@@ -66,11 +66,13 @@ class RepoAdapter(Protocol):
     def push(self, branch: str) -> None: ...
     def open_pr(self, title: str, body: str, base: str, head: str) -> dict: ...  # may raise NotImplemented
 
-    # Change detection
+    # Change detection helpers (explicit, testable)
+    def fetch(self, depth: int = 1) -> None: ...
+    def checkout(self, ref: str) -> None: ...
     def list_changes(self, since_sha: str) -> list[dict]: ...  # [{path,status,old_path?}]
 ```
 
-**Shapes (unchanged; clarified)**
+**Shapes (clarified)**
 
 * `repo_info()` → `{host:"local|github|gitlab|bitbucket|generic", owner, name, default_branch, cache_path, permissions:{read,write,pr}, rate_limits?:{remaining, reset_at}}`
 * `git_diff(...)` → `{files:[{path,status,add,del,old_path?}], stats:{files,lines_added,lines_removed}}`
@@ -80,44 +82,9 @@ class RepoAdapter(Protocol):
 **Behavior (locked)**
 If an operation isn’t supported (e.g., PRs on Generic Git), the adapter **raises `NotImplemented`** and advertises capability `false`.
 
-```python
-from typing import Protocol, Literal
-
-class RepoAdapter(Protocol):
-    # Identity & capabilities
-    def repo_info(self) -> dict: ...
-    def capabilities(self) -> dict: ...  # e.g., {"pr": True, "branch": True, ...}
-
-    # Reads
-    def list_files(self, glob: str | None = None, rev: str | None = None) -> list[str]: ...
-    def read_file(self, path: str, rev: str | None = None) -> bytes: ...
-    def git_diff(self, base: str, head: str | None = None,
-                 paths: list[str] | None = None) -> dict: ...
-
-    # VCS primitives (no business rules)
-    def create_branch(self, name: str, from_ref: str) -> None: ...
-    def apply_patch_worktree(self, unified_diff: str) -> dict: ...  # may raise NotImplemented
-    def commit(self, message: str, author: dict) -> str: ...  # returns new commit sha
-    def push(self, branch: str) -> None: ...
-    def open_pr(self, title: str, body: str, base: str, head: str) -> dict: ...  # may raise NotImplemented
-
-    # Change detection
-    def list_changes(self, since_sha: str) -> list[dict]: ...  # [{path,status,old_path?}]
-```
-
-**Shapes**
-
-* `repo_info()` → `{host:"local|github|gitlab|bitbucket|generic", owner, name, default_branch, cache_path, permissions:{read,write,pr}}`
-* `git_diff(...)` → `{files:[{path,status,add,del,old_path?}], stats:{files,lines_added,lines_removed}}`
-* `open_pr(...)` → `{pr_url, pr_number, branch}`
-* `list_changes(...)` → `[{path:"src/x.ts", status:"M|A|D|R", old_path?}]`
-
-**Behavior**
-If an operation isn’t supported (e.g., PRs on Generic Git), the adapter **raises `NotImplemented`** and advertises capability `false`.
-
----
-
 ## 3) RepoConnector — Registry, Cache, Events
+
+RepoConnector — Registry, Cache, Events
 
 ### 3.1 Driver resolution
 
@@ -141,16 +108,27 @@ def from_url(url: str, **opts) -> RepoAdapter:
 ### 3.2 Local cache strategy (remotes)
 
 * **Shallow, partial clone**: `git clone --depth=1 --filter=blob:none <url>`
-* **Sparse checkout** (optional scopes): `git sparse-checkout set <paths>`
-* **Depth escalation**: allowed on demand for operations needing deeper history (e.g., rename detection).
+* **Sparse checkout** (optional scopes): `git sparse-checkout set <paths>`; **scopes persisted** in repo config; per‑run overrides must be a **subset**.
+* **Depth escalation**: start at depth=1; **escalate on demand** (e.g., to 50) for history‑dependent ops (rename detection). All escalations are logged in telemetry.
 * **Refresh**: `git fetch --depth=1 && git checkout <branch>`
   All reads/diffs use the **working tree** in the cache for speed and rename detection.
 
-### 3.3 Events (delivery TBD per §12)
+### 3.3 Events & Transport (locked)
 
-* `repo.head_changed` — `{repo_id, old, new, branch, timestamp}`
-* `repo.files_changed` — `{repo_id, base, head, changes:[...], timestamp}`
-* `repo.branch_switched` — `{repo_id, branch, timestamp}`
+**Transport:** Phase 0 = in‑process pub/sub; Phase 1 = Redis Streams (durable). Unified `RepoEvents` interface supports both.
+
+**Event types** (at‑least‑once, ordered per repo):
+
+* `repo.head_changed` — `{repo_id, old, new, branch, timestamp, event_id}`
+* `repo.files_changed` — `{repo_id, base, head, changes:[{path,status,old_path?}], timestamp, event_id}`
+* `repo.branch_switched` — `{repo_id, branch, timestamp, event_id}`
+
+**IDs & retention:** `event_id = "{repo_id}#{monotonic_int}"`. Dev (in‑proc): keep last **1,000** per repo in memory. Prod (Redis): **7‑day** retention; consumers use groups/offsets.
+
+**Local change detection:** LocalRepoDriver uses a filesystem watcher (watchdog) with **250 ms debounce**; verifies with `git status`/`rev‑parse` before emitting events.
+
+**Remote change detection (polling):** Active branch every **30–45 s** (±20% jitter); default branch every **3–5 min**; slow to **5–10 min** when idle; exponential backoff on errors. Depth **1** by default; escalate as needed (see §3.2).
+`—`{repo_id, branch, timestamp}`
 
 ### 3.1 Driver resolution
 
@@ -307,19 +285,12 @@ protected_branches = ["main", "release/*"]
 
 Expose safe, read‑first operations as tools; write tools are mediated by Patch Service.
 
-**Transport (partially locked):**
+**Transport (locked):**
 
 * **LangGraph tools**: in-process.
-* **MCP, Model Context Protocol**: **enabled** for v1. **Open item**: transport **STDIO vs. HTTP streaming**. Default proposal: **STDIO** for simplicity; add **HTTP streaming** option in v1.x.
+* **MCP, Model Context Protocol**: **STDIO in v1**. HTTP/SSE transport is planned for v1.x with identical tool schemas.
 
-**Example tool specs**
-
-* `repo.list_files(glob?, rev?) -> [paths]`
-* `repo.read_file(path, rev?) -> {path, content, rev}`
-* `repo.git_diff(base, head?, paths?) -> {files, stats}`
-* `repo.open_pr(title, body, base, head) -> {pr_url, pr_number}` *(only when `capabilities().pr`)*
-
-**Capability gating:** tools are only registered when the adapter reports support. Unsupported calls fail fast with `NotImplemented`.
+**Capability gating:** tools are only registered when the adapter reports support. Unsupported calls fail fast with `NotImplemented`. ** tools are only registered when the adapter reports support. Unsupported calls fail fast with `NotImplemented`.
 
 Expose safe, read‑first operations as tools; write tools are mediated by Patch Service.
 
@@ -438,152 +409,20 @@ Conformance runners discover drivers via entry points and run the same suite.
 
 ---
 
-## 12) Open questions / items to finalize
+## 12) Locked decisions (formerly open items)
 
-* **§16 Event bus transport** — MVP in‑process pub/sub vs. Redis Streams. *We will discuss.*
-* **§7 MCP transport** — **STDIO** default proposed; should we add **HTTP streaming** in v1.x? *We will discuss.*
-* **§21 Repository scopes** — confirm how users specify/persist sparse scopes.
-
-**Defaults if not changed:** entry points for driver registry; unsupported ops raise `NotImplemented` and are gated by capabilities; default project policy prefers PR‑first with HITL for risky actions.
-
----
-
-**Summary**
-This spec standardizes a modern, agent‑friendly repository layer: agents see **RepoTools**, orchestration uses a **RepoConnector** to obtain a host‑neutral **RepoAdapter**, and concrete **RepoDrivers** handle Git mechanics. It is indexing‑free, capability‑gated, and ready for GitHub first while remaining easy to extend to any Git host.
-
----
-
-## 13) Implementation guidance & OSS building blocks (do not reinvent)
-
-This section lists open‑source libraries and projects we will leverage or study. The goal is to keep the **RepoConnector/RepoAdapter** thin and standardized while delegating heavy lifting to mature OSS.
-
-### 13.1 Local Git plumbing (for RepoDrivers)
-
-* **PyGit2** (libgit2 bindings) — high‑performance diffs/branching/commits; preferred for Local/GitHub/Generic drivers.
-* **Dulwich** (pure‑Python Git) — fallback for environments that cannot install libgit2; slower but zero native deps.
-
-**Driver policy:** Prefer PyGit2; provide a Dulwich code path when native deps are disallowed. Expose a config toggle `repo.driver_impl = "pygit2"|"dulwich"`.
-
-### 13.2 Git host SDKs (PR/MR flows)
-
-* **PyGitHub** — GitHub REST v3 client for branches/PRs/rate limits; maps to `open_pr`, `create_branch`, etc.
-* **python‑gitlab** — GitLab API client; maps to merge request equivalents.
-
-**Driver policy:** Host‑specific SDKs are used **inside** drivers; the Adapter contract remains host‑neutral. Rate‑limit data should be surfaced via `repo_info().permissions`/`capabilities()` or error `meta`.
-
-### 13.3 Clone & cache strategy references
-
-* Use **shallow/partial clone** (`--depth=1 --filter=blob:none`) and **sparse checkout** where possible.
-* Connector must be able to **escalate depth on demand** (e.g., for deep rename detection).
-
-### 13.4 Agent projects to study (tool schemas & flows)
-
-* **Aider** — reference for patch/commit ergonomics and reviewable diffs; informs Patch Service UX.
-* **SWE‑agent**, **OpenHands** — end‑to‑end issue→PR agents; good patterns for tool JSON schemas and safety checks.
-
----
-
-## 14) Entry‑point registry (driver plug‑ins)
-
-Drivers self‑register via Python entry points so third parties can add hosts without core changes.
-
-**`pyproject.toml` in a driver package**
-
-```toml
-[project.entry-points."texere.repo_drivers"]
-"github" = "texere.repo.drivers.github:driver_entry"
-"local"  = "texere.repo.drivers.local:driver_entry"
-"generic"= "texere.repo.drivers.genericgit:driver_entry"
-```
-
-**Connector loader**
-
-```python
-import importlib.metadata as md
-DRIVERS = {}
-
-def load_repo_drivers():
-    for ep in md.entry_points(group="texere.repo_drivers"):
-        name, (pred, ctor) = ep.load()  # returns (predicate, constructor)
-        DRIVERS[name] = (pred, ctor)
-```
-
-**Contract for `driver_entry`**
-
-```python
-# returns: (predicate: Callable[[str], bool], ctor: Callable[..., RepoAdapter])
-```
-
----
-
-## 15) Capability gating & tool exposure
-
-* **RepoTools** are registered **conditionally** based on `adapter.capabilities()`.
-* Unsupported operations **must** raise `NotImplemented` and **must not** be exposed as tools.
-* For hosts without PRs, `repo.open_pr` is omitted; Patch Service must choose an alternate workflow.
-
----
-
-## 16) Conformance test suite (for any RepoDriver)
-
-A shared runner executes the same tests against all discovered drivers:
-
-* **Parity:** `list_files/read_file/git_diff` produce equivalent results for the same ref across drivers.
-* **Branch lifecycle:** create→commit→push; `open_pr` only where supported.
-* **Errors:** standardized codes for auth failure, rate‑limit, conflict, protected branch, invalid patch, timeout/network.
-* **Security:** deny symlink escapes; submodule writes disabled by default.
-* **Performance:** basic p50/p95 thresholds (see §8).
-
-Drivers must publish a small **test fixture repo** (or use the provided one) to validate behavior.
-
----
-
-## 17) Telemetry additions
-
-* Capture `driver_impl` (pygit2/dulwich) and `host` (github/gitlab/local/generic) on each call.
-* For host SDK calls, include `rate_limit_remaining` and `reset_at` when available in `meta`.
-* Emit `repo.rate_limit_low` event when below a configurable threshold to give agents a chance to back off.
-
----
-
-## 18) Security notes (expanded)
-
-* Tokens are only read via configured env/secret managers and never stored in the cache directory.
-* All paths are resolved against the repo root; attempts to write via symlinked paths are rejected with `ProtectedPath`.
-* Submodules remain read‑only unless the driver advertises `capabilities().get("submodule_write") == True` and policy allows it (default: False).
-
----
-
-## 19) MCP exposure (optional but recommended)
-
-Expose **RepoTools** over **MCP, Model Context Protocol** so any MCP‑capable client can discover them.
-
-* Tools: `repo.list_files`, `repo.read_file`, `repo.git_diff`, conditionally `repo.open_pr`.
-* Include **capability metadata** in MCP tool descriptions so clients can self‑adapt.
-* Rate‑limit telemetry is returned in tool `meta` fields for budgeting.
-
----
-
-## 20) Configuration keys (additions)
-
-```toml
-[repo]
-# choose low‑level git implementation; default pygit2
-impl = "pygit2"  # or "dulwich"
-
-[limits]
-# shallow/partial clone tuning
-max_fetch_depth = 1
-allow_depth_escalation = true
-
-[telemetry]
-rate_limit_warn_threshold = 100  # emit repo.rate_limit_low when below
-```
-
----
-
-## 21) Non‑functional requirements (updated)
-
-* **Portability:** drivers must function without invoking external `git` binaries when `impl = "dulwich"` is selected.
-* **Extensibility:** adding a new host requires only a new driver package that registers via entry points and passes the conformance suite.
-* **Observability:** rate‑limit and host/driver fields are first‑class telemetry dimensions.
+* **Event bus (v1):** Phase 0 in‑proc pub/sub; Phase 1 Redis Streams with 7‑day retention and consumer groups.
+* **Local detection:** filesystem watcher + debounce + `git` verification.
+* **Remote polling cadence:** active branch 30–45 s (±20% jitter); default 3–5 min; idle 5–10 min; backoff on errors.
+* **Adapter helpers:** `fetch(depth)` and `checkout(ref)` exposed on RepoAdapter.
+* **MCP transport:** STDIO now; HTTP/SSE later.
+* **Sparse scopes:** persisted in config; per‑run overrides must be subsets.
+* **Depth escalation:** start at 1; escalate on demand; log escalations.
+* **Event IDs/retention:** `{repo_id}#<monotonic>`; dev keep last 1,000; prod 7 days.
+* **Rate‑limit threshold:** warn at ≤100 remaining; emit `repo.rate_limit_low` with `reset_at`; increase polling interval 2× on warning.
+* **Unsupported ops:** gated by capabilities; raise `NotImplemented`; don’t expose the tool.
+* **Errors:** fixed codes with required `meta` fields.
+* **Branch/commit conventions:** `texere/run-{run_id}` + `feat: {summary} [run_id={run_id}]` (project may override but must keep tokens).
+* **PR policy source:** project rules + HITL; repo layer enforces local checks and never bypasses policy.
+* **Windows:** out of scope v1 (Docker/Linux); normalize LF in memory; preserve original EOL on write.
+* **Conformance runner:** drivers via entry points; shared parity/error/security/perf suite; JSON report output.
