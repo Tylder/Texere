@@ -50,9 +50,9 @@ Texere coordinates multiple agents and tools to perform development‑centric wo
 - **Retrieval Orchestrator** — hybrid search (symbol/file narrow → BM25 → vector re‑rank) with a single source of truth for `k`.  
 - **LLM Adapter** — provider‑agnostic generate/stream with JSON mode, tool‑calls, usage telemetry.  
 - **Patch Service** — propose/verify/apply diffs; integrates with Repo; PR‑first policy.  
-- **Executor** — allowlisted commands, timeouts, sandbox (separate container in prod).  
+ - **Executor (local default)** — runs on the user's machine with approvals (no OS sandbox in v0); optional containerized executor for hardened environments.  
 - **Policy/HITL** — environment‑aware guardrails (dev/staging/prod).  
-- **Events/Telemetry** — Redis Streams for durable repo events; JSONL + OTEL for logs/metrics.  
+ - **Events/Telemetry** — Redis Streams for durable repo events; JSONL + OTEL for logs/metrics. Local executor writes `.texere/logs/*.jsonl` audit records.  
 - **CLI & MCP** — human + JSON CLI; optional MCP (stdio) exposes tools to external clients.
 
 ## 7) Deployment Modes

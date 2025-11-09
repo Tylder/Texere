@@ -14,13 +14,15 @@ Risk evaluation and approval gates for WRITE/EXEC/NET actions.
 - ≥5: DENY (explain and suggest safer plan)
 
 ## Gates & Rules
+- Local executor by default; no OS sandbox in v0 (Amp/Codex behavior). Risk is mitigated via HITL prompts and policy.
 - File writes confined to repo root; no symlink traversal; patch size caps apply.
-- EXEC allowlist only (e.g., `git`, `rg`, `pytest`); forbid mutation tools without patching.
+- EXEC default: allow execution on host with prior approval; maintain an allowlist for guidance (e.g., `git`, `rg`, `pytest`).
 - NET limited to allowlisted domains; require reason + budget.
 
-## Interrupt UX
+## Interrupt UX (CLI defaults)
 - On REQUIRE_HITL: emit interrupt with proposed diff/command, rationale, risk,
   and one-click options (approve once, approve step class, deny with note).
+ - CLI prompt baseline: show command/cwd/timeout for EXEC; show diff summary for WRITE; show domain and method for NET.
 
 ## Audit
 - Log Decision with inputs (caps, metrics), outputs (action, risk), and approver id.
@@ -30,4 +32,3 @@ Risk evaluation and approval gates for WRITE/EXEC/NET actions.
 - WRITE 2 files, 120 LOC: score 3 ⇒ REQUIRE_HITL.
 - EXEC `pytest -q` in repo: score 4 ⇒ REQUIRE_HITL.
 - NET to unknown domain: score ≥5 ⇒ DENY.
-

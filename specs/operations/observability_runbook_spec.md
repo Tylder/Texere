@@ -13,6 +13,7 @@ Minimum metrics, logs, events, and ops actions to keep runs healthy.
 - Correlate with `trace_id`, `run_id`, `step_id` in every entry.
 - Log pre/post Decision with `risk`, `caps`, and `action`.
 - Redact secrets by allowlist; never log raw tokens/patch contents over limit.
+ - Local executor audit: write JSONL to `.texere/logs/local_executor.jsonl` with fields `{ts, event, command, cwd, timeout_sec, decision, exit_code, duration_ms}`.
 
 ## Events (required fields)
 - run.started: {run_id, plan_id, branch}
@@ -31,4 +32,3 @@ Minimum metrics, logs, events, and ops actions to keep runs healthy.
 - Hot tool: check `step_latency_ms{tool=...}`; consider caps/budget tweaks.
 - Frequent denies: review policy thresholds vs. actual patch sizes/commands.
 - Repo conflicts: attempt auto-rebase; if repeated, require HITL before retry.
-
