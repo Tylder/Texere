@@ -151,3 +151,21 @@ A driver is **certified** when:
 - CI publishes a passing JSON report.
 
 **Status:** Ready to use in CI and as a PR template
+
+## 13) Canonical Tool Error Mapping (adapter → tool layer)
+- AuthError → `transient_net` (retry) or surface as policy setup error if credentials missing permanently.
+- RateLimit → `transient_net` (retry with `reset_at`).
+- Network → `transient_net` (retry with backoff).
+- Timeout → `timeout` (retry bounded by policy).
+- Conflict → `repo_conflict` (no retry; requires human or rebase).
+- ProtectedPath | WriteDenied → `policy_denied` (explain path/branch rule).
+- NotFound → `invalid_args` when the path/ref is wrong; retain `meta.path`/`meta.ref`.
+- InvalidPatch → `invalid_args` with `meta.path` and hunk info.
+- NotImplemented → surface as `invalid_args` at tool registration time (tool should not be exposed when unsupported).
+
+## 14) Cross‑OS Behavior (advisory; Linux is the v1 baseline)
+- Newlines: preserve file newlines; do not auto‑convert LF/CRLF. Tests assert round‑trip fidelity.
+- File modes: preserve executable bit and report mode changes in `git_diff` when present.
+- Symlinks: resolve and forbid writes through symlinked paths on all OSes. On Windows, drivers must simulate or deny safely.
+- Case sensitivity: treat paths case‑sensitively; on case‑insensitive filesystems, drivers must guard against collisions.
+- Encoding: read/write as bytes; callers decide decoding. Tests include binary fixtures.
