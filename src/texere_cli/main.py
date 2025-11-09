@@ -6,9 +6,10 @@ from typing import List
 
 import typer
 from rich.console import Console
-from texere_core.executor import execute_plan_stream
+from texere_core.graph_executor import execute_plan_graph
 from texere_core.local_executor import run_local_exec
 from texere_core.state import Plan, State, Step
+from texere_core.registry import list_adapters, list_tools
 
 app = typer.Typer(help="Texere CLI — tools, runs, and UI")
 console = Console()
@@ -25,14 +26,17 @@ def ui():
 
 @app.command(name="adapters:list")
 def adapters_list():
-    """List discovered adapters (stub)."""
-    console.print("repo.local  — READ/WRITE (local working tree)")
+    """List discovered adapters."""
+    adapters = list_adapters()
+    for a in adapters:
+        console.print(f"{a.name} — kind={a.kind}")
 
 
 @app.command(name="tools:list")
 def tools_list():
-    """List available tools (stub)."""
-    console.print("repo.list_files, repo.read_file, repo.apply_patch, llm.generate, exec.run")
+    """List available tools."""
+    tools = ", ".join(t.name for t in list_tools())
+    console.print(tools)
 
 
 @app.command()
@@ -45,7 +49,7 @@ def run(
         steps=[Step(id="s1", tool="llm.generate", args={"prompt": prompt}, out="resp")],
     )
     state = State(run_id="r1", plan=plan)
-    execute_plan_stream(state)
+    execute_plan_graph(state)
 
 
 @app.command()

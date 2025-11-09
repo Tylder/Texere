@@ -16,10 +16,14 @@ dependencies = [
     "textual==0.50.0",
     "rich==13.9.2",
     "rich-click==1.8.3",
+    "langgraph==0.2.38",
 ]
 
 [project.scripts]
 texere = "texere_cli.main:app"
+
+[project.entry-points."texere.repo_drivers"]
+local = "texere_repo_drivers.local:LocalRepoAdapter"
 
 [tool.hatch.metadata]
 allow-direct-references = true
