@@ -1,5 +1,7 @@
 # Texere — RepoConnector & RepoAdapter Spec (indexing‑free, multi‑host)
 
+> **Runtime & packaging (locked)**: Python **3.11+**, Pydantic **v2**, namespace packages, entry points. Container-first: **Docker (Linux)** as the primary runtime; **ARM** supported when available but **not required**.
+
 **Goal**
 Provide a host‑agnostic, indexing‑free layer for accessing code repositories. Agents see **RepoTools**; orchestration uses a **RepoConnector** that resolves a URL to a **RepoAdapter** implemented by a concrete **RepoDriver** (GitHub, Local, Generic Git, etc.). All write *policy* (caps/HITL) lives in the Patch Service.
 
@@ -16,6 +18,8 @@ No indexing, parsing, symbol maps, embeddings, BM25/FAISS, or retrieval APIs.
 ---
 
 ## 1) Capabilities & Errors
+
+> **OS support (locked)**: Linux (Docker). macOS/Windows not required for v1. ARM is nice-to-have.
 
 ### 1.1 Capabilities
 
@@ -66,6 +70,41 @@ class RepoAdapter(Protocol):
     def list_changes(self, since_sha: str) -> list[dict]: ...  # [{path,status,old_path?}]
 ```
 
+**Shapes (unchanged; clarified)**
+
+* `repo_info()` → `{host:"local|github|gitlab|bitbucket|generic", owner, name, default_branch, cache_path, permissions:{read,write,pr}, rate_limits?:{remaining, reset_at}}`
+* `git_diff(...)` → `{files:[{path,status,add,del,old_path?}], stats:{files,lines_added,lines_removed}}`
+* `open_pr(...)` → `{pr_url, pr_number, branch}`
+* `list_changes(...)` → `[{path:"src/x.ts", status:"M|A|D|R", old_path?}]`
+
+**Behavior (locked)**
+If an operation isn’t supported (e.g., PRs on Generic Git), the adapter **raises `NotImplemented`** and advertises capability `false`.
+
+```python
+from typing import Protocol, Literal
+
+class RepoAdapter(Protocol):
+    # Identity & capabilities
+    def repo_info(self) -> dict: ...
+    def capabilities(self) -> dict: ...  # e.g., {"pr": True, "branch": True, ...}
+
+    # Reads
+    def list_files(self, glob: str | None = None, rev: str | None = None) -> list[str]: ...
+    def read_file(self, path: str, rev: str | None = None) -> bytes: ...
+    def git_diff(self, base: str, head: str | None = None,
+                 paths: list[str] | None = None) -> dict: ...
+
+    # VCS primitives (no business rules)
+    def create_branch(self, name: str, from_ref: str) -> None: ...
+    def apply_patch_worktree(self, unified_diff: str) -> dict: ...  # may raise NotImplemented
+    def commit(self, message: str, author: dict) -> str: ...  # returns new commit sha
+    def push(self, branch: str) -> None: ...
+    def open_pr(self, title: str, body: str, base: str, head: str) -> dict: ...  # may raise NotImplemented
+
+    # Change detection
+    def list_changes(self, since_sha: str) -> list[dict]: ...  # [{path,status,old_path?}]
+```
+
 **Shapes**
 
 * `repo_info()` → `{host:"local|github|gitlab|bitbucket|generic", owner, name, default_branch, cache_path, permissions:{read,write,pr}}`
@@ -79,6 +118,39 @@ If an operation isn’t supported (e.g., PRs on Generic Git), the adapter **rais
 ---
 
 ## 3) RepoConnector — Registry, Cache, Events
+
+### 3.1 Driver resolution
+
+* **URL schemes supported (locked):** `file://`, `gh://org/repo` or `https://github.com/org/repo`, `git+ssh://`, `git+https://`.
+
+```python
+# Registry entry: predicate(url) -> bool, ctor(url, **opts) -> RepoAdapter
+register_driver("local",    pred=lambda u: u.startswith("file://"),              ctor=LocalRepoDriver)
+register_driver("github",   pred=lambda u: "github.com" in u or u.startswith("gh://"), ctor=GitHubRepoDriver)
+register_driver("generic",  pred=lambda u: u.startswith(("git+ssh://","git+https://")), ctor=GenericGitDriver)
+
+def from_url(url: str, **opts) -> RepoAdapter:
+    for name, (pred, ctor) in DRIVERS.items():
+        if pred(url):
+            return ctor(url, **opts)
+    raise ValueError("No driver for URL")
+```
+
+**Extensibility:** drivers self‑register via Python entry points: `texere.repo_drivers`.
+
+### 3.2 Local cache strategy (remotes)
+
+* **Shallow, partial clone**: `git clone --depth=1 --filter=blob:none <url>`
+* **Sparse checkout** (optional scopes): `git sparse-checkout set <paths>`
+* **Depth escalation**: allowed on demand for operations needing deeper history (e.g., rename detection).
+* **Refresh**: `git fetch --depth=1 && git checkout <branch>`
+  All reads/diffs use the **working tree** in the cache for speed and rename detection.
+
+### 3.3 Events (delivery TBD per §12)
+
+* `repo.head_changed` — `{repo_id, old, new, branch, timestamp}`
+* `repo.files_changed` — `{repo_id, base, head, changes:[...], timestamp}`
+* `repo.branch_switched` — `{repo_id, branch, timestamp}`
 
 ### 3.1 Driver resolution
 
@@ -119,6 +191,26 @@ Later you can back with Redis streams or another queue; contract stays the same.
 ### 4.1 GitHubRepoDriver
 
 * Uses local cache (above).
+* **Writes** are **PR‑first** by default; final policy comes from project rules + HITL.
+* Surfaces rate limits via `repo_info().permissions / capabilities` and `meta` on errors.
+* Auth via PAT/OAuth (least privilege), never logged, redacted in errors.
+
+### 4.2 LocalRepoDriver
+
+* Operates directly on a local working tree.
+* `apply_patch_worktree` supported.
+* `open_pr` **NotImplemented**; capability `pr=false`.
+
+### 4.3 GenericGitDriver (git+ssh / git+https)
+
+* Clone/pull/branch/commit/push supported.
+* `open_pr` **NotImplemented**; `capabilities()["pr"] == false`.
+
+(Drivers for GitLab/Bitbucket follow the same pattern.)
+
+### 4.1 GitHubRepoDriver
+
+* Uses local cache (above).
 * **Writes** are **PR‑first**: create branch → apply patch (in cache) → commit → push → open PR.
 * Surfaces rate limits via `repo_info().permissions / capabilities` and `meta` on errors.
 * Auth via PAT/OAuth (least privilege), never logged, redacted in errors.
@@ -141,14 +233,58 @@ Later you can back with Redis streams or another queue; contract stays the same.
 ## 5) Security & Safety
 
 * **Path confinement** to repo root; resolve symlinks; deny writes via symlinks.
-* **Protected branches** list honored locally; never push to `main`/`release/*` unless caller is Patch Service and policy allows.
+
+* **Protected branches** are governed by **project rules** and **HITL, Human-In-The-Loop** policy. RepoConnector/Adapter enforces local checks (never bypass policy), but risk decisions (e.g., PR-only, protected branches) are **owned by project-level rules**.
+
 * **Submodules**: read‑only by default.
+
 * **Binaries/LFS**: driver never parses; Patch Service decides write policy.
+
+* **Secrets**: tokens in OS keychain/secret manager or environment; logs redact secrets.
+
+* **Path confinement** to repo root; resolve symlinks; deny writes via symlinks.
+
+* **Protected branches** list honored locally; never push to `main`/`release/*` unless caller is Patch Service and policy allows.
+
+* **Submodules**: read‑only by default.
+
+* **Binaries/LFS**: driver never parses; Patch Service decides write policy.
+
 * **Secrets**: tokens in OS keychain/secret manager; logs redact secrets.
 
 ---
 
 ## 6) Config (host‑neutral)
+
+```toml
+# Runtime
+[runtime]
+python = "3.11+"
+container = true            # built for Docker/Linux
+arch_arm_optional = true    # ARM is supported when available, not required
+
+[repo]
+url = "gh://org/repo"              # file://, git+ssh://, git+https://, gh://
+default_branch = "main"
+scopes = ["services/foo/**"]       # optional sparse checkout paths
+cache_dir = "~/.texere/cache"
+
+[auth]
+# Tokens via env or secret manager; never persisted
+use_secret_manager = true
+ token_env = "GITHUB_TOKEN"         # or GITLAB_TOKEN, etc.
+
+[write_policy]
+# Enforced by project rules + HITL (Patch Service), not here
+managed_by_project_rules = true
+pr_only_default = true
+protected_branches = ["main", "release/*"]
+
+[branching]
+# Commit/branch conventions (locked)
+branch_pattern = "texere/run-{run_id}"
+commit_format = "feat: {summary} [run_id={run_id}]"
+```
 
 ```toml
 [repo]
@@ -171,6 +307,22 @@ protected_branches = ["main", "release/*"]
 
 Expose safe, read‑first operations as tools; write tools are mediated by Patch Service.
 
+**Transport (partially locked):**
+
+* **LangGraph tools**: in-process.
+* **MCP, Model Context Protocol**: **enabled** for v1. **Open item**: transport **STDIO vs. HTTP streaming**. Default proposal: **STDIO** for simplicity; add **HTTP streaming** option in v1.x.
+
+**Example tool specs**
+
+* `repo.list_files(glob?, rev?) -> [paths]`
+* `repo.read_file(path, rev?) -> {path, content, rev}`
+* `repo.git_diff(base, head?, paths?) -> {files, stats}`
+* `repo.open_pr(title, body, base, head) -> {pr_url, pr_number}` *(only when `capabilities().pr`)*
+
+**Capability gating:** tools are only registered when the adapter reports support. Unsupported calls fail fast with `NotImplemented`.
+
+Expose safe, read‑first operations as tools; write tools are mediated by Patch Service.
+
 **Example tool specs**
 
 * `repo.list_files(glob?, rev?) -> [paths]`
@@ -184,7 +336,22 @@ Expose safe, read‑first operations as tools; write tools are mediated by Patch
 
 ## 8) Telemetry & Performance
 
+* **Sink (locked):** JSONL locally + optional OpenTelemetry exporter; secrets redacted; retention 7–30 days.
+* Record per‑call: `run_id, repo_id, op, duration_ms, bytes_read, driver_impl (pygit2|dulwich), host (github|gitlab|local|generic), rate_limit_remaining`.
+* Emit `repo.rate_limit_low` when below configured threshold; include `reset_at` if available.
+
+**Targets (accepted):**
+
+* `read_file` p50 < 20 ms (p95 < 50 ms)
+
+* `list_files` p50 < 200 ms for 10k files
+
+* `git_diff` p50 < 150 ms for 200‑file diffs
+
+* PR path (create branch → apply patch → commit → push → open PR): ~3 s typical, network dependent
+
 * Record per‑call: `run_id, repo_id, op, duration_ms, bytes_read, driver, rate_limit_remaining`.
+
 * Targets (warm cache):
 
   * `read_file` p50 < 20 ms (p95 < 50 ms)
@@ -194,6 +361,16 @@ Expose safe, read‑first operations as tools; write tools are mediated by Patch
 ---
 
 ## 9) Testing & Conformance
+
+**Requirement (locked):** All RepoDrivers MUST pass a shared suite:
+
+* **Parity:** `list_files/read_file/git_diff` equivalent results for the same ref across drivers.
+* **Branch lifecycle:** create→commit→push; `open_pr` only where supported.
+* **Errors:** standardized codes for auth failure, rate‑limit (with backoff), conflict, protected branch, invalid patch, timeout/network.
+* **Security:** deny symlink escapes; submodule writes disabled by default.
+* **Performance:** basic p50/p95 thresholds (see §8).
+
+Provide a small **fixture repo** or use the provided one to validate behavior.
 
 A shared test suite validates any RepoDriver implementation:
 
@@ -209,13 +386,38 @@ Conformance runners discover drivers via entry points and run the same suite.
 
 ## 10) Interaction with other components
 
-* **Patch Service**: owns verify/apply policy and HITL; calls RepoAdapter primitives to enact changes.
+* **Patch Service**: owns verify/apply policy and **HITL, Human-In-The-Loop** via project rules; calls RepoAdapter primitives to enact changes.
+
 * **Indexing Service**: subscribes to `repo.files_changed` events or polls `list_changes(since_sha)`; **RepoConnector does not index**.
+
+* **Retrieval**: hydrates snippet text via `read_file(path, rev)` through RepoAdapter, not from index blobs.
+
+* **Patch Service**: owns verify/apply policy and HITL; calls RepoAdapter primitives to enact changes.
+
+* **Indexing Service**: subscribes to `repo.files_changed` events or polls `list_changes(since_sha)`; **RepoConnector does not index**.
+
 * **Retrieval**: hydrates snippet text via `read_file(path, rev)` through RepoAdapter, not from index blobs.
 
 ---
 
 ## 11) Example lifecycle flows
+
+**A) Read & diff (agent question)**
+
+1. Agent calls `repo.list_files("src/**")` via RepoTools.
+2. Agent calls `repo.git_diff(base=prev_sha, head="HEAD")` for context.
+3. Adapter returns normalized diff; telemetry recorded.
+
+**B) PR creation (invoked by Patch Service under project rules)**
+
+1. Patch Service → `create_branch("texere/run-<id>", from_ref="main")`.
+2. `apply_patch_worktree(unified_diff)` (Local/GitHub).
+3. `commit("feat: <summary> [run_id=<id>]")`; `push(branch)`.
+4. If supported: `open_pr(title, body, base="main", head="texere/run-<id>")`.
+
+**C) Event emission**
+
+* After `git fetch`/`checkout`, driver computes diffs and emits `repo.files_changed` with `{base, head, changes}`.
 
 **A) Read & diff (agent question)**
 
@@ -236,11 +438,13 @@ Conformance runners discover drivers via entry points and run the same suite.
 
 ---
 
-## 12) Open questions (defaults to recommended if unspecified)
+## 12) Open questions / items to finalize
 
-1. **Registry mechanism** — Use Python entry points group `texere.repo_drivers`.
-2. **Unsupported ops** — Raise `NotImplemented`; tools gated by `capabilities()`.
-3. **Default write policy** — PR‑first for remotes; Patch Service enforces caps/HITL.
+* **§16 Event bus transport** — MVP in‑process pub/sub vs. Redis Streams. *We will discuss.*
+* **§7 MCP transport** — **STDIO** default proposed; should we add **HTTP streaming** in v1.x? *We will discuss.*
+* **§21 Repository scopes** — confirm how users specify/persist sparse scopes.
+
+**Defaults if not changed:** entry points for driver registry; unsupported ops raise `NotImplemented` and are gated by capabilities; default project policy prefers PR‑first with HITL for risky actions.
 
 ---
 
