@@ -7,15 +7,15 @@ name = "texere"
 version = "0.0.1"
 description = "Texere core + CLI skeleton"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.12"
 authors = [{ name = "Texere Authors" }]
 license = { text = "Proprietary" }
 dependencies = [
-  "pydantic>=2.5",
-  "typer[all]>=0.12.3",
-  "textual>=0.50.0",
-  "rich>=13.7",
-  "rich-click>=1.8.3",
+  "pydantic==2.9.2",
+  "typer[all]==0.12.5",
+  "textual==0.50.0",
+  "rich==13.9.2",
+  "rich-click==1.8.3",
 ]
 
 [project.scripts]
@@ -33,9 +33,9 @@ target-version = "py311"
 
 [tool.hatch.envs.default]
 dependencies = [
-  "ruff>=0.6.0",
-  "black>=24.8.0",
-  "pytest>=8.0.0",
+  "ruff==0.6.9",
+  "black==24.10.0",
+  "pytest==8.3.3",
 ]
 
 [tool.hatch.envs.default.scripts]
@@ -43,3 +43,4 @@ ui = "texere ui"
 lint = "ruff check ."
 fmt = "ruff format . && black ."
 test = "pytest -q"
+lock = "uv pip compile pyproject.toml -o requirements.lock"

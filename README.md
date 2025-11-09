@@ -3,7 +3,7 @@
 Quick start for the CLI, Command-Line Interface, and development environment.
 
 ## Prereqs
-- Python 3.11+
+- Python 3.11 (recommended 3.11.9)
 - Hatch (installed automatically in Docker)
 
 ## Local usage
