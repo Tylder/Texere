@@ -9,7 +9,7 @@ from langgraph.graph import StateGraph, END
 from .llm_fake import stream_generate
 from .router import select_adapter
 from .state import State
-from .events import EventLogger
+from .events import EventLogger, default_logger
 
 console = Console()
 
@@ -90,6 +90,16 @@ def _make_plan_executor(events: EventLogger) -> Callable[[RunState], RunState]:
                     with console.status("Streaming…", spinner="dots"):
                         for chunk in stream_generate(prompt):
                             console.print(chunk, end="")
+                            if run_id:
+                                events.emit(
+                                    run_id,
+                                    {
+                                        "event": "stream",
+                                        "run_id": run_id,
+                                        "tool": tool,
+                                        "chunk": chunk,
+                                    },
+                                )
                     console.print()
                     if out:
                         artifacts[out] = "<streamed>"
@@ -167,7 +177,7 @@ def _node_plan_stub(s: RunState) -> RunState:
 
 
 def execute_plan_graph(state: State) -> State:
-    events = EventLogger()
+    events = default_logger
     g = StateGraph(dict)
 
     run_state = _to_run_state(state)
@@ -211,7 +221,8 @@ def execute_plan_graph(state: State) -> State:
     # Ensure artifacts include outputs for executed steps if runtime didn't propagate
     arts: dict[str, Any] = dict(out.get("artifacts") or {})
     effective_steps = out.get("plan", {}).get("steps") or run_state.get("plan", {}).get("steps", [])
-    for st in effective_steps:
+    executed = int(out.get("plan_idx", 0))
+    for st in effective_steps[:executed]:
         out_key = st.get("out")
         if not out_key:
             continue

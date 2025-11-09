@@ -21,3 +21,36 @@ def test_event_logger_emits_and_checkpoint(tmp_path, monkeypatch):
 def test_services_default_includes_event_logger():
     svc = Services()
     assert isinstance(svc.events, EventLogger)
+
+
+def test_event_logger_subscribe_and_unsubscribe(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    logger = EventLogger()
+    seen = []
+
+    def cb(e: dict):
+        seen.append(e.get("event"))
+
+    logger.subscribe(cb)
+    logger.emit("r1", {"event": "e1", "run_id": "r1"})
+    logger.unsubscribe(cb)
+    logger.emit("r1", {"event": "e2", "run_id": "r1"})
+    assert seen == ["e1"]
+
+
+def test_event_logger_callback_error_is_swallowed(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    logger = EventLogger()
+    seen = []
+
+    def bad(_):
+        raise RuntimeError("boom")
+
+    def ok(e: dict):
+        seen.append(e.get("event"))
+
+    logger.subscribe(bad)
+    logger.subscribe(ok)
+    # Should not raise even if one subscriber fails
+    logger.emit("rX", {"event": "ok", "run_id": "rX"})
+    assert seen == ["ok"]

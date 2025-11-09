@@ -5,6 +5,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Vertical
 from textual.widgets import Footer, Header, Input, Static, Log
+from texere_core.events import default_logger
 from textual.message import Message
 from typing import AbstractSet, cast
 from typing import ClassVar
@@ -102,6 +103,13 @@ class TexereApp(App):
             "clear",
         ]
 
+        # Subscribe to runtime events for live updates
+        def _on_event(e: dict) -> None:
+            self.handle_runtime_event(e)
+
+        self._event_cb = _on_event  # type: ignore[attr-defined]
+        default_logger.subscribe(self._event_cb)
+
     def compose(self) -> ComposeResult:  # type: ignore[override]
         yield Header(show_clock=False)
         with Vertical(classes="pane"):
@@ -135,6 +143,25 @@ class TexereApp(App):
         if event.key == "enter" and ("shift" in modifiers) and self.prompt.has_focus:
             self.prompt.value = (self.prompt.value or "") + "\n"
             event.stop()
+
+    def handle_runtime_event(self, event: dict) -> None:
+        kind = event.get("event", "")
+        if kind == "stream":
+            chunk = event.get("chunk", "")
+            self.transcript.write(str(chunk))
+        else:
+            parts = [
+                kind,
+                event.get("node", ""),
+                event.get("tool", ""),
+                str(event.get("plan_idx", "")),
+            ]
+            self.transcript.write(" ".join(p for p in parts if p))
+
+    def unsubscribe_events(self) -> None:
+        cb = getattr(self, "_event_cb", None)
+        if cb is not None:
+            default_logger.unsubscribe(cb)  # type: ignore[arg-type]
 
 
 class PaletteRun(Message):
