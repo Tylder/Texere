@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import subprocess
+import sys
+from typing import List
+
 import typer
 from rich.console import Console
 from texere_core.executor import execute_plan_stream
@@ -28,16 +32,12 @@ def adapters_list():
 @app.command(name="tools:list")
 def tools_list():
     """List available tools (stub)."""
-    console.print(
-        "repo.list_files, repo.read_file, repo.apply_patch, llm.generate, exec.run"
-    )
+    console.print("repo.list_files, repo.read_file, repo.apply_patch, llm.generate, exec.run")
 
 
 @app.command()
 def run(
-        prompt: str = typer.Argument(
-            ..., help="Prompt to send to the demo LLM, Large Language Model"
-        ),
+    prompt: str = typer.Argument(..., help="Prompt to send to the demo LLM, Large Language Model"),
 ):
     """Run a minimal plan that streams an LLM, Large Language Model, response to the terminal."""
     plan = Plan(
@@ -50,14 +50,54 @@ def run(
 
 @app.command()
 def exec(
-        cmd: list[str] = typer.Argument(
-            ..., help="Command to execute (use quotes for complex commands)"
-        ),
+    cmd: list[str] = typer.Argument(
+        ..., help="Command to execute (use quotes for complex commands)"
+    ),
     timeout: int = typer.Option(30, help="Timeout in seconds"),
-        no_hitl: bool = typer.Option(
-            False, "--no-hitl", help="Do not require HITL, Human In The Loop, approval"
-        ),
+    no_hitl: bool = typer.Option(
+        False, "--no-hitl", help="Do not require HITL, Human In The Loop, approval"
+    ),
 ):
     """Execute a local command with HITL, Human In The Loop, approval and JSONL audit."""
     code = run_local_exec(cmd, timeout_sec=timeout, require_hitl=not no_hitl)
     raise typer.Exit(code)
+
+
+@app.command()
+def test(
+    paths: List[str] | None = typer.Argument(
+        None,
+        help="Optional test paths or files; defaults to 'tests'",
+    ),
+    cov: bool = typer.Option(
+        False,
+        "--cov",
+        help="Include coverage with --cov=src and term-missing report",
+        is_flag=True,
+    ),
+    xml: bool = typer.Option(
+        False,
+        "--xml",
+        help="Also emit coverage XML (for CI, Continuous Integration)",
+        is_flag=True,
+    ),
+    mark: str | None = typer.Option(
+        None, "--mark", help="Pytest -m marker expression (e.g., 'not integration')"
+    ),
+    kexpr: str | None = typer.Option(None, "--kexpr", help="Pytest -k expression to filter tests"),
+):
+    """Run tests from the Texere CLI, Command Line Interface, optionally with coverage."""
+    args: List[str] = ["-m", mark] if mark else []
+    if kexpr:
+        args += ["-k", kexpr]
+    if cov:
+        args += ["--cov=src", "--cov-report=term-missing"]
+        if xml:
+            args += ["--cov-report=xml"]
+    # Default to unit tests under tests/ if no path provided
+    if not paths:
+        paths = ["tests"]
+
+    cmd = [sys.executable, "-m", "pytest", "-q", *args, *paths]
+    result = subprocess.run(cmd)
+    raise typer.Exit(result.returncode)

@@ -1,60 +1,93 @@
-# Python
+###############################################
+# Texere / Python — .gitignore (clean layout) #
+###############################################
+
+## Python caches & bytecode
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+## Virtual environments
 .venv/
 venv/
 ENV/
 env/
+__pypackages__/
 pip-wheel-metadata/
+
+## Build artifacts
+build/
+dist/
+site/
+*.egg-info/
+.eggs/
+
+## Testing & coverage
 .pytest_cache/
 .coverage
 .coverage.*
 htmlcov/
-dist/
-build/
-site/
-.eggs/
-*.egg-info/
+coverage.xml
+
+## Type checking
 .mypy_cache/
 .pytype/
 .pyre/
-.cache/
-.ruff_cache/
 .dmypy.json
+.pyrightcache/
+
+## Linters & tooling caches
+.ruff_cache/
+.cache/
+
+## Tox / Nox / Hypothesis / Benchmarks
+.tox/
+.nox/
+.hypothesis/
+.benchmarks/
+
+## Hatch / UV / Lock files
+.uv/
+# If you choose to commit locks, remove this line:
+requirements.lock
+
+## Jupyter
 .ipynb_checkpoints
 
-# IDE / Editor
+## Editors / IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
+## OS files
 .DS_Store
 Thumbs.db
 
-# Env / Config
+## Env / Config
 .env
 .env.*
 !.env.example
 *.local
+.envrc
+.direnv/
 
-# Node (if used later)
-node_modules/
-npm-debug.log*
-yarn-error.log*
-
-# Logs
+## Logs & project artifacts
 logs/
 *.log
+.texere/
 
-# Docker / Runtime
+## Docker / Runtime
 docker-compose.override.yml
 tmp/
 *.pid
 
-# Data
+## Node (optional)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+## Data
 data/
 *.sqlite3

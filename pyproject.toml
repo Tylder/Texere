@@ -31,6 +31,10 @@ packages = ["src/texere_core", "src/texere_cli", "src/texere_repo_drivers"]
 line-length = 100
 target-version = "py311"
 
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
 [tool.hatch.envs.default]
 dependencies = [
     "ruff==0.6.9",
@@ -47,8 +51,13 @@ ui = "texere ui"
 lint = "ruff check ."
 fmt = "ruff format . && black ."
 test = "pytest -q"
+test-cov = "pytest -q --cov=src --cov-report=term-missing"
+test-unit = "pytest -q -m 'not integration'"
+test-integration = "pytest -q -m integration"
+test-all-cov = "pytest -q --cov=src --cov-report=term-missing --cov-report=xml"
 lock = "uv pip compile pyproject.toml -o requirements.lock"
-agent-post-edit = "hatch run python -m ruff check . && hatch run python -m ruff format --check . && hatch run python -m black --check . && hatch run python -m mypy . && hatch run python -m pytest -q --cov=src --cov-report=xml --cov-report=term-missing && hatch run python -m pytest -q -m integration && hatch build"
+agent-post-edit = "hatch run python -m ruff check . && hatch run python -m ruff format --check . && hatch run python -m black --check . && hatch run python -m mypy . && hatch run python -m pytest -q -m 'not integration' --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=80 && hatch run python -m pytest -q -m integration && hatch build"
+ 
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

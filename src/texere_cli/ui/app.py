@@ -4,8 +4,10 @@ from textual import events
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Vertical
-from textual.widgets import Footer, Header, Input, Static, TextLog
-from typing import Iterable
+from textual.widgets import Footer, Header, Input, Static, Log
+from textual.message import Message
+from typing import AbstractSet, cast
+from typing import ClassVar
 
 
 class CommandPalette(Static):
@@ -29,15 +31,15 @@ class CommandPalette(Static):
     def __init__(self, commands: list[str]):
         super().__init__()
         self.commands = commands
-        self.query = Input(placeholder="Type to filter… (Enter to run, Esc to close)")
-        self.results = TextLog(highlight=False, markup=False)
+        self.query_input = Input(placeholder="Type to filter… (Enter to run, Esc to close)")
+        self.results = Log(highlight=False)
 
     def compose(self) -> ComposeResult:  # type: ignore[override]
-        yield Container(self.query, self.results, classes="body")
+        yield Container(self.query_input, self.results, classes="body")  # type: ignore[arg-type]
 
     def on_mount(self) -> None:
         self.refresh_results("")
-        self.query.focus()
+        self.query_input.focus()
 
     def refresh_results(self, text: str) -> None:
         self.results.clear()
@@ -50,7 +52,7 @@ class CommandPalette(Static):
     def on_input_submitted(self, event: Input.Submitted) -> None:
         cmd = event.value.strip()
         if cmd:
-            self.post_message(events.Message("palette_run", cmd))
+            self.post_message(PaletteRun(cmd))
         self.remove()
 
     def on_key(self, event: events.Key) -> None:
@@ -76,19 +78,19 @@ class TexereApp(App):
     # Keep prompt visually distinct
     #
     # TextLog tweaks
-    TextLog {
+    Log {
         overflow-x: hidden;
     }
     """
 
-    BINDINGS: Iterable[Binding | tuple[str, str, str]] = (
+    BINDINGS: ClassVar[list[Binding | tuple[str, str] | tuple[str, str, str]]] = [
         ("/", "open_palette", "Command Palette"),
         ("ctrl+l", "clear", "Clear"),
-    )
+    ]
 
     def __init__(self) -> None:
         super().__init__()
-        self.transcript = TextLog(highlight=True, markup=True)
+        self.transcript = Log(highlight=True)
         self.prompt = Input(
             placeholder="Type your prompt… (Enter=send, Shift+Enter=newline, /=commands)"
         )
@@ -129,6 +131,13 @@ class TexereApp(App):
 
     def on_key(self, event: events.Key) -> None:
         # Shift+Enter inserts newline in the prompt
-        if event.key == "enter" and event.shift and self.prompt.has_focus:
+        modifiers: AbstractSet[str] = cast(AbstractSet[str], getattr(event, "modifiers", set()))
+        if event.key == "enter" and ("shift" in modifiers) and self.prompt.has_focus:
             self.prompt.value = (self.prompt.value or "") + "\n"
             event.stop()
+
+
+class PaletteRun(Message):
+    def __init__(self, command: str) -> None:
+        super().__init__()
+        self.command = command
