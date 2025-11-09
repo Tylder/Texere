@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+ENV/
+env/
+pip-wheel-metadata/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+dist/
+build/
+site/
+.eggs/
+*.egg-info/
+.mypy_cache/
+.pytype/
+.pyre/
+.cache/
+.ruff_cache/
+.dmypy.json
+.ipynb_checkpoints
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env / Config
+.env
+.env.*
+!.env.example
+*.local
+
+# Node (if used later)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+
+# Docker / Runtime
+docker-compose.override.yml
+tmp/
+*.pid
+
+# Data
+data/
+*.sqlite3
