@@ -7,11 +7,9 @@ import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
-
 from rich.console import Console
 from rich.prompt import Confirm
-
+from typing import List, Optional
 
 console = Console()
 
@@ -41,7 +39,8 @@ def run_local_exec(
     text_cmd = " ".join(shlex.quote(c) for c in cmd)
     if require_hitl:
         approved = Confirm.ask(
-            f"Approve EXEC? [dim]{text_cmd}[/dim] (timeout={timeout_sec}s)", default=False
+            f"Approve EXEC? [dim]{text_cmd}[/dim] (timeout={timeout_sec}s)",
+            default=False,
         )
         decision = "APPROVED" if approved else "DENIED"
         if not approved:
@@ -106,4 +105,3 @@ def _write_log(
     }
     with _log_path().open("a", encoding="utf-8") as f:
         f.write(json.dumps(rec) + "\n")
-

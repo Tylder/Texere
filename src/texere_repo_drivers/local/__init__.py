@@ -6,7 +6,10 @@ from typing import Any, Dict, List, Protocol
 class RepoAdapter(Protocol):
     def repo_info(self) -> Dict[str, Any]: ...
     def capabilities(self) -> Dict[str, bool]: ...
-    def list_files(self, glob: str | None = None, rev: str | None = None) -> List[str]: ...
+
+    def list_files(
+            self, glob: str | None = None, rev: str | None = None
+    ) -> List[str]: ...
     def read_file(self, path: str, rev: str | None = None) -> bytes: ...
 
 
@@ -26,11 +29,18 @@ class LocalRepoAdapter:
         }
 
     def capabilities(self) -> Dict[str, bool]:
-        return {"pr": False, "branch": True, "rate_limits": False, "sparse_checkout": False, "apply_patch_worktree": False}
+        return {
+            "pr": False,
+            "branch": True,
+            "rate_limits": False,
+            "sparse_checkout": False,
+            "apply_patch_worktree": False,
+        }
 
     def list_files(self, glob: str | None = None, rev: str | None = None) -> List[str]:
         # Minimal implementation: list relative files under root (non-recursive if glob is None)
         import os
+
         results: List[str] = []
         for dirpath, _dirs, files in os.walk(self.root):
             for f in files:
@@ -40,6 +50,7 @@ class LocalRepoAdapter:
 
     def read_file(self, path: str, rev: str | None = None) -> bytes:
         import os
+
         full = os.path.join(self.root, path)
         with open(full, "rb") as f:
             return f.read()

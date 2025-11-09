@@ -1,13 +1,12 @@
-from __future__ import annotations
+"""Executor that streams plan results to the console."""
 
-from typing import Any, Dict
+from __future__ import annotations
 
 from rich.console import Console
 
 from .llm_fake import stream_generate
-from .state import State
 from .router import select_adapter
-
+from .state import State
 
 console = Console()
 
@@ -41,4 +40,3 @@ def execute_plan_stream(state: State) -> State:
 
     state.status = "DONE"
     return state
-

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+"""Simple adapter selection stubs for demo routing."""
 
 
 class AdapterSelection:
@@ -22,4 +22,3 @@ def select_adapter(tool: str) -> AdapterSelection:
     if tool.startswith("exec."):
         return AdapterSelection(tool, "exec.local", "demo")
     return AdapterSelection(tool, "unknown", "no match")
-

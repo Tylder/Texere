@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import Generator, Iterable
+from typing import Generator
 
 
 def stream_generate(prompt: str) -> Generator[str, None, None]:
@@ -13,4 +13,3 @@ def stream_generate(prompt: str) -> Generator[str, None, None]:
     for token in text.split(" "):
         yield token + " "
         time.sleep(0.03)
-

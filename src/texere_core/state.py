@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Literal, Optional
-
 from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Literal, Optional
 
 
 class Step(BaseModel):
@@ -45,4 +44,3 @@ class Decision(BaseModel):
     action: Literal["ALLOW", "REQUIRE_HITL", "DENY"]
     reason: str
     risk: int = 0
-

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import Iterable
-
 from textual import events
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Vertical
 from textual.widgets import Footer, Header, Input, Static, TextLog
+from typing import Iterable
 
 
 class CommandPalette(Static):
@@ -90,7 +89,9 @@ class TexereApp(App):
     def __init__(self) -> None:
         super().__init__()
         self.transcript = TextLog(highlight=True, markup=True)
-        self.prompt = Input(placeholder="Type your prompt… (Enter=send, Shift+Enter=newline, /=commands)")
+        self.prompt = Input(
+            placeholder="Type your prompt… (Enter=send, Shift+Enter=newline, /=commands)"
+        )
         self.palette_commands: list[str] = [
             "run plan",
             "list tools",
@@ -131,4 +132,3 @@ class TexereApp(App):
         if event.key == "enter" and event.shift and self.prompt.has_focus:
             self.prompt.value = (self.prompt.value or "") + "\n"
             event.stop()
-
