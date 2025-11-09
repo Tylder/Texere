@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+  app:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ./.texere/checkpoints:/app/.texere/checkpoints
+      - ./.texere/logs:/app/.texere/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TEXERE_REDIS_URL=${TEXERE_REDIS_URL:-}
+    command: bash -lc "pip install -q --disable-pip-version-check hatch && hatch run ui"
+    tty: true
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]

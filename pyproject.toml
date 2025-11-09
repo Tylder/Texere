@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling>=1.21.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "texere"
+version = "0.0.1"
+description = "Texere core + CLI skeleton"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Texere Authors" }]
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic>=2.5",
+  "typer[all]>=0.12.3",
+  "textual>=0.50.0",
+  "rich>=13.7",
+  "rich-click>=1.8.3",
+]
+
+[project.scripts]
+texere = "texere_cli.main:app"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/texere_core", "src/texere_cli", "src/texere_repo_drivers"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.hatch.envs.default]
+dependencies = [
+  "ruff>=0.6.0",
+  "black>=24.8.0",
+  "pytest>=8.0.0",
+]
+
+[tool.hatch.envs.default.scripts]
+ui = "texere ui"
+lint = "ruff check ."
+fmt = "ruff format . && black ."
+test = "pytest -q"
