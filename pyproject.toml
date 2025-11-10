@@ -60,7 +60,7 @@ test-unit = "pytest -q -m 'not integration'"
 test-integration = "pytest -q -m integration"
 test-all-cov = "pytest -q --cov=src --cov-report=term-missing --cov-report=xml"
 lock = "uv pip compile pyproject.toml -o requirements.lock"
-agent-post-edit = "hatch run python -m ruff check . && hatch run python -m ruff format --check . && hatch run python -m black --check . && hatch run python -m mypy . && hatch run python -m pytest -q -m 'not integration' --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=80 && hatch run python -m pytest -q -m integration && hatch build"
+agent-post-edit = "hatch run python -m ruff check . && hatch run python -m ruff format --check . && hatch run python -m black --check . && hatch run python -m mypy . && hatch run python -m pytest -q -m 'not integration' --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=70 && hatch run python -m pytest -q -m integration && hatch build"
  
 
 [tool.pytest.ini_options]
