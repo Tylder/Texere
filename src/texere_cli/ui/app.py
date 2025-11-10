@@ -122,6 +122,15 @@ class TexereApp(App):
     def on_mount(self) -> None:
         self.prompt.focus()
         self.transcript.write("Texere UI ready. Press '/' for commands.")
+        # Ensure native terminal text selection works by disabling mouse tracking
+        # Textual enables mouse reporting by default; turning it off lets the terminal
+        # handle drag selection without requiring any modifier keys.
+        try:  # best-effort; ignore if driver/platform doesn't support it
+            driver = getattr(self, "_driver", None)
+            if driver is not None and hasattr(driver, "_disable_mouse_support"):
+                driver._disable_mouse_support()  # type: ignore[attr-defined]
+        except Exception:
+            pass
 
     def action_open_palette(self) -> None:
         # Create and mount palette, then focus its input for immediate typing
@@ -178,8 +187,8 @@ class TexereApp(App):
         if cb is not None:
             default_logger.unsubscribe(cb)  # type: ignore[arg-type]
 
-    def on_PaletteRun(self, msg: "PaletteRun") -> None:  # type: ignore[override]
-        raw = (msg.command or "").strip()
+    def run_palette_command(self, raw: str) -> None:
+        raw = (raw or "").strip()
         if not raw:
             return
         tokens = shlex.split(raw)
@@ -217,7 +226,10 @@ class TexereApp(App):
             self.transcript.write("Commands: run <text>, tools:list, adapters:list, clear")
             return
         # Fallback: echo unknown command
-        self.transcript.write(f"[red]Unknown command:[/red] {msg.command}")
+        self.transcript.write(f"[red]Unknown command:[/red] {raw}")
+
+    def on_PaletteRun(self, msg: "PaletteRun") -> None:  # type: ignore[override]
+        self.run_palette_command(msg.command or "")
 
 
 class PaletteRun(Message):

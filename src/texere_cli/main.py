@@ -136,5 +136,26 @@ def test(
     raise typer.Exit(result.returncode)
 
 
+@app.command(name="ui:cmd")
+def ui_cmd(
+    command: str = typer.Argument(..., help="Command to execute as if from the TUI palette"),
+    prompt_text: str = typer.Option("", "--prompt", help="Optional prompt text to seed"),
+):
+    """Run a TUI palette command without launching the full UI.
+
+    Useful for debugging command handling directly from CLI.
+    """
+    # Lazy import to avoid importing Textual unless needed
+    from texere_cli.ui.app import TexereApp
+
+    app_ui = TexereApp()
+    if prompt_text:
+        app_ui.prompt.value = prompt_text
+    app_ui.run_palette_command(command)
+    # Print transcript lines for inspection
+    for line in app_ui.transcript.lines:
+        console.print(line)
+
+
 if __name__ == "__main__":
     app()

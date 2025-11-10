@@ -3,7 +3,7 @@
 Purpose: Deliver a fully working project driven by a LangGraph, Language Graph, runtime with one production‑grade RepoAdapter (“local”) and complete coverage of all specs under `specs/`.
 
 Outcomes:
-- CLI, Command Line Interface, and TUI, Text User Interface, run entirely on a LangGraph executor.
+- CLI, Command Line Interface, and terminal UI run entirely on a LangGraph executor.
 - One adapter (RepoAdapter local) meets its spec and passes conformance tests.
 - All other specs in `specs/` are implemented, with tests and observability.
 - Post‑edit gate remains green with ≥80% coverage and typing/lint quality.
@@ -58,10 +58,10 @@ Milestones & Phases
   - Sample client script and documentation.
 - Acceptance: MCP client can list + invoke RepoTools locally.
 
-8) CLI/TUI Productization
+8) CLI/Terminal UI Productization
 - Align CLI flows with runtime: `run`, `resume`, `inspect`, adapters/tools JSON output.
-- TUI streams graph events; command palette invokes graph actions; basic error UX.
-- Acceptance: TUI reflects node progress and streamed tokens; CLI returns structured diagnostics on `--json`.
+- Terminal UI streams graph events; inline slash menu invokes actions; basic error UX.
+- Acceptance: Terminal UI reflects node progress and streamed tokens; CLI returns structured diagnostics on `--json`.
 
 9) Testing & Coverage (Spec‑Driven)
 - Implement per `specs/testing/tests_style_spec.md` and old roadmap targets:
@@ -105,4 +105,3 @@ Open Questions (to align before detailed design)
 2) Checkpoint storage: JSONL only vs. pluggable backend? (Spec §9)
 3) Policy defaults by environment: single profile or env‑based matrix? (Spec §13)
 4) Minimum MCP surface for v1: which RepoTools are exposed?
-

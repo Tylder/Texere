@@ -23,3 +23,9 @@ def test_tools_list_outputs_known_tools():
     assert "repo.read_file" in out
     assert "llm.generate" in out
     assert "exec.run" in out
+
+
+def test_ui_cmd_tools_list():
+    result = runner.invoke(app, ["ui:cmd", "tools:list"])
+    assert result.exit_code == 0
+    assert "repo.list_files" in result.stdout

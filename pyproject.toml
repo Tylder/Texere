@@ -66,3 +66,6 @@ agent-post-edit = "hatch run python -m ruff check . && hatch run python -m ruff 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --maxfail=1"
+markers = [
+    "integration: end-to-end flows (CLI run, executor stream)",
+]

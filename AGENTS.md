@@ -88,7 +88,7 @@ Do NOT respond to the user without validation:
   - Global: 80% lines minimum (gate) via `--cov-fail-under=80` in `agent-post-edit`.
   - Core (`src/texere_core/**`): target 90% lines, 85% branches.
   - Repo drivers (`src/texere_repo_drivers/**`): target 85% lines, 75% branches.
-  - UI/TUI (`src/texere_cli/ui/**`): target 70% lines initially, ratchet upward as UI stabilizes.
+  - UI (`src/texere_cli/ui/**`): target 70% lines initially, ratchet upward as UI stabilizes.
 
 - Test categories:
   - Unit: fast, deterministic; assert observable behavior (outputs, side‑effects); no superficial assertions.
@@ -109,7 +109,7 @@ Do NOT respond to the user without validation:
 
 ## PDB Debugging (How and When)
 
-Purpose: Use PDB, Python Debugger, to suspend execution and inspect stack frames and locals when diagnosing issues. Prefer deterministic, CLI‑driven sessions over TUI, Text User Interface, for reliability.
+Purpose: Use PDB, Python Debugger, to suspend execution and inspect stack frames and locals when diagnosing issues. Prefer deterministic, CLI‑driven sessions over the UI for reliability.
 
 When it’s useful
 - Routing bugs in the LangGraph, Language Graph, executor (which node runs next; `plan_idx` flow).
@@ -153,7 +153,7 @@ Recommended workflows
   ```
 
 Notes & tips
-- Prefer CLI “run”/unit tests over the TUI: Textual captures input, making interactive PDB awkward.
+- Prefer CLI “run”/unit tests over the UI: Textual captures input, making interactive PDB awkward.
 - Use small/deterministic prompts and minimal plans to make reproductions stable.
 - Avoid committing `breakpoint()`; use scripted PDB or local edits only. Never enable PDB in CI, Continuous Integration.
 - Be mindful of secrets/PII in locals when sharing traces; sanitize before posting.

@@ -53,7 +53,7 @@ Texere coordinates multiple agents and tools to perform development‑centric wo
  - **Executor (local default)** — runs on the user's machine with approvals (no OS sandbox in v0); optional containerized executor for hardened environments.  
 - **Policy/HITL** — environment‑aware guardrails (dev/staging/prod).  
  - **Events/Telemetry** — Redis Streams for durable repo events; JSONL + OTEL for logs/metrics. Local executor writes `.texere/logs/*.jsonl` audit records.  
-- **CLI & MCP** — human + JSON CLI; optional MCP (stdio) exposes tools to external clients.
+- **CLI & Terminal UI & MCP** — human + JSON CLI; terminal-first UI with inline slash menu (see `specs/ui_terminal_spec.md`); optional MCP (stdio) exposes tools to external clients.
 
 ## 7) Deployment Modes
 - **Dev (Phase 0):** single container; in‑process events; executor shim.  
