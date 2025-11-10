@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Callable
+import os
+import traceback
 import uuid
 
 from rich.console import Console
@@ -51,6 +53,17 @@ def _router(s: RunState) -> str:
     return "summarize_node"
 
 
+def _snapshot_locals(locals_map: dict[str, Any]) -> dict[str, Any]:
+    def _shrink(v: Any) -> Any:
+        try:
+            s = str(v)
+        except Exception:
+            return "<unrepr>"
+        return s if len(s) <= 256 else s[:256] + "…"
+
+    return {k: _shrink(v) for k, v in locals_map.items() if k in {"tool", "args", "out", "idx"}}
+
+
 def _make_plan_executor(events: EventLogger) -> Callable[[RunState], RunState]:
     def _node_plan_executor(s: RunState) -> RunState:
         plan = s.get("plan") or {}
@@ -80,6 +93,19 @@ def _make_plan_executor(events: EventLogger) -> Callable[[RunState], RunState]:
         )
 
         artifacts: dict[str, Any] = {}
+        debug_trace = os.getenv("TEXERE_DEBUG_TRACE") == "1"
+        if debug_trace:
+            events.emit(
+                run_id,
+                {
+                    "event": "stack",
+                    "run_id": run_id,
+                    "node": "plan_executor_node",
+                    "plan_idx": idx,
+                    "locals": _snapshot_locals(locals()),
+                    "frames": traceback.format_stack(limit=10),
+                },
+            )
         # Single retry policy: try once more on failure
         attempts = 0
         last_exc: Exception | None = None
@@ -141,6 +167,9 @@ def _make_plan_executor(events: EventLogger) -> Callable[[RunState], RunState]:
         if run_id:
             events.checkpoint(run_id=run_id, node="plan_executor_node", plan_idx=next_idx)
 
+        # Optionally stop early in debug single-step mode
+        if os.getenv("TEXERE_DEBUG_MAX_STEPS"):
+            return {"plan_idx": next_idx, "artifacts": artifacts, "__debug_stop__": True}
         return {"plan_idx": next_idx, "artifacts": artifacts}
 
     return _node_plan_executor

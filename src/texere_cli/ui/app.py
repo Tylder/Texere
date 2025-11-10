@@ -12,6 +12,7 @@ from typing import ClassVar
 from texere_core.registry import list_tools
 from texere_core.graph_executor import execute_plan_graph
 from texere_core.state import Plan, State, Step
+import shlex
 
 
 class CommandPalette(Static):
@@ -178,16 +179,30 @@ class TexereApp(App):
             default_logger.unsubscribe(cb)  # type: ignore[arg-type]
 
     def on_PaletteRun(self, msg: "PaletteRun") -> None:  # type: ignore[override]
-        cmd = (msg.command or "").strip().lower()
+        raw = (msg.command or "").strip()
+        if not raw:
+            return
+        tokens = shlex.split(raw)
+        if not tokens:
+            return
+        cmd = tokens[0].lower()
+        args = tokens[1:]
         if cmd in ("clear", "cls"):
             self.action_clear()
             return
-        if cmd in ("list tools", "tools", "tools:list"):
+        if cmd in ("tools", "tools:list", "list-tools", "list", "ls"):
             tools = ", ".join(t.name for t in list_tools())
             self.transcript.write(tools)
             return
-        if cmd in ("run", "run plan", "run:plan"):
-            text = (self.prompt.value or "").strip()
+        if cmd in ("adapters:list", "adapters", "list-adapters"):
+            from texere_core.registry import list_adapters
+
+            adapters = list_adapters()
+            for a in adapters:
+                self.transcript.write(f"{a.name} — kind={a.kind}")
+            return
+        if cmd in ("run", "run:plan", "run-plan", "runplan"):
+            text = " ".join(args).strip() if args else (self.prompt.value or "").strip()
             if not text:
                 self.transcript.write("[yellow]No prompt to run.[/yellow]")
                 return
@@ -197,6 +212,9 @@ class TexereApp(App):
             )
             st = State(run_id="ui-run", plan=plan)
             execute_plan_graph(st)
+            return
+        if cmd in ("help", "?", ":help"):
+            self.transcript.write("Commands: run <text>, tools:list, adapters:list, clear")
             return
         # Fallback: echo unknown command
         self.transcript.write(f"[red]Unknown command:[/red] {msg.command}")

@@ -105,4 +105,55 @@ Do NOT respond to the user without validation:
   - `texere test` (or `hatch run test`) — quick local tests.
   - `texere test --cov --xml` (or `hatch run test-all-cov`) — coverage with XML.
   - `hatch run test-unit` / `hatch run test-integration` — split runs.
-  - Mandatory: `hatch run agent-post-edit` — lints, types, tests with coverage gate, integration, build.
+- Mandatory: `hatch run agent-post-edit` — lints, types, tests with coverage gate, integration, build.
+
+## PDB Debugging (How and When)
+
+Purpose: Use PDB, Python Debugger, to suspend execution and inspect stack frames and locals when diagnosing issues. Prefer deterministic, CLI‑driven sessions over TUI, Text User Interface, for reliability.
+
+When it’s useful
+- Routing bugs in the LangGraph, Language Graph, executor (which node runs next; `plan_idx` flow).
+- Adapter discovery/registry surprises (missing drivers, wrong owners).
+- Node execution problems (tool args, outputs, retry logic, exceptions).
+- Failing or flaky unit tests where stack/locals clarify the failure quickly.
+
+Recommended workflows
+- Scripted PDB for CLI, Command Line Interface, runs (no code changes):
+  - Break at node entry and inspect variables, then continue.
+  ```bash
+  hatch run python -m pdb \
+    -c "break src/texere_core/graph_executor.py:68" \
+    -c continue -c where -c list -c "p tool" -c "p args" -c continue \
+    -m texere_cli.main run "Hello"
+  ```
+  - Inspect router decisions:
+  ```bash
+  hatch run python -m pdb \
+    -c "break src/texere_core/graph_executor.py:43" \
+    -c continue -c "p s.get('plan')" -c "p s.get('plan_idx')" -c where \
+    -m texere_cli.main run "Hello"
+  ```
+
+- Post‑mortem during tests (drop into PDB on failure):
+  ```bash
+  hatch run pytest -q --pdb -k graph_executor
+  # common commands: where, up/down, list/ll, p VAR, args, until, return
+  ```
+
+- Conditional/targeted breakpoints (avoid loops):
+  ```bash
+  # Only break when step index == 2
+  hatch run python -m pdb \
+    -c "break src/texere_core/graph_executor.py:68, idx==2" \
+    -c continue -c where -m texere_cli.main run "Hello"
+  # Only when not llm.generate
+  hatch run python -m pdb \
+    -c "break src/texere_core/graph_executor.py:68, tool!='llm.generate'" \
+    -c continue -c where -m texere_cli.main run "Hello"
+  ```
+
+Notes & tips
+- Prefer CLI “run”/unit tests over the TUI: Textual captures input, making interactive PDB awkward.
+- Use small/deterministic prompts and minimal plans to make reproductions stable.
+- Avoid committing `breakpoint()`; use scripted PDB or local edits only. Never enable PDB in CI, Continuous Integration.
+- Be mindful of secrets/PII in locals when sharing traces; sanitize before posting.

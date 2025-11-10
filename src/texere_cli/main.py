@@ -52,6 +52,35 @@ def run(
     execute_plan_graph(state)
 
 
+@app.command(name="debug-run")
+def debug_run(
+    prompt: str = typer.Argument(
+        ..., help="Prompt to send; runs with debug tracing and optional step limit"
+    ),
+    steps: int = typer.Option(1, "--steps", help="Max steps to execute before stopping"),
+    trace: bool = typer.Option(True, "--trace", help="Emit stack traces to logs", is_flag=True),
+):
+    """Run the LangGraph executor with CLI debugging aids.
+
+    - Emits stack traces and locals to per-run logs when --trace is enabled.
+    - Executes a limited number of steps (default 1) to simulate stepping.
+    """
+    import os
+
+    # Configure debug environment for the executor
+    if trace:
+        os.environ["TEXERE_DEBUG_TRACE"] = "1"
+    if steps:
+        os.environ["TEXERE_DEBUG_MAX_STEPS"] = str(steps)
+
+    plan = Plan(
+        id="dbg",
+        steps=[Step(id="s1", tool="llm.generate", args={"prompt": prompt}, out="resp")],
+    )
+    state = State(run_id="dbg-run", plan=plan)
+    execute_plan_graph(state)
+
+
 @app.command()
 def exec(
     cmd: list[str] = typer.Argument(
@@ -105,3 +134,7 @@ def test(
     cmd = [sys.executable, "-m", "pytest", "-q", *args, *paths]
     result = subprocess.run(cmd)
     raise typer.Exit(result.returncode)
+
+
+if __name__ == "__main__":
+    app()
