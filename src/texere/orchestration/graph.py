@@ -1,6 +1,7 @@
 """LangGraph workflow construction for Texere orchestration."""
 
 import json
+import os
 import sqlite3
 from pathlib import Path
 from typing import (
@@ -25,7 +26,7 @@ from langgraph.graph import StateGraph
 from .state import WorkflowState
 
 if TYPE_CHECKING:
-    pass
+    from langfuse.langchain import CallbackHandler
 
 
 # Create a minimal SQLite checkpointer compatible with LangGraph v1.x
@@ -231,6 +232,28 @@ def entry_node(state: WorkflowState) -> dict[str, Any]:
     return {}
 
 
+def _get_langfuse_handler() -> Optional["CallbackHandler"]:
+    """
+    Initialize Langfuse callback handler if credentials are configured.
+
+    Returns:
+        CallbackHandler instance if LANGFUSE_PUBLIC_KEY is set, None otherwise.
+        This enables graceful degradation: observability is optional but
+        automatic when configured.
+    """
+    if not os.getenv("LANGFUSE_PUBLIC_KEY"):
+        return None
+
+    try:
+        from langfuse.langchain import CallbackHandler
+
+        return CallbackHandler()
+    except Exception as e:
+        # If Langfuse is not available or misconfigured, log and continue
+        print(f"Warning: Failed to initialize Langfuse: {e}")
+        return None
+
+
 def create_workflow_graph(
     config: Optional[RunnableConfig] = None,
 ) -> Any:
@@ -238,13 +261,20 @@ def create_workflow_graph(
     Create and compile a minimal LangGraph StateGraph for Slice 1.
 
     This graph has a single entry node that executes successfully, with
-    state persistence via SQLite checkpointer.
+    state persistence via SQLite checkpointer and optional Langfuse tracing.
+
+    Langfuse Integration:
+    - Automatically traces all LLM calls, tools, and node execution
+    - Requires LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY in environment
+    - If not configured, runs without observability (graceful degradation)
+    - For local development, run: docker compose -f docker-compose.langfuse.yml up
+    - Then set LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY in .env
 
     Args:
         config: Optional RunnableConfig from LangGraph runtime (ignored for Slice 1).
 
     Returns:
-        Compiled StateGraph with checkpointer.
+        Compiled StateGraph with checkpointer and optional Langfuse callbacks.
     """
     # Create state graph
     graph = StateGraph(WorkflowState)
@@ -263,5 +293,12 @@ def create_workflow_graph(
     db_path = str(Path(checkpointer_dir) / "checkpoints.db")
     checkpointer = SimpleCheckpointer(db_path)
     compiled_graph = graph.compile(checkpointer=checkpointer)
+
+    # Add Langfuse callbacks for full tracing (node + LLM + tool calls)
+    # This provides complete observability: traces node execution, LLM API calls,
+    # tool invocations, token counts, and latencies.
+    langfuse_handler = _get_langfuse_handler()
+    if langfuse_handler:
+        compiled_graph = compiled_graph.with_config({"callbacks": [langfuse_handler]})
 
     return compiled_graph

@@ -55,29 +55,41 @@ This specification is written for:
 
 Observability & Control provides visibility, debugging, and operational control for Texere workflows, including traces, logs, metrics, and developer-facing debugging interfaces.
 
-**Status:** This spec is currently a placeholder. Tracing and metrics backends are TBD.
+**Status:** Tracing backend decided and implemented. Logging and metrics (TBD).
+
+**Current Implementation (Decision Made §5.1):**
+- **Distributed Tracing:** Langfuse v3 (open-source, self-hosted)
+- **LLM Integration:** Automatic via Langfuse LangChain callback handler
+- **Deployment:** Separate Docker Compose stack (see `docker-compose.langfuse.yml`)
 
 **Cite as:** §3
 
 ## 4. Tracing Strategy
 
-### 4.1 Distributed Tracing
+### 4.1 Distributed Tracing (DECIDED)
 
-**(TBD) Evaluate and decide:**
+**Decision: Langfuse v3 (Self-Hosted)**
 
-- **LangSmith:** Native LangGraph integration
-  - Pros: Built-in support, visualizations
-  - Cons: Vendor lock-in, cost
+Texere uses [Langfuse v3](https://langfuse.com) for distributed tracing:
 
-- **OpenTelemetry (OTEL):** Open standard
-  - Pros: Vendor-agnostic, flexible
-  - Cons: More setup required
+- **Why Langfuse:**
+  - ✅ Open-source (GitHub, self-hostable, no vendor lock-in)
+  - ✅ First-class LangGraph support via LangChain callback handler
+  - ✅ Full tracing: LLM calls, tool invocations, node execution, latencies, token counts
+  - ✅ Production-ready: ClickHouse for analytics, PostgreSQL for transactional data
+  - ✅ Flexible deployment: Local Docker Compose, Kubernetes, cloud VMs
+  - ❌ Not LangSmith: Avoids vendor lock-in and cost concerns
 
-- **Jaeger:** Open-source alternative
-  - Pros: Self-hosted, powerful
-  - Cons: Operational burden
+- **Comparison (Rejected Options):**
+  - **LangSmith:** Vendor lock-in, proprietary, tied to LangChain pricing
+  - **OpenTelemetry (OTEL):** Lower-level, requires more instrumentation, no LLM-specific features
+  - **Jaeger:** Strong for distributed systems, weak for LLM-specific metrics
 
-**Decision owner:** TBD
+**Implementation Details (§5.1 onwards):**
+
+See [Implementation: Langfuse Integration](#5-langfuse-implementation) below.
+
+**Decision record:** Decision made 2025-12-05. Langfuse provides the right balance of openness, LLM-specific features, and operational simplicity.
 
 **Cite as:** §4.1
 
@@ -95,6 +107,115 @@ Observability & Control provides visibility, debugging, and operational control 
 **Owner:** TBD
 
 **Cite as:** §4.2
+
+## 5. Langfuse Implementation (DECIDED)
+
+This section documents how Texere integrates Langfuse for observability.
+
+### 5.1 Deployment Architecture
+
+**Langfuse v3 Self-Hosted Stack** (see `docker-compose.langfuse.yml`):
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Langfuse Web (port 3000)                            │
+│ - UI for trace inspection and analysis              │
+│ - API for SDK integration                           │
+└────────────────┬────────────────────────────────────┘
+                 │
+┌─────────────────────────────────────────────────────┐
+│ Infrastructure                                       │
+├──────────────────────────────────────────────────────┤
+│ - PostgreSQL (5432): Transactional data & metadata   │
+│ - ClickHouse (8123): Traces, observations, analytics │
+│ - Redis (6379): Cache, queue, rate limiting          │
+│ - MinIO (9000/9090): S3-compatible blob storage      │
+│ - Langfuse Worker: Async trace processing           │
+└──────────────────────────────────────────────────────┘
+```
+
+**Deployment Model:**
+- Separate Docker Compose file (`docker-compose.langfuse.yml`)
+- Runs independently from Texere core
+- Optional for local dev, required for production observability
+
+### 5.2 SDK Integration (LangChain Callback Handler)
+
+**Implementation in `src/texere/orchestration/graph.py`:**
+
+```python
+from langfuse.langchain import CallbackHandler
+
+def _get_langfuse_handler() -> Optional[CallbackHandler]:
+    """Initialize Langfuse if LANGFUSE_PUBLIC_KEY is configured."""
+    if not os.getenv("LANGFUSE_PUBLIC_KEY"):
+        return None
+    return CallbackHandler()
+
+def create_workflow_graph(config: Optional[RunnableConfig] = None) -> Any:
+    # ... build graph ...
+    compiled = graph.compile(checkpointer=checkpointer)
+    
+    # Add automatic tracing if configured
+    handler = _get_langfuse_handler()
+    if handler:
+        compiled = compiled.with_config({"callbacks": [handler]})
+    
+    return compiled
+```
+
+**Key Features:**
+- ✅ **Automatic:** No manual span creation; callback captures all LLM calls, tool invocations, node execution
+- ✅ **Full Context:** Traces include inputs, outputs, token counts, latencies, errors
+- ✅ **Graceful Degradation:** If `LANGFUSE_PUBLIC_KEY` is missing, runs without observability
+- ✅ **Zero Code Changes:** Works with existing LangGraph graphs without refactoring
+
+### 5.3 Configuration
+
+**Required Environment Variables:**
+
+```bash
+LANGFUSE_PUBLIC_KEY=pk-lf-...     # From Langfuse UI settings
+LANGFUSE_SECRET_KEY=sk-lf-...     # From Langfuse UI settings
+LANGFUSE_BASE_URL=http://localhost:3000  # Local or https://cloud.langfuse.com
+```
+
+**Setup for Local Development:**
+
+1. Start Langfuse: `docker compose -f docker-compose.langfuse.yml up`
+2. Open http://localhost:3000, create project, copy API keys
+3. Set keys in `.env` file
+4. Run Texere with normal commands; tracing happens automatically
+
+**Setup for Cloud Deployment:**
+
+1. Sign up at [cloud.langfuse.com](https://cloud.langfuse.com)
+2. Create project, copy API keys
+3. Set `LANGFUSE_BASE_URL=https://cloud.langfuse.com` (EU) or US region
+4. Deploy Texere with credentials in secrets manager
+
+### 5.4 Tracing Scope (Full)
+
+Langfuse callback handler captures:
+
+- **LangGraph Nodes:** Entry, exit, duration, state mutations
+- **LLM Calls:** Model, input tokens, output tokens, latency, cost estimation
+- **Tool Invocations:** Tool name, input/output, success/failure
+- **Errors & Exceptions:** Caught and attached to spans with stack traces
+- **Metadata:** User ID, session ID, custom tags (extensible)
+
+**Token Counting:** Automatic via LangChain integration (counts tokens per LLM call, totals per trace).
+
+### 5.5 Privacy & Security
+
+- **Data Residence:** 
+  - Local: Stored in PostgreSQL/ClickHouse on your infrastructure
+  - Cloud: Stored in Langfuse Cloud data centers (check [regional availability](https://langfuse.com))
+- **Network Isolation:** Langfuse runs in isolated Docker network; no automatic external calls
+- **Data Retention:** Configurable per deployment; local deployments own their data fully
+- **PII Handling:** Users responsible for scrubbing PII from LLM prompts before sending to Langfuse
+
+**Cite as:** §5
 
 ### 4.3 Span Context & Baggage
 

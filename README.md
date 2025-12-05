@@ -144,19 +144,66 @@ make test-coverage  # With coverage report
 
 Git hooks automatically run before commits, so most changes are formatted automatically.
 
-### LangGraph Studio (Local Debugging)
+### Langfuse Observability (Tracing & Monitoring)
 
-Visualize and debug the graph execution locally:
+Texere integrates with [Langfuse](https://langfuse.com) for comprehensive observability of your workflows.
+
+#### Option 1: Local Langfuse (Docker Compose)
+
+Run Langfuse locally for development:
 
 ```bash
-# Install studio dependencies
-pip install -U "langgraph-cli[inmem]"
+# Start Langfuse with all dependencies (PostgreSQL, ClickHouse, Redis, MinIO)
+docker compose -f docker-compose.langfuse.yml up
 
-# Start local studio
-langgraph dev
+# After ~2-3 minutes, open http://localhost:3000 in your browser
 ```
 
-Then open http://localhost:3000 in your browser to interact with the graph visually.
+Then configure Texere to use local Langfuse:
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env and set (found in Langfuse UI at http://localhost:3000/settings):
+# LANGFUSE_PUBLIC_KEY=pk-lf-...
+# LANGFUSE_SECRET_KEY=sk-lf-...
+# LANGFUSE_BASE_URL=http://localhost:3000
+```
+
+#### Option 2: Langfuse Cloud
+
+Sign up for free at [cloud.langfuse.com](https://cloud.langfuse.com):
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env and set your cloud API keys:
+# LANGFUSE_PUBLIC_KEY=pk-lf-...
+# LANGFUSE_SECRET_KEY=sk-lf-...
+# LANGFUSE_BASE_URL=https://cloud.langfuse.com (or https://us.cloud.langfuse.com)
+```
+
+#### How Observability Works
+
+- **Automatic Tracing:** All LLM calls, tool invocations, and node execution are traced automatically
+- **Full Visibility:** See latencies, token counts, costs, and error details in Langfuse UI
+- **Optional:** If `LANGFUSE_PUBLIC_KEY` is not set, Texere runs without observability (graceful degradation)
+- **No UI Bloat:** Observability is decoupled from the core; Texere focuses on execution, Langfuse on tracing
+
+#### Langfuse Architecture
+
+Texere uses [Langfuse v3](https://langfuse.com/self-hosting) self-hosted stack:
+
+- **Langfuse Web:** UI and API (port 3000)
+- **PostgreSQL:** Transactional database (port 5432)
+- **ClickHouse:** Analytics and trace storage (port 8123)
+- **Redis:** Cache and queue (port 6379)
+- **MinIO:** S3-compatible blob storage (ports 9000, 9090)
+
+See [docker-compose.langfuse.yml](docker-compose.langfuse.yml) for configuration.
+Credentials default to `admin@example.com / password` and should be changed in production.
 
 ### Environment Variables
 

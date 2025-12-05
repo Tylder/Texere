@@ -16,6 +16,7 @@ langgraph-sdk==0.2.12
 pydantic==2.12.5
 pydantic-core==2.41.5
 python-dotenv==1.2.1
+langfuse==3.3.0
 
 # Testing Dependencies
 pytest==9.0.1

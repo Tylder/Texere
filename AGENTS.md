@@ -71,6 +71,14 @@ make check          # Run lint + test (all checks)
 - **Professional:** No emojis; minimal exclamation points.
 - **No flattery:** Skip positive adjectives; respond directly to the request.
 
+## Server & Process Management
+
+- **DO NOT start/stop servers** — assume LangGraph dev server is already running
+- **DO NOT run long-lived processes** — use Bash for one-off commands only
+- **USE Playwright MCP tools** for UI testing (browser_navigate, browser_snapshot, browser_click, etc.)
+- **Playwright runs in Docker** — use `http://host.docker.internal:2024` (not localhost or 127.0.0.1)
+- LangGraph API is at `http://host.docker.internal:2024/docs` for docs, etc.
+
 ## Planning vs. Implementation
 
 - **Plan requests:** Provide discussion/analysis only. Require explicit approval before any code modifications.
