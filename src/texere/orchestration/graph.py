@@ -22,7 +22,7 @@ from .state import WorkflowState
 class SimpleCheckpointer(BaseCheckpointSaver):
     """
     Simple SQLite-based checkpointer for Slice 1.
-    
+
     This is a minimal implementation to store and retrieve state by thread_id.
     Implements BaseCheckpointSaver from langgraph.checkpoint.base.
     """
@@ -73,10 +73,10 @@ class SimpleCheckpointer(BaseCheckpointSaver):
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
-            
+
             metadata_json = json.dumps(metadata or {}, default=str)
             checkpoint_json = json.dumps(checkpoint or {}, default=str)
-            
+
             cursor.execute(
                 """
                 INSERT INTO checkpoints (thread_id, checkpoint_id, metadata, checkpoint_values)
@@ -86,14 +86,14 @@ class SimpleCheckpointer(BaseCheckpointSaver):
             )
             conn.commit()
             conn.close()
-            
+
             # Return updated config with checkpoint_id
             return {
                 **config,
                 "configurable": {
                     **config.get("configurable", {}),
                     "checkpoint_id": checkpoint_id,
-                }
+                },
             }
         except Exception:
             return config
@@ -135,20 +135,20 @@ class SimpleCheckpointer(BaseCheckpointSaver):
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
-            
+
             query = """
                 SELECT checkpoint_id, metadata, checkpoint_values FROM checkpoints
                 WHERE thread_id = ?
                 ORDER BY created_at DESC
             """
-            
+
             if limit:
                 query += f" LIMIT {limit}"
-            
+
             cursor.execute(query, (thread_id,))
             results = cursor.fetchall()
             conn.close()
-            
+
             return [
                 CheckpointTuple(
                     values=json.loads(r[2]),
