@@ -1,6 +1,5 @@
 """Unit tests for WorkflowState structure (Slice 1)."""
 
-import pytest
 from typing import get_type_hints
 
 from texere.orchestration.state import WorkflowState
@@ -49,9 +48,9 @@ class TestWorkflowStateStructure:
         hints = get_type_hints(WorkflowState, include_extras=True)
 
         # Test key field types
-        assert hints["user_request"] == str
-        assert hints["thread_id"] == str
-        assert hints["run_id"] == str
+        assert hints["user_request"] is str
+        assert hints["thread_id"] is str
+        assert hints["run_id"] is str
 
         # Verify string-based type hints are preserved
         assert "list" in str(hints["messages"]).lower()
@@ -86,7 +85,7 @@ class TestWorkflowStateStructure:
         assert isinstance(state["tool_results"], dict)
 
     def test_workflow_state_partial_instantiation(self) -> None:
-        """Test that WorkflowState can be instantiated with partial fields (TypedDict total=False)."""
+        """Test WorkflowState instantiation with partial fields (TypedDict total=False)."""
         # Since total=False, not all fields are required
         state: WorkflowState = {
             "user_request": "test",

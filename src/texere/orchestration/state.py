@@ -1,10 +1,10 @@
 """Orchestration state models for Texere workflows."""
 
-from typing import Annotated, Any, Optional
-from typing_extensions import TypedDict
 import operator
+from typing import Annotated, Any, Optional
 
 from langchain_core.messages import BaseMessage
+from typing_extensions import TypedDict
 
 
 class WorkflowState(TypedDict, total=False):

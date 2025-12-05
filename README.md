@@ -61,22 +61,22 @@ source venv/bin/activate
 
 You should see `(venv)` in your terminal prompt when activated.
 
-### 3. Install Development Dependencies
+### 3. Install Development Dependencies & Setup
 
 ```bash
-# Upgrade pip first
-pip install --upgrade pip
-
-# Option A: Install latest compatible versions (recommended)
-pip install -e ".[dev]"
-
-# Option B: Install locked versions for reproducibility
-pip install -r requirements-lock.txt
+make install
 ```
 
 This installs:
 - Core dependencies (langgraph 1.0.4, langchain 1.1.2, pydantic 2.12.5)
 - Development tools (pytest 9.0.1, black 25.11.0, mypy 1.19.0, ruff 0.14.8)
+- Git hooks for automatic code quality checks on commit
+
+**Alternative (manual):**
+```bash
+pip install -e ".[dev]"
+pre-commit install
+```
 
 **Installed Versions (as of 2025-12-05):**
 ```
@@ -128,17 +128,21 @@ EOF
 
 ```bash
 # Format code
-black src/ tests/
+make format
 
 # Lint code
-ruff check src/ tests/
+make lint
 
-# Type checking
-mypy src/
+# Run all checks
+make check
 
-# All checks at once
-black src/ tests/ && ruff check src/ tests/ && mypy src/ && pytest tests/
+# Run tests
+make test
+make test-watch     # Watch mode
+make test-coverage  # With coverage report
 ```
+
+Git hooks automatically run before commits, so most changes are formatted automatically.
 
 ### Environment Variables
 

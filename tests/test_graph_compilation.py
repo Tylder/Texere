@@ -1,11 +1,8 @@
 """Unit tests for graph compilation and structure (Slice 1)."""
 
-import pytest
 import tempfile
-from pathlib import Path
 
 from texere.orchestration.graph import create_workflow_graph
-from texere.orchestration.state import WorkflowState
 
 
 class TestGraphCompilation:

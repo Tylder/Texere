@@ -1,6 +1,5 @@
 """Integration tests for checkpoint persistence (Slice 1)."""
 
-import pytest
 import tempfile
 from pathlib import Path
 
@@ -23,7 +22,7 @@ class TestCheckpointPersistence:
             }
 
             # Execute graph
-            result = graph.invoke(
+            graph.invoke(
                 initial_state,
                 config={"configurable": {"thread_id": thread_id}},
             )
