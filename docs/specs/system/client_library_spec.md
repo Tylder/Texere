@@ -45,8 +45,20 @@ This spec defines:
 
 ---
 
-**See also:**
-- [High-Level Architecture Spec](high_level_architecture_spec.md)
-- [API & Gateway Spec](./api_gateway_spec.md)
-- [Async Transport Spec](./async_transport_spec.md)
-- [Client Applications Spec](./client_applications_spec.md)
+## References
+
+### External Documentation
+
+- **TypeScript Handbook:** https://www.typescriptlang.org/docs/
+- **LangChain JS/TS SDK:** https://js.langchain.com/
+- **HTTP Client Libraries:** https://github.com/axios/axios
+- **WebSocket Clients:** https://github.com/websockets/ws
+
+### Internal Documentation
+
+- [Texere High-Level Spec](./texere_high_level_architecture_spec.md) — System overview and component relationships
+- [API & Gateway Spec](./api_gateway_spec.md) — HTTP endpoints and request/response contracts
+- [Async Transport Spec](./async_transport_spec.md) — Streaming protocol and transport layer
+- [Client Applications Spec](./client_applications_spec.md) — Web UI, CLI, MCP implementations
+- [Orchestration Core Spec](./orchestration_core_spec.md) — Workflow engine and state management
+- [Spec Index](../README.md) — Entry point for all specifications

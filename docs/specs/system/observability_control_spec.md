@@ -49,6 +49,22 @@ This spec defines:
 
 ---
 
-**See also:**
-- [High-Level Architecture Spec](high_level_architecture_spec.md)
-- [Security & Policy Spec](./security_policy_spec.md)
+## References
+
+### External Documentation
+
+- **LangGraph Observability:** https://docs.langchain.com/oss/python/langgraph/observability
+- **LangSmith Documentation:** https://docs.smith.langchain.com/
+- **OpenTelemetry:** https://opentelemetry.io/docs/
+- **Prometheus Metrics:** https://prometheus.io/docs/
+- **Distributed Tracing (Jaeger):** https://www.jaegertracing.io/docs/
+- **ELK Stack (Logging):** https://www.elastic.co/guide/
+
+### Internal Documentation
+
+- [Texere High-Level Spec](./texere_high_level_architecture_spec.md) — System overview and component relationships
+- [Orchestration Core Spec](./orchestration_core_spec.md) — Workflow engine and instrumentation hooks
+- [API & Gateway Spec](./api_gateway_spec.md) — HTTP endpoints and error handling
+- [Security & Policy Spec](./security_policy_spec.md) — Audit logging and compliance
+- [Persistence & Infrastructure Spec](./persistence_infra_spec.md) — Storage for logs and traces
+- [Spec Index](../README.md) — Entry point for all specifications

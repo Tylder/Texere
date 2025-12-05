@@ -57,6 +57,20 @@ This spec defines:
 
 ---
 
-**See also:**
-- [High-Level Architecture Spec](high_level_architecture_spec.md)
-- [Client Library Spec](./client_library_spec.md)
+## References
+
+### External Documentation
+
+- **Next.js Docs:** https://nextjs.org/docs
+- **React Best Practices:** https://react.dev/
+- **CLI Framework (Commander.js):** https://github.com/tj/commander.js
+- **MCP Protocol:** https://modelcontextprotocol.io/docs/getting-started/intro
+
+### Internal Documentation
+
+- [Texere High-Level Spec](./texere_high_level_architecture_spec.md) — System overview and component relationships
+- [Client Library Spec](./client_library_spec.md) — TypeScript client integration surface
+- [API & Gateway Spec](./api_gateway_spec.md) — HTTP endpoints and request/response contracts
+- [Async Transport Spec](./async_transport_spec.md) — Streaming protocol and transport layer
+- [Orchestration Core Spec](./orchestration_core_spec.md) — Workflow engine and state management
+- [Spec Index](../README.md) — Entry point for all specifications

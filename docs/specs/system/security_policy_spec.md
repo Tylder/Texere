@@ -49,7 +49,21 @@ This spec defines:
 
 ---
 
-**See also:**
-- [High-Level Architecture Spec](high_level_architecture_spec.md)
-- [API & Gateway Spec](./api_gateway_spec.md)
-- [Observability & Control Spec](./observability_control_spec.md)
+## References
+
+### External Documentation
+
+- **OAuth 2.0 & OpenID Connect:** https://oauth.net/2/ and https://openid.net/connect/
+- **JWT (JSON Web Tokens):** https://jwt.io/
+- **RBAC (Role-Based Access Control):** https://csrc.nist.gov/publications/detail/sp/800-162/final
+- **OWASP Security Checklists:** https://owasp.org/www-project-top-ten/
+- **Encryption Best Practices:** https://www.cisa.gov/recommendations
+
+### Internal Documentation
+
+- [Texere High-Level Spec](./texere_high_level_architecture_spec.md) — System overview and component relationships
+- [API & Gateway Spec](./api_gateway_spec.md) — HTTP endpoints and authentication
+- [Orchestration Core Spec](./orchestration_core_spec.md) — Tool invocation and policy enforcement
+- [Observability & Control Spec](./observability_control_spec.md) — Audit logging and compliance
+- [Persistence & Infrastructure Spec](./persistence_infra_spec.md) — Secure data storage
+- [Spec Index](../README.md) — Entry point for all specifications

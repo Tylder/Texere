@@ -45,7 +45,20 @@ This spec defines:
 
 ---
 
-**See also:**
-- [High-Level Architecture Spec](high_level_architecture_spec.md)
-- [Orchestration Core Spec](./orchestration_core_spec.md)
-- [Async Transport Spec](./async_transport_spec.md)
+## References
+
+### External Documentation
+
+- **HTTP API Design:** https://docs.microsoft.com/en-us/azure/architecture/best-practices/api-design
+- **gRPC & Streaming:** https://grpc.io/docs/
+- **OpenAPI/Swagger:** https://swagger.io/specification/
+- **REST Best Practices:** https://tools.ietf.org/html/rfc7231
+
+### Internal Documentation
+
+- [Texere High-Level Spec](./texere_high_level_architecture_spec.md) — System overview and component relationships
+- [Orchestration Core Spec](./orchestration_core_spec.md) — Workflow engine and state management
+- [Async Transport Spec](./async_transport_spec.md) — Streaming protocol and transport layer
+- [Client Library Spec](./client_library_spec.md) — TypeScript client integration surface
+- [Security & Policy Spec](./security_policy_spec.md) — Authentication, authz, and policy enforcement
+- [Spec Index](../README.md) — Entry point for all specifications

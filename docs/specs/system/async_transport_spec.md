@@ -45,7 +45,19 @@ This spec defines:
 
 ---
 
-**See also:**
-- [High-Level Architecture Spec](high_level_architecture_spec.md)
-- [API & Gateway Spec](./api_gateway_spec.md)
-- [TS Client Library Spec](./client_library_spec.md)
+## References
+
+### External Documentation
+
+- **Server-Sent Events (SSE):** https://html.spec.whatwg.org/multipage/server-sent-events.html
+- **WebSockets:** https://tools.ietf.org/html/rfc6455
+- **LangGraph Streaming:** https://docs.langchain.com/oss/python/langgraph/streaming
+- **gRPC Streaming:** https://grpc.io/docs/guides/performance-best-practices/
+
+### Internal Documentation
+
+- [Texere High-Level Spec](./texere_high_level_architecture_spec.md) — System overview and component relationships
+- [API & Gateway Spec](./api_gateway_spec.md) — HTTP endpoints and request/response contracts
+- [Orchestration Core Spec](./orchestration_core_spec.md) — Workflow engine and event emission
+- [Client Library Spec](./client_library_spec.md) — TypeScript client consumption patterns
+- [Spec Index](../README.md) — Entry point for all specifications

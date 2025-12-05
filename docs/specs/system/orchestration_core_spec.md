@@ -435,8 +435,35 @@ class OrchestrationConfig:
 
 ---
 
-**See also:**
-- [High-Level Architecture Spec](./texere_high_level_architecture_spec.md)
-- [API & Gateway Spec](./api_gateway_spec.md)
-- [Async Transport Spec](./async_transport_spec.md)
-- [Persistence & Infrastructure Spec](./persistence_infra_spec.md)
+## References
+
+### External Documentation
+
+- **LangGraph Docs:** https://docs.langchain.com/oss/python/langgraph/overview
+    - Graph API: https://docs.langchain.com/oss/python/langgraph/graph-api
+    - Persistence: https://docs.langchain.com/oss/python/langgraph/persistence
+    - Streaming: https://docs.langchain.com/oss/python/langgraph/streaming
+    - Human-in-the-loop: https://docs.langchain.com/oss/python/langgraph/interrupts
+    - Memory Management: https://docs.langchain.com/oss/python/langgraph/add-memory
+
+- **RAG & Vector Search:**
+    - RAG Overview: https://learn.microsoft.com/en-us/azure/search/retrieval-augmented-generation-overview
+    - Vector Indexing Guide: https://www.meilisearch.com/blog/rag-indexing
+    - Context Management: https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
+
+- **Agent Design Patterns:**
+    - LLM Agents Framework: https://www.promptingguide.ai/research/llm-agents
+    - State Management: https://aisc.substack.com/p/llm-agents-part-6-state-management
+    - Memory Systems: https://langchain-ai.github.io/langmem/concepts/conceptual_guide/
+
+### Internal Documentation
+
+- [Texere High-Level Spec](./texere_high_level_architecture_spec.md) — System overview and component relationships
+- [API & Gateway Spec](./api_gateway_spec.md) — HTTP endpoints and request/response contracts
+- [Async Transport Spec](./async_transport_spec.md) — Streaming protocol and event types
+- [Client Library Spec](./client_library_spec.md) — TypeScript client integration surface
+- [Client Applications Spec](./client_applications_spec.md) — Web UI, CLI, MCP implementations
+- [Persistence & Infrastructure Spec](./persistence_infra_spec.md) — Storage schema and deployment
+- [Observability & Control Spec](./observability_control_spec.md) — Tracing, logging, debugging
+- [Security & Policy Spec](./security_policy_spec.md) — Authentication and access control
+- [Spec Index](../README.md) — Entry point for all specifications

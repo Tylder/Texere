@@ -57,7 +57,22 @@ This spec defines:
 
 ---
 
-**See also:**
-- [High-Level Architecture Spec](high_level_architecture_spec.md)
-- [Orchestration Core Spec](./orchestration_core_spec.md)
-- [API & Gateway Spec](./api_gateway_spec.md)
+## References
+
+### External Documentation
+
+- **LangGraph Persistence:** https://docs.langchain.com/oss/python/langgraph/persistence
+- **Vector Databases:** https://www.meilisearch.com/blog/rag-indexing
+- **PostgreSQL Documentation:** https://www.postgresql.org/docs/
+- **Kubernetes Best Practices:** https://kubernetes.io/docs/concepts/
+- **Redis Documentation:** https://redis.io/docs/
+- **Message Queues (RabbitMQ/Kafka):** https://www.rabbitmq.com/documentation.html
+
+### Internal Documentation
+
+- [Texere High-Level Spec](./texere_high_level_architecture_spec.md) — System overview and component relationships
+- [Orchestration Core Spec](./orchestration_core_spec.md) — Workflow engine and checkpoint requirements
+- [API & Gateway Spec](./api_gateway_spec.md) — HTTP endpoints and request/response contracts
+- [Observability & Control Spec](./observability_control_spec.md) — Logging and tracing infrastructure
+- [Security & Policy Spec](./security_policy_spec.md) — Encryption and data protection
+- [Spec Index](../README.md) — Entry point for all specifications
