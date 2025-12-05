@@ -1,25 +1,44 @@
-# Texere (skeleton)
+# Texere
 
-Quick start for the CLI, Command-Line Interface, and development environment.
+An LLM-powered agent platform for understanding codebases and implementing changes across multiple frontends.
 
-## Prereqs
-- Python 3.11 (recommended 3.11.9)
-- Hatch (installed automatically in Docker)
+## Overview
 
-## Local usage
-```
-hatch env create
-hatch run ui        # launches the terminal UI (early stub)
-hatch run texere run --prompt "Hello"  # streams a fake LLM, Large Language Model, response
-```
+Texere is a three-tier system built on Python (LangGraph) and TypeScript:
 
-## Docker
-```
-docker compose up app
-```
-Bind-mounted volumes store checkpoints/logs under `.texere/`.
+1. **Orchestration Core** — Stateful LangGraph workflows for code understanding and change implementation
+2. **API & Transport Layer** — HTTP + async streaming boundary exposing the core to clients
+3. **Client Layer** — Web UI, CLI, MCP servers, and other TS-based frontends
 
-## Notes
-- `texere run --prompt` executes a minimal Plan via the router/executor and streams output.
-- The terminal UI is evolving; the CLI path is primary for now.
-- Specs live in `specs/`; see adapter routing and event schemas for contracts.
+## Quick Start
+
+(TBD: Setup instructions, dependencies, running the core and clients)
+
+## Architecture
+
+- **Core:** Python + LangGraph for multi-step, stateful agent workflows
+- **API:** HTTP/JSON endpoints with SSE or WebSocket streaming
+- **Clients:** TypeScript via shared client library; multiple applications (web, CLI, MCP)
+- **State:** Threads (long-lived contexts) and Runs (individual workflow executions)
+
+See [High-Level Architecture Spec](docs/specs/system/high_level_architecture_spec.md) for detailed component descriptions.
+
+## Key Concepts
+
+- **Thread:** Long-lived context tied to a user, repo, or project
+- **Run:** Individual execution of a workflow on a thread
+- **Tool:** Internal service invoked by the core (code search, AST, test runner, VCS, etc.)
+- **Async Transport:** Streaming mechanism for incremental results and state updates
+
+## Documentation
+
+- **[Specification Index](docs/specs/README.md)** — Entry point for agents; links to all specs
+- **[High-Level Architecture](docs/specs/system/high_level_architecture_spec.md)** — System overview and component details
+
+## Development
+
+(TBD: Contributing guidelines, development environment setup, running tests)
+
+## License
+
+(TBD)
