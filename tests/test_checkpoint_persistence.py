@@ -3,7 +3,22 @@
 import tempfile
 from pathlib import Path
 
-from texere.orchestration.graph import create_workflow_graph
+from langgraph.graph import StateGraph
+
+from texere.orchestration.graph import SimpleCheckpointer, entry_node
+from texere.orchestration.state import WorkflowState
+
+
+def _create_graph_with_checkpointer(checkpointer_dir: str):
+    """Create a graph with custom checkpointer for testing."""
+    graph = StateGraph(WorkflowState)
+    graph.add_node("entry", entry_node)
+    graph.set_entry_point("entry")
+    graph.set_finish_point("entry")
+
+    db_path = str(Path(checkpointer_dir) / "checkpoints.db")
+    checkpointer = SimpleCheckpointer(db_path)
+    return graph.compile(checkpointer=checkpointer)
 
 
 class TestCheckpointPersistence:
@@ -12,7 +27,7 @@ class TestCheckpointPersistence:
     def test_state_saved_to_checkpointer(self) -> None:
         """Verify state is saved to checkpointer after execution."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             thread_id = "thread-checkpoint-001"
             initial_state = {
@@ -37,7 +52,7 @@ class TestCheckpointPersistence:
     def test_state_retrieved_by_thread_id(self) -> None:
         """Verify saved state can be retrieved by thread_id."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             thread_id = "thread-retrieve-001"
             initial_state = {
@@ -64,7 +79,7 @@ class TestCheckpointPersistence:
     def test_multiple_threads_isolated(self) -> None:
         """Verify state isolation between different threads."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             thread_1 = "thread-001"
             thread_2 = "thread-002"
@@ -92,7 +107,7 @@ class TestCheckpointPersistence:
     def test_checkpoint_history_available(self) -> None:
         """Verify checkpoint history can be retrieved."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             thread_id = "thread-history-001"
             initial_state = {
@@ -116,7 +131,7 @@ class TestCheckpointPersistence:
     def test_state_includes_all_fields_after_execution(self) -> None:
         """Verify saved state contains all expected fields."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             thread_id = "thread-fields-001"
             initial_state = {
@@ -142,7 +157,7 @@ class TestMinimalGraphExecution:
     def test_minimal_graph_execution_one_round_trip(self) -> None:
         """Execute graph once, assert state saved."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             thread_id = "thread-roundtrip-001"
             initial_state = {
@@ -169,7 +184,7 @@ class TestMinimalGraphExecution:
     def test_graph_returns_state_after_execution(self) -> None:
         """Verify invoke returns complete state."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             initial_state = {
                 "user_request": "test",

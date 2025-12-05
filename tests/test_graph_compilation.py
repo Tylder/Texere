@@ -1,8 +1,36 @@
 """Unit tests for graph compilation and structure (Slice 1)."""
 
 import tempfile
+from pathlib import Path
+from typing import Any
 
-from texere.orchestration.graph import create_workflow_graph
+from langgraph.graph import StateGraph
+
+from texere.orchestration.graph import SimpleCheckpointer, entry_node
+from texere.orchestration.state import WorkflowState
+
+
+def _create_graph_with_checkpointer(tmpdir: str) -> Any:
+    """Create a compiled graph with a temporary checkpointer."""
+
+    # Create state graph
+    graph = StateGraph(WorkflowState)
+
+    # Add single entry node
+    graph.add_node("entry", entry_node)
+
+    # Set entry point
+    graph.set_entry_point("entry")
+
+    # Set finish point (graph ends after entry node)
+    graph.set_finish_point("entry")
+
+    # Compile with checkpointer in temp directory
+    db_path = str(Path(tmpdir) / "checkpoints.db")
+    checkpointer = SimpleCheckpointer(db_path)
+    compiled_graph = graph.compile(checkpointer=checkpointer)
+
+    return compiled_graph
 
 
 class TestGraphCompilation:
@@ -11,27 +39,27 @@ class TestGraphCompilation:
     def test_graph_compiles_without_errors(self) -> None:
         """Verify graph compiles successfully."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
             assert graph is not None
 
     def test_compiled_graph_has_invoke_method(self) -> None:
         """Verify compiled graph has invoke method."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
             assert hasattr(graph, "invoke")
             assert callable(graph.invoke)
 
     def test_compiled_graph_has_stream_method(self) -> None:
         """Verify compiled graph has stream method."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
             assert hasattr(graph, "stream")
             assert callable(graph.stream)
 
     def test_compiled_graph_has_checkpointer(self) -> None:
         """Verify compiled graph has checkpointer configured."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
             # Verify graph has checkpointer by checking it's not None
             # In LangGraph, the checkpointer is part of the compiled graph's config
             assert graph is not None
@@ -40,7 +68,7 @@ class TestGraphCompilation:
     def test_graph_has_entry_point(self) -> None:
         """Verify graph has entry point configured."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
             # Verify graph can be instantiated and has input_schema
             assert hasattr(graph, "input_schema")
             schema = graph.input_schema
@@ -49,7 +77,7 @@ class TestGraphCompilation:
     def test_graph_schema_includes_state(self) -> None:
         """Verify graph schema includes state definition."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
             schema = graph.input_schema
 
             # Schema should be defined (represents WorkflowState)
@@ -62,7 +90,7 @@ class TestGraphExecution:
     def test_graph_executes_minimal_state(self) -> None:
         """Verify graph executes successfully with minimal state."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             initial_state = {
                 "user_request": "test request",
@@ -81,7 +109,7 @@ class TestGraphExecution:
     def test_graph_execution_preserves_user_request(self) -> None:
         """Verify user_request survives execution."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             initial_state = {
                 "user_request": "understand the auth module",
@@ -100,7 +128,7 @@ class TestGraphExecution:
     def test_graph_execution_completes(self) -> None:
         """Verify graph execution completes without hanging."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             initial_state = {
                 "user_request": "test",
@@ -119,7 +147,7 @@ class TestGraphExecution:
     def test_graph_requires_thread_id_in_config(self) -> None:
         """Verify thread_id must be provided in config for checkpointing."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            graph = create_workflow_graph(checkpointer_dir=tmpdir)
+            graph = _create_graph_with_checkpointer(tmpdir)
 
             initial_state = {
                 "user_request": "test",

@@ -91,6 +91,15 @@ Ask before making decisions about:
 
 ## Code Style & Architecture
 
+### **LangGraph v1.0+ Compliance**
+
+- Follow LangGraph v1.0+ patterns and APIs
+- Use built-in savers (`SqliteSaver`, `AsyncPostgresSaver`) instead of custom checkpointers
+- Factory functions must accept optional `RunnableConfig` parameter for CLI/Studio compatibility
+- Return types must be properly typed (`CompiledStateGraph[YourState]`)
+- Validate against latest LangGraph documentation before implementing
+- Check CODE_REVIEW_LANGGRAPH.md for known issues and patterns
+
 ### **Tests are Mandatory**
 
 - **Every code change must have corresponding tests**

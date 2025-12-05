@@ -144,6 +144,20 @@ make test-coverage  # With coverage report
 
 Git hooks automatically run before commits, so most changes are formatted automatically.
 
+### LangGraph Studio (Local Debugging)
+
+Visualize and debug the graph execution locally:
+
+```bash
+# Install studio dependencies
+pip install -U "langgraph-cli[inmem]"
+
+# Start local studio
+langgraph dev
+```
+
+Then open http://localhost:3000 in your browser to interact with the graph visually.
+
 ### Environment Variables
 
 Create a `.env` file in the project root for development configuration:

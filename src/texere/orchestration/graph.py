@@ -41,8 +41,15 @@ class SimpleCheckpointer(BaseCheckpointSaver):
         """Initialize checkpointer with database path."""
         super().__init__()
         self.db_path = db_path
-        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        self._initialized = False
+
+    def _ensure_initialized(self) -> None:
+        """Lazy initialization to avoid blocking in async context."""
+        if self._initialized:
+            return
+        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
+        self._initialized = True
 
     def _init_db(self) -> None:
         """Create tables if they don't exist."""
@@ -77,6 +84,7 @@ class SimpleCheckpointer(BaseCheckpointSaver):
         new_versions: ChannelVersions,
     ) -> RunnableConfig:
         """Save checkpoint to database."""
+        self._ensure_initialized()
         config_dict = config or {}
         thread_id = config_dict.get("configurable", {}).get("thread_id", "default")  # type: ignore
         checkpoint_id = str(uuid4())
@@ -111,6 +119,7 @@ class SimpleCheckpointer(BaseCheckpointSaver):
 
     def get_tuple(self, config: RunnableConfig) -> Optional[CheckpointTuple]:
         """Retrieve latest checkpoint for thread."""
+        self._ensure_initialized()
         config_dict = config or {}
         thread_id = config_dict.get("configurable", {}).get("thread_id", "default")  # type: ignore
 
@@ -150,6 +159,7 @@ class SimpleCheckpointer(BaseCheckpointSaver):
         limit: Optional[int] = None,
     ) -> Iterator[CheckpointTuple]:
         """List all checkpoints for thread."""
+        self._ensure_initialized()
         config_dict = config or {}
         thread_id = config_dict.get("configurable", {}).get("thread_id", "default")  # type: ignore
 
@@ -181,6 +191,7 @@ class SimpleCheckpointer(BaseCheckpointSaver):
 
     def delete_thread(self, thread_id: str) -> None:
         """Delete checkpoints for thread."""
+        self._ensure_initialized()
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -221,7 +232,7 @@ def entry_node(state: WorkflowState) -> dict[str, Any]:
 
 
 def create_workflow_graph(
-    checkpointer_dir: str = "./.texere/checkpoints",
+    config: Optional[RunnableConfig] = None,
 ) -> Any:
     """
     Create and compile a minimal LangGraph StateGraph for Slice 1.
@@ -230,7 +241,7 @@ def create_workflow_graph(
     state persistence via SQLite checkpointer.
 
     Args:
-        checkpointer_dir: Directory for SQLite checkpointer.
+        config: Optional RunnableConfig from LangGraph runtime (ignored for Slice 1).
 
     Returns:
         Compiled StateGraph with checkpointer.
@@ -247,7 +258,8 @@ def create_workflow_graph(
     # Set finish point (graph ends after entry node)
     graph.set_finish_point("entry")
 
-    # Compile with checkpointer
+    # Compile with checkpointer (fixed location for Slice 1)
+    checkpointer_dir = "./.texere/checkpoints"
     db_path = str(Path(checkpointer_dir) / "checkpoints.db")
     checkpointer = SimpleCheckpointer(db_path)
     compiled_graph = graph.compile(checkpointer=checkpointer)

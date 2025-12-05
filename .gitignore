@@ -41,6 +41,9 @@ coverage.xml
 .ruff_cache/
 .cache/
 
+## LangGraph
+.langgraph_api/
+
 ## Tox / Nox / Hypothesis / Benchmarks
 .tox/
 .nox/
