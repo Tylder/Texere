@@ -58,6 +58,7 @@ requirements.lock
 ## Editors / IDE
 .vscode/
 .idea/
+.amp/
 *.swp
 *.swo
 
