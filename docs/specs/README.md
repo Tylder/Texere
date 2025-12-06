@@ -1,7 +1,7 @@
 # Texere High-Level Specification
 
-**Document Version:** 1.0  
-**Last Updated:** December 2025  
+**Document Version:** 1.1  
+**Last Updated:** December 6, 2025  
 **Status:** Active
 
 This is the canonical entry point for all specifications. It keeps system orientation, navigation, and requirements in one place.
@@ -152,32 +152,36 @@ Support for retries with exponential backoff, checkpoints, and human-in-the-loop
 
 | File (relative) | Version | Status | Audience | Key Sections |
 | --- | --- | --- | --- | --- |
-| `high_level_architecture_spec.md` | v0 | Active | All | Layers, components, workflows |
-| `orchestration_core_spec.md` | v0.1 | Draft | Backend, Core | State models, tools, RAG, checkpointing |
-| `api_gateway_spec.md` | v0 | Placeholder | Backend, Frontend | Endpoints, auth, contracts |
-| `async_transport_spec.md` | v0 | Placeholder | Backend, Frontend | Protocol, events, backpressure |
-| `client_library_spec.md` | v0 | Placeholder | Frontend, Backend | Types, API surface, error handling |
-| `client_applications_spec.md` | v0 | Placeholder | Frontend, UX | Web UI, CLI, MCP patterns |
-| `persistence_infra_spec.md` | v0 | Placeholder | DevOps, Backend | Storage, queues, deployment |
-| `observability_control_spec.md` | v0 | Placeholder | Ops, Backend | Tracing, logging, debugging |
-| `security_policy_spec.md` | v0 | Placeholder | Security, Ops | Auth, authz, policy |
-| `engineering/testing_strategy.md` | 1.0 | Active | All | Testing philosophy, tools, patterns |
-| `engineering/testing_specification.md` | 1.0 | Active | All | pytest setup, fixtures, coverage |
-| `system/local_llm_integration_spec.md` | v0.1 | Draft | Backend, Ops | OpenAI-compatible endpoints, model switching, Langfuse tagging |
+| **System & Architecture** | | | | |
+| `README.md` (this file) | 1.0 | Active | All | Overview, navigation, spec organization |
+| **Engineering / Tooling & Quality** | | | | |
+| `engineering/eslint_code_quality.md` | Active | Active | Backend, Frontend | Monorepo discipline, type safety, import org, dead code, async safety |
+| `engineering/prettier_formatting.md` | Active | Active | Backend, Frontend | Formatting config, import sorting, Tailwind classes, ESLint integration |
+| `engineering/rendering-strategies.md` | 1.0 | Active | Frontend | SSG, SSR, CSR, ISR, PPR, decision matrix |
+| `engineering/testing_strategy.md` | 1.1 | Active | All | Testing trophy, tools (TypeScript, ESLint, Vitest, RTL, Playwright), what to test by level, anti-patterns, coverage goals |
+| `engineering/testing_specification.md` | 1.2 | Active | All | Implementation details: vitest config, colocated tests, E2E Playwright setup, commands, quality gates |
+| `engineering/typescript_configuration.md` | Active | Active | Backend, Frontend | TS 5.9, Node 22 ES2023, project refs, strict settings, module resolution via package.json exports |
+| **Meta / Process & Governance** | | | | |
+| `meta/llm_feature_workflow_full.md` | N/A | Active | All (esp. Agents) | Vertical slices, test-driven development, spec-first, iterative workflow |
+| `meta/prompt_template.md` | N/A | Active | Agents | Universal task template, code/test change template, docs-only change template |
+| `meta/spec_writing.md` | 1.1 | Active | All (esp. Authors & Agents) | §1–11 spec structure, numbering, citability, checklists, completeness criteria, citation mandate, bad vs good examples |
+| **Feature / Orchestrator (Mastra)** | | | | |
+| `feauture/mastra_orchestrator_spec.md` | 0.1 | Active | Backend, Core | Purpose, Nx monorepo layout, Mastra primitives (agents, workflows, storage), agents (8 roles), workflows (5+), tools integration, retrieval/indexing, storage, safety, observability, evals, extensibility |
+| `feauture/texere-tool-spec.md` | N/A | Active | Backend, Core | TS-first tool abstraction for Mastra + LangGraph.js, CoreTool types, framework-agnostic design, Mastra adapter, LangGraph adapter, testing, observability |
 
 **Cite as:** §8
 
 ## 9. Open Questions / Risks
 
-**TBD Items Blocking Progress (§9):**
+**Active Development Items (§9):**
 
-- **API Versioning:** URL path (e.g., `/v1/`) vs. header-based versioning? (Owner: TBD)
-- **Persistence Layer:** PostgreSQL + Redis, or cloud-managed alternatives? (Owner: TBD)
-- **Vector Database:** Pinecone, Weaviate, or self-hosted? (Owner: TBD)
-- **MCP Integration:** Implementation patterns and security model for MCP servers as clients? (Owner: TBD)
-- **Streaming Backpressure:** Handling slow clients and reconnection semantics? (Owner: TBD)
-- **Cost & Scaling:** Targets for concurrent users, token/hour throughput, infrastructure cost? (Owner: TBD)
-- **Production SLA:** Uptime, latency, error rate targets? (Owner: TBD)
+The following areas are in active development or have documented design decisions in progress:
+
+- **LangGraph.js vs. Python Backend:** Framework choice for orchestration; current focus is TS (Mastra + LangGraph.js) per `feauture/mastra_orchestrator_spec.md` and `feauture/texere-tool-spec.md`. Python migration path reserved but not primary v1 goal.
+- **MCP Integration Patterns:** Implementation details for MCP servers as clients (tools layer is framework-agnostic per `feauture/texere-tool-spec.md`; MCP integration spec TBD).
+- **Index/Retrieval Service:** Contract and integration points defined in `feauture/mastra_orchestrator_spec.md §7` (Repo-Intel Tool Contract); implementation deferred to separate indexing pipeline spec.
+- **Streaming & Real-Time:** API and async transport specs referenced in high-level spec (§7) but not yet fully detailed; Mastra's built-in streaming is the current focus.
+- **Cost & Scaling Targets:** Not quantified in v1 specs; should be formalized in observability & evals spec (TBD).
 
 **Cite as:** §9
 
@@ -230,6 +234,7 @@ Support for retries with exponential backoff, checkpoints, and human-in-the-loop
 
 | Date | Version | Editor | Summary |
 | --- | --- | --- | --- |
+| Dec 6, 2025 | 1.1 | @agent | Updated spec index (§8) with all existing specs (engineering: eslint, prettier, rendering, testing_strategy, testing_specification, typescript; meta: llm_feature_workflow, prompt_template, spec_writing; feauture: mastra_orchestrator, texere-tool). Organized table by category headers. Updated §9 (Open Questions) to reflect actual active development items and documented design decisions instead of generic TBD list. |
 | Dec 5, 2025 | 1.0 | @agent | Upgraded to Active spec; added § numbering for citability; added Scope, Audience, Goals sections; reformatted as 13-section spec per spec_writing.md standards; added Testing specs to index. |
 | Dec 5, 2025 | 0.1 | @agent | Initial Texere specs README. |
 
