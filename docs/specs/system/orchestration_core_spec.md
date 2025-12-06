@@ -470,6 +470,18 @@ class OrchestrationConfig:
 
 ### 12.3 Adding New Workflows
 
+### 12.4 Model Selection & Provider Switching (LangGraph + Langfuse)
+
+- **Config-driven choice:** Expose `config_schema={"configurable": {"llm": str}}` on compiled graphs. Nodes read `config["configurable"]["llm"]` and instantiate the chat model at invoke time; no graph rebuild when swapping models/providers.
+- **OpenAI-compatible endpoints:** All providers (local vLLM/Ollama, RunPod, Vast, Salad, Hyperbolic, Northflank, AWS Bedrock proxies) must be reachable through an OpenAI-compatible URL. Set via envs:
+  - `MODEL_ENDPOINT` → passed as `base_url`
+  - `MODEL_KEY` → passed as `api_key`
+  - `MODEL_NAME` → default model id; override per-run via config.
+- **Factory pattern:** Provide a small resolver (e.g., `get_chat_model(model_id: str, base_url: str, api_key: str) -> BaseChatModel`) that returns an OpenAI-compatible LangChain chat model instance. Keep it pure and side-effect free for testability.
+- **Observability tagging:** Add `{"metadata": {"llm_model": model_id}}` to `RunnableConfig` so Langfuse traces include the chosen model. Include model id in trace tags for per-model dashboards.
+- **Failover (optional):** Allow a list in config (`llm_candidates`) and try in order with backoff on rate/host errors; emit the final chosen model in metadata.
+- **Environment presets:** Maintain `.env.local` (localhost vLLM) and `.env.remote` (cheap GPU endpoint). Switching models is env-only: `export $(cat .env.remote | xargs)` then rerun.
+
 ## 13. Non-Functional
 
 ### 13.1 Performance Targets
