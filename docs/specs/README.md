@@ -181,6 +181,9 @@ human-in-the-loop interrupts.
 | `meta/spec_writing.md`                    | 1.1     | Active | All (esp. Authors & Agents) | §1–11 spec structure, numbering, citability, checklists, completeness criteria, citation mandate, bad vs good examples                                                                                     |
 | **Feature / Orchestrator (Mastra)**       |         |        |                             |                                                                                                                                                                                                            |
 | `feauture/mastra_orchestrator_spec.md`    | 0.1     | Active | Backend, Core               | Purpose, Nx monorepo layout, Mastra primitives (agents, workflows, storage), agents (8 roles), workflows (5+), tools integration, retrieval/indexing, storage, safety, observability, evals, extensibility |
+| **Feature / Orchestrator (LangGraph.js)** |         |        |                             |                                                                                                                                                                                                            |
+| `feauture/langgraph_orchestrator_spec.md` | 0.1     | Draft  | Backend, Core               | Parallel framework evaluation, graph-first design, tool adapter pattern, PoC workflows (Q&A, summarize), framework-agnostic tool contract, self-hosted deployment, future LangSmith integration            |
+| **Feature / Tools**                       |         |        |                             |                                                                                                                                                                                                            |
 | `feauture/texere-tool-spec.md`            | N/A     | Active | Backend, Core               | TS-first tool abstraction for Mastra + LangGraph.js, CoreTool types, framework-agnostic design, Mastra adapter, LangGraph adapter, testing, observability                                                  |
 
 **Cite as:** §8
@@ -191,16 +194,22 @@ human-in-the-loop interrupts.
 
 The following areas are in active development or have documented design decisions in progress:
 
-- **LangGraph.js vs. Python Backend:** Framework choice for orchestration; current focus is TS
-  (Mastra + LangGraph.js) per `feauture/mastra_orchestrator_spec.md` and
-  `feauture/texere-tool-spec.md`. Python migration path reserved but not primary v1 goal.
+- **Mastra vs. LangGraph.js Framework Evaluation:** Two orchestration frameworks are being developed
+  in parallel (per `feauture/mastra_orchestrator_spec.md` (Active, v0.1) and
+  `feauture/langgraph_orchestrator_spec.md` (Draft, v0.1 PoC)). Both share the same tool contract
+  and framework-agnostic design. A final framework decision will be made after the LangGraph PoC
+  completes (~§12.1). Evaluation criteria: DX, observability, perf, operational overhead.
+- **Python Backend Path:** Tools are designed to be framework-agnostic so a future Python/LangGraph
+  backend can consume the same tool contracts via HTTP or MCP. This is optional and deferred
+  (`feauture/langgraph_orchestrator_spec.md §12.3`).
 - **MCP Integration Patterns:** Implementation details for MCP servers as clients (tools layer is
   framework-agnostic per `feauture/texere-tool-spec.md`; MCP integration spec TBD).
 - **Index/Retrieval Service:** Contract and integration points defined in
   `feauture/mastra_orchestrator_spec.md §7` (Repo-Intel Tool Contract); implementation deferred to
   separate indexing pipeline spec.
 - **Streaming & Real-Time:** API and async transport specs referenced in high-level spec (§7) but
-  not yet fully detailed; Mastra's built-in streaming is the current focus.
+  not yet fully detailed; both Mastra and LangGraph.js support streaming (deferred to v1 deploy
+  spec).
 - **Cost & Scaling Targets:** Not quantified in v1 specs; should be formalized in observability &
   evals spec (TBD).
 
@@ -259,6 +268,7 @@ The following areas are in active development or have documented design decision
 
 | Date        | Version | Editor | Summary                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ----------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dec 6, 2025 | 1.2     | @agent | Added `feauture/langgraph_orchestrator_spec.md` (Draft, v0.1) to spec index as parallel framework evaluation. Updated §9 (Open Questions) to detail Mastra vs. LangGraph.js parallel development, framework decision timeline, and Python interop path. Reorganized orchestrator sections in §8 spec table (Mastra, LangGraph.js, Tools).                                                                                        |
 | Dec 6, 2025 | 1.1     | @agent | Updated spec index (§8) with all existing specs (engineering: eslint, prettier, rendering, testing_strategy, testing_specification, typescript; meta: llm_feature_workflow, prompt_template, spec_writing; feauture: mastra_orchestrator, texere-tool). Organized table by category headers. Updated §9 (Open Questions) to reflect actual active development items and documented design decisions instead of generic TBD list. |
 | Dec 5, 2025 | 1.0     | @agent | Upgraded to Active spec; added § numbering for citability; added Scope, Audience, Goals sections; reformatted as 13-section spec per spec_writing.md standards; added Testing specs to index.                                                                                                                                                                                                                                    |
 | Dec 5, 2025 | 0.1     | @agent | Initial Texere specs README.                                                                                                                                                                                                                                                                                                                                                                                                     |

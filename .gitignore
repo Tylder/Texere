@@ -18,6 +18,9 @@ playwright-report/
 .playwright/
 test-results/
 
+# Prettier
+.prettier-cache
+
 # Nx
 .nx/cache
 .nx/workspace-data

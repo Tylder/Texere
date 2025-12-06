@@ -47,25 +47,57 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["{projectRoot}/**/*", "{projectRoot}/.env*"],
+      "inputs": [
+        "{projectRoot}/src/**",
+        "{projectRoot}/package.json",
+        "{projectRoot}/tsconfig.build.json",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/vite.config.ts",
+        "{projectRoot}/vite.config.js",
+        "{projectRoot}/next.config.js",
+        "{projectRoot}/.env*"
+      ],
       "outputs": ["{projectRoot}/.next/**", "!{projectRoot}/.next/cache/**"],
       "cache": true
     },
     "lint": {
       "dependsOn": ["^lint"],
+      "inputs": [
+        "{projectRoot}/src/**",
+        "{projectRoot}/tests/**",
+        "{workspaceRoot}/eslint.config.mjs"
+      ],
       "cache": true
     },
     "check-types": {
       "dependsOn": ["^check-types"],
+      "inputs": [
+        "{projectRoot}/src/**",
+        "{projectRoot}/package.json",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/tsconfig*.json"
+      ],
       "cache": true
     },
     "test": {
       "dependsOn": ["^test", "^build"],
+      "inputs": [
+        "{projectRoot}/src/**",
+        "{projectRoot}/tests/**",
+        "{projectRoot}/vitest.config.ts",
+        "{projectRoot}/package.json"
+      ],
       "outputs": ["{projectRoot}/coverage/**"],
       "cache": true
     },
     "test:coverage": {
       "dependsOn": ["^test:coverage"],
+      "inputs": [
+        "{projectRoot}/src/**",
+        "{projectRoot}/tests/**",
+        "{projectRoot}/vitest.config.ts",
+        "{projectRoot}/package.json"
+      ],
       "outputs": ["{projectRoot}/coverage/**"],
       "cache": true
     },
