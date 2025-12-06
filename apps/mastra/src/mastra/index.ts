@@ -1,7 +1,6 @@
 import { Mastra } from '@mastra/core';
 
 import { simpleReaderAgent } from './agents/simple-reader.js';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { specInterpreterAgent } from './agents/spec-interpreter.js';
 
 /**
@@ -18,15 +17,15 @@ import { specInterpreterAgent } from './agents/spec-interpreter.js';
  * Reference: mastra_orchestrator_spec.md §2.3, §8.1, §5.2
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mastra: Mastra = new Mastra({
   server: {
-    port: parseInt(process.env.MASTRA_PORT || '4111'),
+    port: parseInt(process.env.MASTRA_PORT || '4111', 10),
     host: process.env.MASTRA_HOST || '0.0.0.0',
   },
 
   // Agents: Register all agents
   agents: {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     specInterpreter: specInterpreterAgent,
     simpleReader: simpleReaderAgent,
   },

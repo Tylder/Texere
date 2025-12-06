@@ -1,5 +1,7 @@
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/require-await */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { z } from 'zod';
 
 import { createTool } from '@mastra/core';
@@ -9,6 +11,9 @@ import { createTool } from '@mastra/core';
  * (mastra_orchestrator_spec.md §6.2)
  *
  * v0.2: Real file reader with error handling
+ *
+ * Note: ESLint suppressions for @typescript-eslint/no-unsafe-* are required because
+ * Mastra's createTool API passes context as `any` type.
  */
 const readSpecToolInputSchema = z.object({
   specPath: z.string().describe('Relative or absolute path to the spec document'),
@@ -26,10 +31,8 @@ export const readSpecTool = createTool({
   description: 'Read a specification document from the filesystem and return its content.',
   inputSchema: readSpecToolInputSchema,
   outputSchema: readSpecToolOutputSchema,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  execute: async (input: any) => {
-    // Mastra passes context, extract actual input
-    const specPath = input.specPath || input.input?.specPath;
+  execute: async (context: any) => {
+    const specPath = context.specPath || context.input?.specPath;
 
     if (!specPath) {
       return {
@@ -61,3 +64,4 @@ export const readSpecTool = createTool({
     }
   },
 });
+/* eslint-enable */
