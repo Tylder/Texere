@@ -1,1 +1,1 @@
-import { expect, afterEach } from 'vitest';
+import { afterEach, expect } from 'vitest';

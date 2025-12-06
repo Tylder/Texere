@@ -1,17 +1,20 @@
 # Mastra Orchestrator
 
-A Mastra-based orchestrator for Texere that coordinates coding agent workflows across repositories. See `docs/specs/feature/mastra_orchestrator_spec.md` for the full specification.
+A Mastra-based orchestrator for Texere that coordinates coding agent workflows across repositories.
+See `docs/specs/feature/mastra_orchestrator_spec.md` for the full specification.
 
 ## Overview
 
 The orchestrator implements workflows for:
+
 - Feature implementation
 - Bugfix resolution
 - Code refactoring
 - Q&A / codebase exploration
 - Index maintenance
 
-Each workflow coordinates multiple agents (Spec Interpreter, Planner, Coder, Reviewer, etc.) using tools to interact with repositories and indexes.
+Each workflow coordinates multiple agents (Spec Interpreter, Planner, Coder, Reviewer, etc.) using
+tools to interact with repositories and indexes.
 
 ## Runtime Entrypoints
 

@@ -1,6 +1,5 @@
 // Core tool types - framework-agnostic definitions per spec §2
 // See docs/specs/feature/texere-tool-spec.md for full specification
-
 import { z } from 'zod';
 
 export type FrameworkKind = 'mastra' | 'langgraph';
@@ -161,8 +160,5 @@ export interface CoreTool<I, O, State = unknown> {
    * - Receives strongly-typed input and framework-specific env.
    * - Returns ToolResult plus optional effects.
    */
-  handler: (
-    input: I,
-    env: ToolEnv<State>,
-  ) => Promise<ToolResult<O, State>> | ToolResult<O, State>;
+  handler: (input: I, env: ToolEnv<State>) => Promise<ToolResult<O, State>> | ToolResult<O, State>;
 }

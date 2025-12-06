@@ -2,7 +2,9 @@
 
 ## 1. Purpose and Scope
 
-This document specifies the **Mastra-based orchestrator** for Texere, implemented in TypeScript with Mastra as the core framework. The orchestrator’s primary job in v1 is to act as a **coding agent for repositories**:
+This document specifies the **Mastra-based orchestrator** for Texere, implemented in TypeScript with
+Mastra as the core framework. The orchestrator’s primary job in v1 is to act as a **coding agent for
+repositories**:
 
 - Read, understand, and navigate code across one or more repos.
 - Implement features and bugfixes according to a written spec.
@@ -12,25 +14,31 @@ This document specifies the **Mastra-based orchestrator** for Texere, implemente
 
 ### 1.1 Goals
 
-1. Provide a **reliable, debuggable orchestration layer** for repo-focused coding tasks using Mastra agents, workflows, and tools.
-2. Make tools **framework-agnostic** so they can later be reused by a Python/LangGraph backend with minimal adapters.
-3. Express core behaviors as **explicit workflows** (graphs), not opaque “magic agents,” to ease debugging, evaluation, and future migration.
-4. Integrate cleanly into an **Nx monorepo** and reuse shared packages (especially observability and tools).
+1. Provide a **reliable, debuggable orchestration layer** for repo-focused coding tasks using Mastra
+   agents, workflows, and tools.
+2. Make tools **framework-agnostic** so they can later be reused by a Python/LangGraph backend with
+   minimal adapters.
+3. Express core behaviors as **explicit workflows** (graphs), not opaque “magic agents,” to ease
+   debugging, evaluation, and future migration.
+4. Integrate cleanly into an **Nx monorepo** and reuse shared packages (especially observability and
+   tools).
 5. Be immediately usable via **Mastra Studio** in v1, with a **TUI CLI** planned for v2.
 
 ### 1.2 Non-goals (v1)
 
-- Running or managing the **indexing pipeline** itself (AST/SCIP/embeddings) as a core responsibility. The orchestrator consumes indexes via tools; indexing daemons are separate.
+- Running or managing the **indexing pipeline** itself (AST/SCIP/embeddings) as a core
+  responsibility. The orchestrator consumes indexes via tools; indexing daemons are separate.
 - Multi-tenant auth, quotas, or billing. v1 assumes single-user or trusted environment.
 - Complex cross-repo dependency management beyond what the tools and index expose.
-- Rich GUI for end users (web/app). v1 interaction surface is Mastra Studio and internal programmatic use.
-
+- Rich GUI for end users (web/app). v1 interaction surface is Mastra Studio and internal
+  programmatic use.
 
 ## 2. High-Level Architecture
 
 ### 2.1 Nx Monorepo Layout
 
-The orchestrator integrates into an Nx monorepo with at least the following structure (names illustrative):
+The orchestrator integrates into an Nx monorepo with at least the following structure (names
+illustrative):
 
 - `packages/orchestrator`
   - Mastra configuration (agents, workflows, storage, registries).
@@ -38,8 +46,9 @@ The orchestrator integrates into an Nx monorepo with at least the following stru
   - Wiring between tools (from the separate tools packages) and Mastra.
 
 - `packages/tools-*`
-  - Existing and future tool packages (code, git, tests, repo-intel, etc.) as defined in the separate **Tools Spec**.
-  - Tools are pure TS modules with Zod schemas and are *not* Mastra-specific.
+  - Existing and future tool packages (code, git, tests, repo-intel, etc.) as defined in the
+    separate **Tools Spec**.
+  - Tools are pure TS modules with Zod schemas and are _not_ Mastra-specific.
 
 - `apps/mastra-dev`
   - Mastra dev server and Mastra Studio entrypoint for local development.
@@ -54,9 +63,12 @@ The orchestrator integrates into an Nx monorepo with at least the following stru
 The orchestrator uses the following Mastra primitives:
 
 - **Agents**: Role-specific LLM-backed entities with access to tools and optional memory.
-- **Workflows**: Deterministic orchestration graphs for multi-step processes (branching, loops, parallelism, suspend/resume, HITL).
-- **Agent Networks**: Optional multi-agent routing patterns used inside workflow steps for fuzzier subtasks.
-- **Storage**: Mastra Storage for workflow state, memory (if used), and metadata, backed by Postgres in production.
+- **Workflows**: Deterministic orchestration graphs for multi-step processes (branching, loops,
+  parallelism, suspend/resume, HITL).
+- **Agent Networks**: Optional multi-agent routing patterns used inside workflow steps for fuzzier
+  subtasks.
+- **Storage**: Mastra Storage for workflow state, memory (if used), and metadata, backed by Postgres
+  in production.
 
 ### 2.3 Environments
 
@@ -69,7 +81,6 @@ The orchestrator uses the following Mastra primitives:
   - Orchestrator runs as a Node service or serverless functions.
   - Storage: PostgreSQL via `@mastra/pg` (vector + DB capabilities).
   - External indexes and services accessed via tools or MCP connections.
-
 
 ## 3. Interaction Surfaces
 
@@ -105,12 +116,13 @@ Not implemented in v1, but the spec reserves requirements:
   - Display progress aligned with workflow steps and sub-steps.
   - Stream key events (planning, patch proposals, test results, review outcome).
 
-- The TUI CLI will **only** call public APIs from `packages/orchestrator` and will not access tools directly.
-
+- The TUI CLI will **only** call public APIs from `packages/orchestrator` and will not access tools
+  directly.
 
 ## 4. Agents and Roles
 
-The orchestrator defines several role-specific agents. Roles are logical; implementation may reuse underlying models/config where appropriate.
+The orchestrator defines several role-specific agents. Roles are logical; implementation may reuse
+underlying models/config where appropriate.
 
 ### 4.1 Shared Agent Design Principles
 
@@ -121,7 +133,8 @@ The orchestrator defines several role-specific agents. Roles are logical; implem
 
 - Agents should:
   - Be **idempotent** at the workflow step level (safe to retry with same inputs where possible).
-  - Return **structured outputs** (Zod schemas, e.g. plans, patch lists, structured reviews) rather than free text.
+  - Return **structured outputs** (Zod schemas, e.g. plans, patch lists, structured reviews) rather
+    than free text.
 
 ### 4.2 Agent Roles (v1)
 
@@ -182,10 +195,10 @@ The orchestrator defines several role-specific agents. Roles are logical; implem
    - Updates or generates docs and inline comments after code changes.
    - Tools: docs writer, code search, diff viewer.
 
-
 ## 5. Workflows
 
-Top-level entrypoints are **Mastra workflows**. They orchestrate agents, tools, and (optionally) agent networks.
+Top-level entrypoints are **Mastra workflows**. They orchestrate agents, tools, and (optionally)
+agent networks.
 
 ### 5.1 Common Concepts
 
@@ -275,7 +288,8 @@ Similar to `implementFeature`, with differences:
 Focuses on structural, non-functional changes:
 
 - Spec step emphasizes invariants and non-goals (“no behavior change”).
-- Planner and coder steps focus on API changes, call-graph adjustments, and internal structural improvements.
+- Planner and coder steps focus on API changes, call-graph adjustments, and internal structural
+  improvements.
 - Test step must:
   - Run a broader set of tests (or at least all tests affected by changed modules).
 - Risk step is more conservative; may require HITL by default.
@@ -298,9 +312,9 @@ Triggered from other workflows or manually:
 
 - Input: list of changed files (and optionally symbols).
 - Steps:
-  - For each changed file, call index-maintenance tools to update embeddings/SCIP slices or other relevant indexes.
+  - For each changed file, call index-maintenance tools to update embeddings/SCIP slices or other
+    relevant indexes.
 - Output: summary of index update results.
-
 
 ## 6. Tools Integration
 
@@ -351,12 +365,12 @@ Mastra agent/tool integration layer lives in `packages/orchestrator` and:
    - Re-index changed files for embeddings and/or SCIP.
    - Report status per file or per batch.
 
-
 ## 7. Retrieval and Indexing Layer
 
 ### 7.1 Responsibility Split
 
-- The **indexing pipeline** (SCIP, AST extraction, embeddings, etc.) is built and operated outside of Mastra.
+- The **indexing pipeline** (SCIP, AST extraction, embeddings, etc.) is built and operated outside
+  of Mastra.
 - The orchestrator interacts with indexes via tools, which expose a stable contract.
 
 ### 7.2 Repo-Intel Tool Contract (High-Level)
@@ -365,7 +379,8 @@ Input (simplified):
 
 - `repoId`
 - `query`: symbol name, path, or free-text.
-- `operation`: e.g. `FIND_DEFINITION`, `FIND_REFERENCES`, `SIMILAR_CHUNKS`, `NEAREST_CODE_FOR_SPEC_SECTION`.
+- `operation`: e.g. `FIND_DEFINITION`, `FIND_REFERENCES`, `SIMILAR_CHUNKS`,
+  `NEAREST_CODE_FOR_SPEC_SECTION`.
 - Optional filters: language, path prefix, etc.
 
 Output (simplified):
@@ -381,7 +396,6 @@ The spec does not prescribe implementation, only the shape of the contract.
 
 - Input: list of changed files (paths) and metadata (repoId, branch, etc.).
 - Output: per-file status (`UPDATED`, `SKIPPED`, `ERROR`) and optional error details.
-
 
 ## 8. Storage and Infrastructure
 
@@ -408,7 +422,6 @@ The spec does not prescribe implementation, only the shape of the contract.
   - A single logical Mastra app per environment.
   - Stable `DATABASE_URL` and other configuration via environment variables.
 
-
 ## 9. Safety and Permissions
 
 ### 9.1 v1 Trust Model
@@ -423,14 +436,14 @@ The spec does not prescribe implementation, only the shape of the contract.
 Although not implemented in v1, the spec anticipates a capability-based model:
 
 - **Capabilities** attached to TaskContext:
-  - `allowedRepos`: explicit list of repo IDs and allowed operations (`READ`, `WRITE`, `GIT`, `TEST`, `INDEX_UPDATE`).
+  - `allowedRepos`: explicit list of repo IDs and allowed operations (`READ`, `WRITE`, `GIT`,
+    `TEST`, `INDEX_UPDATE`).
   - `allowedNetworks`: which external services the orchestrator can call for this task.
   - `maxDiffSize`, `maxFileCount`, etc. for guardrails.
 
 - **Enforcement points:**
   - Tool adapter layer in `packages/orchestrator` checks capabilities before executing a tool.
   - Workflows can branch or fail early on insufficient capabilities.
-
 
 ## 10. Observability
 
@@ -448,7 +461,6 @@ Although not implemented in v1, the spec anticipates a capability-based model:
     - Metrics (e.g. run duration, tokens used, failure counts).
     - Structured logs and traces.
   - No direct dependency in v1 to keep the orchestrator focused.
-
 
 ## 11. Evals and Metrics (v1)
 
@@ -473,12 +485,12 @@ For each workflow run, capture at minimum:
   - Reconstruct runs.
   - Compare different versions of workflows/agents over the same tasks.
 
-
 ## 12. Extensibility and Future Work
 
 ### 12.1 TUI CLI (v2)
 
-- Provide a stable TypeScript API in `packages/orchestrator` that can be called by a future TUI, including:
+- Provide a stable TypeScript API in `packages/orchestrator` that can be called by a future TUI,
+  including:
   - Listing available workflows and their input schemas.
   - Triggering runs and streaming progress events.
   - Fetching run histories and artifacts.
@@ -491,7 +503,8 @@ For each workflow run, capture at minimum:
 
 - Because tools are framework-agnostic pure TS modules, a future LangGraph/Python backend can:
   - Call the same tools via MCP servers or HTTP wrappers.
-  - Recreate workflows conceptually as LangGraph graphs using the same step structure as in this spec.
+  - Recreate workflows conceptually as LangGraph graphs using the same step structure as in this
+    spec.
 
 ### 12.3 Additional Workflows
 
@@ -501,11 +514,10 @@ Potential future workflows (not required in v1):
 - `migration` – structured changes across multiple services/repos.
 - `bulkRefactor` – large-scale changes (e.g. library migrations) with extra safeguards.
 
-
 ## 13. Versioning and Governance
 
-- This spec is **v0.1** and should be versioned alongside the code in the repo (e.g. `SPEC_MASTRA_ORCHESTRATOR.md`).
+- This spec is **v0.1** and should be versioned alongside the code in the repo (e.g.
+  `SPEC_MASTRA_ORCHESTRATOR.md`).
 - Any incompatible changes to workflows, agents, or APIs must:
   - Bump the spec version.
   - Include a migration note for existing runs and any TUI/frontends.
-

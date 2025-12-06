@@ -1,6 +1,14 @@
-import { createConfig } from '@repo/eslint-config';
+import { config } from '@repo/eslint-config/base';
 
-export default createConfig({
-  name: 'tools-langgraph',
-  rules: {},
-});
+/** @type {import("eslint").Linter.Config[]} */
+export default [
+  ...config,
+  {
+    files: ['vitest.config.ts'],
+    languageOptions: {
+      parserOptions: {
+        allowDefaultProject: true,
+      },
+    },
+  },
+];

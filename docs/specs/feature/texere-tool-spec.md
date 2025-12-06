@@ -16,7 +16,8 @@ Design goals:
 3. **Minimal, mechanical adapters** per framework.
 4. **Extensible**: easy to add MCP/HTTP/Python adapters later without changing tool logic.
 
-The core idea: tools are defined once in a neutral `CoreTool<I, O, State>` format; Mastra and LangGraph.js receive thin wrappers that adapt environment and effects to their native semantics.
+The core idea: tools are defined once in a neutral `CoreTool<I, O, State>` format; Mastra and
+LangGraph.js receive thin wrappers that adapt environment and effects to their native semantics.
 
 ---
 
@@ -25,7 +26,8 @@ The core idea: tools are defined once in a neutral `CoreTool<I, O, State>` forma
 ### 1.1 Terminology
 
 - **Core tool**: Framework-independent definition (schemas, handler, metadata, effects).
-- **Env (environment)**: Framework-specific runtime data passed to handlers (e.g. tracing context, graph state, abort signals).
+- **Env (environment)**: Framework-specific runtime data passed to handlers (e.g. tracing context,
+  graph state, abort signals).
 - **Effects**: Side-channel outputs that can drive framework-specific features:
   - State updates (for LangGraph Commands).
   - UI/progress events (for streaming to clients via Mastra writer or LangGraph event bus).
@@ -46,9 +48,9 @@ This package defines the canonical tool spec and shared types.
 
 ```ts
 // packages/tools-core/src/types.ts
-import { z } from "zod";
+import { z } from 'zod';
 
-export type FrameworkKind = "mastra" | "langgraph";
+export type FrameworkKind = 'mastra' | 'langgraph';
 
 /**
  * Metadata that becomes the LLM-visible tool spec.
@@ -89,7 +91,7 @@ export interface ToolMeta<I, O> {
  * For Mastra, can be ignored or used for custom memory.
  */
 export interface StateUpdateEffect<S = unknown> {
-  kind: "state-update";
+  kind: 'state-update';
   patch: Partial<S>;
 }
 
@@ -99,7 +101,7 @@ export interface StateUpdateEffect<S = unknown> {
  * - LangGraph: can be logged, sent via event bus, or folded into state.
  */
 export interface UiEventEffect {
-  kind: "ui-event";
+  kind: 'ui-event';
   eventType: string; // e.g. "data-tool-progress", "indexing-status"
   payload: Record<string, unknown>;
 }
@@ -108,9 +110,7 @@ export interface UiEventEffect {
  * Union of supported effect types.
  * Extendable later if needed (e.g. metrics, audit events).
  */
-export type ToolEffect<S = unknown> =
-  | StateUpdateEffect<S>
-  | UiEventEffect;
+export type ToolEffect<S = unknown> = StateUpdateEffect<S> | UiEventEffect;
 
 /**
  * Normalized tool result (success or failure) with optional effects.
@@ -127,16 +127,14 @@ export interface ToolFailure<S = unknown> {
   effects?: ToolEffect<S>[];
 }
 
-export type ToolResult<O, S = unknown> =
-  | ToolSuccess<O, S>
-  | ToolFailure<S>;
+export type ToolResult<O, S = unknown> = ToolSuccess<O, S> | ToolFailure<S>;
 
 /**
  * Environment for Mastra-backed executions.
  * Mirrors Mastra's createTool execute(...) signature + streaming writer.
  */
 export interface MastraEnv {
-  framework: "mastra";
+  framework: 'mastra';
 
   /**
    * Mastra runtimeContext (shared DI, clients, db, etc.).
@@ -164,7 +162,7 @@ export interface MastraEnv {
  * Exposes graph state and a way to construct Commands.
  */
 export interface LangGraphEnv<State = unknown> {
-  framework: "langgraph";
+  framework: 'langgraph';
 
   /**
    * Current graph state (mirrors InjectedState in LangGraph Python).
@@ -188,9 +186,7 @@ export interface LangGraphEnv<State = unknown> {
  * Unified environment union.
  * Handlers must pattern-match on env.framework to use framework-specific parts.
  */
-export type ToolEnv<State = unknown> =
-  | MastraEnv
-  | LangGraphEnv<State>;
+export type ToolEnv<State = unknown> = MastraEnv | LangGraphEnv<State>;
 
 /**
  * Core, framework-independent tool definition.
@@ -203,10 +199,7 @@ export interface CoreTool<I, O, State = unknown> {
    * - Receives strongly-typed input and framework-specific env.
    * - Returns ToolResult plus optional effects.
    */
-  handler: (
-    input: I,
-    env: ToolEnv<State>,
-  ) => Promise<ToolResult<O, State>> | ToolResult<O, State>;
+  handler: (input: I, env: ToolEnv<State>) => Promise<ToolResult<O, State>> | ToolResult<O, State>;
 }
 ```
 
@@ -218,14 +211,9 @@ Domain-level example: stock lookup.
 
 ```ts
 // packages/tools-core/src/tools/getStockLevels.ts
-import { z } from "zod";
-import {
-  CoreTool,
-  ToolResult,
-  UiEventEffect,
-  StateUpdateEffect,
-  ToolEnv,
-} from "../types";
+import { z } from 'zod';
+
+import { CoreTool, StateUpdateEffect, ToolEnv, ToolResult, UiEventEffect } from '../types';
 
 type StockState = {
   lastStockLookup?: { sku: string; warehouseId: string };
@@ -246,48 +234,41 @@ export const getStockLevels: CoreTool<
   StockState
 > = {
   meta: {
-    id: "get_stock_levels",
-    description: "Get current stock levels for a SKU in one or all warehouses.",
+    id: 'get_stock_levels',
+    description: 'Get current stock levels for a SKU in one or all warehouses.',
     inputSchema: z.object({
-      sku: z.string().describe("Product SKU"),
-      warehouseId: z
-        .string()
-        .describe("Warehouse ID, or 'ALL' to query all warehouses"),
+      sku: z.string().describe('Product SKU'),
+      warehouseId: z.string().describe("Warehouse ID, or 'ALL' to query all warehouses"),
     }),
     outputSchema: z.object({
       total: z.number(),
       perLocation: z.record(z.number()),
     }),
-    tags: ["inventory", "read-only"],
-    displayName: "Get Stock Levels",
-    category: "inventory",
+    tags: ['inventory', 'read-only'],
+    displayName: 'Get Stock Levels',
+    category: 'inventory',
     isIdempotent: true,
   },
 
   async handler(
     input,
     env: ToolEnv<StockState>,
-  ): Promise<
-    ToolResult<
-      { total: number; perLocation: Record<string, number> },
-      StockState
-    >
-  > {
+  ): Promise<ToolResult<{ total: number; perLocation: Record<string, number> }, StockState>> {
     const { sku, warehouseId } = input;
 
     const startProgress: UiEventEffect = {
-      kind: "ui-event",
-      eventType: "data-tool-progress",
-      payload: { status: "pending", tool: "get_stock_levels", sku, warehouseId },
+      kind: 'ui-event',
+      eventType: 'data-tool-progress',
+      payload: { status: 'pending', tool: 'get_stock_levels', sku, warehouseId },
     };
 
     const stateUpdate: StateUpdateEffect<StockState> = {
-      kind: "state-update",
+      kind: 'state-update',
       patch: { lastStockLookup: { sku, warehouseId } },
     };
 
     // Optional: emit start progress immediately in Mastra
-    if (env.framework === "mastra" && env.writer) {
+    if (env.framework === 'mastra' && env.writer) {
       await env.writer.custom({
         type: startProgress.eventType,
         ...startProgress.payload,
@@ -299,11 +280,11 @@ export const getStockLevels: CoreTool<
     const total = Object.values(perLocation).reduce((a, b) => a + b, 0);
 
     const doneProgress: UiEventEffect = {
-      kind: "ui-event",
-      eventType: "data-tool-progress",
+      kind: 'ui-event',
+      eventType: 'data-tool-progress',
       payload: {
-        status: "success",
-        tool: "get_stock_levels",
+        status: 'success',
+        tool: 'get_stock_levels',
         sku,
         warehouseId,
         total,
@@ -321,29 +302,29 @@ export const getStockLevels: CoreTool<
 
 Notes:
 
-- The core implementation can use `env.framework` to branch if needed, but most tools **should not**—keep them neutral and let adapters handle effects.
+- The core implementation can use `env.framework` to branch if needed, but most tools **should
+  not**—keep them neutral and let adapters handle effects.
 - `StateUpdateEffect` will be meaningful to LangGraph (mapped to Commands) and optional for Mastra.
-- `UiEventEffect` is mapped into Mastra streaming; LangGraph can log or surface via its own channels.
+- `UiEventEffect` is mapped into Mastra streaming; LangGraph can log or surface via its own
+  channels.
 
 ---
 
 ## 4. Mastra Integration (`@repo/tools-mastra`)
 
-Mastra uses `createTool` with an `execute({ context, runtimeContext, tracingContext, abortSignal, writer })` signature. The adapter maps this into the `CoreTool` handler, and translates effects back into Mastra primitives.
+Mastra uses `createTool` with an
+`execute({ context, runtimeContext, tracingContext, abortSignal, writer })` signature. The adapter
+maps this into the `CoreTool` handler, and translates effects back into Mastra primitives.
 
 ### 4.1 Adapter
 
 ```ts
 // packages/tools-mastra/src/toMastraTool.ts
-import { createTool } from "@mastra/core/tools";
-import type { z } from "zod";
-import type {
-  CoreTool,
-  ToolEnv,
-  MastraEnv,
-  ToolResult,
-  ToolEffect,
-} from "@repo/tools-core";
+import type { z } from 'zod';
+
+import { createTool } from '@mastra/core/tools';
+
+import type { CoreTool, MastraEnv, ToolEffect, ToolEnv, ToolResult } from '@repo/tools-core';
 
 function applyMastraEffects<S>(
   effects: ToolEffect<S>[] | undefined,
@@ -355,7 +336,7 @@ function applyMastraEffects<S>(
 
   return (async () => {
     for (const effect of effects) {
-      if (effect.kind === "ui-event") {
+      if (effect.kind === 'ui-event') {
         await writer.custom({
           type: effect.eventType,
           ...effect.payload,
@@ -369,9 +350,7 @@ function applyMastraEffects<S>(
 /**
  * Convert a CoreTool into a Mastra createTool definition.
  */
-export function toMastraTool<I, O, S>(
-  core: CoreTool<I, O, S>,
-) {
+export function toMastraTool<I, O, S>(core: CoreTool<I, O, S>) {
   const { meta, handler } = core;
 
   return createTool({
@@ -395,7 +374,7 @@ export function toMastraTool<I, O, S>(
       writer?: { custom: (part: Record<string, unknown>) => Promise<void> };
     }): Promise<O> {
       const env: MastraEnv = {
-        framework: "mastra",
+        framework: 'mastra',
         runtimeContext,
         tracingContext,
         abortSignal,
@@ -406,10 +385,7 @@ export function toMastraTool<I, O, S>(
           : undefined,
       };
 
-      const result = (await handler(
-        context,
-        env as ToolEnv<S>,
-      )) as ToolResult<O, S>;
+      const result = (await handler(context, env as ToolEnv<S>)) as ToolResult<O, S>;
 
       // Apply effects (streaming, etc.) before returning data or throwing.
       await applyMastraEffects(result.effects, env);
@@ -457,22 +433,20 @@ This preserves:
 
 ## 5. LangGraph.js Integration (`@repo/tools-langgraph`)
 
-LangGraph.js builds on LangChain JS tools and `ToolNode`. The adapter wraps a `CoreTool` into a LangChain `tool()` and maps effects into LangGraph `Command` semantics for state-aware tools.
+LangGraph.js builds on LangChain JS tools and `ToolNode`. The adapter wraps a `CoreTool` into a
+LangChain `tool()` and maps effects into LangGraph `Command` semantics for state-aware tools.
 
 ### 5.1 Adapter
 
 ```ts
 // packages/tools-langgraph/src/toLangGraphTool.ts
-import { tool as lcTool } from "@langchain/core/tools";
-import { Command } from "@langchain/langgraph"; // adjust import per version
-import type { z } from "zod";
-import type {
-  CoreTool,
-  ToolEnv,
-  LangGraphEnv,
-  ToolResult,
-  ToolEffect,
-} from "@repo/tools-core";
+// adjust import per version
+import type { z } from 'zod';
+
+import { tool as lcTool } from '@langchain/core/tools';
+import { Command } from '@langchain/langgraph';
+
+import type { CoreTool, LangGraphEnv, ToolEffect, ToolEnv, ToolResult } from '@repo/tools-core';
 
 function applyLangGraphEffects<State>(
   effects: ToolEffect<State>[] | undefined,
@@ -483,7 +457,7 @@ function applyLangGraphEffects<State>(
   const commands: Array<Command<State, Record<string, unknown>, string>> = [];
 
   for (const effect of effects) {
-    if (effect.kind === "state-update") {
+    if (effect.kind === 'state-update') {
       // Primary mapping: state-update → Command(update=...)
       commands.push(
         new Command({
@@ -500,9 +474,7 @@ function applyLangGraphEffects<State>(
 /**
  * Convert a CoreTool into a LangChain JS tool usable in LangGraph.js.
  */
-export function toLangGraphTool<I, O, State>(
-  core: CoreTool<I, O, State>,
-) {
+export function toLangGraphTool<I, O, State>(core: CoreTool<I, O, State>) {
   const { meta, handler } = core;
 
   const lcWrapped = lcTool(
@@ -515,17 +487,13 @@ export function toLangGraphTool<I, O, State>(
       },
     ) => {
       const env: LangGraphEnv<State> = {
-        framework: "langgraph",
+        framework: 'langgraph',
         state: config?.state,
         signal: config?.signal,
-        makeCommand: (patch: Partial<State>) =>
-          new Command({ update: patch as State }),
+        makeCommand: (patch: Partial<State>) => new Command({ update: patch as State }),
       };
 
-      const result = (await handler(
-        input,
-        env as ToolEnv<State>,
-      )) as ToolResult<O, State>;
+      const result = (await handler(input, env as ToolEnv<State>)) as ToolResult<O, State>;
 
       const commands = applyLangGraphEffects(result.effects, env);
 
@@ -560,14 +528,14 @@ export function toLangGraphTool<I, O, State>(
 
 ```ts
 // packages/texere-langgraph/src/tools.ts
-import { toLangGraphTool } from "@repo/tools-langgraph";
-import { getStockLevels } from "@repo/tools-core/tools/getStockLevels";
+import { StateGraph } from '@langchain/langgraph';
+// In a LangGraph.js graph:
+import { ToolNode, toolsCondition } from '@langchain/langgraph/prebuilt';
+
+import { getStockLevels } from '@repo/tools-core/tools/getStockLevels';
+import { toLangGraphTool } from '@repo/tools-langgraph';
 
 export const getStockLevelsLg = toLangGraphTool(getStockLevels);
-
-// In a LangGraph.js graph:
-import { ToolNode, toolsCondition } from "@langchain/langgraph/prebuilt";
-import { StateGraph } from "@langchain/langgraph";
 
 type GraphState = {
   messages: any[];
@@ -576,17 +544,17 @@ type GraphState = {
 
 const builder = new StateGraph<GraphState>({
   channels: {
-    messages: { type: "list" },
-    lastStockLookup: { type: "value" },
+    messages: { type: 'list' },
+    lastStockLookup: { type: 'value' },
   },
 });
 
-builder.addNode("llm", llmNode);
-builder.addNode("tools", new ToolNode([getStockLevelsLg]));
+builder.addNode('llm', llmNode);
+builder.addNode('tools', new ToolNode([getStockLevelsLg]));
 
-builder.addConditionalEdges("llm", toolsCondition, {
-  tools: "tools",
-  __end__: "__end__",
+builder.addConditionalEdges('llm', toolsCondition, {
+  tools: 'tools',
+  __end__: '__end__',
 });
 
 const graph = builder.compile();
@@ -605,9 +573,11 @@ This preserves:
 
 If you need Python LangGraph but want tools implemented only in TS:
 
-1. Add an HTTP “tool host” app (Fastify/Express) in Node that imports `CoreTool`s and exposes them as endpoints:
+1. Add an HTTP “tool host” app (Fastify/Express) in Node that imports `CoreTool`s and exposes them
+   as endpoints:
    - `POST /tools/:id` → `{ input }` → `{ ok, data, error, effects }`.
-2. In Python LangGraph, define LangChain tools that call this HTTP host and map responses into data or Commands.
+2. In Python LangGraph, define LangChain tools that call this HTTP host and map responses into data
+   or Commands.
 
 This keeps tools single-source-of-truth in TS while Python orchestration remains a thin client.
 
@@ -619,22 +589,21 @@ This keeps tools single-source-of-truth in TS while Python orchestration remains
 
 ### 7.1 Unit testing tools
 
-Because `CoreTool` is just a TS object with a `handler`, you can test tools directly without any framework:
+Because `CoreTool` is just a TS object with a `handler`, you can test tools directly without any
+framework:
 
 ```ts
-import { getStockLevels } from "@repo/tools-core/tools/getStockLevels";
+import { getStockLevels } from '@repo/tools-core/tools/getStockLevels';
 
-test("TEMP SKUs respect warehouseId", async () => {
+test('TEMP SKUs respect warehouseId', async () => {
   const result = await getStockLevels.handler(
-    { sku: "TEMP-123", warehouseId: "EU-1" },
-    { framework: "mastra" }, // or { framework: "langgraph" }
+    { sku: 'TEMP-123', warehouseId: 'EU-1' },
+    { framework: 'mastra' }, // or { framework: "langgraph" }
   );
 
   expect(result.ok).toBe(true);
   if (result.ok) {
-    expect(
-      Object.keys(result.data.perLocation).every((w) => w === "EU-1"),
-    ).toBe(true);
+    expect(Object.keys(result.data.perLocation).every((w) => w === 'EU-1')).toBe(true);
   }
 });
 ```
@@ -643,9 +612,13 @@ You can also inject fake env (e.g. mock `writer.custom` or a fake state) to test
 
 ### 7.2 Framework-level observability
 
-- **Mastra**: tools are auto-traced when used in agents/workflows with Observability enabled. The adapter does not interfere with tracing or logging; errors and metadata flow through Mastra’s observability layer.
+- **Mastra**: tools are auto-traced when used in agents/workflows with Observability enabled. The
+  adapter does not interfere with tracing or logging; errors and metadata flow through Mastra’s
+  observability layer.
 
-- **LangGraph.js**: tools are traced via LangChain callbacks and any configured observability (LangSmith, Langfuse, OTEL). Returning Commands and updating state integrates with LangGraph’s standard patterns.
+- **LangGraph.js**: tools are traced via LangChain callbacks and any configured observability
+  (LangSmith, Langfuse, OTEL). Returning Commands and updating state integrates with LangGraph’s
+  standard patterns.
 
 No extra work is needed for observability beyond normal framework setup.
 
@@ -653,12 +626,15 @@ No extra work is needed for observability beyond normal framework setup.
 
 ## 8. Summary
 
-- All tool business logic, schemas, and metadata live in `@repo/tools-core` as `CoreTool<I, O, State>`.
+- All tool business logic, schemas, and metadata live in `@repo/tools-core` as
+  `CoreTool<I, O, State>`.
 - Mastra and LangGraph.js receive **thin, mechanical adapters** that preserve:
   - Mastra: `createTool`, runtime/tracing context, streaming writer, Studio integration.
   - LangGraph.js: LangChain tools, state-aware Commands, ToolNode, dynamic tool behavior.
 - Effects and env are the extensibility points:
   - Add more effect kinds or env fields as either framework evolves.
-  - Keep tool logic neutral; keep framework-specific behavior in adapters or env-driven branches when unavoidable.
+  - Keep tool logic neutral; keep framework-specific behavior in adapters or env-driven branches
+    when unavoidable.
 
-This spec gives you a TS-first, framework-agnostic tool layer that can be used in either Mastra or LangGraph.js without giving up any tool-related advantages of either framework.
+This spec gives you a TS-first, framework-agnostic tool layer that can be used in either Mastra or
+LangGraph.js without giving up any tool-related advantages of either framework.

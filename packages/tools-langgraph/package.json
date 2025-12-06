@@ -27,6 +27,15 @@
     "@repo/tools-core": "workspace:*",
     "zod": "^3.22.0"
   },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "24.10.1",
+    "@vitest/coverage-v8": "4.0.15",
+    "eslint": "9.39.1",
+    "typescript": "5.9.3",
+    "vitest": "4.0.15"
+  },
   "peerDependencies": {
     "@langchain/core": ">=0.1.0",
     "@langchain/langgraph": ">=0.0.1"
@@ -38,14 +47,5 @@
     "@langchain/langgraph": {
       "optional": false
     }
-  },
-  "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@types/node": "24.10.1",
-    "@vitest/coverage-v8": "4.0.15",
-    "eslint": "9.39.1",
-    "typescript": "5.9.3",
-    "vitest": "4.0.15"
   }
 }

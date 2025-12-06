@@ -27,14 +27,6 @@
     "@repo/tools-core": "workspace:*",
     "zod": "^3.22.0"
   },
-  "peerDependencies": {
-    "@mastra/core": ">=0.1.0"
-  },
-  "peerDependenciesMeta": {
-    "@mastra/core": {
-      "optional": false
-    }
-  },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
@@ -43,5 +35,13 @@
     "eslint": "9.39.1",
     "typescript": "5.9.3",
     "vitest": "4.0.15"
+  },
+  "peerDependencies": {
+    "@mastra/core": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@mastra/core": {
+      "optional": false
+    }
   }
 }

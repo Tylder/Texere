@@ -14,10 +14,10 @@ services:
     image: ollama/ollama:latest
     restart: unless-stopped
     ports:
-      - "11434:11434"
+      - '11434:11434'
     environment:
       OLLAMA_HOST: 0.0.0.0
-      OLLAMA_ORIGINS: "*"
+      OLLAMA_ORIGINS: '*'
       OLLAMA_KEEP_ALIVE: 24h
     volumes:
       - ollama_models:/root/.ollama

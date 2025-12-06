@@ -1,6 +1,7 @@
 # Tools LangGraph
 
-LangGraph.js adapter for CoreTool definitions. Converts framework-agnostic `CoreTool<I, O, State>` definitions into LangChain JS tools usable in LangGraph while supporting state-aware Commands.
+LangGraph.js adapter for CoreTool definitions. Converts framework-agnostic `CoreTool<I, O, State>`
+definitions into LangChain JS tools usable in LangGraph while supporting state-aware Commands.
 
 ## Overview
 
@@ -15,15 +16,17 @@ This adapter bridges `@repo/tools-core` and LangGraph.js by:
 ## Usage
 
 ```ts
-import { toLangGraphTool } from '@repo/tools-langgraph';
 import { myCoreTool } from '@repo/tools-core/tools/myTool';
+import { toLangGraphTool } from '@repo/tools-langgraph';
 
 // Convert CoreTool to LangGraph tool
 const lgVersion = toLangGraphTool(myCoreTool);
 
 // Use in LangGraph
 const builder = new StateGraph<MyState>({
-  channels: { /* ... */ },
+  channels: {
+    /* ... */
+  },
 });
 
 builder.addNode('tools', new ToolNode([lgVersion]));
@@ -39,6 +42,7 @@ export function toLangGraphTool<I, O, State>(
 ```
 
 Per spec §5: The adapter preserves:
+
 - Tool metadata (name, description, schema)
 - State-aware tool behavior via injected state
 - Command generation from StateUpdateEffect

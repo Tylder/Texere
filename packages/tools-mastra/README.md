@@ -1,12 +1,14 @@
 # Tools Mastra
 
-Mastra adapter for CoreTool definitions. Converts framework-agnostic `CoreTool<I, O, State>` definitions into Mastra-native `createTool` instances while preserving all Mastra capabilities.
+Mastra adapter for CoreTool definitions. Converts framework-agnostic `CoreTool<I, O, State>`
+definitions into Mastra-native `createTool` instances while preserving all Mastra capabilities.
 
 ## Overview
 
 This adapter bridges `@repo/tools-core` and Mastra by:
 
-- Mapping `CoreTool` handler to Mastra's `execute({ context, runtimeContext, tracingContext, abortSignal, writer })` signature
+- Mapping `CoreTool` handler to Mastra's
+  `execute({ context, runtimeContext, tracingContext, abortSignal, writer })` signature
 - Translating `ToolEffect`s (state updates, UI events) into Mastra streaming via `writer.custom()`
 - Preserving `runtimeContext` and `tracingContext` access for observability
 - Maintaining full type safety through Zod schemas
@@ -14,8 +16,8 @@ This adapter bridges `@repo/tools-core` and Mastra by:
 ## Usage
 
 ```ts
-import { toMastraTool } from '@repo/tools-mastra';
 import { myCoreTool } from '@repo/tools-core/tools/myTool';
+import { toMastraTool } from '@repo/tools-mastra';
 
 // Convert CoreTool to Mastra tool
 const mastraVersion = toMastraTool(myCoreTool);
@@ -33,12 +35,11 @@ const agent = new Agent({
 
 ```ts
 // Main export
-export function toMastraTool<I, O, S>(
-  core: CoreTool<I, O, S>
-): ReturnType<typeof createTool>;
+export function toMastraTool<I, O, S>(core: CoreTool<I, O, S>): ReturnType<typeof createTool>;
 ```
 
 Per spec §4: The adapter preserves:
+
 - Tool metadata (id, description, schemas, tags, displayName, category, hints)
 - Mastra observability (runtimeContext, tracingContext, tracing)
 - Streaming effects via writer.custom()
