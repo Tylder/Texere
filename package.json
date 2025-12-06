@@ -13,6 +13,7 @@
     "post:report": "pnpm run format && nx run-many --targets=lint,check-types,test:coverage,build --all --parallel && node scripts/aggregate-coverage.mjs",
     "prepare": "husky",
     "quality": "nx run-many --targets=format:check,lint,check-types,test,build --all --parallel",
+    "studio:dev": "langgraph dev",
     "test": "nx run-many --target=test --all --parallel",
     "test:coverage": "nx run-many --target=test:coverage --all --parallel && node scripts/aggregate-coverage.mjs",
     "typecheck": "nx run-many --target=check-types --all --parallel",
@@ -33,6 +34,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@langchain/langgraph-cli": "^0.0.37",
     "@nx/devkit": "22.1.3",
     "@nx/eslint": "^22.1.3",
     "@nx/eslint-plugin": "^22.1.3",
