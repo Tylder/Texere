@@ -10,10 +10,14 @@ import { specInterpreterAgent } from './agents/spec-interpreter.js';
  * Agents are registered here and exposed via Studio and REST API.
  *
  * Configuration:
- * - Model routing: Ollama (OLLAMA_BASE_URL, OLLAMA_MODEL env vars)
+ * - Model routing: Ollama (local container on localhost:11434)
  * - Server: Port 4111 (configurable via MASTRA_PORT)
+ * - Storage: In-memory for v0.1 (SQLite planned for v0.2)
+ *
+ * Reference: mastra_orchestrator_spec.md §2.3, §8.1, §5.2
  */
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mastra: Mastra = new Mastra({
   server: {
     port: parseInt(process.env.MASTRA_PORT || '4111'),

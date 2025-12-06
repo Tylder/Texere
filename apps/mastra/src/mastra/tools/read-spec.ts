@@ -1,33 +1,50 @@
+import { createTool } from '@mastra/core/tools';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { z } from 'zod';
 
 /**
- * Mock readSpec tool
- * In production, this would read from actual spec files
- * (mastra_orchestrator_spec.md §6)
+ * readSpec tool - Read specification files from filesystem
+ * (mastra_orchestrator_spec.md §6.2)
+ *
+ * v0.2: Real file reader with error handling
  */
-const readSpecToolSchema = z.object({
-  specPath: z.string().describe('Path or identifier for the spec document'),
+const readSpecToolInputSchema = z.object({
+  specPath: z.string().describe('Relative or absolute path to the spec document'),
 });
 
-export const readSpecTool = {
+const readSpecToolOutputSchema = z.object({
+  success: z.boolean(),
+  content: z.string(),
+  source: z.string(),
+  error: z.string().optional(),
+});
+
+export const readSpecTool = createTool({
   id: 'readSpec',
-  description:
-    'Read and return a normalized specification document. Mock implementation for skeleton.',
-  inputSchema: readSpecToolSchema,
-  execute: (input: { specPath: string }) => {
-    // Mock implementation: return a sample spec
-    return {
-      success: true,
-      content: `Mock Spec Content for: ${input.specPath}
-      
-Goal: Implement a simple feature
-Non-Goals: Complex integrations
-Constraints: Must be testable
-Acceptance Criteria:
-- Feature works as specified
-- Tests pass
-- No regressions`,
-      source: input.specPath,
-    };
+  description: 'Read a specification document from the filesystem and return its content.',
+  inputSchema: readSpecToolInputSchema,
+  outputSchema: readSpecToolOutputSchema,
+  execute: async ({ specPath }) => {
+
+    try {
+      // Support both relative (from repo root) and absolute paths
+      const fullPath = specPath.startsWith('/') ? specPath : resolve(process.cwd(), specPath);
+      const content = readFileSync(fullPath, 'utf-8');
+
+      return {
+        success: true,
+        content,
+        source: fullPath,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        success: false,
+        content: '',
+        source: specPath,
+        error: `Failed to read spec: ${errorMessage}`,
+      };
+    }
   },
-};
+});

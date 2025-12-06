@@ -5,13 +5,17 @@ import { readSpecTool } from '../tools/read-spec.js';
 /**
  * Spec Interpreter Agent (mastra_orchestrator_spec.md §4.2)
  *
+ * v0.1 Placeholder: Uses mock agent
  * Reads SPEC.md, AGENTS.md, tickets, and user prompts.
  * Outputs a normalized, structured TaskSpec including:
  * - Goals, non-goals
  * - Constraints and assumptions
  * - Explicit acceptance criteria
  * - Affected modules / domains
+ *
+ * TODO v0.2: Real Ollama integration (waiting for Mastra 1.0 stable)
  */
+
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 export const specInterpreterAgent = new Agent({
   id: 'spec-interpreter',
@@ -35,9 +39,7 @@ Be precise and structured. Return JSON only.`,
   tools: {
     readSpec: readSpecTool,
   },
-  // Model required by Agent API - placeholder for v0.1
-  // In production, use Mastra's multi-provider routing with Ollama
-  // Using simplified ID format for Mastra v1 beta
-  model: 'openai/gpt-4',
+  // Placeholder model - real Ollama wired in v0.2
+  model: 'openai/gpt-4o-mini',
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }) as any;
