@@ -6,6 +6,8 @@ export default defineConfig({
     environment: 'node',
     setupFiles: './vitest.setup.ts',
     passWithNoTests: true,
+    // Include test blocks in source files (colocated pattern per testing_specification §3.1)
+    include: ['src/**/*.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

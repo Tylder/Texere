@@ -23,7 +23,11 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@ai-sdk/openai": "^2.0.77",
+    "@mastra/core": "^0.24.6",
+    "zod": "^3.23.8"
+  },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
