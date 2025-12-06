@@ -36,10 +36,13 @@
 - Use `langfuse.openai` wrapper in Texere for automatic tracing; respects `OPENAI_API_BASE` and `OPENAI_API_KEY`.
 - Prompt Playground uses the connection to experiment with prompts and switch models without code changes.
 
-## 5. Local Model Server Options
-- **vLLM** (recommended): `vllm serve <model> --quantization gptq --host 0.0.0.0 --port 8000 --gpu-memory-utilization 0.85 --api-key <MODEL_KEY>`.
-- **Ollama with OpenAI API**: `OLLAMA_HOST=0.0.0.0:11434` and enable OpenAI compatibility; expose via reverse proxy to `/v1`.
-- Any provider exposing OpenAI-compatible endpoints (RunPod/Vast/Salad/Hyperbolic) can be swapped by env.
+## 5. Local Model Server / Routing Options
+
+- **Single-model (simplest):** vLLM serves one model per instance/port. Change model by restarting vLLM with a new `--model` (or run multiple instances behind a router).
+- **Multi-model runtime switch (works with Langfuse dropdown):**
+  - **Ollama**: Pull multiple models; its OpenAI-compatible API loads/dispatches by the `model` field at request time.
+  - **Router (LiteLLM / Portkey / OpenAI-compatible proxy):** Front a set of backends (multiple vLLM instances or cloud endpoints). The router accepts `model` and forwards to the matching backend.
+- **Cloud/remote GPUs:** Any OpenAI-compatible host (RunPod, Vast, Salad, Hyperbolic, Northflank, etc.) can be added to the router model map.
 
 ## 6. Testing & Validation
 - Smoke test: `curl $MODEL_ENDPOINT/models -H "Authorization: Bearer $MODEL_KEY"` should list `MODEL_NAME`.

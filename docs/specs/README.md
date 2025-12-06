@@ -163,6 +163,7 @@ Support for retries with exponential backoff, checkpoints, and human-in-the-loop
 | `security_policy_spec.md` | v0 | Placeholder | Security, Ops | Auth, authz, policy |
 | `engineering/testing_strategy.md` | 1.0 | Active | All | Testing philosophy, tools, patterns |
 | `engineering/testing_specification.md` | 1.0 | Active | All | pytest setup, fixtures, coverage |
+| `system/local_llm_integration_spec.md` | v0.1 | Draft | Backend, Ops | OpenAI-compatible endpoints, model switching, Langfuse tagging |
 
 **Cite as:** §8
 
