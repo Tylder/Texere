@@ -1,97 +1,69 @@
-###############################################
-# Texere / Python — .gitignore (clean layout) #
-###############################################
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-## Python caches & bytecode
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
+# Dependencies
+node_modules
+.pnp
+.pnp.js
 
-## Virtual environments
-.venv/
-venv/
-ENV/
-env/
-__pypackages__/
-pip-wheel-metadata/
-
-## Build artifacts
-build/
-dist/
-site/
-*.egg-info/
-.eggs/
-
-## Testing & coverage
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-coverage.xml
-
-## Type checking
-.mypy_cache/
-.pytype/
-.pyre/
-.dmypy.json
-.pyrightcache/
-
-## Linters & tooling caches
-.ruff_cache/
-.cache/
-
-## LangGraph
-.langgraph_api/
-
-## Tox / Nox / Hypothesis / Benchmarks
-.tox/
-.nox/
-.hypothesis/
-.benchmarks/
-
-## Hatch / UV / Lock files
-.uv/
-# If you choose to commit locks, remove this line:
-requirements.lock
-
-## Jupyter
-.ipynb_checkpoints
-
-## Editors / IDE
-.vscode/
-.idea/
-.amp/
-*.swp
-*.swo
-
-## OS files
-.DS_Store
-Thumbs.db
-
-## Env / Config
+# Local env files
 .env
-.env.*
-!.env.example
-*.local
-.envrc
-.direnv/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-## Logs & project artifacts
-logs/
-*.log
-.texere/
+# Testing
+coverage
+playwright-report/
+.playwright/
+test-results/
 
-## Docker / Runtime
-docker-compose.override.yml
-tmp/
-*.pid
+# Nx
+.nx/cache
+.nx/workspace-data
+.nx/installation
 
-## Node (optional)
-node_modules/
+# Vercel
+.vercel
+
+# Build Outputs
+.next/
+out/
+build
+dist
+next-env.d.ts
+*.tsbuildinfo
+
+
+# Debug
 npm-debug.log*
+yarn-debug.log*
 yarn-error.log*
 
-## Data
-data/
-*.sqlite3
+# Misc
+.DS_Store
+*.pem
+/.idea/
+/.husky/_/
+/.cache/
+.pnpm-store
+.pnpm
+.vscode
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+# Moved to component-sources
+/site_build/lq_ai_studio/
+
+# Component source artifacts (use per-project .gitignore instead)
+/component-sources/**/node_modules/
+/component-sources/**/.env.local
+/component-sources/**/dist/
+/component-sources/**/.next/
+/component-sources/**/build/
+/component-sources/**/.vite/
+
+**/screenshots/
+
+/logs/
+
+vitest.config.*.timestamp*

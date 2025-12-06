@@ -1,7 +1,0 @@
-{
-  "graphs": {
-    "texere": "texere.orchestration.graph:create_workflow_graph"
-  },
-  "dependencies": ["requirements-lock.txt"],
-  "env": ".env"
-}

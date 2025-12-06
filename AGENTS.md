@@ -1,197 +1,218 @@
-# Texere Agent Guidelines
+# Repository Guide for LLM Agents
 
-Ground truth for agent behavior, code modification protocols, and project conventions.
+## Read First
 
-## 🚨 CRITICAL REQUIREMENTS (MANDATORY)
+- Start with `README.md` for setup, commands, and repo layout.
+- Specs entrypoint: `docs/specs/README.md` (LLM-first high-level spec + index).
+  `docs/specs/high_level_spec.md` is only a stub for legacy links.
 
-### **Code Modification Protocol**
+## Development Workflow (fast feedback)
 
-**⚠️ VIOLATION CONSEQUENCES: Any code modification without following this protocol will be rejected.**
+- **NEVER attempt to run, start, stop, or restart servers or watchers.** Ask the user to manage
+  them.
+- User runs two watchers in separate terminals for feature work:
+  - `pnpm dev:log` – runtime + tests; writes filtered logs to `logs/dev.log`.
+  - `pnpm typecheck:watch:log` – type checking; writes filtered logs to `logs/typecheck.log`.
+- **If `logs/dev.log` exists, the `dev:log` watcher is running.** If missing, ask the user to run
+  `pnpm dev:log`.
+- **If `logs/typecheck.log` exists, the `typecheck:watch:log` watcher is running.** If missing, ask
+  the user to run `pnpm typecheck:watch:log`.
+- Note: These log files are automatically deleted when their respective scripts are closed.
+- Console shows full output; filtered logs remove noisy warnings/ANSI for agent use only.
+- While watchers run:
+  1. Read relevant specs first; if unclear, ask numbered questions with lettered options (A
+     recommended).
+  2. Plan steps citing spec sections.
+  3. Implement in small, deterministic units; fix issues surfaced in `logs/*.log`.
+  4. Add tests that reference the governing spec section in their descriptions.
+- Before handing off, run `pnpm post:report` (format:staged → lint → typecheck → test:coverage →
+  build). and fix any issues reported.
 
-After **ANY** prompt that modifies, creates, or deletes code:
+## Working Style
 
-1. **IMMEDIATELY** run `make format` to format all code
-2. **IMMEDIATELY** run `make lint` to check for linting errors
-3. **FIX** any linting errors reported
-4. **RUN** `make test` to verify tests still pass
-5. **INCLUDE** complete validation results in response
-6. **REPORT** any failures with specific error details
-7. **NEVER** respond to user without validation confirmation
+- Prefer workspace-scoped installs: `pnpm --filter <package> add <dep>`.
+- Import shared code via aliases like `@repo/ui`.
+- Keep code, specs, and docs in sync; update `README.md` when workflows change.
+- Add new env vars to `.env.example`; never commit secrets.
 
-### **Validation Commands (in order)**
+## Testing
 
-```bash
-# Activate venv first (if not already active)
-source venv/bin/activate
+**CRITICAL: Always consult testing specs when writing or editing tests.**
 
-# 1. Format code (auto-fixes most style issues)
-make format
+- **Testing Strategy** (`docs/specs/engineering/testing_strategy.md`): High-level philosophy,
+  testing trophy distribution (§2.2), what to test by level (§4.1–4.4)
+- **Testing Specification** (`docs/specs/engineering/testing_specification.md`): Detailed setup,
+  colocated patterns (§3.1), vitest config (§3.2–3.5), coverage targets (§7.1–7.2)
+- **Distribution targets**: Unit 60-75% (§2.2.1), Integration 15-25% (§2.2.2), E2E 5-10% (§2.2.3)
+- **Test placement**: Colocated `*.test.tsx` in same directory as source (§3.1.1), NOT `__tests__/`
+  folders
+- **Test structure**: Reference spec section in test description (e.g.,
+  `describe('Button (testing_specification §3.6.1)', () => ...)`)
+- Vitest with globals + jsdom; React Testing Library for components; Playwright for E2E
+- For new packages, wire `test` and `test:coverage` scripts so Nx can fan out
 
-# 2. Lint code (identifies remaining issues)
-make lint
+## Git Hooks
 
-# 3. Run tests
-make test
+- Husky pre-commit runs `pnpm format:staged`; keep it fast and non-interactive.
 
-# OR run all three at once
-make check
+## Spec Discipline
+
+- Specs are authoritative. If code and spec diverge, change code (or update spec only if
+  instructed).
+- Spec-first workflow: read spec → plan → implement → test referencing spec sections.
+- Cite sources in specs and code comments where helpful for verification.
+- For concept overview: see `docs/specs/README.md` (high-level spec + role-based reading orders);
+  for implementation: domain specs in `docs/specs/{system,engineering,meta}/`.
+- **When writing or editing tests**: ALWAYS read `testing_strategy.md` (§2.2–§4.4) and
+  `testing_specification.md` (§3–§7) first. Cite distribution targets and structure in test
+  descriptions.
+
+## Local Development Site Access (Docker/MCP)
+
+- The site runs on `localhost:3000` in WSL2.
+- When accessing from within Docker containers (e.g., Playwright MCP), use
+  `http://host.docker.internal:3000/` instead of `localhost:3000`.
+- This resolves to the WSL2 host from inside the container's network namespace.
+
+### Taking Screenshots
+
+- Use Playwright MCP to navigate and screenshot the running site.
+- Screenshots save to `/tmp/playwright-output/` (Playwright's restricted output directory).
+- Copy screenshots to repo root with:
+  `cp /tmp/playwright-output/<filename>.png <repo-root>/<filename>.png`
+- Or use Bash to copy directly after taking the screenshot.
+
+## Code Search Tools Guide
+
+### Semantic Search (`mcp__code_search__search_code`)
+
+**When to use:** For conceptual or functional searches when exact code patterns are unknown.
+
+**Examples:**
+
+- "How does authentication work?" → search for `authentication` concepts
+- "Where is the referral tracking logic?" → find code related to `referral tracking`
+- "Find all places we handle theme switching" → search `theme switching implementation`
+
+**Usage:**
+
+- Minimal: `search_code("authentication")`
+- Full: `search_code("authentication", k=10, file_pattern="**/*.ts", enrich_context=true)`
+- Parameters:
+  - `query`: Natural-language description (required)
+  - `k`: Number of results (default: 5; max useful ~20)
+  - `file_pattern`: Restrict to file types (e.g., `**/*.ts`, `apps/web/**/*.tsx`)
+  - `enrich_context`: Include surrounding code context (default: true; set false for 10x speed if
+    context not needed)
+  - `search_mode`: `"auto"` (default) or `"keyword"`
+
+**Returns:** Ranked results with file paths, line numbers, similarity scores, and code snippets.
+
+### Grep (`Grep`)
+
+**When to use:** For exact text matches, specific function/variable names, or regex patterns.
+
+**Examples:**
+
+- Find all calls to `handleAuth()` → `Grep("handleAuth")`
+- Find error handling in TypeScript files → `Grep("throw new", glob="**/*.ts")`
+- Find TODO comments in a specific directory → `Grep("TODO:", path="src/components")`
+
+**Usage:**
+
+- Exact string: `Grep("functionName", literal=true)`
+- Regex pattern: `Grep("ERROR:\\s+\\w+", caseSensitive=true)`
+- Scoped search: `Grep("export interface", path="src/types")`
+
+**Parameters:**
+
+- `pattern`: Regex or literal string (required)
+- `path` or `glob`: Narrow search scope (use one or the other)
+- `literal`: Treat pattern as exact string (default: false)
+- `caseSensitive`: Case-sensitive match (default: false)
+
+**Returns:** Up to 100 matches across files; results grouped by file with line numbers.
+
+### Finder (`finder`)
+
+**When to use:** For multi-step searches requiring semantic understanding across multiple areas.
+
+**Examples:**
+
+- "Find every place we validate JWT authentication headers"
+- "Where do we handle file-watcher retry logic?"
+- "Find all API error response builders"
+
+**Usage:**
+
+- Define precise engineering question with concrete artifacts/patterns
+- Agent searches multiple areas and correlates results
+- `finder("Find every place we build an HTTP error response")`
+
+**Parameters:**
+
+- `query`: Precise engineering request (not vague exploration)
+
+**Decision Tree:**
+
+```
+Search task?
+├─ Know exact file/function name?
+│  └─ Use Grep (fast, literal match)
+├─ Know exact code pattern (regex)?
+│  └─ Use Grep with regex
+├─ Need to understand functionality/behavior?
+│  └─ Use Semantic Search (search_code)
+└─ Need to correlate multiple code areas?
+   └─ Use Finder (multi-step, semantic)
 ```
 
-**All three must pass before responding to the user.**
+### Playwright MCP (`mcp__playwright__*`)
 
-### **Make Targets Available**
+**When to use:** To interact with the running web app (navigate, click, fill forms, take
+screenshots).
 
-```bash
-make install        # Install dev dependencies + setup pre-commit hooks
-make format         # Format code with Black + Ruff
-make lint           # Check linting with Ruff + type checking with mypy
-make test           # Run pytest
-make test-watch     # Run pytest in watch mode
-make test-coverage  # Run pytest with coverage report
-make check          # Run lint + test (all checks)
-```
+**Prerequisites:**
 
----
+1. Site must be running on `localhost:3000` (or `http://host.docker.internal:3000/` in Docker)
+2. Use `http://host.docker.internal:3000/` when inside Docker containers (Playwright MCP)
+3. Use `localhost:3000` when running locally
 
-## Code Quality Tools
+**Common Tasks:**
 
-- **Black** — Code formatter (opinionated, enforces consistency)
-- **Ruff** — Fast linter (replaces flake8, pylint, isort, etc.)
-- **mypy** — Static type checker (enforces type hints)
-- **pytest** — Test runner
+| Task                 | Method                     | Example                                                     |
+| -------------------- | -------------------------- | ----------------------------------------------------------- |
+| Navigate to page     | `browser_navigate`         | `navigate("http://host.docker.internal:3000/contact")`      |
+| Take screenshot      | `browser_take_screenshot`  | Capture current viewport or full page                       |
+| Click element        | `browser_click`            | Click button, link, or interactive element                  |
+| Fill form            | `browser_fill_form`        | Set field values before submission                          |
+| Hover element        | `browser_hover`            | Trigger hover states or tooltips                            |
+| Take snapshot        | `browser_snapshot`         | Accessibility snapshot (better than screenshot for actions) |
+| Wait for text        | `browser_wait_for`         | Wait for content to appear or disappear                     |
+| Drag & drop          | `browser_drag`             | Drag between two elements                                   |
+| Select option        | `browser_select_option`    | Choose from dropdowns                                       |
+| Type text            | `browser_type`             | Type into input with optional slow typing for handlers      |
+| Press key            | `browser_press_key`        | Keyboard actions (Enter, Escape, ArrowDown, etc.)           |
+| Get console messages | `browser_console_messages` | Debug console errors or logs                                |
+| Get network requests | `browser_network_requests` | Inspect XHR/fetch calls                                     |
+| Handle dialog        | `browser_handle_dialog`    | Accept/reject alerts, confirms, prompts                     |
 
-**Configuration:** All tools configured in `pyproject.toml`
-
----
-
-## Communication Style
-
-- **Concise:** One-word answers when possible; avoid unnecessary explanation.
-- **Direct:** Answer the user's specific question without preamble or summary.
-- **Professional:** No emojis; minimal exclamation points.
-- **No flattery:** Skip positive adjectives; respond directly to the request.
-
-## Server & Process Management
-
-- **DO NOT start/stop servers** — assume LangGraph dev server is already running
-- **DO NOT run long-lived processes** — use Bash for one-off commands only
-- **USE Playwright MCP tools** for UI testing (browser_navigate, browser_snapshot, browser_click, etc.)
-- **Playwright runs in Docker** — use `http://host.docker.internal:2024` (not localhost or 127.0.0.1)
-- LangGraph API is at `http://host.docker.internal:2024/docs` for docs, etc.
-
-## Planning vs. Implementation
-
-- **Plan requests:** Provide discussion/analysis only. Require explicit approval before any code modifications.
-- **Implicit requests:** Proceed with implementation and validation.
-
-## Decision Points (Require User Approval)
-
-Ask before making decisions about:
-
-- Project quality standards and validation requirements
-- Configuration changes affecting the entire codebase
-- Architecture decisions affecting the entire codebase
-- Changes to coding conventions or style guides
-- Modifications to development workflows or processes
-- Any change establishing new project standards
-
----
-
-## Code Style & Architecture
-
-### **LangGraph v1.0+ Compliance**
-
-- Follow LangGraph v1.0+ patterns and APIs
-- Use built-in savers (`SqliteSaver`, `AsyncPostgresSaver`) instead of custom checkpointers
-- Factory functions must accept optional `RunnableConfig` parameter for CLI/Studio compatibility
-- Return types must be properly typed (`CompiledStateGraph[YourState]`)
-- Validate against latest LangGraph documentation before implementing
-- Check CODE_REVIEW_LANGGRAPH.md for known issues and patterns
-
-### **Tests are Mandatory**
-
-- **Every code change must have corresponding tests**
-- New functions require unit tests
-- New features require integration tests
-- All tests must pass before code is committed
-
-### **Prefer Pure Functions**
-
-- Keep functions **pure** (no side effects, deterministic)
-- Avoid global state and mutable dependencies
-- Pure functions are easier to test and reason about
-- Inject dependencies as parameters
-
-### **Code Containment**
-
-- Keep functions **small and focused** (single responsibility)
-- Avoid deeply nested logic; prefer early returns
-- Minimize coupling between modules
-- Use clear, descriptive names
-- Document non-obvious behavior
-
-### **Example: Good vs. Bad**
-
-**❌ Bad: Impure, hard to test**
-```python
-db = {}  # Global state
-
-def process_request(user_id: int):
-    db[user_id] = compute_something()  # Side effect
-    return db[user_id]
-```
-
-**✅ Good: Pure, testable**
-```python
-def process_request(user_id: int, store: dict[int, Any]) -> Any:
-    result = compute_something()
-    return result  # Caller handles storage
-```
-
----
-
-## Project Structure
+**Usage Pattern:**
 
 ```
-Texere/
-├── src/texere/                    # Main source code
-│   ├── orchestration/
-│   │   ├── state.py              # WorkflowState definition
-│   │   └── graph.py              # LangGraph implementation
-├── tests/                         # Test suite
-│   ├── test_workflow_state.py
-│   ├── test_graph_compilation.py
-│   └── test_checkpoint_persistence.py
-├── docs/
-│   └── specs/                     # Architecture specifications
-├── pyproject.toml                # Project configuration + tool settings
-├── Makefile                       # Development commands
-├── .pre-commit-config.yaml       # Git hooks configuration
-├── .github/workflows/lint.yml    # CI/CD linting workflow
-└── README.md                      # Setup & development guide
+1. Use browser_snapshot() to see current page state
+2. Identify element using accessibility labels or ref from snapshot
+3. Perform action (click, fill, type, etc.)
+4. Take screenshot or snapshot to verify result
+5. Repeat until test/verification complete
 ```
 
-## Glossary (Texere-specific)
+**Key Points:**
 
-- **Orchestration Core:** Python + LangGraph service executing workflows
-- **Thread:** Long-lived context tied to user, repo, or project
-- **Run:** Individual workflow execution on a thread
-- **Async Transport:** Streaming mechanism (SSE/WebSockets) for client–server communication
-- **TS Client Library:** Shared TypeScript library for all frontends
-- **Tool:** Internal service invoked by core (code search, AST, test runner, VCS)
-
----
-
-## Specifications
-
-**Always refer to specifications for architecture decisions and design patterns:**
-
-- [Spec Index](docs/specs/README.md) — Entry point for all architecture specs
-- [High-Level Architecture Spec](docs/specs/system/high_level_architecture_spec.md) — System overview and components
-- Implementation specs in `docs/specs/` for detailed design decisions
-
-## Notes
-
-- Code that violates pure function principles or lacks tests will be rejected
-- CI/CD enforces format, lint, and test requirements—local validation is your responsibility
-- Use `.github/workflows/lint.yml` as reference for what CI will check
+- Always use `http://host.docker.internal:3000/` inside Docker (not `localhost:3000`)
+- Screenshots save to `/tmp/playwright-output/` (container-restricted directory)
+- Copy screenshots to repo with:
+  `cp /tmp/playwright-output/<filename>.png <repo-root>/<filename>.png`
+- Use `browser_snapshot()` for interaction planning (accessibility-aware); use
+  `browser_take_screenshot()` for visual verification
+- Element refs from snapshot are exact; use them in actions for reliability

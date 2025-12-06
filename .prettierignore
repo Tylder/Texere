@@ -1,0 +1,31 @@
+# Dependencies
+node_modules
+.pnpm
+.pnpm-store
+pnpm-lock.yaml
+
+# Nx / build caches
+.nx
+.next
+dist
+build
+out
+coverage
+
+# Auto-generated files
+**/next-env.d.ts
+**/.eslintignore
+
+# Logs & misc
+logs
+.cache
+.husky/_/
+.vercel
+.idea
+.vscode
+
+# Component sources (external projects, not subject to repo formatting)
+component-sources
+
+/.nx/cache
+/.nx/workspace-data

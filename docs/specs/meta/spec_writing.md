@@ -44,10 +44,7 @@ and PRs. This guide is **especially written for LLM agents**—see § 9–11 for
 6. **Behavior / Requirements**: numbered clauses; include tables for routes, state, data shapes.
 7. **Non-Functional**: performance, accessibility, security, observability targets (quantified).
 8. **Edge Cases & Errors**: expected failures, error codes, recovery paths.
-9. **References**: split into:
-    - **External Documentation**: Links to authoritative sources (official docs, RFCs, best practices) for all external
-      technologies mentioned.
-    - **Internal Documentation**: Links to other specs and the high-level spec sections with brief descriptions.
+9. **Dependencies & Cross-Refs**: links to other specs and the high-level spec sections.
 10. **Testing Guidance**: how to validate; required test types; cite relevant sections.
 11. **Changelog**: date, editor, version, summary of changes.
 
@@ -55,11 +52,8 @@ and PRs. This guide is **especially written for LLM agents**—see § 9–11 for
 
 - **High-level spec duties**: maintain a table listing every spec file, primary audience, and key
   sections for quick lookup. Update it whenever a new spec is added or renamed.
-- **Per-spec duties**: include a "References" section (not "Dependencies & References") that is split into:
-    - **External Documentation**: Links to authoritative sources (official docs, RFCs, best practices)
-    - **Internal Documentation**: Links back to the high-level spec and any sibling specs with descriptions
-- **Always cite external docs**: Every claim about external technologies (LangGraph, RAG, databases) must link to the
-  latest official documentation.
+- **Per-spec duties**: include a "Dependencies & References" section linking back to the high-level
+  spec and any sibling specs (e.g., UI spec pointing to API spec routes).
 - **Section citations**: use `spec_file §number` (e.g., `backend.md §5.2`) in tests, PRs, and code
   comments when enforcing behavior.
 
@@ -80,9 +74,7 @@ and PRs. This guide is **especially written for LLM agents**—see § 9–11 for
 - [ ] Spec exists/updated before coding.
 - [ ] Scope and out-of-scope stated.
 - [ ] Sections numbered; quick navigation present.
-- [ ] References section added with External Documentation and Internal Documentation subsections.
-- [ ] All external technology claims link to official docs (latest versions).
-- [ ] Internal cross-refs added (back to high-level spec + related specs with descriptions).
+- [ ] Cross-refs added (back to high-level spec + related specs).
 - [ ] Tables for any routes/data/acceptance criteria.
 - [ ] Changelog entry with explicit date + version number.
 - [ ] All requirements are numbered or table-sourced (citable).
@@ -93,8 +85,6 @@ and PRs. This guide is **especially written for LLM agents**—see § 9–11 for
 
 - [ ] Requirements are testable and cite section numbers.
 - [ ] No contradictions with other specs; cross-refs present.
-- [ ] References section has both External Documentation and Internal Documentation.
-- [ ] All external technology references link to official/latest documentation.
 - [ ] Terminology matches glossary.
 - [ ] Open questions are labeled TBD with owners.
 - [ ] Changelog format is explicit: `| YYYY-MM-DD | x.y | @editor | actionable summary |`
@@ -285,7 +275,7 @@ Strengths agents should emulate:
 - [3. Requirements](#3-requirements)
 - [4. Non-Functional](#4-non-functional)
 - [5. Edge Cases & Errors](#5-edge-cases--errors)
-- [6. References](#6-references)
+- [6. Dependencies & References](#6-dependencies--references)
 - [7. Testing Guidance](#7-testing-guidance)
 - [8. Changelog](#8-changelog)
 
@@ -337,18 +327,10 @@ When: Invalid credentials
 Response: `{ error: "auth_fail", message: "..." }` (HTTP 401)  
 Recovery: User can retry; see §3.1.3 rate limit
 
-## 6. References
+## 6. Dependencies & References
 
-### External Documentation
-
-- **OAuth 2.0**: https://oauth.net/2/
-- **JWT**: https://jwt.io/
-- **Related RFC/Standards**: [link]
-
-### Internal Documentation
-
-- [Related spec name](../sibling_spec.md) — Brief description of relationship and what to cross-reference
-- [High-level spec](../../README.md) — System overview
+- Related spec: [../sibling_spec.md §x.y]
+- High-level spec: [../../README.md §y]
 
 ## 7. Testing Guidance
 

@@ -1,24 +1,24 @@
-# Testing Specification (Python)
+# Testing Specification
 
-**Document Version:** 1.0  
-**Last Updated:** December 2025  
+**Document Version:** 1.2  
+**Last Updated:** December 2, 2025  
 **Status:** Active  
-**Relationship:** Implementation spec; pairs with [testing_strategy.md](./testing_strategy.md) (philosophy)
+**Relationship:** Implementation spec; pairs with [testing_strategy.md](./testing_strategy.md)
+(philosophy)
 
 ## Quick Navigation
 
 - [1. Scope](#1-scope)
 - [2. Overview & Framework Assignment](#2-overview--framework-assignment)
-- [3. Unit & Integration Testing](#3-unit--integration-testing)
-- [4. Fixtures & Setup](#4-fixtures--setup)
-- [5. Test Organization](#5-test-organization)
+- [3. Unit & Component Testing](#3-unit--component-testing)
+- [4. E2E Testing](#4-e2e-testing)
+- [5. Feature-Based Testing Strategy](#5-feature-based-testing-strategy)
 - [6. Commands & Workflows](#6-commands--workflows)
 - [7. Coverage & Quality Gates](#7-coverage--quality-gates)
 - [8. Anti-Patterns & Forbidden Practices](#8-anti-patterns--forbidden-practices)
-- [9. Async Testing](#9-async-testing)
-- [10. Spec Discipline](#10-spec-discipline)
-- [11. References](#11-references)
-- [12. Changelog](#12-changelog)
+- [9. Spec Discipline](#9-spec-discipline)
+- [10. Dependencies & References](#10-dependencies--references)
+- [11. Changelog](#11-changelog)
 
 ---
 
@@ -29,23 +29,27 @@
 
 **In Scope:**
 
-- Unit testing setup (pytest + pytest-asyncio)
-- Integration testing patterns
-- Fixture organization and best practices
-- Test file naming and colocated patterns
-- Configuration details (pyproject.toml, pytest.ini)
-- Coverage targets (line, branch, function)
+- Unit testing setup (Vitest + React Testing Library)
+- Component testing (colocated `.test.tsx` pattern)
+- E2E testing (Playwright browser automation)
+- Integration testing (multi-component scenarios)
+- Test organization (folder structure, naming conventions)
+- Configuration details (per-project vitest.config.ts, playwright.config.ts)
+- Coverage targets (lines, functions, branches, statements)
 - CI/CD quality gates (lint, typecheck, test, build)
-- Mock and patch patterns (unittest.mock)
-- Async/await testing with pytest-asyncio
+- Nx monorepo test orchestration
+- Next.js app and client component testing
+- Mock Service Worker (MSW) for API mocking
 - Code examples and patterns for each test type
 
 **Out of Scope:**
 
 - Testing philosophy and "why" (covered in [testing_strategy.md](./testing_strategy.md))
-- Performance profiling tools
+- Storybook component documentation (separate workflow)
+- Performance profiling tools (covered in [perf_accessibility.md](../system/perf_accessibility.md))
+- Server-side testing frameworks beyond Next.js routes
 - Load testing or stress testing infrastructure
-- Integration testing with external APIs (covered in testing_strategy.md)
+- Mobile app testing (web-only scope)
 
 ---
 
@@ -58,373 +62,514 @@ This specification focuses on implementation details. Key targets from strategy:
 
 - **Unit Tests:** 60-75% of test suite (§ testing_strategy.md §2.2)
 - **Integration Tests:** 15-25% of test suite (§ testing_strategy.md §2.2)
-- **End-to-End Tests:** 5-10% of test suite (§ testing_strategy.md §2.2)
-- **Overall Coverage:** 70-80% lines (§7.1 below)
+- **E2E Tests:** 5-10% of test suite (§ testing_strategy.md §2.2)
+- **Overall Coverage:** 70-80% lines/functions (§7.1 below)
 
 ### 2.1 Test Framework Assignment (Why Each Tool)
 
-| Framework                  | Purpose                       | Environment       | Cite As |
-| -------------------------- | ----------------------------- | ----------------- | ------- |
-| **mypy**                   | Static type checking          | No runtime        | §2.1.1  |
-| **ruff**                   | Code standards enforcement    | No runtime        | §2.1.2  |
-| **pytest**                 | Unit & integration tests      | Python runtime    | §2.1.3  |
-| **pytest-asyncio**         | Async test support            | Python runtime    | §2.1.4  |
-| **pytest-cov**             | Coverage reporting            | Python runtime    | §2.1.5  |
-| **unittest.mock**          | Mocking and patching          | Built-in stdlib   | §2.1.6  |
+| Framework                 | Purpose                       | Environment                            | Cite As |
+| ------------------------- | ----------------------------- | -------------------------------------- | ------- |
+| **TypeScript**            | Static type checking          | No runtime                             | §2.1.1  |
+| **ESLint**                | Code standards enforcement    | No runtime                             | §2.1.2  |
+| **Vitest**                | Unit & integration tests      | jsdom or Browser                       | §2.1.3  |
+| **React Testing Library** | Component interaction testing | jsdom or Browser                       | §2.1.4  |
+| **Playwright**            | End-to-end testing            | Real browser (Chrome, Firefox, Safari) | §2.1.5  |
 
 **For tool responsibilities and why we chose them, see
 [testing_strategy.md § 3.1](./testing_strategy.md#31-testing-tools--their-purposes).**
 
 ---
 
-## 3. Unit & Integration Testing
+## 3. Unit & Component Testing
 
-### 3.1 Test File Organization Pattern
+### 3.1 Test File Organization (Colocated Pattern)
 
-**DECISION: Colocated test files in `tests/` directory with mirror structure**
+<!-- IMPROVED: Made citability explicit with section numbers -->
 
-**Pattern:** `tests/test_<module_name>.py` mirrors `src/<package>/<module>.py` structure (§3.1.1)
+**DECISION: Colocated test files (NOT `__tests__` folders)**
+
+**Pattern:** `source.tsx` + `source.test.tsx` in same directory (§3.1.1)
 
 #### 3.1.1 Folder Structure Example
 
 ```
-src/texere/
-├── orchestration/
-│   ├── __init__.py
-│   ├── workflow.py
-│   └── graph.py
-└── persistence/
-    ├── __init__.py
-    └── checkpoint.py
-
-tests/
-├── __init__.py
-├── test_workflow.py          ← Tests for orchestration.workflow
-├── test_graph.py             ← Tests for orchestration.graph
-└── test_checkpoint.py        ← Tests for persistence.checkpoint
+packages/ui/src/
+├── Button/
+│   ├── Button.tsx
+│   ├── Button.test.tsx          ← Colocated
+│   └── index.ts
+├── Input/
+│   ├── Input.tsx
+│   ├── Input.test.tsx
+│   └── index.ts
+└── index.ts (exports)
 ```
 
-#### 3.1.2 Rationale for Mirror Structure
+#### 3.1.2 Rationale for Colocated Tests
 
 **Advantages:**
 
-- **Modern Python Standard** (§3.1.2.1): pytest, unittest, and most frameworks default to separate `tests/` directory
-- **CI/CD Clarity** (§3.1.2.2): Easily exclude test files from distribution; clear separation of source vs. test code
-- **Monorepo/Monolithic Clarity** (§3.1.2.3): Single test directory for all tests; pytest discovers all automatically
-- **Scalability** (§3.1.2.4): Supports large projects without polluting source directories
-- **Testing Culture** (§3.1.2.5): Clear signal that tests are "separate concern"; emphasizes test rigor
+- **Modern Framework Standard** (§3.1.2.1): Angular, Next.js, React ecosystem default to colocated
+- **Developer Experience** (§3.1.2.2): Opening component surfaces test immediately; single refactor
+  renames both files
+- **Monorepo Advantages** (§3.1.2.3): Nx discovers `*.test.ts(x)` automatically; clear ownership
+- **Scalability** (§3.1.2.4): No mirror directory maintenance; Nx inferred tasks work seamlessly
+- **Testing Culture** (§3.1.2.5): Tests visible by default; reinforces "tests are code" mindset
 
-### 3.2 Project-Level pytest Configuration
+**Why NOT `__tests__` folders:**
 
-**DECISION: Single root-level pytest configuration in `pyproject.toml` (§3.2.1)**
+- IDE navigation becomes cluttered (same hierarchy level confusion)
+- Refactoring requires manual folder sync
+- Vitest's testMatch defaults to glob-based (colocated) as primary pattern
+- Less clear signal for exclusion from distribution
 
-#### 3.2.1 pyproject.toml Example
+### 3.2 Per-Project vitest.config.ts (Self-Contained)
 
-```toml
-[tool.pytest.ini_options]
-# Test discovery patterns
-testpaths = ["tests"]
-python_files = "test_*.py"
-python_classes = "Test*"
-python_functions = "test_*"
+<!-- IMPROVED: Added citability to configuration sections -->
 
-# Async support
-asyncio_mode = "auto"
+**DECISION: Each workspace project owns its own vitest.config.ts — NO root inheritance (§3.2.1)**
 
-# Coverage
-addopts = [
-  "--cov=src/texere",
-  "--cov-report=html",
-  "--cov-report=term-missing",
-  "--cov-branch",
-]
+#### 3.2.1 Generic React Package Example (packages/ui)
 
-# Minimum coverage thresholds
-[tool.coverage.run]
-branch = true
-source = ["src/texere"]
+```typescript
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-[tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "def __repr__",
-  "raise AssertionError",
-  "raise NotImplementedError",
-  "if __name__ == .__main__.:",
-  "if TYPE_CHECKING:",
-]
-fail_under = 70
+import { defineConfig } from 'vitest/config';
 
-[tool.coverage.html]
-directory = "htmlcov"
+const packageDir = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: [path.resolve(packageDir, './vitest.setup.ts')],
+    // Colocated pattern: **/*.test.tsx in same directory as source (§3.1.1)
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['**/e2e/**', '**/node_modules/**', '**/dist/**'],
+    coverage: {
+      provider: 'v8',
+      reportsDirectory: './coverage',
+      exclude: ['**/node_modules/**', '**/*.{test,spec}.{ts,tsx}', '**/index.ts', '**/index.tsx'],
+      lines: 70,
+      functions: 70,
+      branches: 65,
+      statements: 70,
+    },
+  },
+  resolve: {
+    alias: {
+      '@repo/ui': path.resolve(packageDir, 'src'),
+    },
+  },
+});
 ```
 
-**Cite as:** §3.2.1
+#### 3.2.2 Next.js App Example (apps/web)
 
-### 3.3 Test File Structure
+```typescript
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-#### 3.3.1 Example: Simple Unit Test
+import { defineConfig } from 'vitest/config';
 
-```python
-# tests/test_workflow.py
-import pytest
-from unittest.mock import Mock, patch
-from texere.orchestration.workflow import WorkflowEngine
+const appDir = path.dirname(fileURLToPath(import.meta.url));
 
-
-class TestWorkflowEngine:
-    """Unit tests for WorkflowEngine."""
-
-    def test_init_creates_empty_graph(self):
-        """Test that WorkflowEngine initializes with empty graph."""
-        engine = WorkflowEngine()
-        assert engine.graph is not None
-        assert len(engine.graph.nodes) == 0
-
-    def test_add_step_adds_to_graph(self):
-        """Test that add_step correctly registers a node."""
-        engine = WorkflowEngine()
-        engine.add_step("step1", lambda: 42)
-        
-        assert "step1" in engine.graph.nodes
-        assert engine.graph.nodes["step1"]() == 42
-
-    def test_add_step_raises_on_duplicate(self):
-        """Test that duplicate step names raise ValueError."""
-        engine = WorkflowEngine()
-        engine.add_step("step1", lambda: 42)
-        
-        with pytest.raises(ValueError, match="already exists"):
-            engine.add_step("step1", lambda: 99)
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: [path.resolve(appDir, './vitest.setup.ts')],
+    // Colocated pattern (§3.1.1)
+    include: [
+      'app/**/*.{test,spec}.{ts,tsx}',
+      'components/**/*.{test,spec}.{ts,tsx}',
+      'hooks/**/*.{test,spec}.{ts,tsx}',
+      'lib/**/*.{test,spec}.{ts,tsx}',
+    ],
+    exclude: ['**/e2e/**', '**/node_modules/**', '**/.next/**'],
+    coverage: {
+      provider: 'v8',
+      reportsDirectory: './coverage',
+      exclude: [
+        '**/node_modules/**',
+        '**/*.{test,spec}.{ts,tsx}',
+        '**/index.ts',
+        '**/index.tsx',
+        '**/.next/**',
+      ],
+      lines: 70,
+      functions: 70,
+      branches: 65,
+      statements: 70,
+    },
+  },
+  resolve: {
+    alias: {
+      '@repo/ui': path.resolve(appDir, '../../packages/ui/src'),
+      '@': path.resolve(appDir),
+    },
+  },
+});
 ```
 
-**Cite as:** §3.3.1
+### 3.3 vitest.setup.ts (Per-Project)
 
-#### 3.3.2 Example: Integration Test with Fixtures
+#### 3.3.1 Generic Package (packages/ui)
 
-```python
-# tests/test_graph_compilation.py
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from texere.orchestration.graph import GraphCompiler
-from tests.fixtures import sample_workflow_graph
+```typescript
+import { afterEach } from 'vitest';
 
+import '@testing-library/jest-dom/vitest';
+import { cleanup } from '@testing-library/react';
 
-class TestGraphCompilation:
-    """Integration tests for graph compilation."""
-
-    def test_compile_creates_executable_graph(self, sample_workflow_graph):
-        """Test that compilation produces valid executable graph."""
-        compiler = GraphCompiler()
-        compiled = compiler.compile(sample_workflow_graph)
-        
-        assert compiled is not None
-        assert callable(compiled.invoke)
-
-    def test_compile_handles_missing_dependencies(self):
-        """Test graceful error when step dependencies not satisfied."""
-        graph = {
-            "step2": {"depends_on": ["missing_step"]}
-        }
-        
-        compiler = GraphCompiler()
-        with pytest.raises(ValueError, match="dependency not found"):
-            compiler.compile(graph)
+// Cleanup DOM after each test (§3.3)
+afterEach(() => cleanup());
 ```
 
-**Cite as:** §3.3.2
+#### 3.3.2 Next.js App (apps/web)
 
-### 3.4 Fixture Organization
+```typescript
+import { afterEach, vi } from 'vitest';
 
-#### 3.4.1 Shared Fixtures (conftest.py)
+import '@testing-library/jest-dom/vitest';
+import { cleanup } from '@testing-library/react';
 
-```python
-# tests/conftest.py
-import pytest
-from unittest.mock import Mock
-from texere.orchestration.workflow import WorkflowEngine
+afterEach(() => cleanup());
 
+// Next.js app-specific mocks (§3.3.2)
+vi.mock('next/router', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    pathname: '/',
+    query: {},
+    asPath: '/',
+  }),
+}));
 
-@pytest.fixture
-def workflow_engine():
-    """Provide a fresh WorkflowEngine instance."""
-    return WorkflowEngine()
-
-
-@pytest.fixture
-def sample_workflow_graph():
-    """Provide a sample workflow graph configuration."""
-    return {
-        "step1": {"fn": lambda: "result1", "depends_on": []},
-        "step2": {"fn": lambda: "result2", "depends_on": ["step1"]},
-    }
-
-
-@pytest.fixture
-def mock_database(monkeypatch):
-    """Mock database connection."""
-    mock_db = Mock()
-    mock_db.query = Mock(return_value=[{"id": 1, "data": "test"}])
-    return mock_db
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+  })),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  usePathname: vi.fn(() => '/'),
+}));
 ```
 
-**Cite as:** §3.4.1
+### 3.4 Root-Level Test Scripts (Nx Orchestration)
 
-#### 3.4.2 When to Use Fixtures vs. Setup Methods
+<!-- IMPROVED: Added section numbers for citability -->
 
-| Pattern                  | Use Case                                | Example                                  | Cite As  |
-| ------------------------ | --------------------------------------- | ---------------------------------------- | -------- |
-| **Shared fixture**       | Reused across multiple test files       | `@pytest.fixture` in `conftest.py`       | §3.4.2.1 |
-| **Local fixture**        | Used only in one test file              | `@pytest.fixture` in same test file      | §3.4.2.2 |
-| **Class setup method**   | Shared state for class test methods     | `def setup_method(self):`                | §3.4.2.3 |
-| **Parametrized fixture** | Test multiple inputs with same fixture  | `@pytest.mark.parametrize`               | §3.4.2.4 |
-
-**Cite as:** §3.4.2
-
-### 3.5 Mocking Best Practices
-
-#### 3.5.1 Mocking External Dependencies
-
-```python
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-import pytest
-
-
-class TestWorkflowExecution:
-    """Tests with mocked external dependencies."""
-
-    @patch('texere.persistence.checkpoint.CheckpointStore')
-    def test_save_checkpoint_calls_store(self, mock_store):
-        """Test that checkpoints are persisted."""
-        mock_store.return_value.save = Mock(return_value=True)
-        
-        from texere.orchestration.execution import ExecutionEngine
-        engine = ExecutionEngine(checkpoint_store=mock_store.return_value)
-        
-        result = engine.save_checkpoint("state_data")
-        
-        mock_store.return_value.save.assert_called_once_with("state_data")
-        assert result is True
-
-    def test_mock_async_function(self):
-        """Test mocking async functions with AsyncMock."""
-        async_fn = AsyncMock(return_value="success")
-        
-        # In actual test: await async_fn()
-        assert async_fn.return_value == "success"
+```json
+{
+  "scripts": {
+    "test": "nx run-many --target=test --all --parallel",
+    "test:watch": "nx run-many --target=test --all --watch",
+    "test:coverage": "nx run-many --target=test:coverage --all --parallel && node scripts/aggregate-coverage.mjs",
+    "test:affected": "nx affected -t test"
+  }
+}
 ```
 
-**Cite as:** §3.5.1
+**Cite as:** §3.4
 
-#### 3.5.2 Mock Pattern Guidelines
+### 3.5 Per-Project Test Scripts (Individual Targets)
 
-| Pattern                     | Use                              | Example                                | Cite As  |
-| --------------------------- | -------------------------------- | -------------------------------------- | -------- |
-| **Mock()**                  | Simple function/method mock      | `Mock(return_value=True)`              | §3.5.2.1 |
-| **MagicMock()**             | Mocks magic methods (\__call__)  | `MagicMock()` for callable objects     | §3.5.2.2 |
-| **AsyncMock()**             | Async functions                  | `AsyncMock(return_value="result")`     | §3.5.2.3 |
-| **@patch decorator**        | Patch at module level            | `@patch('module.Class')`               | §3.5.2.4 |
-| **monkeypatch fixture**     | pytest-native patching           | `monkeypatch.setattr(obj, 'attr', val)` | §3.5.2.5 |
+Each project's `package.json` exports targets recognized by Nx:
 
-**Cite as:** §3.5.2
+```json
+{
+  "scripts": {
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage"
+  }
+}
+```
+
+**Cite as:** §3.5
+
+### 3.6 Test File Structure
+
+#### 3.6.1 Example: Button Component Test
+
+```typescript
+// Button.test.tsx
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { Button } from './Button'
+
+describe('Button', () => {
+  it('renders with text', () => {
+    render(<Button>Click me</Button>)
+    expect(screen.getByRole('button', { name: 'Click me' })).toBeDefined()
+  })
+
+  it('calls onClick when clicked', async () => {
+    const user = userEvent.setup()
+    const handleClick = vi.fn()
+    render(<Button onClick={handleClick}>Click me</Button>)
+
+    await user.click(screen.getByRole('button'))
+    expect(handleClick).toHaveBeenCalledOnce()
+  })
+
+  it('is disabled when disabled prop is true', () => {
+    render(<Button disabled>Click me</Button>)
+    expect(screen.getByRole('button')).toBeDisabled()
+  })
+})
+```
+
+**Cite as:** §3.6.1
+
+### 3.7 React Testing Library Best Practices
+
+#### 3.7.1 Query Priority (in order of preference)
+
+1. `getByRole()` — most semantic, accessibility-first
+2. `getByLabelText()` — for form inputs
+3. `getByPlaceholderText()` — fallback for inputs
+4. `getByText()` — for text content
+5. `getByTestId()` — last resort only
+
+**Cite as:** §3.7.1
+
+#### 3.7.2 User Interactions
+
+```typescript
+import userEvent from '@testing-library/user-event';
+
+const user = userEvent.setup();
+await user.click(element);
+await user.type(inputElement, 'text');
+await user.selectOptions(selectElement, ['option1', 'option2']);
+```
+
+**Cite as:** §3.7.2
+
+#### 3.7.3 Async Operations
+
+```typescript
+// Use findBy* for async content
+const element = await screen.findByText('Loaded Content');
+
+// Or use waitFor for complex async scenarios
+await waitFor(() => {
+  expect(screen.getByText('Success')).toBeInTheDocument();
+});
+```
+
+**Cite as:** §3.7.3
+
+#### 3.7.4 What to Test
+
+| Category                | Pattern                     | Example                                          | Cite As  |
+| ----------------------- | --------------------------- | ------------------------------------------------ | -------- |
+| **Props validation**    | Render with different props | `<Button size="lg" variant="primary" />`         | §3.7.4.1 |
+| **User interactions**   | Click, type, select         | `await user.click(button)`                       | §3.7.4.2 |
+| **Conditional render**  | Props control output        | `disabled={true}` hides button                   | §3.7.4.3 |
+| **Error states**        | Invalid input handling      | `error="Email required"` shows message           | §3.7.4.4 |
+| **Accessibility**       | ARIA attributes             | `role="button"` present                          | §3.7.4.5 |
+| **Custom hooks**        | `renderHook()` in isolation | `const { result } = renderHook(() => useCart())` | §3.7.4.6 |
+| **Utilities/functions** | Direct calls                | `expect(formatPrice(100)).toBe('$100')`          | §3.7.4.7 |
 
 ---
 
-## 4. Fixtures & Setup
+## 4. E2E Testing
 
-### 4.1 Fixture Scopes
+### 4.1 Playwright Setup
 
-| Scope        | Lifetime                | Use Case                           | Cite As |
-| ------------ | ----------------------- | ---------------------------------- | ------- |
-| **function** | Per test function       | Default; isolated test state       | §4.1.1  |
-| **class**    | Per test class          | Shared setup for class tests       | §4.1.2  |
-| **module**   | Per test module/file    | Expensive setup (DB init)          | §4.1.3  |
-| **session**  | Entire test run         | Global resources (test DB)         | §4.1.4  |
+#### 4.1.1 Installation
 
-**Cite as:** §4.1
+```bash
+npm install -D @playwright/test
+```
 
-### 4.2 Example: Database Fixture with Cleanup
+**Cite as:** §4.1.1
 
-```python
-# tests/conftest.py
-import pytest
-from texere.persistence.database import Database
+#### 4.1.2 playwright.config.ts (Complete Example)
 
+```typescript
+import { defineConfig, devices } from '@playwright/test';
 
-@pytest.fixture(scope="module")
-def test_db():
-    """Create test database; clean up after session."""
-    db = Database(url="sqlite:///:memory:")
-    db.init_schema()
-    
-    yield db  # Provide to test
-    
-    # Cleanup after all tests using this fixture
-    db.close()
+const baseURL = process.env.BASE_URL || 'http://localhost:3000';
 
+export default defineConfig({
+  // Test files
+  testDir: './tests',
+  testMatch: '**/*.spec.ts',
+  testIgnore: '**/*.setup.ts',
 
-@pytest.fixture
-def db_with_sample_data(test_db):
-    """Populate test database with sample data."""
-    test_db.insert("workflows", {"id": 1, "name": "test_workflow"})
-    yield test_db
-    test_db.execute("DELETE FROM workflows")  # Clean up after test
+  // Execution
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  timeout: 30 * 1000,
+  expect: {
+    timeout: 5000,
+  },
+
+  // Reporting
+  reporter: [
+    ['html', { outputFolder: 'test-results/html' }],
+    ['junit', { outputFile: 'test-results/junit.xml' }],
+    ['json', { outputFile: 'test-results/results.json' }],
+    ...(process.env.CI ? [] : [['list']]),
+  ],
+
+  // Global settings
+  use: {
+    baseURL,
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    actionTimeout: 10000,
+  },
+
+  // Global setup (login once for all tests)
+  globalSetup: require.resolve('./tests/auth.setup.ts'),
+
+  // Web server
+  webServer: process.env.CI
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: baseURL,
+        reuseExistingServer: true,
+        timeout: 120 * 1000,
+      },
+
+  // Browsers
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+    // Optional: mobile testing
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+  ],
+});
+```
+
+**Cite as:** §4.1.2
+
+### 4.2 Per-Feature E2E Project Structure
+
+```
+apps/main-app-cart-e2e/
+├── playwright.config.ts
+├── tests/
+│   ├── auth.setup.ts                 ← Shared login setup
+│   ├── cart-add-item.spec.ts
+│   ├── cart-checkout.spec.ts
+│   └── fixtures/
+│       └── test-data.ts
+├── package.json
+└── tsconfig.json
 ```
 
 **Cite as:** §4.2
 
+### 4.3 Global Auth Setup (Reusable)
+
+```typescript
+// tests/auth.setup.ts
+import { test as setup } from '@playwright/test';
+
+const authFile = 'test-results/.auth.json';
+
+setup('authenticate user', async ({ page, context }) => {
+  // Navigate to login
+  await page.goto('/login');
+
+  // Fill credentials
+  await page.fill('input[name="email"]', 'test@example.com');
+  await page.fill('input[name="password"]', 'password123');
+
+  // Submit login
+  await page.click('button[type="submit"]');
+
+  // Wait for navigation to dashboard
+  await page.waitForURL('/dashboard');
+
+  // Save auth state
+  await context.storageState({ path: authFile });
+});
+```
+
+**Cite as:** §4.3
+
+### 4.4 Playwright Best Practices
+
+| Aspect        | Do (✓)                        | Don't (✗)                     | Cite As |
+| ------------- | ----------------------------- | ----------------------------- | ------- |
+| **Locators**  | Use `getByRole()`             | Avoid hardcoded CSS selectors | §4.4.1  |
+| **Waits**     | Let Playwright auto-wait      | Don't use `setTimeout()`      | §4.4.2  |
+| **Auth**      | Use `globalSetup` for auth    | Don't login in each test      | §4.4.3  |
+| **Data**      | Use test fixtures & factories | Don't create data in UI tests | §4.4.4  |
+| **Isolation** | Each test independent         | Don't depend on test order    | §4.4.5  |
+| **Debugging** | Use `--debug` or `--headed`   | Don't use `console.log()`     | §4.4.6  |
+
 ---
 
-## 5. Test Organization
+## 5. Feature-Based Testing Strategy
 
-### 5.1 Test File Structure by Feature
+### 5.1 Organization by Feature
+
+Tests for a feature (e.g., "Shopping Cart") live together:
 
 ```
-src/texere/
-├── orchestration/
-│   ├── workflow.py
-│   └── graph.py
-└── persistence/
-    └── checkpoint.py
-
-tests/
-├── conftest.py                   # Shared fixtures
-├── test_workflow.py              # Tests for orchestration.workflow
-├── test_graph.py                 # Tests for orchestration.graph
-├── test_checkpoint.py            # Tests for persistence.checkpoint
-└── integration/
-    └── test_end_to_end.py        # Integration/E2E tests
+features/cart/
+├── components/
+│   ├── CartItem/
+│   │   ├── CartItem.tsx
+│   │   └── CartItem.test.tsx
+│   ├── CartSummary/
+│   │   ├── CartSummary.tsx
+│   │   └── CartSummary.test.tsx
+├── hooks/
+│   ├── useCart.ts
+│   └── useCart.test.ts
+├── __tests__/
+│   └── cart.integration.test.tsx  ← Multi-component
+└── e2e/
+    ├── add-to-cart.spec.ts
+    ├── checkout.spec.ts
+    └── fixtures/
+        └── cart-data.ts
 ```
 
 **Cite as:** §5.1
 
-### 5.2 Test Class Organization
+### 5.2 E2E Project per Major Feature (Optional)
 
-```python
-# tests/test_workflow.py
-
-class TestWorkflowInit:
-    """Tests for WorkflowEngine initialization."""
-    
-    def test_creates_empty_graph(self):
-        ...
-
-
-class TestWorkflowAddStep:
-    """Tests for WorkflowEngine.add_step method."""
-    
-    def test_adds_step_to_graph(self):
-        ...
-    
-    def test_raises_on_duplicate(self):
-        ...
-
-
-class TestWorkflowExecution:
-    """Tests for WorkflowEngine.execute method."""
-    
-    def test_executes_single_step(self):
-        ...
+```
+apps/cart-e2e/
+├── playwright.config.ts
+├── tests/
+│   ├── auth.setup.ts
+│   ├── add-item.spec.ts
+│   ├── checkout-flow.spec.ts
+│   └── fixtures/
+│       └── product-data.ts
+├── package.json
+└── tsconfig.json
 ```
 
 **Cite as:** §5.2
@@ -435,20 +580,15 @@ class TestWorkflowExecution:
 
 ### 6.1 Running Tests
 
-| Command                      | Purpose                                     | Cite As |
-| ---------------------------- | ------------------------------------------- | ------- |
-| `pytest`                     | Run all tests                               | §6.1.1  |
-| `pytest -v`                  | Verbose output; show each test name         | §6.1.2  |
-| `pytest -k "test_name"`      | Run tests matching pattern                  | §6.1.3  |
-| `pytest --cov`               | Run tests with coverage report              | §6.1.4  |
-| `pytest -x`                  | Stop on first failure                       | §6.1.5  |
-| `pytest -s`                  | Show print output (don't capture)           | §6.1.6  |
-| `pytest --pdb`               | Drop into debugger on failure               | §6.1.7  |
-| `pytest tests/test_file.py`  | Run single test file                        | §6.1.8  |
-| `pytest tests/test_file.py::TestClass::test_method` | Run single test | §6.1.9  |
-| `ptw` (pytest-watch)         | Continuous watch mode                       | §6.1.10 |
-
-**Cite as:** §6.1
+| Command              | Purpose                                     | Cite As |
+| -------------------- | ------------------------------------------- | ------- |
+| `pnpm test`          | Run all unit & integration tests (parallel) | §6.1.1  |
+| `pnpm test:watch`    | Watch mode; rerun on file change            | §6.1.2  |
+| `pnpm test:coverage` | Generate coverage report; check thresholds  | §6.1.3  |
+| `pnpm test:affected` | Run tests for changed packages (Nx)         | §6.1.4  |
+| `pnpm e2e`           | Run all Playwright E2E tests                | §6.1.5  |
+| `pnpm e2e:headed`    | Run E2E tests with visible browser window   | §6.1.6  |
+| `pnpm e2e:debug`     | Run E2E with step-by-step debugger          | §6.1.7  |
 
 ---
 
@@ -456,30 +596,28 @@ class TestWorkflowExecution:
 
 ### 7.1 Coverage Targets (Mandatory)
 
-| Metric     | Minimum | Target | Excluded From Coverage              | Cite As |
-| ---------- | ------- | ------ | ----------------------------------- | ------- |
-| Lines      | 65%     | 75-80% | `__init__.py`, `if TYPE_CHECKING:` | §7.1.1  |
-| Functions  | 65%     | 75-80% | (same)                              | §7.1.2  |
-| Branches   | 60%     | 70%    | (same)                              | §7.1.3  |
+| Metric     | Minimum | Target | Excluded From Coverage                 | Cite As |
+| ---------- | ------- | ------ | -------------------------------------- | ------- |
+| Lines      | 65%     | 75-80% | \*.test.ts(x), index.ts, dist/, .next/ | §7.1.1  |
+| Functions  | 65%     | 75-80% | (same)                                 | §7.1.2  |
+| Branches   | 60%     | 70%    | (same)                                 | §7.1.3  |
+| Statements | 65%     | 75-80% | (same)                                 | §7.1.4  |
 
 **For philosophy on coverage goals, see
 [testing_strategy.md § 12](./testing_strategy.md#12-coverage-goals).**
 
-**Cite as:** §7.1
-
 ### 7.2 Quality Gates (All MUST pass before merge)
 
-| Gate             | Command                 | Threshold              | Cite As |
-| ---------------- | ----------------------- | ---------------------- | ------- |
-| **Format Check** | `black --check src/`    | 0 format violations    | §7.2.1  |
-| **Lint**         | `ruff check src/`       | 0 errors               | §7.2.2  |
-| **Typecheck**    | `mypy src/`             | 0 errors               | §7.2.3  |
-| **Unit Tests**   | `pytest --cov`          | ≥65% lines, fail_under | §7.2.4  |
-| **Build**        | `python -m build`       | 0 errors               | §7.2.5  |
+| Gate             | Command              | Threshold                | Cite As |
+| ---------------- | -------------------- | ------------------------ | ------- |
+| **Format Check** | `pnpm format:check`  | 0 format violations      | §7.2.1  |
+| **Lint**         | `nx lint`            | 0 errors (warnings ok)   | §7.2.2  |
+| **Typecheck**    | `nx typecheck`       | 0 errors                 | §7.2.3  |
+| **Unit Tests**   | `nx test --coverage` | ≥65% lines, ≥70% overall | §7.2.4  |
+| **E2E Tests**    | `nx affected -t e2e` | 0 failures               | §7.2.5  |
+| **Build**        | `nx build`           | 0 errors                 | §7.2.6  |
 
 **Enforcement:** All gates block PR merge. CI must pass before hand-off to QA.
-
-**Cite as:** §7.2
 
 ---
 
@@ -490,149 +628,84 @@ class TestWorkflowExecution:
 
 Key forbidden practices enforced in this spec:
 
-- Test implementation details (private methods, internal state) — Brittle; breaks on refactor
+- Test implementation details (state, private methods) — Brittle; breaks on refactor
 - 100% coverage obsession — Diminishing returns; target 70-80%
+- Snapshot tests — Hard to review in PRs
+- Flaky E2E tests (timeouts, no waits) — Use Playwright auto-wait
 - Shared test state between tests — Each test must be independent
-- `sleep()` or fixed waits in tests — Use mocks and async test patterns
-- Testing third-party library behavior — Test your integration, not their code
-- Overly complex fixtures — Keep fixtures focused and reusable
-- Mixing unit and integration tests in same class — Separate concerns
+- `__tests__` folders instead of colocated — Use `.test.tsx` colocated pattern per §3.1
 
 **Cite as:** §8
 
 ---
 
-## 9. Async Testing
-
-### 9.1 Testing Async Functions
-
-**DECISION: Use `pytest-asyncio` with `asyncio_mode = "auto"` (§9.1.1)**
-
-#### 9.1.1 Async Test Example
-
-```python
-# tests/test_async_execution.py
-import pytest
-from texere.orchestration.execution import AsyncExecutionEngine
-
-
-class TestAsyncExecution:
-    """Tests for async execution engine."""
-
-    @pytest.mark.asyncio
-    async def test_execute_async_step(self):
-        """Test async step execution."""
-        engine = AsyncExecutionEngine()
-        
-        async def async_step():
-            return "result"
-        
-        result = await engine.execute_step(async_step)
-        assert result == "result"
-
-    @pytest.mark.asyncio
-    async def test_execute_multiple_steps_concurrently(self):
-        """Test concurrent execution of multiple async steps."""
-        engine = AsyncExecutionEngine()
-        
-        async def step1():
-            return "result1"
-        
-        async def step2():
-            return "result2"
-        
-        results = await engine.execute_concurrent([step1, step2])
-        assert results == ["result1", "result2"]
-```
-
-**Cite as:** §9.1.1
-
-### 9.2 AsyncMock for Async Dependencies
-
-```python
-from unittest.mock import AsyncMock
-import pytest
-
-
-class TestAsyncWithMocks:
-    """Tests with async mocks."""
-
-    @pytest.mark.asyncio
-    async def test_calls_async_dependency(self):
-        """Test interaction with async dependency."""
-        async_dep = AsyncMock(return_value="mocked_result")
-        
-        # Pass to component under test
-        result = await async_dep()
-        
-        assert result == "mocked_result"
-        async_dep.assert_called_once()
-```
-
-**Cite as:** §9.2
-
----
-
-## 10. Spec Discipline
+## 9. Spec Discipline
 
 **This spec is binding and definitive.** All code must follow these rules:
 
-### 10.1 Mandatory Requirements
+### 9.1 Mandatory Requirements
 
-- **Test file placement** (§3.1): Always in `tests/` directory with mirror structure
-- **Test framework** (§2.1): pytest for all tests; pytest-asyncio for async
-- **Naming** (§3.1): `test_<module_name>.py` matching source modules
+- **Test file placement** (§3.1): Always colocated `.test.tsx` in same directory
+- **Test framework** (§2.3): Vitest for unit/integration, Playwright for E2E
+- **Naming** (§3.1): `filename.test.tsx` (not `__tests__/filename.tsx`)
 - **Coverage targets** (§7.1): Minimum 65-70%, target 75-80%
-- **Organization** (§5): Feature-scoped test files, class-based organization
+- **Organization** (§5): Feature-scoped E2E projects, colocated unit tests
 - **Quality gates** (§7.2): All gates must pass before merge
-- **Async tests** (§9): Use `@pytest.mark.asyncio` for async test functions
 
 **Deviation Requires:** Explicit spec update + team consensus.
 
-**Cite as:** §10.1
+**Cite as:** §9.1
 
 ---
 
-## 11. References
+## 10. Dependencies & References
 
 ### Related Specifications
 
 - **High-level spec:** [../../README.md § Engineering Specs](../README.md)
-- **Testing Strategy (Philosophy & Principles):** [testing_strategy.md](./testing_strategy.md) — Covers why we test, testing trophy distribution, tools rationale, anti-patterns philosophy. Read this first for context.
+- **Testing Strategy (Philosophy & Principles):** [testing_strategy.md](./testing_strategy.md) —
+  Covers why we test, testing trophy distribution, tools rationale, anti-patterns philosophy. Read
+  this first for context.
+- **Performance & Accessibility:**
+  [../system/perf_accessibility.md § 4 (Validation)](../system/perf_accessibility.md#4-validation--quality-gates)
 
 ### External Resources
 
-- [pytest Documentation](https://docs.pytest.org/)
-- [pytest-asyncio](https://github.com/pytest-dev/pytest-asyncio)
-- [unittest.mock Documentation](https://docs.python.org/3/library/unittest.mock.html)
-- [pytest-cov](https://pytest-cov.readthedocs.io/)
-- [Python Type Checking with mypy](https://mypy.readthedocs.io/)
-- [Ruff Documentation](https://docs.astral.sh/ruff/)
+- [Vitest Documentation](https://vitest.dev)
+- [React Testing Library Docs](https://testing-library.com/docs/react-testing-library/intro)
+- [Playwright Documentation](https://playwright.dev)
+- [Nx Testing Guide](https://nx.dev/docs/guides/testing)
+- [Next.js Testing Guide](https://nextjs.org/docs/app/guides/testing)
+- [Feature-Based Testing Strategy](https://nx.dev/docs/guides/tips-n-tricks/feature-based-testing)
 
-**Cite as:** §11
-
----
-
-## 12. Changelog
-
-| Date       | Version | Editor | Summary                                                                                                                                                                                                                                                                                                                                 |
-| ---------- | ------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2025-12-05 | 1.0     | @agent | Initial Python-specific testing specification. Adapted from JavaScript specs; features pytest, pytest-asyncio, unittest.mock, pyproject.toml configuration, mirror directory structure for tests/, coverage targets (65-80%), async testing patterns, and integration with mypy/ruff quality gates. Status: Active. |
+**Cite as:** §10
 
 ---
 
-## Summary of Spec
+## 11. Changelog
 
-- Formal document metadata (Version 1.0, Last Updated Dec 5 2025, Status: Active)
-- Quick Navigation with anchor links for easy citation
-- Explicit "In Scope" and "Out of Scope" sections
-- Numbered all sections (§1–§12) for full citability
-- Mirror directory structure for tests/ vs src/
-- pytest + pytest-asyncio framework
-- Coverage targets: 65-80% (matching modern Python best practices)
-- Quality gates: format, lint, typecheck, test, build
-- Async testing patterns with `@pytest.mark.asyncio`
-- Fixture organization with conftest.py, scopes, and cleanup
-- Mocking patterns with unittest.mock, AsyncMock
-- Anti-patterns section with forbidden practices
-- References to testing_strategy.md for philosophy
+| Date       | Version | Editor | Summary                                                                                                                                                                                                                                                                                                                       |
+| ---------- | ------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-12-02 | 1.2     | @agent | Removed duplication with testing_strategy.md: Consolidated testing pyramid to reference strategy §2, removed duplicate tools table, eliminated anti-patterns table (reference strategy §11), added coverage philosophy ref to strategy §12; clarified scope boundary (implementation only); added cross-references throughout |
+| 2025-12-02 | 1.1     | @agent | Upgraded from "Definitive" to "Active" status; added § numbering for citability; quantified coverage thresholds; expanded scope & out-of-scope; added cross-refs to testing_strategy.md & perf_accessibility.md; converted tables to numbered format; added mandatory spec discipline section                                 |
+| 2025-12-02 | 1.0     | legacy | Initial version (status: Definitive)                                                                                                                                                                                                                                                                                          |
+
+---
+
+## Summary of Improvements
+
+- Added formal document metadata (Version 1.1, Last Updated Dec 2 2025, Status: Active)
+- Added Quick Navigation with anchor links for easy citation
+- Added explicit "In Scope" and "Out of Scope" sections
+- **Numbered all major sections (§1–§11)** for full citability
+- **Numbered all subsections** (§2.1, §2.2, §3.1, etc.) with table-based organization
+- Converted coverage targets to numbered table with minimum/target thresholds
+- Made quality gates explicit and numbered (§7.2) with command/threshold pairs
+- Added Anti-Patterns section with forbidden practices numbered and citable
+- Added Dependencies & References section with cross-refs to related specs (testing_strategy.md,
+  perf_accessibility.md)
+- Added Spec Discipline section (§9) to make requirements binding
+- Formatted changelog as proper table with actionable summary (old was inline text)
+- Status upgraded from "Definitive (No Optionals)" to "Active" (all sections complete, all
+  requirements citable, changelog present)
+- Bumped version from 1.0 → 1.1
