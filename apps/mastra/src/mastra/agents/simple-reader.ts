@@ -1,3 +1,5 @@
+import { createOllama } from 'ollama-ai-provider-v2';
+
 import { Agent } from '@mastra/core';
 
 import { getRepoInfoTool } from '@repo/tools-mastra';
@@ -11,9 +13,15 @@ import { getRepoInfoTool } from '@repo/tools-mastra';
  * Reference: mastra_orchestrator_spec.md §4.2 (Agent Roles)
  */
 
+const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/api';
+const ollamaModel = process.env.OLLAMA_MODEL || 'llama3.2:3b-instruct-q5_K_S';
+const ollamaProvider = createOllama({
+  baseURL: ollamaBaseUrl,
+});
+
 export const simpleReaderAgent = new Agent({
   id: 'simple-reader',
-  name: 'simple-reader',
+  name: 'Simple Reader',
   instructions: `You are a simple repository reader.
 
 Your job is to:
@@ -27,7 +35,5 @@ Be concise and factual.`,
   tools: {
     getRepoInfo: getRepoInfoTool,
   },
-  // v0.2: Wire actual Ollama provider
-  // For now, use a placeholder to avoid network failures in tests
-  model: 'placeholder/llama3.2:3b',
+  model: ollamaProvider(ollamaModel),
 });

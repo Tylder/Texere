@@ -1,3 +1,5 @@
+import { createOllama } from 'ollama-ai-provider-v2';
+
 import { Agent } from '@mastra/core';
 
 import { readSpecTool } from '../tools/read-spec.js';
@@ -5,7 +7,6 @@ import { readSpecTool } from '../tools/read-spec.js';
 /**
  * Spec Interpreter Agent (mastra_orchestrator_spec.md §4.2)
  *
- * v0.1 Placeholder: Uses mock agent
  * Reads SPEC.md, AGENTS.md, tickets, and user prompts.
  * Outputs a normalized, structured TaskSpec including:
  * - Goals, non-goals
@@ -13,13 +14,20 @@ import { readSpecTool } from '../tools/read-spec.js';
  * - Explicit acceptance criteria
  * - Affected modules / domains
  *
- * TODO v0.2: Real Ollama integration (waiting for Mastra 1.0 stable)
+ * Uses Ollama for local LLM inference via ollama-ai-provider-v2
+ * Reference: mastra_orchestrator_spec.md §2.3, §8.1
  */
+
+const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/api';
+const ollamaModel = process.env.OLLAMA_MODEL || 'llama3.2:3b-instruct-q5_K_S';
+const ollamaProvider = createOllama({
+  baseURL: ollamaBaseUrl,
+});
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 export const specInterpreterAgent = new Agent({
   id: 'spec-interpreter',
-  name: 'spec-interpreter',
+  name: 'Spec Interpreter',
   instructions: `You are the Spec Interpreter Agent.
 
 Your job is to read specifications and user prompts, then output a structured TaskSpec.
@@ -35,12 +43,10 @@ The TaskSpec must include:
 8. affectedModules: Modules or areas affected
 9. timestamp: ISO timestamp when spec was interpreted
 
-Be precise and structured. Return JSON only.`,
+Be precise and structured. Return valid JSON only.`,
   tools: {
     readSpec: readSpecTool,
   },
-  // v0.2: Wire actual Ollama provider
-  // For now, use a placeholder to avoid network failures in tests
-  model: 'placeholder/llama3.2:3b',
+  model: ollamaProvider(ollamaModel),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }) as any;

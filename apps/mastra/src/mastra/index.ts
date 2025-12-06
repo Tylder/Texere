@@ -1,5 +1,12 @@
 import { Mastra } from '@mastra/core';
+import { LibSQLStore } from '@mastra/libsql';
 
+import {
+  chatLlama31Agent,
+  chatLlama32Agent,
+  chatMistralAgent,
+  chatQwenAgent,
+} from './agents/chat.js';
 import { simpleReaderAgent } from './agents/simple-reader.js';
 import { specInterpreterAgent } from './agents/spec-interpreter.js';
 
@@ -12,10 +19,12 @@ import { specInterpreterAgent } from './agents/spec-interpreter.js';
  * Configuration:
  * - Model routing: Ollama (local container on localhost:11434)
  * - Server: Port 4111 (configurable via MASTRA_PORT)
- * - Storage: In-memory for v0.1 (SQLite planned for v0.2)
+ * - Storage: SQLite with dev.db (configurable via DATABASE_URL)
  *
  * Reference: mastra_orchestrator_spec.md §2.3, §8.1, §5.2
  */
+
+const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
 
 export const mastra: Mastra = new Mastra({
   server: {
@@ -23,8 +32,16 @@ export const mastra: Mastra = new Mastra({
     host: process.env.MASTRA_HOST || '0.0.0.0',
   },
 
+  storage: new LibSQLStore({
+    url: databaseUrl,
+  }),
+
   // Agents: Register all agents
   agents: {
+    chatLlama32: chatLlama32Agent,
+    chatLlama31: chatLlama31Agent,
+    chatMistral: chatMistralAgent,
+    chatQwen: chatQwenAgent,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     specInterpreter: specInterpreterAgent,
     simpleReader: simpleReaderAgent,
