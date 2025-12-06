@@ -14,6 +14,8 @@ export default [
       'out/**',
       'coverage/**',
       '**/vitest.config.*.timestamp*',
+      '**/.mastra/**', // Mastra build artifacts
+      '**/apps/mastra/.mastra/**',
     ],
   },
   {

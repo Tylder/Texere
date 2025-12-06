@@ -13,7 +13,12 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@mastra/core": "^0.24.6",
+    "@mastra/core": "^1.0.0-beta.8",
+    "@mastra/fastembed": "latest",
+    "@mastra/libsql": "latest",
+    "@mastra/loggers": "latest",
+    "@mastra/mcp": "latest",
+    "@mastra/memory": "latest",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -22,6 +27,7 @@
     "@types/node": "24.10.1",
     "@vitest/coverage-v8": "4.0.15",
     "eslint": "9.39.1",
+    "mastra": "^1.0.0-beta.6",
     "typescript": "5.9.3",
     "vitest": "4.0.15"
   }
