@@ -1,5 +1,6 @@
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
+
 import { mockCodeSearchTool } from '../tools/mock-code-search';
 
 /**

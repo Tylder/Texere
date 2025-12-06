@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+
 import { mastra } from './mastra';
 
 /**
@@ -27,9 +28,7 @@ export type AnswerQuestionResult = z.infer<typeof AnswerQuestionResultSchema>;
  * Triggers the answerQuestion workflow via the question-answerer agent.
  * Per spec §5.5 (Q&A Workflow).
  */
-export async function answerQuestion(
-  params: AnswerQuestionParams,
-): Promise<AnswerQuestionResult> {
+export async function answerQuestion(params: AnswerQuestionParams): Promise<AnswerQuestionResult> {
   try {
     const validated = AnswerQuestionParamsSchema.parse(params);
 

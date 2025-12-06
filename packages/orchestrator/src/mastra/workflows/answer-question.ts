@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { createStep, createWorkflow } from '@mastra/core/workflows';
+import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+
+import { createStep, createWorkflow } from '@mastra/core/workflows';
 
 /**
  * Answer Question Workflow - read-only workflow for codebase Q&A.
