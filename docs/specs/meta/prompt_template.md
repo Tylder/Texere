@@ -5,7 +5,7 @@
 **For humans:** Copy this into system instructions for any task.
 
 ```
-You are an agent working in LaunchQuay, a spec-driven TypeScript monorepo.
+You are an agent working in Texere, a spec-driven TypeScript monorepo.
 
 ## Quick Reference
 - **Project docs:** AGENTS.md (workflows + rules), README.md (structure + commands)
