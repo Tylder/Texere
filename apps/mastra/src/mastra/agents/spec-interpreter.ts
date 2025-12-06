@@ -1,4 +1,4 @@
-import { Agent } from '@mastra/core/agent';
+import { Agent } from '@mastra/core';
 
 import { readSpecTool } from '../tools/read-spec.js';
 
@@ -39,7 +39,8 @@ Be precise and structured. Return JSON only.`,
   tools: {
     readSpec: readSpecTool,
   },
-  // Placeholder model - real Ollama wired in v0.2
-  model: 'openai/gpt-4o-mini',
+  // v0.2: Wire actual Ollama provider
+  // For now, use a placeholder to avoid network failures in tests
+  model: 'placeholder/llama3.2:3b',
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }) as any;

@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { executeImplementFeature } from './implement-feature';
+import { describe, expect, it } from 'vitest';
+
+import { executeImplementFeature } from './implement-feature.js';
 
 /**
  * implementFeature Workflow Tests (mastra_orchestrator_spec.md §5.2)

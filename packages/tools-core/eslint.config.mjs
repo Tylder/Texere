@@ -11,4 +11,10 @@ export default [
       },
     },
   },
+  {
+    files: ['src/**/*.spec.ts'],
+    rules: {
+      'check-file/filename-naming-convention': 'off',
+    },
+  },
 ];

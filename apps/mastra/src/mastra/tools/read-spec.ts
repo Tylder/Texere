@@ -1,7 +1,8 @@
-import { createTool } from '@mastra/core/tools';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { z } from 'zod';
+
+import { createTool } from '@mastra/core';
 
 /**
  * readSpec tool - Read specification files from filesystem
@@ -25,7 +26,19 @@ export const readSpecTool = createTool({
   description: 'Read a specification document from the filesystem and return its content.',
   inputSchema: readSpecToolInputSchema,
   outputSchema: readSpecToolOutputSchema,
-  execute: async ({ specPath }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  execute: async (input: any) => {
+    // Mastra passes context, extract actual input
+    const specPath = input.specPath || input.input?.specPath;
+
+    if (!specPath) {
+      return {
+        success: false,
+        content: '',
+        source: '',
+        error: 'specPath is required',
+      };
+    }
 
     try {
       // Support both relative (from repo root) and absolute paths

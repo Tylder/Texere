@@ -15,3 +15,12 @@ export type {
   ToolEnv,
   CoreTool,
 } from './types';
+
+// GetRepoInfo Tool - Mock implementation for skeleton v0.1
+export {
+  GetRepoInfoInputSchema,
+  GetRepoInfoOutputSchema,
+  getRepoInfoHandler,
+  type GetRepoInfoInput,
+  type GetRepoInfoOutput,
+} from './tools/get-repo-info.js';

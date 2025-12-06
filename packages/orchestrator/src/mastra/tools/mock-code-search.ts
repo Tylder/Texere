@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createTool } from '@mastra/core/tools';
+import { createTool } from '@mastra/core';
 
 /**
  * Mock code search tool for skeleton implementation.

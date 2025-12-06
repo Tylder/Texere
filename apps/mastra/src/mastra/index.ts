@@ -1,5 +1,6 @@
-import { Mastra } from '@mastra/core/mastra';
+import { Mastra } from '@mastra/core';
 
+import { simpleReaderAgent } from './agents/simple-reader.js';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { specInterpreterAgent } from './agents/spec-interpreter.js';
 
@@ -27,8 +28,9 @@ export const mastra: Mastra = new Mastra({
   // Agents: Register all agents
   agents: {
     specInterpreter: specInterpreterAgent,
+    simpleReader: simpleReaderAgent,
   },
 
-  // Workflows: Registered programmatically via executeImplementFeature()
+  // Workflows: Registered programmatically via executeImplementFeature(), executeReadRepo()
   // TODO: Re-enable Mastra workflow DSL once v1 API stabilizes
 });

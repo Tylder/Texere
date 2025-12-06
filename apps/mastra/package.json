@@ -7,18 +7,19 @@
     "build": "mastra build",
     "check-types": "tsc --noEmit",
     "dev": "mastra dev",
-    "lint": "eslint --max-warnings 0",
+    "lint": "eslint . --max-warnings 0",
     "start": "node .mastra/output/index.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@mastra/core": "^1.0.0-beta.8",
-    "@mastra/fastembed": "^0.10.7",
+    "@mastra/core": "^0.24.6",
     "@mastra/libsql": "^0.16.3",
     "@mastra/loggers": "^0.10.19",
     "@mastra/mcp": "^0.14.4",
-    "@mastra/memory": "^0.15.12",
+    "@repo/tools-mastra": "workspace:*",
+    "ai": "^5.0.108",
+    "ollama": "^0.6.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {

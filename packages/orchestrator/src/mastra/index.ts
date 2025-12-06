@@ -1,7 +1,7 @@
-import { Mastra } from '@mastra/core/mastra';
+import { Mastra } from '@mastra/core';
 
-import { questionAnswererAgent } from './agents/question-answerer';
-import { answerQuestionWorkflow } from './workflows/answer-question';
+import { questionAnswererAgent } from './agents/question-answerer.js';
+import { answerQuestionWorkflow } from './workflows/answer-question.js';
 
 /**
  * Mastra instance - central orchestration hub.
