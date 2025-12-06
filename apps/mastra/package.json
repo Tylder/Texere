@@ -21,7 +21,7 @@
     "ai": "^5.0.108",
     "ollama": "^0.6.3",
     "ollama-ai-provider-v2": "^1.5.5",
-    "zod": "^3.23.8"
+    "zod": "^3.25.8"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -29,7 +29,7 @@
     "test:watch": "vitest --watch"
   },
   "dependencies": {
-    "zod": "^3.22.0"
+    "zod": "^3.25.8"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
