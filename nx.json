@@ -87,7 +87,7 @@
         "{projectRoot}/vitest.config.ts",
         "{projectRoot}/package.json"
       ],
-      "outputs": ["{projectRoot}/coverage/**"],
+      "outputs": ["{projectRoot}/.test/**"],
       "cache": true
     },
     "test:coverage": {

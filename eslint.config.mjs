@@ -13,6 +13,7 @@ export default [
       'build/**',
       'out/**',
       'coverage/**',
+      '.test/**',
       '**/vitest.config.*.timestamp*',
       '**/.mastra/**', // Mastra build artifacts
       '**/apps/mastra/.mastra/**',
