@@ -4,6 +4,13 @@
  */
 
 export * from './api.js';
+export * from './state/classifier-types.js';
 export * from './state/types.js';
-export { TaskState, type TaskStateType } from './state/annotations.js';
+export {
+  ClassifyState,
+  TaskState,
+  type ClassifyStateType,
+  type TaskStateType,
+} from './state/annotations.js';
 export { buildAnswerQuestionGraph } from './graphs/answer-question.js';
+export { buildClassifyGraph } from './graphs/classify-text.js';

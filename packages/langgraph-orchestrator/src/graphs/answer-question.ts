@@ -9,7 +9,8 @@ import { shouldContinue } from '../nodes/router-nodes.js';
 import { toolsNode } from '../nodes/tools-node.js';
 import { TaskState } from '../state/annotations.js';
 
-export function buildAnswerQuestionGraph() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildAnswerQuestionGraph(): any {
   const graph = new StateGraph(TaskState)
     .addNode('agent', agentNode)
     .addNode('tools', toolsNode)

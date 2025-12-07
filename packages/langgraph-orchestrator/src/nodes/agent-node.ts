@@ -5,16 +5,20 @@
 import { SystemMessage } from '@langchain/core/messages';
 
 import { initializeLLM } from '../adapters/llm-adapter.js';
-import { TaskStateType } from '../state/annotations.js';
+import type { TaskStateType } from '../state/annotations.js';
 
-export async function agentNode(state: TaskStateType) {
+export interface AgentNodeResult {
+  messages: unknown[];
+}
+
+export async function agentNode(state: TaskStateType): Promise<AgentNodeResult> {
   const { modelWithTools } = initializeLLM();
 
   const systemPrompt = new SystemMessage(
     'You are a helpful assistant. If asked, use the list_files tool to find files. Always be concise.',
   );
 
-  const response = await modelWithTools.invoke([systemPrompt, ...state.messages]);
+  const response = (await modelWithTools.invoke([systemPrompt, ...state.messages])) as unknown;
 
   return { messages: [response] };
 }

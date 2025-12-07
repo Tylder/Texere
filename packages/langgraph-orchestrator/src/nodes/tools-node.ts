@@ -5,9 +5,13 @@
 import { ToolMessage } from '@langchain/core/messages';
 
 import { buildToolRegistry } from '../adapters/tool-adapter.js';
-import { TaskStateType } from '../state/annotations.js';
+import type { TaskStateType } from '../state/annotations.js';
 
-export async function toolsNode(state: TaskStateType) {
+export interface ToolsNodeResult {
+  messages: ToolMessage[];
+}
+
+export async function toolsNode(state: TaskStateType): Promise<ToolsNodeResult> {
   const lastMessage = state.messages.at(-1);
 
   if (!lastMessage || !('tool_calls' in lastMessage)) {

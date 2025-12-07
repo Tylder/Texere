@@ -4,7 +4,7 @@
  */
 import { END } from '@langchain/langgraph';
 
-import { TaskStateType } from '../state/annotations.js';
+import type { TaskStateType } from '../state/annotations.js';
 
 /**
  * Route to tools node if agent made tool calls, else END.

@@ -51,6 +51,17 @@ export const config = tseslint.config(
     files: ['**/vitest.config.ts', '**/vitest.config.js'],
     ...tseslint.configs.disableTypeChecked,
   },
+  {
+    // Test files: relax unsafe type rules as per spec (eslint_code_quality.md §3.2)
+    files: ['**/*.{test,spec}.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+    },
+  },
   eslintConfigPrettier,
   {
     name: 'base/plugins',
@@ -71,9 +82,45 @@ export const config = tseslint.config(
       },
     },
     rules: {
+      // Type safety: explicit return types required (eslint_code_quality.md §3.2)
+      '@typescript-eslint/explicit-function-return-type': [
+        'error',
+        {
+          allowExpressions: true,
+          allowTypedFunctionExpressions: true,
+          allowHigherOrderFunctions: true,
+          allowDirectConstAssertionInArrowFunctions: true,
+          allowConciseArrowFunctionExpressionsStartingWithVoid: false,
+          allowFunctionsWithoutTypeParameters: false,
+          allowIIFEs: false,
+        },
+      ],
+      // Type safety: enforce type-only imports (eslint_code_quality.md §3.3)
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          prefer: 'type-imports',
+          fixStyle: 'separate-type-imports',
+          disallowTypeAnnotations: true,
+        },
+      ],
+      // Monorepo discipline: block relative cross-package imports (eslint_code_quality.md §3.1)
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              // Block imports like ../../packages/other-pkg, but allow ../sibling (same package)
+              group: ['../../**', '../../../**', '../../../../**', '../../../../../**'],
+              message:
+                'Cross-package relative imports are not allowed. Use workspace imports (@repo/*) instead.',
+            },
+          ],
+        },
+      ],
       // Import sorting is handled by Prettier (prettier-plugin-sort-imports); keep ESLint out.
       'import/order': 'off',
-      'import/no-default-export': 'off',
+      'import/no-default-export': 'error',
       'n/no-process-exit': 'off',
       'security/detect-object-injection': 'off',
       'sonarjs/cognitive-complexity': ['warn', 20],
