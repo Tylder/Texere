@@ -53,13 +53,6 @@
         "claude-context-local-py-ccl:latest"
       ]
     },
-    "jetbrains": {
-      "type": "sse",
-      "url": "http://localhost:64342/sse",
-      "headers": {
-        "IJ_MCP_SERVER_PROJECT_PATH": "/home/anon/Projects/texere"
-      }
-    },
     "jetbrains-debugger": {
       "type": "sse",
       "url": "http://localhost:63342/debugger-mcp/sse"
