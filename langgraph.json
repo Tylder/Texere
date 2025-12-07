@@ -1,8 +1,8 @@
 {
-  "python_version": "3.11",
-  "dependencies": ["../packages/langgraph-orchestrator"],
+  "node_version": "22",
+  "dependencies": ["packages/langgraph-orchestrator"],
   "graphs": {
-    "answerQuestion": "../packages/langgraph-orchestrator/src/index.ts:buildAnswerQuestionGraph"
+    "answerQuestion": "packages/langgraph-orchestrator/src/index.ts:buildAnswerQuestionGraph"
   },
-  "env": "../.env"
+  "env": ".env"
 }

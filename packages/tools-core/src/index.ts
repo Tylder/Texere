@@ -23,4 +23,4 @@ export {
   getRepoInfoHandler,
   type GetRepoInfoInput,
   type GetRepoInfoOutput,
-} from './tools/get-repo-info.js';
+} from './tools/get-repo-info';

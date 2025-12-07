@@ -4,7 +4,7 @@ import {
   GetRepoInfoInputSchema,
   GetRepoInfoOutputSchema,
   getRepoInfoHandler,
-} from './get-repo-info.js';
+} from './get-repo-info';
 
 /**
  * GetRepoInfo Tool Tests (tools_spec.md)

@@ -2,7 +2,7 @@
 // See docs/specs/feature/texere-tool-spec.md §4 for specification
 
 // GetRepoInfo Tool - Mastra adapter for skeleton v0.1
-export { getRepoInfoTool } from './tools/get-repo-info.js';
+export { getRepoInfoTool } from './tools/get-repo-info';
 
 // TODO: Implement toMastraTool adapter per spec §4.1:
 // - Map CoreTool handler to Mastra execute signature
