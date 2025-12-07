@@ -9,8 +9,7 @@ import { classifyText } from './api.js';
 // Mock LLM to avoid real API calls
 vi.mock('./adapters/llm-adapter', () => ({
   initializeLLM: () => ({
-    model: {},
-    modelWithTools: {
+    model: {
       invoke: vi.fn(() =>
         Promise.resolve({
           content: JSON.stringify({
@@ -21,6 +20,9 @@ vi.mock('./adapters/llm-adapter', () => ({
           tool_calls: [],
         }),
       ),
+    },
+    modelWithTools: {
+      invoke: vi.fn(),
     },
     tools: [],
   }),

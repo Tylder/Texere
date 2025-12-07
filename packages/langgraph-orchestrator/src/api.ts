@@ -72,26 +72,28 @@ export async function classifyText(input: ClassifyTextInput): Promise<ClassifyTe
   });
 
   const resultState = result as ClassifyStateType;
-  const classification = resultState.classification as unknown;
+  // Classification is already validated by classifier node with Zod schema
+  const classification = resultState.classification;
 
-  const classificationResult =
-    classification &&
-    typeof classification === 'object' &&
-    'label' in classification &&
-    'confidence' in classification &&
-    'reasoning' in classification
-      ? {
-          label: String((classification as Record<string, unknown>).label),
-          confidence: Number((classification as Record<string, unknown>).confidence),
-          reasoning: String((classification as Record<string, unknown>).reasoning),
-        }
-      : {
-          label: 'unknown',
-          confidence: 0,
-          reasoning: 'No classification result',
-        };
+  // Validate the classification result has the expected shape
+  // (classifier node ensures this, but belt-and-suspenders check)
+  if (
+    !classification ||
+    typeof classification !== 'object' ||
+    !('label' in classification) ||
+    !('confidence' in classification) ||
+    !('reasoning' in classification)
+  ) {
+    return {
+      classification: {
+        label: 'unknown',
+        confidence: 0,
+        reasoning: 'Invalid classification result from node',
+      },
+    };
+  }
 
   return {
-    classification: classificationResult,
+    classification,
   };
 }
