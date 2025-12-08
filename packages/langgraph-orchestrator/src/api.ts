@@ -46,7 +46,7 @@ export async function answerQuestion(input: AnswerQuestionInput): Promise<Answer
     lastMessage !== null &&
     'content' in lastMessage
   ) {
-    const content = (lastMessage as unknown as Record<string, unknown>).content;
+    const content = (lastMessage as unknown as Record<string, unknown>)['content'];
     if (typeof content === 'string') {
       answer = content;
     }

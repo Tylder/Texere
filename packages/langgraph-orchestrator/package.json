@@ -2,11 +2,11 @@
   "name": "@repo/langgraph-orchestrator",
   "version": "0.1.0",
   "description": "LangGraph.js-based orchestrator for Texere (experimental v0.1)",
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js"
     }
   },
   "main": "dist/index.js",

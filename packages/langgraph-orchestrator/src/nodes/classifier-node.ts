@@ -133,8 +133,8 @@ async function classifyWithRetry(
         typeof response === 'object' &&
         response !== null &&
         'content' in response &&
-        typeof (response as Record<string, unknown>).content === 'string'
-          ? (response as Record<string, unknown>).content
+        typeof (response as Record<string, unknown>)['content'] === 'string'
+          ? (response as Record<string, unknown>)['content']
           : '';
 
       const { result, error } = tryParseClassification(content as string);

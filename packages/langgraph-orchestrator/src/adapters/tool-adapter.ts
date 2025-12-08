@@ -13,7 +13,7 @@ import { z } from 'zod';
  */
 const listFilesMock = (input: {
   path: string;
-  pattern?: string;
+  pattern?: string | undefined;
 }): {
   files: string[];
   count: number;

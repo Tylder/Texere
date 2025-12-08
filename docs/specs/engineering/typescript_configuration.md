@@ -140,8 +140,8 @@ All strict compiler options (see below for full config). Extended by all other c
 
 Per **Node.js spec** and **TypeScript team guidance**, module boundaries are defined via
 `package.json` `exports` fields—**no tsconfig `paths`**. Publishable libraries MUST use NodeNext;
- Bundler resolution is reserved for Next.js apps only. (Refs: TypeScript moduleResolution docs
- <https://www.typescriptlang.org/tsconfig/moduleResolution.html>.)
+Bundler resolution is reserved for Next.js apps only. (Refs: TypeScript moduleResolution docs
+<https://www.typescriptlang.org/tsconfig/moduleResolution.html>.)
 
 ```json
 {

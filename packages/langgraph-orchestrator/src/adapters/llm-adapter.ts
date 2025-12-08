@@ -23,8 +23,8 @@ export interface LLMInitResult {
  *   - OLLAMA_MODEL: model name (default: llama3.2:3b-instruct-q5_K_S)
  */
 export function initializeLLM(): LLMInitResult {
-  const baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-  const modelName = process.env.OLLAMA_MODEL || 'llama3.2:3b-instruct-q5_K_S';
+  const baseUrl = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
+  const modelName = process.env['OLLAMA_MODEL'] || 'llama3.2:3b-instruct-q5_K_S';
 
   const model = new ChatOllama({
     baseUrl,
