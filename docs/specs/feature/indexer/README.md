@@ -16,8 +16,8 @@
 - [8. Non-Functional](#8-non-functional)
 - [9. Implementation Order](#9-implementation-order)
 - [10. Dependencies & References](#10-dependencies--references)
-- [10. Future Extensions (v2+)](#10-future-extensions-v2)
-- [11. Changelog](#11-changelog)
+- [11. Future Extensions (v2+)](#11-future-extensions-v2)
+- [12. Changelog](#12-changelog)
 
 ---
 
@@ -658,46 +658,46 @@ interface GetIncidentSliceInput {
 
 ---
 
-## 10. Future Extensions (v2+)
+## 11. Future Extensions (v2+)
 
 The following enhancements are deferred beyond v1 and may be explored in future versions:
 
-### 10.1 Trace / Log / Coverage Ingestion
+### 11.1 Trace / Log / Coverage Ingestion
 
 - Ingest runtime execution traces (function entry/exit, timing, arguments).
 - Ingest application logs to correlate with graph nodes (errors, warnings, events).
 - Ingest code coverage data to identify untested symbols and features.
 - Link traces, logs, and coverage to Snapshots to enable debugging workflows.
 
-**Cite as:** §10.1
+**Cite as:** §11.1
 
-### 10.2 Automatic Pattern Mining
+### 11.2 Automatic Pattern Mining
 
 - Use structural/behavioral clustering to automatically discover implementation patterns from the
   codebase.
 - Augment manually-defined patterns with heuristically-identified patterns.
 - Enable agents to learn and apply patterns dynamically.
 
-**Cite as:** §10.2
+**Cite as:** §11.2
 
-### 10.3 Multi-Codebase Federation
+### 11.3 Multi-Codebase Federation
 
 - Extend schema to support cross-Codebase edges (currently prohibited in v1).
 - Enable querying relationships between symbols in different projects.
 - Support monorepo scenarios with internal and external dependencies.
 
-**Cite as:** §10.3
+**Cite as:** §11.3
 
 ---
 
-## 11. Changelog
+## 12. Changelog
 
 | Date       | Version | Editor | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | ---------- | ------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2025-12-06 | 1.1     | @agent | Added missing data from original spec: (1) Expanded Snapshot definition to include "No separate Commit node" constraint and metadata details (§4.1.1). (2) Enhanced Pattern definition with "manually defined but may be augmented" distinction (§4.1.3). (3) Added §4.3 Edge Inference Rules with detailed logic for each edge type (CONTAINS, CALLS/REFERENCES, IMPLEMENTS, READS_FROM/WRITES_TO, DEPENDS_ON, TESTS, DOCUMENTS, FOLLOWS_PATTERN, INTRODUCED_IN/MODIFIED_IN, CAUSES, SIMILAR_TO). (4) Added §10 Future Extensions (v2+): Trace/Log/Coverage Ingestion, Automatic Pattern Mining, Multi-Codebase Federation. All original v1 data now fully preserved. |
 | 2025-12-06 | 1.0     | @agent | Rewrote high-level spec per `spec_writing.md` standards. Added Quick Navigation, explicit Audience section, structured node/edge type tables (4.1–4.2), logical pipeline steps (§5), strict Query API section with bundle contracts (§6), Non-Functional targets (§8, quantified), and proper sections for Implementation Order, Dependencies, Changelog. Consolidated original data from `indexer_high_level.md` with no loss. References updated to point to `ingest_spec.md` and `nx_layout_spec.md`.                                                                                                                                                               |
 
-**Cite as:** §11
+**Cite as:** §12
 
 ---
 

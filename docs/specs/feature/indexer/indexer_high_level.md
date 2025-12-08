@@ -1,8 +1,19 @@
 # Texere Indexer v1 Specification
 
-This document defines the Version 1 schema, ingestion pipeline, and query API for the Texere
-Indexer. It integrates **all decisions provided by the user**, with **no information loss**,
-rewriting the full specification for correctness and internal consistency.
+This document is the **high-level, conceptual foundation** for the Texere Indexer v1. It defines:
+
+- The **knowledge graph schema** (nodes, edges, types).
+- The **logical architecture** of the indexing pipeline.
+- The **query API** for agents.
+
+For **implementation details**, refer to:
+
+- **`ingest_spec.md`**: Complete ingestion pipeline, language indexers, snapshot handling, testing
+  requirements.
+- **`nx_layout_spec.md`**: Monorepo layout, Nx library structure, dependency boundaries.
+
+This document integrates **all decisions provided by the user**, with **no information loss**, and
+provides the foundation that the other specs build upon.
 
 ---
 
