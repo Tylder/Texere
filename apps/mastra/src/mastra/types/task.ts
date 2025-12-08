@@ -22,7 +22,7 @@ export type TaskSpec = z.infer<typeof TaskSpecSchema>;
 
 export const ImplementFeatureResultSchema = z.object({
   success: z.boolean(),
-  taskSpec: TaskSpecSchema.optional(),
+  taskSpec: TaskSpecSchema,
   message: z.string(),
   timestamp: z.string(),
 });

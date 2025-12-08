@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-import { ImplementFeatureResultSchema, TaskSpec, TaskSpecSchema } from '../../types/task.js';
 import { specInterpreterAgent } from '../agents/spec-interpreter.js';
+import type { TaskSpec } from '../types/task.js';
+import { ImplementFeatureResultSchema, TaskSpecSchema } from '../types/task.js';
 
 /**
  * implementFeature Workflow (mastra_orchestrator_spec.md §5.2)

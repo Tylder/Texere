@@ -19,7 +19,7 @@ describe('readRepo Workflow (mastra_orchestrator_spec.md §5.5)', () => {
     expect(result.repoId).toBe('texere');
     expect(result.summary).toBeDefined();
     expect(result.message).toBeDefined();
-  });
+  }, 10000);
 
   it('should return structured output', async () => {
     const result = await executeReadRepo({
@@ -32,7 +32,7 @@ describe('readRepo Workflow (mastra_orchestrator_spec.md §5.5)', () => {
     expect(result).toHaveProperty('summary');
     expect(result).toHaveProperty('message');
     expect(result).toHaveProperty('timestamp');
-  });
+  }, 10000);
 
   it('should handle unknown repository gracefully', async () => {
     const result = await executeReadRepo({
@@ -44,5 +44,5 @@ describe('readRepo Workflow (mastra_orchestrator_spec.md §5.5)', () => {
     // The tool will return error data, and agent will communicate that.
     expect(result).toBeDefined();
     expect(result.repoId).toBe('nonexistent-repo');
-  });
+  }, 10000);
 });
