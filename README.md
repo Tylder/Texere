@@ -11,7 +11,8 @@ with production-ready reliability and observability.
 
 - Install: `pnpm install` (pnpm 10.23.0+, Node >= 20).
 - Dev: `pnpm dev` (runs all apps in parallel via Nx).
-- Quality loop: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test`.
+- Quality loop: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test`
+  - `pnpm lint` = oxlint (instant baseline checks) + ESLint (comprehensive type-aware validation)
 - Commit-ready: `pnpm format:staged` (also runs on pre-commit via Husky).
 
 ## Repository Layout
@@ -52,8 +53,8 @@ Currently no user-facing apps in v1; focus is on core orchestration and tools.
 
 Configuration files at the workspace root:
 
-- `prettier.config.mjs` – Formatting config (sort-imports, tailwindcss, package.json plugins,
-  printWidth 100)
+- `prettier.config.mjs` – Formatting config (tailwindcss, package.json plugins, printWidth 100;
+  import ordering handled by ESLint)
 - `eslint.config.mjs` – Shared ESLint flat config entry
 - `vitest.config.ts` – Shared Vitest config (jsdom, coverage via V8)
 - `.husky/` – Git hooks (pre-commit → `pnpm format:staged`)
@@ -82,8 +83,15 @@ Follow the fast-feedback pattern documented in `AGENTS.md`:
 
 ## Tooling Defaults
 
-- **Formatting**: Prettier with import sorting and package.json plugin, printWidth 100
-- **Linting**: ESLint 9 with monorepo discipline (dead code, async safety, import org)
+- **Formatting**: Prettier with package.json plugin, printWidth 100 (import order handled by
+  linting)
+- **Linting**: Hybrid oxlint + ESLint for speed and comprehensive coverage
+  - **Oxlint** (instant, ~550ms): 600+ rules for correctness, suspicious patterns, best practices
+  - **ESLint** (comprehensive, ~8-15s): Type-aware rules, monorepo discipline, import ordering,
+    naming conventions
+  - Run both: `pnpm lint` executes oxlint first (fast feedback) then ESLint (full validation)
+  - ESLint plugin automatically disables rules oxlint already checks (eliminates redundancy)
+  - See `docs/specs/engineering/eslint_code_quality.md` §3.3 for import ordering details
 - **Testing**: Vitest (jsdom, coverage via V8) with colocated test files (`*.test.ts`)
 - **Type Checking**: TypeScript 5.9 strict mode (see
   `docs/specs/engineering/typescript_configuration.md`)
@@ -157,7 +165,8 @@ pnpm --filter my-lib add dep  # Install deps in a specific workspace package
 
 - `pnpm dev` – Run all packages in development mode (Nx parallel)
 - `pnpm dev:log` – Run with filtered dev logs (for agent-driven development)
-- `pnpm lint` – Nx run-many for `lint`
+- `pnpm lint` – Hybrid linting: oxlint (fast baseline) then ESLint (comprehensive checks with
+  type-aware rules)
 - `pnpm typecheck` – Nx run-many for `check-types`
 - `pnpm test` – Nx run-many for Vitest
 - `pnpm test:coverage` – Nx run-many with coverage aggregation
