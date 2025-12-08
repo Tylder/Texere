@@ -8,7 +8,14 @@
     "build": {
       "executor": "nx:run-script",
       "options": { "script": "build" },
-      "outputs": ["{projectRoot}/.next"]
+      "outputs": ["{projectRoot}/.next"],
+      "inputs": [
+        "default",
+        "{projectRoot}/tsconfig.app.json",
+        "{projectRoot}/app/**",
+        "{projectRoot}/pages/**",
+        "{projectRoot}/components/**"
+      ]
     },
     "dev": {
       "executor": "nx:run-script",

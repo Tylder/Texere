@@ -8,11 +8,19 @@
     "build": {
       "executor": "nx:run-script",
       "options": { "script": "build" },
-      "outputs": ["{workspaceRoot}/dist/packages/__name__"]
+      "outputs": ["{workspaceRoot}/dist/packages/__name__"],
+      "inputs": ["default", "{projectRoot}/tsconfig.lib.json", "{projectRoot}/src/**"]
     },
     "check-types": {
       "executor": "nx:run-script",
-      "options": { "script": "check-types" }
+      "options": { "script": "check-types" },
+      "inputs": [
+        "default",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/tsconfig.lib.json",
+        "{projectRoot}/src/**",
+        "{projectRoot}/tests/**"
+      ]
     },
     "lint": {
       "executor": "nx:run-script",
