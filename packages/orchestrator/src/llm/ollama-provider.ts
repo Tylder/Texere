@@ -33,13 +33,20 @@ interface TextGenerationResult {
   };
 }
 
+interface OllamaProviderInterface {
+  generateText(options: TextGenerationOptions): Promise<TextGenerationResult>;
+  healthCheck(): Promise<boolean>;
+  listModels(): Promise<string[]>;
+  getConfig(): OllamaConfig;
+}
+
 /**
  * Create an Ollama provider instance
  *
  * @param config Configuration for Ollama
  * @returns OllamaProvider instance
  */
-export function createOllamaProvider(config: Partial<OllamaConfig> = {}) {
+export function createOllamaProvider(config: Partial<OllamaConfig> = {}): OllamaProviderInterface {
   const finalConfig: OllamaConfig = {
     baseURL: config.baseURL || process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
     model: config.model || process.env.OLLAMA_MODEL || 'llama3.2:3b-instruct-q5_K_S',
@@ -99,7 +106,7 @@ export function createOllamaProvider(config: Partial<OllamaConfig> = {}) {
     /**
      * Health check - verify Ollama is running
      */
-    async isHealthy(): Promise<boolean> {
+    async healthCheck(): Promise<boolean> {
       try {
         const response = await client.list();
         return response.models && response.models.length > 0;
@@ -131,4 +138,4 @@ export function createOllamaProvider(config: Partial<OllamaConfig> = {}) {
 }
 
 // Export type for use in agents
-export type OllamaProvider = ReturnType<typeof createOllamaProvider>;
+export type OllamaProvider = OllamaProviderInterface;

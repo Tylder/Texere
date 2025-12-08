@@ -25,6 +25,9 @@ const noisePatterns = [
 const stripAnsi = (line) =>
   line.replace(
     // ANSI escape sequences (colors, cursor moves, clear screen, OSC titles)
+    // eslint-disable-next-line no-control-regex
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequences require control characters
+    // eslint-disable-next-line no-control-regex
     /\x1b\[[0-9;?]*[A-Za-z]|\x1b\][^\u0007]*(\u0007|\x1b\\)|\x1b=|\x1b>|[^\S\r\n]*\u001b\[2J[^\S\r\n]*|[^\S\r\n]*\u001b\[3J[^\S\r\n]*/g,
     '',
   );

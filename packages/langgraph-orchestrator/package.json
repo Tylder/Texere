@@ -27,7 +27,6 @@
     "@langchain/core": "^1.1.4",
     "@langchain/langgraph": "^1.0.4",
     "@langchain/ollama": "^1.0.3",
-    "@repo/tools-core": "workspace:*",
     "zod": "^3.25.8"
   },
   "devDependencies": {
