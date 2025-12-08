@@ -123,11 +123,11 @@ function createUser(name: any) {
 
 ### 3.3 Import Organization
 
-| Rule                       | Enforcement            | Details                                                       |
-| -------------------------- | ---------------------- | ------------------------------------------------------------- |
-| `import/order`             | **error**              | Enforced by ESLint; auto-fixable with `--fix`                 |
-| `import/no-default-export` | error (except Next.js) | Named exports only                                            |
-| `consistent-type-imports`  | error                  | Use `import type { X }` for type-only imports                 |
+| Rule                       | Enforcement            | Details                                       |
+| -------------------------- | ---------------------- | --------------------------------------------- |
+| `import/order`             | **error**              | Enforced by ESLint; auto-fixable with `--fix` |
+| `import/no-default-export` | error (except Next.js) | Named exports only                            |
+| `consistent-type-imports`  | error                  | Use `import type { X }` for type-only imports |
 
 **RULE: ESLint Owns Import Sorting via `import/order` Rule**
 

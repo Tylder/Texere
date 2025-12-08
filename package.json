@@ -11,7 +11,7 @@
     "format:staged": "node ./scripts/format-staged.mjs",
     "lint": "nx run-many --target=lint --all --parallel",
     "lint:fast": "oxlint",
-    "post:report": "pnpm run format && nx run-many --targets=lint,check-types,test:coverage,build --all --parallel && node scripts/aggregate-coverage.mjs",
+    "post:report": "pnpm run format && pnpm run lint --fix && nx run-many --targets=check-types,test:coverage,build --all --parallel && node scripts/aggregate-coverage.mjs",
     "prepare": "husky",
     "quality": "nx run-many --targets=format:check,lint,check-types,test,build --all --parallel",
     "studio:dev": "npx @langchain/langgraph-cli dev",

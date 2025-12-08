@@ -9,9 +9,8 @@
  * - Structured output constraints in prompt
  * - Detailed error tracking
  */
-import { z } from 'zod';
-
 import { SystemMessage } from '@langchain/core/messages';
+import { z } from 'zod';
 
 import { initializeLLM } from '../adapters/llm-adapter.js';
 import type { ClassifyStateType } from '../state/annotations.js';

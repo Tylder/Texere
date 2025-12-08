@@ -55,6 +55,7 @@ export const config = tseslint.config(
     // Test files: relax unsafe type rules as per spec (eslint_code_quality.md §3.2)
     files: ['**/*.{test,spec}.{ts,tsx}'],
     rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
@@ -118,8 +119,36 @@ export const config = tseslint.config(
           ],
         },
       ],
-      // Import sorting is handled by Prettier (prettier-plugin-sort-imports); keep ESLint out.
-      'import/order': 'off',
+      // Import sorting enforced by ESLint per spec (eslint_code_quality.md §3.3)
+      'import/order': [
+        'error',
+        {
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+          pathGroups: [
+            {
+              pattern: 'node:*',
+              group: 'builtin',
+              position: 'before',
+            },
+            {
+              pattern: '@repo/**',
+              group: 'internal',
+              position: 'before',
+            },
+            {
+              pattern: '@/**',
+              group: 'internal',
+              position: 'after',
+            },
+          ],
+          pathGroupsExcludedImportTypes: ['builtin'],
+          'newlines-between': 'always',
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+        },
+      ],
       'import/no-default-export': 'error',
       'n/no-process-exit': 'off',
       'security/detect-object-injection': 'off',

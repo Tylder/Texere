@@ -5,24 +5,8 @@ const config = {
   singleQuote: true,
   trailingComma: 'all',
   endOfLine: 'lf',
-  // Plugin order matters: packagejson → sort-imports → tailwindcss (last).
-  plugins: [
-    'prettier-plugin-packagejson',
-    '@trivago/prettier-plugin-sort-imports',
-    'prettier-plugin-tailwindcss',
-  ],
-  importOrder: [
-    '^node:', // Node.js builtins
-    '^(?!\\.)(?!@)', // External packages
-    '^@(?!repo/)', // Other scoped packages
-    '^@repo/', // Workspace packages
-    '^@/', // Absolute aliases
-    '^\\.\\.[/\\\\]', // Parent imports
-    '^\\./', // Sibling imports
-  ],
-  importOrderSeparation: true,
-  importOrderParserPlugins: ['typescript', 'jsx', 'decorators-legacy'],
-  importOrderSortSpecifiers: true,
+  // ESLint now handles import ordering (eslint_code_quality.md §3.3)
+  plugins: ['prettier-plugin-packagejson', 'prettier-plugin-tailwindcss'],
   overrides: [
     {
       files: '*.md',

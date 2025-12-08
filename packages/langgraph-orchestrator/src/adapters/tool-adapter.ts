@@ -2,10 +2,10 @@
  * Tool adapter: wraps pure tool functions for LangGraph.
  * Spec reference: langgraph_orchestrator_spec.md §6.2, §6.3
  */
-import { z } from 'zod';
 
 import type { StructuredTool } from '@langchain/core/tools';
 import { tool as langchainTool } from '@langchain/core/tools';
+import { z } from 'zod';
 
 /**
  * Mock listFiles tool for PoC.

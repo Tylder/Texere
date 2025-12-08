@@ -2,9 +2,8 @@
  * Tests for state definitions.
  * Spec reference: langgraph_orchestrator_spec.md §5.1; testing_specification.md §3, §7
  */
-import { describe, expect, it } from 'vitest';
-
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
+import { describe, expect, it } from 'vitest';
 
 import { TaskState } from './annotations';
 

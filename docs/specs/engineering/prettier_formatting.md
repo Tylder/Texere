@@ -139,10 +139,10 @@ All directories use the root `prettier.config.mjs`.
 
 **RULE:** PersonaCore must use these Prettier plugins:
 
-| Plugin                         | Purpose                                               | Version | Why                                             |
-| ------------------------------ | ----------------------------------------------------- | ------- | ----------------------------------------------- |
-| `prettier-plugin-packagejson`  | Format `package.json` consistently                    | Latest  | Standardizes package.json across monorepo       |
-| `prettier-plugin-tailwindcss`  | Sort Tailwind utility classes alphabetically          | Latest  | Prevents class duplicates; improves readability |
+| Plugin                        | Purpose                                      | Version | Why                                             |
+| ----------------------------- | -------------------------------------------- | ------- | ----------------------------------------------- |
+| `prettier-plugin-packagejson` | Format `package.json` consistently           | Latest  | Standardizes package.json across monorepo       |
+| `prettier-plugin-tailwindcss` | Sort Tailwind utility classes alphabetically | Latest  | Prevents class duplicates; improves readability |
 
 **Installation:**
 
@@ -150,8 +150,8 @@ All directories use the root `prettier.config.mjs`.
 pnpm -w add -D prettier-plugin-packagejson prettier-plugin-tailwindcss
 ```
 
-**NOTE:** `prettier-plugin-sort-imports` is **NOT** used. ESLint's `import/order` rule handles
-all import sorting (see `eslint_code_quality.md §3.3`).
+**NOTE:** `prettier-plugin-sort-imports` is **NOT** used. ESLint's `import/order` rule handles all
+import sorting (see `eslint_code_quality.md §3.3`).
 
 ### 3.4 Tailwind Class Sorting (prettier-plugin-tailwindcss)
 
