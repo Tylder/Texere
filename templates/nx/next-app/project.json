@@ -28,7 +28,14 @@
     },
     "check-types": {
       "executor": "nx:run-script",
-      "options": { "script": "check-types" }
+      "options": { "script": "check-types" },
+      "inputs": [
+        "default",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/tsconfig.app.json",
+        "{projectRoot}/app/**",
+        "{projectRoot}/components/**"
+      ]
     },
     "test": {
       "executor": "nx:run-script",

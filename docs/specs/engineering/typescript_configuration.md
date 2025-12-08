@@ -127,6 +127,9 @@ includes.
 **Key rules:** Use `references`; keep file minimal; `noEmit: true`. Ref: Nx TypeScript project
 linking (<https://nx.dev/docs/concepts/typescript-project-linking>).
 
+**After adding a project:** run `nx sync` (or update references manually) so project references stay
+in sync.
+
 ### 3.2 `/tsconfig.build.json` (Deprecated)
 
 Do not add new `tsconfig.build.json` files. Use `tsconfig.lib.json` / `tsconfig.spec.json` (or
@@ -194,10 +197,12 @@ libraries). (Refs: TypeScript moduleResolution docs
 
 - Extend `@repo/typescript-config/node-library.json`.
 - File layout per package:
+  - `tsconfig.base.json`: extends the shared preset (Node/React/Next); holds compiler options.
   - `tsconfig.json`: references only (`./tsconfig.lib.json`, `./tsconfig.spec.json`).
   - `tsconfig.lib.json`: src build + typecheck (`rootDir: src`, `outDir: dist`,
-    `noEmitOnError: true`).
-  - `tsconfig.spec.json`: tests (`types: ["vitest/globals", "node"]`, includes test globs).
+    `noEmitOnError: true`), extends `tsconfig.base.json`.
+  - `tsconfig.spec.json`: tests (`types: ["vitest/globals", "node"]`, includes test globs), extends
+    `tsconfig.base.json`.
 - Compiler defaults (from preset): ES2023, NodeNext module/resolution, `composite`, `declaration`,
   `declarationMap`, `sourceMap`, `incremental`, `verbatimModuleSyntax`, `moduleDetection: "force"`,
   `resolvePackageJsonExports`/`Imports`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`,
@@ -209,10 +214,14 @@ libraries). (Refs: TypeScript moduleResolution docs
 **Why lib/spec split is the default (Dec 2025 best practice):**
 
 - `tsconfig.json` stays tiny → faster Nx project graph hashing/parsing and cleaner IDE startup.
+- `tsconfig.base.json` holds compiler options (extends shared preset) so other configs don’t inherit
+  references.
 - `tsconfig.lib.json` isolates emit settings (`rootDir`, `outDir`, `noEmitOnError`, NodeNext
-  resolution) so declaration output matches runtime without test-only globals.
+  resolution) so declaration output matches runtime without test-only globals; extends
+  `tsconfig.base.json`.
 - `tsconfig.spec.json` carries test-only types (e.g., `vitest/globals`, DOM) without leaking into
-  the published surface, reducing false positives and keeping d.ts clean.
+  the published surface, reducing false positives and keeping d.ts clean; extends
+  `tsconfig.base.json`.
 - Aligns with Nx generators/migrations (`@nx/js` + Vitest) which expect a lib/spec split; avoids
   future migration churn.
 - Clear separation of concerns: build ≠ tests; editors load both via references, so test files are
@@ -233,6 +242,13 @@ explicit `coverage.include`/`exclude` globs to avoid zeroed reports. (Align with
 
 **Package.json guidance:** add `"sideEffects": false` for publishable libraries to enable tree
 shaking in modern bundlers.
+
+**Exports guidance:** prefer explicit subpath exports (e.g.,
+`"./*": { "types": "./dist/*.d.ts", "import": "./dist/*.js" }`) so NodeNext + editors resolve types
+cleanly.
+
+**Dual-format note:** Default is ESM-only (NodeNext). If a package requires dual ESM/CJS, add
+explicit `exports.require` pointing to CJS output; otherwise keep the default ESM surface.
 
 ### 4.2 React Library
 
