@@ -13,6 +13,8 @@ export default defineConfig({
         functions: 60,
         branches: 50,
       },
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['dist', '**/*.d.ts'],
     },
   },
 });

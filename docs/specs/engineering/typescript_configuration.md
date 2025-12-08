@@ -105,8 +105,8 @@ is deprecated and should not be created for new packages.*
 
 ### 3.1 `/tsconfig.json` (Workspace Type-Checking)
 
-Used by `pnpm typecheck` (Nx orchestrated). Thin shim: pulls strict defaults, forbids emit, covers
-apps + packages.
+Used by `pnpm typecheck` (Nx orchestrated). **References-only** for fast graph + IDE perf; no glob
+includes.
 
 ```json
 {
@@ -116,21 +116,24 @@ apps + packages.
     "allowImportingTsExtensions": true,
     "moduleDetection": "force"
   },
-  "include": ["packages/*/src/**/*", "packages/*/tests/**/*", "apps/**/*"]
+  "files": [],
+  "references": [
+    { "path": "packages/other-package" }
+    // add each package/app here
+  ]
 }
 ```
 
-**Key rules:** No `references`, no `--build`; glob include; `noEmit: true`.
+**Key rules:** Use `references`; keep file minimal; `noEmit: true`. Ref: Nx TypeScript project
+linking (<https://nx.dev/docs/concepts/typescript-project-linking>).
 
 ### 3.2 `/tsconfig.build.json` (Deprecated)
 
 Do not add new `tsconfig.build.json` files. Use `tsconfig.lib.json` / `tsconfig.spec.json` (or
 `tsconfig.app.json` for Next) instead. Legacy references should be removed when encountered.
 
-_Nx quirk (v22.1): the @nx/js TypeScript plugin still tries to hash `tsconfig.build.json` if it
-exists historically; remove the reference from `nx.json targetDefaults.build.inputs` and delete the
-file when safe. If Nx errors on missing file, keep a stub that extends `tsconfig.lib.json` until the
-plugin is upgraded._
+_Nx quirk (v22.1): if @nx/js still hashes `tsconfig.build.json`, keep a temporary stub extending
+`tsconfig.lib.json` only until the plugin is upgraded, then delete it._
 
 ### 3.3 `/tsconfig.base.json` (Shared Settings)
 
@@ -140,7 +143,8 @@ All strict compiler options (see below for full config). Extended by all other c
 
 Per **Node.js spec** and **TypeScript team guidance**, module boundaries are defined via
 `package.json` `exports` fields—**no tsconfig `paths`**. Publishable libraries MUST use NodeNext;
-Bundler resolution is reserved for Next.js apps only. (Refs: TypeScript moduleResolution docs
+Bundler resolution is reserved for Next.js apps only (never mix bundler resolution in Node
+libraries). (Refs: TypeScript moduleResolution docs
 <https://www.typescriptlang.org/tsconfig/moduleResolution.html>.)
 
 ```json
@@ -213,10 +217,22 @@ Bundler resolution is reserved for Next.js apps only. (Refs: TypeScript moduleRe
   future migration churn.
 - Clear separation of concerns: build ≠ tests; editors load both via references, so test files are
   typed correctly while builds remain strict and lean.
+
+**Test placement & examples:** tests must be colocated (`*.test.ts[x]`) and include spec references
+in describe blocks (e.g., `describe('Button (testing_specification §3.6.1)', ...)`). Ensure new
+packages follow this convention.
+
 - References: Nx TypeScript project linking/lib-spec pattern
   (<https://nx.dev/concepts/typescript-project-linking>), Nx recipes on workspaces TS configs
   (<https://nx.dev/recipes/other/switch-to-workspaces-project-references>), TypeScript NodeNext
   module resolution (<https://www.typescriptlang.org/tsconfig/moduleResolution.html>).
+
+**Coverage guidance (Vitest):** set `coverage.provider: 'v8'` with `coverage.thresholds` and
+explicit `coverage.include`/`exclude` globs to avoid zeroed reports. (Align with testing_strategy
+§2.2 targets.)
+
+**Package.json guidance:** add `"sideEffects": false` for publishable libraries to enable tree
+shaking in modern bundlers.
 
 ### 4.2 React Library
 

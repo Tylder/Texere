@@ -13,6 +13,8 @@ export default defineConfig({
         functions: 60,
         branches: 50,
       },
+      include: ['src/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
+      exclude: ['.next', 'dist', '**/*.d.ts'],
     },
     setupFiles: './vitest.setup.ts',
   },
