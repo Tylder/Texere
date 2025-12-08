@@ -1,0 +1,10 @@
+{
+  "extends": "@repo/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "app", "pages", "components", "tests"],
+  "exclude": ["node_modules"]
+}

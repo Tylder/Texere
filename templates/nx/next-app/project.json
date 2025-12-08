@@ -1,0 +1,35 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "__name__",
+  "projectType": "application",
+  "sourceRoot": "apps/__name__/app",
+  "tags": ["runtime:web", "scope:__scope__"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-script",
+      "options": { "script": "build" },
+      "outputs": ["{projectRoot}/.next"]
+    },
+    "dev": {
+      "executor": "nx:run-script",
+      "options": { "script": "dev" },
+      "cache": false
+    },
+    "lint": {
+      "executor": "nx:run-script",
+      "options": { "script": "lint" }
+    },
+    "check-types": {
+      "executor": "nx:run-script",
+      "options": { "script": "check-types" }
+    },
+    "test": {
+      "executor": "nx:run-script",
+      "options": { "script": "test" }
+    },
+    "test:coverage": {
+      "executor": "nx:run-script",
+      "options": { "script": "test:coverage" }
+    }
+  }
+}
