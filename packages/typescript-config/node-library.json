@@ -1,22 +1,24 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./base.json",
   "compilerOptions": {
-    "esModuleInterop": true,
-    "isolatedModules": true,
     "lib": ["ES2023"],
-    "module": "NodeNext",
-    "moduleDetection": "force",
-    "moduleResolution": "NodeNext",
     "target": "ES2023",
-    "strict": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "moduleDetection": "force",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "incremental": true,
+    "noEmitOnError": true,
+    "verbatimModuleSyntax": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noPropertyAccessFromIndexSignature": true,
-    "verbatimModuleSyntax": true,
-    "resolveJsonModule": true,
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
-    "skipLibCheck": true,
     "customConditions": ["monorepo_template"]
   }
 }

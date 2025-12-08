@@ -1,7 +1,7 @@
 # TypeScript Configuration & Type Safety
 
 **Status:** Active  
-**Last Updated:** 2025-11-23  
+**Last Updated:** 2025-12-08  
 **Related Specs:** high_level_system_spec.md §3.6, eslint_code_quality.md, type_safety_strategy.md,
 packages_contracts.md, testing_strategy.md
 
@@ -11,16 +11,21 @@ packages_contracts.md, testing_strategy.md
 
 **Setup (monorepo split):**
 
-- **Shared strict base**: `tsconfig.base.json` (NodeNext, strict, no paths, exports-based).
-- **App/package configs extend base and override only what they need.**
-  - **Next.js app (`apps/web/tsconfig.json`)**: `module: "esnext"`, `moduleResolution: "bundler"`,
-    `jsx: "preserve"`, Next/React types, includes `.next/types/**/*.ts`.
-  - **Backend/Node packages**: inherit base defaults (`module/moduleResolution: "nodenext"`).
-- **Root typecheck** runs per-package via Turbo (`turbo run typecheck`), so each package/app uses
-  its own config; root `tsconfig.json` is a lightweight checker for packages only.
+- **Shared strict base**: `tsconfig.base.json` (NodeNext, strict, exports/imports-aware, no
+  `paths`).
+- **Preset configs in `@repo/typescript-config`:**
+  - `node-library.json` (new, 2025-12-08): publishable non-web packages (ES2023, NodeNext,
+    declarations on, incremental on).
+  - `react-library.json`: React libs (inherits base + JSX + DOM libs).
+  - `nextjs.json`: Next.js apps (Bundler resolution, JSX preserve, no emit).
+- **Per-package layout (Nx-aligned):** `tsconfig.json` (references only) → `tsconfig.lib.json` (src
+  build/typecheck) → `tsconfig.spec.json` (tests).
+- **Root typecheck** runs per-package via Nx, so each package/app owns its tsconfig; workspace
+  `tsconfig.json` is a lightweight no-emit shim.
 
-**This ensures:** Tests are fully type-checked. IDE and CLI use identical strictness. Build output
-excludes test code.
+**This ensures:** Tests are fully type-checked; IDE and CLI use identical strictness; build output
+excludes tests; declaration artifacts match NodeNext consumers; Next.js keeps Bundler resolution
+without leaking to Node packages.
 
 ---
 
@@ -30,8 +35,8 @@ PersonaCore uses **TypeScript 5.9** with two separate compilation strategies:
 
 1. **Type-checking (`pnpm typecheck`):** Delegated to each package/app via Turbo
    (`turbo run typecheck`), so Next uses bundler resolution while backend uses NodeNext.
-2. **Building (`pnpm build`):** Per-package via Turbo; backend/packages can emit declarations with
-   their `tsconfig.build.json`, while the Next app relies on Next’s own build.
+2. **Building (`pnpm build`):** Per-package via Turbo; backend/packages emit declarations using
+   `tsconfig.lib.json` (NodeNext), while the Next app relies on Next’s own build.
 
 This ensures:
 
@@ -67,102 +72,82 @@ This ensures:
 ```
 <monorepo>/
 ├── tsconfig.json              ← Type-checking (tsc, no --build)
-├── tsconfig.build.json        ← Building (tsc --build, project refs)
 ├── tsconfig.base.json         ← Shared strict settings
 ├── packages/
 │   ├── <library-1>/
 │   │   ├── tsconfig.json
-│   │   └── tsconfig.build.json
+│   │   ├── tsconfig.lib.json
+│   │   └── tsconfig.spec.json
 │   ├── <library-2>/
 │   │   ├── tsconfig.json
 │   │   └── tsconfig.build.json
 │   └── <library-N>/
 │       ├── tsconfig.json
-│       └── tsconfig.build.json
+│       ├── tsconfig.lib.json
+│       └── tsconfig.spec.json
 └── apps/
     ├── <app-1>/
     │   ├── tsconfig.json
-    │   └── tsconfig.build.json
+    │   ├── tsconfig.app.json
+    │   └── tsconfig.spec.json
     └── <app-N>/
         ├── tsconfig.json
-        └── tsconfig.build.json
+        ├── tsconfig.app.json
+        └── tsconfig.spec.json
+
+*Nx alignment (Dec 2025): standardize on lib/spec (and app/spec for Next). `tsconfig.build.json`
+is deprecated and should not be created for new packages.*
 ```
 
 ---
 
 ## § 3. Root Configuration
 
-### 3.1 `/tsconfig.json` (Type-Checking)
+### 3.1 `/tsconfig.json` (Workspace Type-Checking)
 
-Used by `pnpm typecheck`.
+Used by `pnpm typecheck` (Nx orchestrated). Thin shim: pulls strict defaults, forbids emit, covers
+apps + packages.
 
 ```json
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "jsx": "preserve",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force"
   },
-  "include": [
-    "packages/*/src/**/*",
-    "packages/*/tests/**/*",
-    "apps/*/app/**/*",
-    "apps/**/*.ts",
-    "apps/**/*.tsx"
-  ]
+  "include": ["packages/*/src/**/*", "packages/*/tests/**/*", "apps/**/*"]
 }
 ```
 
-**Key rules:** No `references`, no `--build` flag, glob patterns, `noEmit: true`, includes tests.
+**Key rules:** No `references`, no `--build`; glob include; `noEmit: true`.
 
-### 3.2 `/tsconfig.build.json` (Legacy, not used by build)
+### 3.2 `/tsconfig.build.json` (Deprecated)
 
-**Status:** Exists in repo but **not used** by current build process (Turbo orchestrates instead).
+Do not add new `tsconfig.build.json` files. Use `tsconfig.lib.json` / `tsconfig.spec.json` (or
+`tsconfig.app.json` for Next) instead. Legacy references should be removed when encountered.
 
-Previously used by `tsc --build tsconfig.build.json`. Now `pnpm build` delegates to
-`turbo run build`, which orchestrates package builds via `turbo.json` and each package's `build`
-script.
-
-Can be safely deleted or archived. If kept for reference:
-
-```json
-{
-  "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "tsBuildInfoFile": ".buildinfo/root.tsbuildinfo"
-  },
-  "files": [],
-  "references": [
-    { "path": "packages/<library-1>/tsconfig.build.json" },
-    { "path": "packages/<library-N>/tsconfig.build.json" },
-    { "path": "apps/<app-1>/tsconfig.build.json" },
-    { "path": "apps/<app-N>/tsconfig.build.json" }
-  ]
-}
-```
+_Nx quirk (v22.1): the @nx/js TypeScript plugin still tries to hash `tsconfig.build.json` if it
+exists historically; remove the reference from `nx.json targetDefaults.build.inputs` and delete the
+file when safe. If Nx errors on missing file, keep a stub that extends `tsconfig.lib.json` until the
+plugin is upgraded._
 
 ### 3.3 `/tsconfig.base.json` (Shared Settings)
 
 All strict compiler options (see below for full config). Extended by all other configs.
 
-**Module Resolution Strategy** (Updated Nov 2025):
+**Module Resolution Strategy** (Updated Dec 2025):
 
-Per **Node.js spec** (official recommendation) and **TypeScript/Turbo teams** (June 2024), module
-boundaries are now defined via `package.json` `exports` fields, **not** hardcoded `tsconfig.json`
-`paths`.
-
-**Why:** Single source of truth, avoids duplication, follows modern Node.js standards.
+Per **Node.js spec** and **TypeScript team guidance**, module boundaries are defined via
+`package.json` `exports` fields—**no tsconfig `paths`**. Publishable libraries MUST use NodeNext;
+ Bundler resolution is reserved for Next.js apps only. (Refs: TypeScript moduleResolution docs
+ <https://www.typescriptlang.org/tsconfig/moduleResolution.html>.)
 
 ```json
 {
   "compilerOptions": {
     "target": "ES2023",
-    "module": "nodenext",
+    "module": "NodeNext",
     "lib": ["ES2023"],
     "strict": true,
     "noUnusedLocals": true,
@@ -174,7 +159,8 @@ boundaries are now defined via `package.json` `exports` fields, **not** hardcode
     "noUncheckedIndexedAccess": true,
     "useUnknownInCatchVariables": true,
     "verbatimModuleSyntax": true,
-    "moduleResolution": "nodenext",
+    "moduleResolution": "NodeNext",
+    "moduleDetection": "force",
     "resolveJsonModule": true,
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
@@ -182,23 +168,66 @@ boundaries are now defined via `package.json` `exports` fields, **not** hardcode
     "incremental": true,
     "noEmitOnError": true,
     "sourceMap": true,
-    "removeComments": false,
     "skipLibCheck": true,
-    "baseUrl": "."
+    "customConditions": ["monorepo_template"]
   },
   "include": [],
   "exclude": ["node_modules", "dist", "coverage", ".turbo"]
 }
 ```
 
-**Key Changes (Nov 2025):**
+**Key Changes (Dec 2025):**
 
-- ✅ Removed hardcoded `paths` (54+ entries) – now replaced with `package.json` `exports` (per
-  Node.js spec)
-- ✅ Enabled `resolvePackageJsonExports: true` – TypeScript consults package.json `exports` field
-- ✅ Enabled `resolvePackageJsonImports: true` – Enables `#` imports in package.json
-- ✅ Added `verbatimModuleSyntax: true` – Explicit `import type` enforcement (TS 5.0+)
-- ✅ Removed redundant strict flags – Already enabled by `strict: true`
+- ✅ Added `moduleDetection: "force"` for consistent ESM detection in editors and Nx graph builds
+- ✅ Explicit `customConditions: ["monorepo_template"]` for conditional exports parity
+- ✅ Reaffirmed NodeNext-only for publishable libs; Bundler kept for Next.js only
+
+---
+
+## § 4. Package Templates (Nx-aligned)
+
+### 4.1 Node Library (non-web, publishable)
+
+- Extend `@repo/typescript-config/node-library.json`.
+- File layout per package:
+  - `tsconfig.json`: references only (`./tsconfig.lib.json`, `./tsconfig.spec.json`).
+  - `tsconfig.lib.json`: src build + typecheck (`rootDir: src`, `outDir: dist`,
+    `noEmitOnError: true`).
+  - `tsconfig.spec.json`: tests (`types: ["vitest/globals", "node"]`, includes test globs).
+- Compiler defaults (from preset): ES2023, NodeNext module/resolution, `composite`, `declaration`,
+  `declarationMap`, `sourceMap`, `incremental`, `verbatimModuleSyntax`, `moduleDetection: "force"`,
+  `resolvePackageJsonExports`/`Imports`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`,
+  `customConditions: ["monorepo_template"]`.
+- `package.json` requirements: `"type": "module"`; `exports` map at least
+  `{ "types": "./dist/index.d.ts", "import": "./dist/index.js" }`; add subpath exports as needed.
+  Tests are excluded from dist via `tsconfig.lib.json` and build script.
+
+**Why lib/spec split is the default (Dec 2025 best practice):**
+
+- `tsconfig.json` stays tiny → faster Nx project graph hashing/parsing and cleaner IDE startup.
+- `tsconfig.lib.json` isolates emit settings (`rootDir`, `outDir`, `noEmitOnError`, NodeNext
+  resolution) so declaration output matches runtime without test-only globals.
+- `tsconfig.spec.json` carries test-only types (e.g., `vitest/globals`, DOM) without leaking into
+  the published surface, reducing false positives and keeping d.ts clean.
+- Aligns with Nx generators/migrations (`@nx/js` + Vitest) which expect a lib/spec split; avoids
+  future migration churn.
+- Clear separation of concerns: build ≠ tests; editors load both via references, so test files are
+  typed correctly while builds remain strict and lean.
+- References: Nx TypeScript project linking/lib-spec pattern
+  (<https://nx.dev/concepts/typescript-project-linking>), Nx recipes on workspaces TS configs
+  (<https://nx.dev/recipes/other/switch-to-workspaces-project-references>), TypeScript NodeNext
+  module resolution (<https://www.typescriptlang.org/tsconfig/moduleResolution.html>).
+
+### 4.2 React Library
+
+- Extend `@repo/typescript-config/react-library.json` (adds JSX + DOM libs). Same file layout as
+  Node Library; keep `module: NodeNext` for publishable React libs consumed in ESM tooling.
+
+### 4.3 Next.js App
+
+- Extend `@repo/typescript-config/nextjs.json`. Use `tsconfig.json` + Next-generated
+  `tsconfig.app.json`/`tsconfig.spec.json` if present. Resolution is `Bundler`; do **not** reuse for
+  libraries.
 
 **Module Boundary Definition** (per Node.js spec):
 

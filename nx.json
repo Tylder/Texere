@@ -50,7 +50,6 @@
       "inputs": [
         "{projectRoot}/src/**",
         "{projectRoot}/package.json",
-        "{projectRoot}/tsconfig.build.json",
         "{projectRoot}/tsconfig.json",
         "{projectRoot}/vite.config.ts",
         "{projectRoot}/vite.config.js",
