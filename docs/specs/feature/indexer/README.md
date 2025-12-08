@@ -637,22 +637,55 @@ interface GetIncidentSliceInput {
 
 ## 10. Dependencies & References
 
-### 10.1 Related Specifications
+### 10.1 Related Specifications (v1 Indexer)
 
 - **`ingest_spec.md`** (Active): Complete ingestion pipeline, language indexers, Git diff,
   higher-level extractors, testing & quality requirements.
 - **`nx_layout_spec.md`** (Active): Monorepo layout, Nx library structure (types, core, ingest,
   query, workers), dependency boundaries.
 
-### 10.2 High-Level Spec
+### 10.2 Implementation Detail Specs (Placeholders – Fill Before Coding)
+
+**CRITICAL (Implement First)**:
+
+- **`graph_schema_spec.md`** (Placeholder): Neo4j/Memgraph schema, node/edge DDL, indexes, Cypher
+  query patterns.
+- **`vector_store_spec.md`** (Placeholder): Qdrant payload schema, embedding model, dimensions,
+  similarity queries.
+- **`llm_prompts_spec.md`** (Placeholder): LLM prompt templates, feature mapping, test↔feature,
+  endpoint↔feature output schemas.
+
+**HIGH PRIORITY (Before Coding)**:
+
+- **`configuration_spec.md`** (Placeholder): Environment variables, config files, tracked branches,
+  security lists.
+- **`api_gateway_spec.md`** (Placeholder): HTTP REST endpoints, request/response schemas, error
+  handling.
+- **`testing_strategy_spec.md`** (Placeholder): Unit/integration/golden test structure, fixtures,
+  coverage targets.
+
+**MEDIUM PRIORITY**:
+
+- **`symbol_id_stability_spec.md`** (Placeholder): Symbol ID algorithm, Git rename handling, symbol
+  movement, incremental diff.
+- **`language_indexers_spec.md`** (Placeholder): TypeScript/JavaScript AST rules, Python sidecar
+  protocol, framework heuristics, test detection.
+
+**OPTIONAL for v1**:
+
+- **`patterns_and_incidents_spec.md`** (Placeholder): Pattern definitions, incident manifest,
+  historical tracking.
+
+### 10.3 High-Level Spec
 
 - [System & Architecture Overview](../../README.md §5–7): Texere architecture, major components.
 
-### 10.3 External References
+### 10.4 External References
 
 - [SCIP Specification](https://sourcegraph.com/github.com/sourcegraph/scip): Code indexing protocol
 - [Cypher Query Language](https://neo4j.com/docs/cypher-manual/current/): Neo4j queries (if
   applicable)
+- [Qdrant Documentation](https://qdrant.tech/documentation/): Vector store usage
 
 **Cite as:** §10
 
