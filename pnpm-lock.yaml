@@ -81,6 +81,9 @@ importers:
       eslint-plugin-check-file:
         specifier: ^3.3.1
         version: 3.3.1(eslint@9.39.1(jiti@2.6.1))
+      eslint-plugin-oxlint:
+        specifier: ^1.31.0
+        version: 1.31.0
       eslint-plugin-playwright:
         specifier: ^2.4.0
         version: 2.4.0(eslint@9.39.1(jiti@2.6.1))
@@ -5063,6 +5066,9 @@ packages:
     peerDependencies:
       eslint: '>=8.23.0'
 
+  eslint-plugin-oxlint@1.31.0:
+    resolution: {integrity: sha512-yIUkBg9qZCL9DZVSvH3FklF5urG7LRboZD0/YLf/CvihPpcfBeMyH1onaG3+iKMCIRa/uwXgdRjB5MSOplFTVw==}
+
   eslint-plugin-playwright@2.4.0:
     resolution: {integrity: sha512-MWNXfXlLfwXAjj4Z80PvCCFCXgCYy5OCHan57Z/beGrjkJ3maG1GanuGX8Ck6T6fagplBx2ZdkifxSfByftaTQ==}
     engines: {node: '>=16.9.0'}
@@ -6176,6 +6182,9 @@ packages:
 
   jsonc-parser@3.2.0:
     resolution: {integrity: sha512-gfFQZrcTc8CnKXp6Y4/CBT3fTc0OVuDofpre4aEeEpSBPV5X5v4+Vmx+8snU7RLPrNHPKSgLxGo9YuQzz20o+w==}
+
+  jsonc-parser@3.3.1:
+    resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
 
   jsonfile@4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
@@ -14797,6 +14806,10 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
+  eslint-plugin-oxlint@1.31.0:
+    dependencies:
+      jsonc-parser: 3.3.1
+
   eslint-plugin-playwright@2.4.0(eslint@9.39.1(jiti@2.6.1)):
     dependencies:
       eslint: 9.39.1(jiti@2.6.1)
@@ -16019,6 +16032,8 @@ snapshots:
       semver: 7.7.3
 
   jsonc-parser@3.2.0: {}
+
+  jsonc-parser@3.3.1: {}
 
   jsonfile@4.0.0:
     optionalDependencies:

@@ -11,6 +11,7 @@ import tseslint from 'typescript-eslint';
 
 import eslint from '@eslint/js';
 import nxPlugin from '@nx/eslint-plugin';
+import oxlintPlugin from 'eslint-plugin-oxlint';
 
 /**
  * Shared base ESLint configuration for all packages/apps.
@@ -75,6 +76,7 @@ export const config = tseslint.config(
       unicorn: unicornPlugin,
       'check-file': checkFilePlugin,
       '@nx': nxPlugin,
+      oxlint: oxlintPlugin,
     },
     settings: {
       'import/resolver': {
@@ -184,5 +186,9 @@ export const config = tseslint.config(
       ],
       '@nx/dependency-checks': 'error',
     },
+  },
+  {
+    name: 'base/oxlint-disable-overlaps',
+    rules: oxlintPlugin.configs.recommended.rules,
   },
 );
