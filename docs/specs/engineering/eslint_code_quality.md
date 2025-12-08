@@ -125,28 +125,25 @@ function createUser(name: any) {
 
 | Rule                       | Enforcement            | Details                                                       |
 | -------------------------- | ---------------------- | ------------------------------------------------------------- |
-| `import/order`             | **disabled**           | Handled entirely by Prettier (`prettier-plugin-sort-imports`) |
+| `import/order`             | **error**              | Enforced by ESLint; auto-fixable with `--fix`                 |
 | `import/no-default-export` | error (except Next.js) | Named exports only                                            |
 | `consistent-type-imports`  | error                  | Use `import type { X }` for type-only imports                 |
 
-**RULE: Prettier Owns Import Sorting; ESLint Only Validates Type Imports**
+**RULE: ESLint Owns Import Sorting via `import/order` Rule**
 
-Import sorting is complex and error-prone when two tools both try to fix it. Solution: **Disable
-ESLint's `import/order` rule** and let Prettier handle all import sorting via
-`prettier-plugin-sort-imports`.
+Import sorting is validated and auto-fixed by ESLint's `import/order` rule. Prettier's import
+sorting plugin is disabled to avoid conflicts and maintain a single source of truth.
 
-- **Prettier** (`prettier-plugin-sort-imports`) auto-fixes import order during `pnpm format:staged`
-  (runs first)
-- **ESLint** (`consistent-type-imports`) validates that type imports use `import type { X }` syntax
-  (validation only, no fixing)
-- No conflict: single source of truth for import order
+- **ESLint** (`import/order`) enforces import order with auto-fix capability
+- **Prettier** handles formatting only (whitespace, quotes); no import sorting
+- No conflict: single source of truth for import order (ESLint)
 
-**Import Order (Prettier auto-fixes to this):**
+**Import Order (ESLint enforces this):**
 
 1. Node.js builtins: `node:fs`, `node:path`
 2. External packages: `zod`, `axios`, `vitest`
 3. Other scoped packages: `@babel/core`, `@testing-library/react`
-4. Workspace imports: `@personacore/*`
+4. Workspace imports: `@repo/*`
 5. Absolute aliases: `@/*`
 6. Parent imports: `../config`
 7. Sibling imports: `./helper`
@@ -154,21 +151,21 @@ ESLint's `import/order` rule** and let Prettier handle all import sorting via
 **Workflow:**
 
 ```bash
-pnpm format:staged  # Prettier: Auto-fix import order via importOrder regex (see prettier_formatting.md §3.4)
-pnpm lint           # ESLint: Validate type imports use 'import type { X }' syntax only
+pnpm lint           # ESLint: Validate and auto-fix import order + type imports
+pnpm format         # Prettier: Apply formatting (whitespace, quotes, etc.)
 ```
 
-**See:** `prettier_formatting.md §3.4` for Prettier regex patterns.
+**See:** ESLint config `packages/eslint-config/base.js` for `import/order` configuration.
 
-**✅ Correct (after `pnpm format:staged`):**
+**✅ Correct (after `pnpm lint --fix` or enforced by `pnpm lint`):**
 
 ```typescript
 import fs from 'node:fs';
 
 import { z } from 'zod';
 
-import type { User } from '@personacore/contracts';
-import { createUser, deleteUser } from '@personacore/backend';
+import type { User } from '@repo/contracts';
+import { createUser, deleteUser } from '@repo/backend';
 
 import { Button } from '@/components';
 
@@ -180,24 +177,24 @@ export function handleUser(user: User): void { ... }
 export { createUser, deleteUser };
 ```
 
-**❌ Incorrect (before formatting or violates `consistent-type-imports`):**
+**❌ Incorrect (violates `import/order` or `consistent-type-imports`):**
 
 ```typescript
-import { createUser } from '@personacore/backend';
-import { User } from '@personacore/contracts';  // ❌ Should be 'import type { User }'
+import { createUser } from '@repo/backend';
+import { User } from '@repo/contracts';  // ❌ Should be 'import type { User }'
 import { z } from 'zod';
-import fs from 'node:fs';  // ❌ Wrong order (Prettier fixes during format:staged)
+import fs from 'node:fs';  // ❌ Wrong order (ESLint auto-fixes with --fix)
 
 export { User, createUser };  // ❌ Mixed type/value
 export default function handleUser(user: User) { ... }  // ❌ Default export
 ```
 
-**Why disable `import/order` in ESLint:**
+**Why enable `import/order` in ESLint:**
 
-- Reduces complexity: one tool (Prettier) handles sorting; ESLint validates syntax only
-- Prevents conflicts: no misaligned regex patterns between Prettier and ESLint
-- Cleaner workflow: `format:staged` fixes, `lint` validates
-- Easier maintenance: one source of truth for import order (Prettier's `importOrder` config)
+- Single source of truth: ESLint validates and auto-fixes import order
+- Prevents conflicts: removes import sorting plugin from Prettier entirely
+- Faster workflow: `pnpm lint --fix` handles all order and type issues
+- Easier maintenance: all import rules live in one tool (ESLint)
 
 ### 3.4 Dead Code
 

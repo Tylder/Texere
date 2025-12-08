@@ -142,65 +142,18 @@ All directories use the root `prettier.config.mjs`.
 | Plugin                         | Purpose                                               | Version | Why                                             |
 | ------------------------------ | ----------------------------------------------------- | ------- | ----------------------------------------------- |
 | `prettier-plugin-packagejson`  | Format `package.json` consistently                    | Latest  | Standardizes package.json across monorepo       |
-| `prettier-plugin-sort-imports` | Auto-organize imports (matches ESLint `import/order`) | Latest  | Fixes import order before ESLint linting        |
 | `prettier-plugin-tailwindcss`  | Sort Tailwind utility classes alphabetically          | Latest  | Prevents class duplicates; improves readability |
 
 **Installation:**
 
 ```bash
-pnpm -w add -D prettier-plugin-packagejson prettier-plugin-sort-imports prettier-plugin-tailwindcss
+pnpm -w add -D prettier-plugin-packagejson prettier-plugin-tailwindcss
 ```
 
-**Why important:** `prettier-plugin-sort-imports` auto-fixes import order during
-`pnpm format:staged` so `pnpm lint` passes without requiring `eslint --fix`.
+**NOTE:** `prettier-plugin-sort-imports` is **NOT** used. ESLint's `import/order` rule handles
+all import sorting (see `eslint_code_quality.md §3.3`).
 
-### 3.4 Import Sorting (prettier-plugin-sort-imports)
-
-**RULE:** `prettier.config.mjs` must configure import sorting with this pattern (matches ESLint
-`import/order`):
-
-```javascript
-importOrder: [
-  '^node:',                // Node.js builtins (e.g., node:fs, node:path)
-  '^(?!\.)(?!@)',         // External packages (e.g., zod, axios) - NOT starting with . or @
-  '^@(?!personacore|/)',   // Other scoped packages (e.g., @babel/core, @testing-library/react)
-  '^@personacore/',        // Workspace imports (@personacore/*)
-  '^@/',                   // Absolute aliases (@/)
-  '^\.\.[/\\]',         // Parent imports (../ or ..\) - MUST come before ./
-  '^\./',                 // Sibling imports (./)
-],
-importOrderSeparation: true,   // Add blank lines between groups
-importOrderSortSpecifiers: true, // Sort specifiers within import statements
-```
-
-**Example result:**
-
-```typescript
-import fs from 'node:fs';
-
-import { z } from 'zod';
-
-import { Button } from '@/components/ui/button';
-import { createUser } from '@personacore/backend';
-import type { User } from '@personacore/contracts';
-
-import { config } from '../config';
-
-import { helper } from './helper';
-```
-
-**Pattern explanation:**
-
-- **`^node:`** – Node.js builtins (e.g., `node:fs`, `node:path`)
-- **`^(?!\.)(?!@)`** – External npm packages (not starting with `.` or `@`): `zod`, `axios`,
-  `vitest`
-- **`^@(?!personacore|/)`** – Other scoped packages: `@babel/core`, `@testing-library/react`
-- **`^@personacore/`** – Workspace imports: `@personacore/backend`, `@personacore/contracts`
-- **`^@/`** – Absolute aliases: `@/components`
-- **`^\.\.[/\\]`** – Parent imports: `../config` (MUST come before `./`)
-- **`^\.\/`** – Sibling imports: `./helper`
-
-### 3.5 Tailwind Class Sorting (prettier-plugin-tailwindcss)
+### 3.4 Tailwind Class Sorting (prettier-plugin-tailwindcss)
 
 **Behavior:** Automatically sorts Tailwind utility classes alphabetically.
 
@@ -222,18 +175,19 @@ import { helper } from './helper';
 
 ## § 4. Integration with ESLint
 
-**RULE:** Prettier and ESLint must not conflict. Prettier fixes imports; ESLint validates them.
+**RULE:** Prettier and ESLint must not conflict. ESLint handles import ordering; Prettier handles
+formatting only.
 
-**See:** `eslint_code_quality.md §6` for integration details.
+**See:** `eslint_code_quality.md §3.3` for import ordering details.
 
-### 4.1 Import Sorting: Prettier Fixes, ESLint Validates
+### 4.1 Workflow: ESLint Fixes Imports, Prettier Formats
 
 **CRITICAL WORKFLOW:**
 
-1. **`pnpm format:staged`** – Prettier fixes import order via `prettier-plugin-sort-imports`
-   - Auto-organizes: builtins → external → workspace (`@personacore/*`) → aliases → parent →
-     relative
-   - Also fixes whitespace, quotes, trailing commas
-   - Examples: See § 3.4 above
+1. **`pnpm lint --fix`** – ESLint fixes import order via `import/order` rule
+   - Auto-organizes: builtins → external → workspace (`@repo/*`) → aliases → parent → relative
+   - Enforces `consistent-type-imports`
+   - Examples: See `eslint_code_quality.md §3.3`
 
-2. **`pnpm lint`** – ESLint validates import order is correct
+2. **`pnpm format`** – Prettier applies formatting (whitespace, quotes, trailing commas)
+   - Does NOT touch import order (ESLint owns this)
