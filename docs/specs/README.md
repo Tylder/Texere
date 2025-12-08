@@ -164,27 +164,25 @@ human-in-the-loop interrupts.
 
 ## 8. Spec Index (status + audience)
 
-| File (relative)                           | Version | Status | Audience                    | Key Sections                                                                                                                                                                                               |
-| ----------------------------------------- | ------- | ------ | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **System & Architecture**                 |         |        |                             |                                                                                                                                                                                                            |
-| `README.md` (this file)                   | 1.0     | Active | All                         | Overview, navigation, spec organization                                                                                                                                                                    |
-| **Engineering / Tooling & Quality**       |         |        |                             |                                                                                                                                                                                                            |
-| `engineering/eslint_code_quality.md`      | Active  | Active | Backend, Frontend           | Monorepo discipline, type safety, import org, dead code, async safety                                                                                                                                      |
-| `engineering/prettier_formatting.md`      | Active  | Active | Backend, Frontend           | Formatting config, import sorting, Tailwind classes, ESLint integration                                                                                                                                    |
-| `engineering/rendering-strategies.md`     | 1.0     | Active | Frontend                    | SSG, SSR, CSR, ISR, PPR, decision matrix                                                                                                                                                                   |
-| `engineering/testing_strategy.md`         | 1.1     | Active | All                         | Testing trophy, tools (TypeScript, ESLint, Vitest, RTL, Playwright), what to test by level, anti-patterns, coverage goals                                                                                  |
-| `engineering/testing_specification.md`    | 1.2     | Active | All                         | Implementation details: vitest config, colocated tests, E2E Playwright setup, commands, quality gates                                                                                                      |
-| `engineering/typescript_configuration.md` | Active  | Active | Backend, Frontend           | TS 5.9, Node 22 ES2023, project refs, strict settings, module resolution via package.json exports                                                                                                          |
-| **Meta / Process & Governance**           |         |        |                             |                                                                                                                                                                                                            |
-| `meta/llm_feature_workflow_full.md`       | N/A     | Active | All (esp. Agents)           | Vertical slices, test-driven development, spec-first, iterative workflow                                                                                                                                   |
-| `meta/prompt_template.md`                 | N/A     | Active | Agents                      | Universal task template, code/test change template, docs-only change template                                                                                                                              |
-| `meta/spec_writing.md`                    | 1.1     | Active | All (esp. Authors & Agents) | §1–11 spec structure, numbering, citability, checklists, completeness criteria, citation mandate, bad vs good examples                                                                                     |
-| **Feature / Orchestrator (Mastra)**       |         |        |                             |                                                                                                                                                                                                            |
-| `feauture/mastra_orchestrator_spec.md`    | 0.1     | Active | Backend, Core               | Purpose, Nx monorepo layout, Mastra primitives (agents, workflows, storage), agents (8 roles), workflows (5+), tools integration, retrieval/indexing, storage, safety, observability, evals, extensibility |
-| **Feature / Orchestrator (LangGraph.js)** |         |        |                             |                                                                                                                                                                                                            |
-| `feauture/langgraph_orchestrator_spec.md` | 0.1     | Draft  | Backend, Core               | Parallel framework evaluation, graph-first design, tool adapter pattern, PoC workflows (Q&A, summarize), framework-agnostic tool contract, self-hosted deployment, future LangSmith integration            |
-| **Feature / Tools**                       |         |        |                             |                                                                                                                                                                                                            |
-| `feauture/texere-tool-spec.md`            | N/A     | Active | Backend, Core               | TS-first tool abstraction for Mastra + LangGraph.js, CoreTool types, framework-agnostic design, Mastra adapter, LangGraph adapter, testing, observability                                                  |
+| File (relative)                           | Version | Status | Audience                    | Key Sections                                                                                                                                            |
+| ----------------------------------------- | ------- | ------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **System & Architecture**                 |         |        |                             |                                                                                                                                                         |
+| `README.md` (this file)                   | 1.0     | Active | All                         | Overview, navigation, spec organization                                                                                                                 |
+| **Engineering / Tooling & Quality**       |         |        |                             |                                                                                                                                                         |
+| `engineering/eslint_code_quality.md`      | Active  | Active | Backend, Frontend           | Monorepo discipline, type safety, import org, dead code, async safety                                                                                   |
+| `engineering/prettier_formatting.md`      | Active  | Active | Backend, Frontend           | Formatting config, import sorting, Tailwind classes, ESLint integration                                                                                 |
+| `engineering/rendering-strategies.md`     | 1.0     | Active | Frontend                    | SSG, SSR, CSR, ISR, PPR, decision matrix                                                                                                                |
+| `engineering/testing_strategy.md`         | 1.1     | Active | All                         | Testing trophy, tools (TypeScript, ESLint, Vitest, RTL, Playwright), what to test by level, anti-patterns, coverage goals                               |
+| `engineering/testing_specification.md`    | 1.2     | Active | All                         | Implementation details: vitest config, colocated tests, E2E Playwright setup, commands, quality gates                                                   |
+| `engineering/typescript_configuration.md` | Active  | Active | Backend, Frontend           | TS 5.9, Node 22 ES2023, project refs, strict settings, module resolution via package.json exports                                                       |
+| **Meta / Process & Governance**           |         |        |                             |                                                                                                                                                         |
+| `meta/llm_feature_workflow_full.md`       | N/A     | Active | All (esp. Agents)           | Vertical slices, test-driven development, spec-first, iterative workflow                                                                                |
+| `meta/prompt_template.md`                 | N/A     | Active | Agents                      | Universal task template, code/test change template, docs-only change template                                                                           |
+| `meta/spec_writing.md`                    | 1.1     | Active | All (esp. Authors & Agents) | §1–11 spec structure, numbering, citability, checklists, completeness criteria, citation mandate, bad vs good examples                                  |
+| **Feature / Orchestrator (LangGraph.js)** |         |        |                             |                                                                                                                                                         |
+| `feauture/langgraph_orchestrator_spec.md` | 0.1     | Active | Backend, Core               | Graph-first design, tool adapter pattern, workflows (Q&A, summarize, classify), framework-agnostic tool contract, self-hosted deployment, observability |
+| **Feature / Tools**                       |         |        |                             |                                                                                                                                                         |
+| `feauture/texere-tool-spec.md`            | N/A     | Active | Backend, Core               | TS-first tool abstraction for LangGraph.js, CoreTool types, framework-agnostic design, LangGraph adapter, testing, observability                        |
 
 **Cite as:** §8
 
@@ -194,22 +192,17 @@ human-in-the-loop interrupts.
 
 The following areas are in active development or have documented design decisions in progress:
 
-- **Mastra vs. LangGraph.js Framework Evaluation:** Two orchestration frameworks are being developed
-  in parallel (per `feauture/mastra_orchestrator_spec.md` (Active, v0.1) and
-  `feauture/langgraph_orchestrator_spec.md` (Draft, v0.1 PoC)). Both share the same tool contract
-  and framework-agnostic design. A final framework decision will be made after the LangGraph PoC
-  completes (~§12.1). Evaluation criteria: DX, observability, perf, operational overhead.
+- **LangGraph.js Framework:** LangGraph.js is the selected orchestration framework. See
+  `feauture/langgraph_orchestrator_spec.md` for architecture, design patterns, and tool contracts.
 - **Python Backend Path:** Tools are designed to be framework-agnostic so a future Python/LangGraph
   backend can consume the same tool contracts via HTTP or MCP. This is optional and deferred
   (`feauture/langgraph_orchestrator_spec.md §12.3`).
 - **MCP Integration Patterns:** Implementation details for MCP servers as clients (tools layer is
   framework-agnostic per `feauture/texere-tool-spec.md`; MCP integration spec TBD).
-- **Index/Retrieval Service:** Contract and integration points defined in
-  `feauture/mastra_orchestrator_spec.md §7` (Repo-Intel Tool Contract); implementation deferred to
-  separate indexing pipeline spec.
+- **Index/Retrieval Service:** Contract and integration points defined in indexing pipeline specs;
+  implementation deferred to separate indexing package.
 - **Streaming & Real-Time:** API and async transport specs referenced in high-level spec (§7) but
-  not yet fully detailed; both Mastra and LangGraph.js support streaming (deferred to v1 deploy
-  spec).
+  not yet fully detailed; LangGraph.js supports streaming (deferred to v1 deploy spec).
 - **Cost & Scaling Targets:** Not quantified in v1 specs; should be formalized in observability &
   evals spec (TBD).
 

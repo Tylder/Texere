@@ -10,11 +10,11 @@ formatting), then integrate oxlint plugin for hybrid speed
 
 ## Overview & Progress
 
-| Phase | Action                                                      | Time   | Status | Files                               |
-| ----- | ----------------------------------------------------------- | ------ | ------ | ----------------------------------- |
-| **1** | ✅ Verify spec, update base.js with spec-required rules        | 30 min | **DONE** | `base.js`, `eslint_code_quality.md` |
-| **2** | ✅ Disable prettier import sorting, enable ESLint import/order | 20 min | **DONE** | `prettier.config.mjs`, `base.js`    |
-| **3** | ❌ Install and integrate eslint-plugin-oxlint                  | 15 min | **TODO** | `base.js`, `package.json`           |
+| Phase | Action                                                         | Time   | Status      | Files                               |
+| ----- | -------------------------------------------------------------- | ------ | ----------- | ----------------------------------- |
+| **1** | ✅ Verify spec, update base.js with spec-required rules        | 30 min | **DONE**    | `base.js`, `eslint_code_quality.md` |
+| **2** | ✅ Disable prettier import sorting, enable ESLint import/order | 20 min | **DONE**    | `prettier.config.mjs`, `base.js`    |
+| **3** | ❌ Install and integrate eslint-plugin-oxlint                  | 15 min | **TODO**    | `base.js`, `package.json`           |
 | **4** | ⏳ Test incrementally                                          | 20 min | **BLOCKED** | Terminal                            |
 | **5** | ⏳ Update README with hybrid approach                          | 10 min | **BLOCKED** | `README.md`                         |
 
@@ -23,6 +23,7 @@ formatting), then integrate oxlint plugin for hybrid speed
 ## Phase 1: Verify & Update base.js Against Spec (30 min) ✅ COMPLETE
 
 ### Current Status
+
 All spec requirements verified and implemented in `packages/eslint-config/base.js`:
 
 - [x] §3.1: `no-restricted-imports` blocks `../../` relative imports (line 109)
@@ -46,12 +47,14 @@ All spec requirements verified and implemented in `packages/eslint-config/base.j
    - Path groups for `node:*`, `@repo/**`, `@/**`
 
 **Verification:**
+
 ```bash
 grep -n "import/order\|no-explicit-any" packages/eslint-config/base.js
 # ✅ Returns 2+ matches (line 58 and lines 123-151)
 ```
 
 **Test Results:**
+
 - `pnpm lint:fast`: ✅ Passes (oxlint works)
 - `pnpm lint`: ✅ Passes (ESLint validates import order)
 
@@ -68,6 +71,7 @@ grep -n "import/order\|no-explicit-any" packages/eslint-config/base.js
 3. ✅ Added comment: "ESLint now handles import ordering"
 
 **Current plugins (line 9):**
+
 ```javascript
 plugins: ['prettier-plugin-packagejson', 'prettier-plugin-tailwindcss'],
 ```
@@ -94,6 +98,7 @@ pnpm lint
 ## Phase 3: Install & Integrate eslint-plugin-oxlint (15 min) ❌ TODO
 
 ### Current Status
+
 - ✅ `oxlint` CLI already installed (v1.31.0 in `package.json` line 66)
 - ✅ `lint:fast` script already uses oxlint (line 13)
 - ❌ **MISSING:** `eslint-plugin-oxlint` **NOT** installed
@@ -110,16 +115,19 @@ pnpm add -D eslint-plugin-oxlint
 **File:** `packages/eslint-config/base.js`
 
 **Step A: Add import after line 12**
+
 ```javascript
 import oxlintPlugin from 'eslint-plugin-oxlint';
 ```
 
 **Step B: Register in plugins section (line ~77)**
+
 ```javascript
 oxlint: oxlintPlugin,  // ADD THIS
 ```
 
 **Step C: Add config block before closing `);` (line 188)**
+
 ```javascript
 {
   name: 'base/oxlint-disable-overlaps',
@@ -308,17 +316,24 @@ pnpm test
 - [x] Update package.json scripts:
   - `lint`: `oxlint && nx run-many --target=lint --all --parallel` ✅
   - `lint:fast`: `oxlint` ✅
-  - `lint:fix`: `nx run-many --target=lint --fix --all --parallel && oxlint` (ESLint fix + oxlint report) ✅
+  - `lint:fix`: `nx run-many --target=lint --fix --all --parallel && oxlint` (ESLint fix + oxlint
+    report) ✅
 - [x] Test: oxlint runs and reports issues ✅
 - [x] Verify plugin disables 100+ overlapping ESLint rules ✅
-- [ ] Commit: `feat: integrate eslint-plugin-oxlint for hybrid linting`
+- [x] Commit: `feat: integrate eslint-plugin-oxlint for hybrid linting` ✅
+- [x] Run `pnpm lint:fix` to fix all issues ✅
+- [x] Fix unused vitest setup imports ✅
+- [x] Fix empty file warnings ✅
+- [x] All tests pass ✅
 
-**Note:** Speed improvement primarily from parallel execution of oxlint + ESLint, not rule disabling. Oxlint catches syntax/basic issues fast while ESLint does type-aware checks simultaneously.
+**Note:** Speed improvement primarily from parallel execution of oxlint + ESLint, not rule
+disabling. Oxlint catches syntax/basic issues fast while ESLint does type-aware checks
+simultaneously.
 
 ### ⏳ Phase 4: Verification (PENDING)
 
 - [ ] Test monorepo rule catches
-- [ ] Test import order catches  
+- [ ] Test import order catches
 - [ ] Test unused variable catches
 - [ ] Run full quality suite: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test`
 - [ ] All pass
@@ -326,7 +341,7 @@ pnpm test
 ### ⏳ Phase 5: Documentation (PENDING)
 
 - [ ] Update "Tooling Defaults" section in README
-- [ ] Update "Quality loop" command in README  
+- [ ] Update "Quality loop" command in README
 - [ ] Update "pnpm lint" command description in README
 - [ ] Commit: `docs: update README with hybrid oxlint+eslint explanation`
 

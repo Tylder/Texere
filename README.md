@@ -1,8 +1,8 @@
 # Texere: LLM Agent Platform for Repository Understanding & Code Implementation
 
 A TypeScript-first platform for building stateful LLM workflows that understand codebases and
-implement changes across repositories. Built on Mastra orchestration, LangGraph.js compatibility,
-and an extensible tool architecture.
+implement changes across repositories. Built on LangGraph.js orchestration and an extensible tool
+architecture.
 
 **Objective:** Enable AI agents to read, understand, and modify code according to specifications
 with production-ready reliability and observability.
@@ -20,7 +20,7 @@ with production-ready reliability and observability.
 
 Texere is organized into three primary layers (see `docs/specs/README.md` § 5):
 
-1. **Orchestration Core** – Mastra-based workflows, agents, and state management
+1. **Orchestration Core** – LangGraph.js-based workflows, agents, and state management
 2. **API & Transport Layer** – HTTP boundary with async streaming (SSE/WebSockets)
 3. **Client Layer** – TypeScript applications consuming the API
 
@@ -28,23 +28,19 @@ Texere is organized into three primary layers (see `docs/specs/README.md` § 5):
 
 Currently no user-facing apps in v1; focus is on core orchestration and tools.
 
-- **`apps/mastra-dev`** (planned) – Mastra dev server and Studio entrypoint
-
 ### Packages
 
 #### Core Orchestration
 
-- **`packages/orchestrator`** – Mastra configuration, agents, workflows, and task execution. Main
-  entry point for running coding tasks programmatically.
+- **`packages/langgraph-orchestrator`** – LangGraph.js configuration, agents, workflows, and task
+  execution. Main entry point for running coding tasks programmatically.
 
 #### Framework-Agnostic Tools
 
 - **`packages/tools-core`** – Framework-independent tool definitions with Zod schemas, types, and
   handler contracts. Single source of truth for tool logic across frameworks.
-- **`packages/tools-mastra`** – Mastra adapter for CoreTool definitions, enabling tools to work
-  natively with Mastra agents and workflows.
-- **`packages/tools-langgraph`** – LangGraph.js adapter for CoreTool definitions, enabling same
-  tools to work with LangGraph state and commands.
+- **`packages/tools-langgraph`** – LangGraph.js integration for CoreTool definitions, enabling tools
+  to work natively with LangGraph agents and workflows.
 
 #### Shared Tooling
 
@@ -73,7 +69,7 @@ Follow the fast-feedback pattern documented in `AGENTS.md`:
 
 2. **Read specs first**: Consult `docs/specs/` for architecture and requirements
    - High-level entrypoint: `docs/specs/README.md`
-   - Feature specs: `docs/specs/feature/mastra_orchestrator_spec.md`,
+   - Feature specs: `docs/specs/feature/langgraph_orchestrator_spec.md`,
      `docs/specs/feature/texere-tool-spec.md`
    - Engineering specs: `docs/specs/engineering/` (testing, linting, TypeScript setup)
 
@@ -99,7 +95,7 @@ Follow the fast-feedback pattern documented in `AGENTS.md`:
 
 ### Agents & Workflows
 
-Texere uses **Mastra** to orchestrate multi-step coding tasks:
+Texere uses **LangGraph.js** to orchestrate multi-step coding tasks:
 
 - **Agents**: Role-specific LLM entities with tool access (Spec Interpreter, Planner, Implementer,
   Reviewer, etc.)
@@ -108,17 +104,13 @@ Texere uses **Mastra** to orchestrate multi-step coding tasks:
   operations, etc.)
 - **Threads & Runs**: Long-lived contexts for stateful interactions and checkpoints
 
-See `docs/specs/feature/mastra_orchestrator_spec.md` for full agent and workflow specifications.
+See `docs/specs/feature/langgraph_orchestrator_spec.md` for full agent and workflow specifications.
 
 ### Framework-Agnostic Tools
 
-Tools are defined once in `@repo/tools-core` and work unchanged across:
-
-- **Mastra**: Native integration with agents and workflows
-- **LangGraph.js**: Adapted via `@repo/tools-langgraph`
-
-This enables tools to be used in both frameworks without duplication. See
-`docs/specs/feature/texere-tool-spec.md` for the tool abstraction contract.
+Tools are defined once in `@repo/tools-core` and integrate with LangGraph.js via
+`@repo/tools-langgraph`. See `docs/specs/feature/texere-tool-spec.md` for the tool abstraction
+contract.
 
 ## Nx Generators (for reference)
 
@@ -187,7 +179,7 @@ Role-based reading order:
 Key specs:
 
 - **Architecture**: `docs/specs/README.md` (§ 3–7)
-- **Mastra Orchestrator**: `docs/specs/feature/mastra_orchestrator_spec.md`
+- **LangGraph Orchestrator**: `docs/specs/feature/langgraph_orchestrator_spec.md`
 - **Tool Abstraction**: `docs/specs/feature/texere-tool-spec.md`
 - **Engineering Standards**: `docs/specs/engineering/` (testing, linting, TypeScript, etc.)
 - **Workflow Process**: `docs/specs/meta/llm_feature_workflow_full.md` (spec-first, TDD, iterative)
