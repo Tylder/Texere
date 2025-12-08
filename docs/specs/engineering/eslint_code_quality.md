@@ -1,7 +1,7 @@
 # ESLint Code Quality
 
 **Status:** Active  
-**Last Updated:** 2025-11-22  
+**Last Updated:** 2025-12-08  
 **Related Specs:** high_level_system_spec.md §3.6, prettier_formatting.md,
 typescript_configuration.md, ci_cd.md §2.2
 
@@ -13,7 +13,8 @@ ESLint is PersonaCore's **code quality checker**. It owns _what code does_: logi
 violations, imports, best practices.
 
 **Key Principle:** ESLint is distributed per-package (context-specific rules) while Prettier is
-centralized (formatting only).
+centralized (formatting only). Nx caching should use explicit `inputs` for lint targets (src + local
+eslint config) to avoid unnecessary cache misses.
 
 | Tool         | Purpose                                              | Scope                          | Config Location                                           |
 | ------------ | ---------------------------------------------------- | ------------------------------ | --------------------------------------------------------- |
@@ -26,7 +27,7 @@ centralized (formatting only).
 
 ### 2.1 Why Distributed ESLint + Root Prettier
 
-**ESLint is distributed** (`packages/eslint-config/base.mjs` + per-package configs):
+**ESLint is distributed** (`packages/eslint-config/base.js` + per-package configs):
 
 - Different packages have different structures (`src/**` vs `app/**` vs `lib/**`)
 - Different rules apply (e.g., `import/no-default-export: off` for Next.js but `error` for backend)
@@ -37,7 +38,7 @@ centralized (formatting only).
 
 - See `prettier_formatting.md §2.1`
 
-### 2.2 Directory Structure
+### 2.2 Directory Structure (example)
 
 ```
 PersonaCore/
@@ -61,10 +62,6 @@ PersonaCore/
 │       └── (no eslint.config.mjs; uses inherited rules if any)
 │
 └── apps/
-    ├── admin-ui/
-    │   ├── eslint.config.mjs              ← Imports base, overrides for Next.js
-    │   └── app/**/*.{ts,tsx}
-    │
     └── web/
         ├── eslint.config.mjs              ← Imports base
         └── app/**/*.{ts,tsx}

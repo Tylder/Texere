@@ -24,7 +24,14 @@
     },
     "lint": {
       "executor": "nx:run-script",
-      "options": { "script": "lint" }
+      "options": { "script": "lint" },
+      "inputs": [
+        "default",
+        "{projectRoot}/app/**",
+        "{projectRoot}/pages/**",
+        "{projectRoot}/components/**",
+        "{projectRoot}/eslint.config.*"
+      ]
     },
     "check-types": {
       "executor": "nx:run-script",

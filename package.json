@@ -11,7 +11,7 @@
     "format:staged": "node ./scripts/format-staged.mjs",
     "lint": "oxlint & nx run-many --target=lint --all --parallel",
     "lint:fast": "oxlint",
-    "lint:fix": "nx run-many --target=lint --fix --all --parallel && oxlint --fix",
+    "lint:fix": "nx run-many --target=lint --fix --all --parallel --outputStyle=static && oxlint --fix",
     "lint:fix-suggestions": "nx run-many --target=lint --fix --fix-suggestions --all --parallel && oxlint --fix --fix-suggestions",
     "lint:fix:fast": "oxlint --fix",
     "post:report": "(pnpm run format && pnpm run lint:fix) && nx run-many --targets=check-types,test:coverage,build --all --parallel --outputStyle=static && node scripts/aggregate-coverage.mjs",

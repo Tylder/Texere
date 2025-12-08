@@ -34,6 +34,8 @@ Modern Node/ESM library template aligned with Nx + strict TypeScript.
 - Husky pre-commit runs `pnpm format:staged`; ensure new paths are formatted.
 - Lint: `pnpm nx run __name__:lint`; Typecheck: `pnpm nx run __name__:check-types`; Build emits d.ts
   to `dist/`.
+- Lint target caches inputs (src + optional local eslint config) and uses the shared root ESLint
+  config by default.
 
 ## Docs & Specs
 

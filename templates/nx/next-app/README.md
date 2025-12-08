@@ -30,6 +30,8 @@ Next.js app template aligned with Nx + strict TypeScript.
 
 - Husky pre-commit runs `pnpm format:staged`; ensure new paths are formatted.
 - Lint: `pnpm nx run __name__:lint`; Typecheck: `...:check-types`; Build via Next (`next build`).
+- Lint target caches inputs (app/pages/components + optional local eslint config) and uses the
+  shared root ESLint config by default.
 
 ## Docs & Specs
 

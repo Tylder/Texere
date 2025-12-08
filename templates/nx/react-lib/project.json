@@ -24,7 +24,8 @@
     },
     "lint": {
       "executor": "nx:run-script",
-      "options": { "script": "lint" }
+      "options": { "script": "lint" },
+      "inputs": ["default", "{projectRoot}/src/**", "{projectRoot}/eslint.config.*"]
     },
     "test": {
       "executor": "nx:run-script",
