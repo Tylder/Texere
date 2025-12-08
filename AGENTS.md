@@ -25,8 +25,10 @@
   2. Plan steps citing spec sections.
   3. Implement in small, deterministic units; fix issues surfaced in `logs/*.log`.
   4. Add tests that reference the governing spec section in their descriptions.
-- Before handing off, run `pnpm post:report` (format:staged → lint → typecheck → test:coverage →
-  build). and fix any issues reported.
+  5. After each code change, run `pnpm post:report:fast` for quick feedback (format + oxlint +
+     typecheck + test coverage; ~30s).
+- End of feature/section: run `pnpm post:report` for full validation (format + lint + typecheck +
+  test:coverage + build; ~60s) and fix any issues reported.
 
 ## Working Style
 

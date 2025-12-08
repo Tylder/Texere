@@ -161,18 +161,79 @@ pnpm dlx nx show project my-lib  # Show targets for a project
 pnpm --filter my-lib add dep  # Install deps in a specific workspace package
 ```
 
-## Common Commands Summary
+## Development Commands
 
-- `pnpm dev` – Run all packages in development mode (Nx parallel)
-- `pnpm dev:log` – Run with filtered dev logs (for agent-driven development)
-- `pnpm lint` – Hybrid linting: oxlint (fast baseline) then ESLint (comprehensive checks with
-  type-aware rules)
-- `pnpm typecheck` – Nx run-many for `check-types`
-- `pnpm test` – Nx run-many for Vitest
-- `pnpm test:coverage` – Nx run-many with coverage aggregation
-- `pnpm build` – Nx run-many to build all packages
-- `pnpm post:report` – Full quality gate: format, lint, typecheck, test, build
-- `pnpm quality` – Quick quality check: format:check, lint, typecheck, test, build
+### Quick Feedback During Coding
+
+These commands run while you're actively writing code:
+
+- **`pnpm dev`** – Run all packages in development mode (Nx parallel). Use this to see runtime
+  changes as you code.
+- **`pnpm dev:log`** – Run with filtered dev logs written to `logs/dev.log`. Recommended for
+  agent-driven development (reduces noise, keeps focus).
+- **`pnpm typecheck:watch:log`** – Watch mode for type checking; logs to `logs/typecheck.log`. Run
+  in a separate terminal while developing.
+
+### After Each Code Change
+
+- **`pnpm post:report:fast`** – Quick validation (~30s): format + oxlint fix + typecheck +
+  test:coverage. Use this after each code change to catch obvious issues without waiting for full
+  ESLint.
+
+### Quality Gates
+
+These commands validate code quality:
+
+- **`pnpm format:check`** – Check if code is formatted with Prettier (no changes). Part of CI.
+- **`pnpm format`** – Auto-format code with Prettier (modifies files).
+- **`pnpm lint:fast`** – Run oxlint only (~550ms) for instant baseline checks (syntax, unused
+  variables, import order validation).
+- **`pnpm lint:fix:fast`** – Run oxlint with `--fix` to auto-fix basic issues (fast iteration).
+- **`pnpm lint`** – Full hybrid linting: oxlint (~550ms) + ESLint (~8-15s). Validates import order,
+  type safety, monorepo discipline, async safety.
+- **`pnpm lint:fix`** – ESLint fix (import order, type imports) + oxlint fix. Use before committing
+  to fix all auto-fixable issues.
+- **`pnpm typecheck`** – TypeScript type checking. Catches type errors without running code.
+- **`pnpm test`** – Run all tests with Vitest.
+- **`pnpm test:coverage`** – Run tests with coverage reports aggregated across monorepo.
+- **`pnpm build`** – Build all packages (creates dist/ outputs).
+
+### Validation Workflows
+
+- **`pnpm post:report:fast`** (~30s) – Use after each code change: format + oxlint fix + typecheck +
+  test coverage. Skips full ESLint and build for speed.
+- **`pnpm post:report`** (~60s) – Use at end of feature/section: format + lint (full ESLint) +
+  typecheck + test:coverage + build. Comprehensive validation before handoff.
+- **`pnpm quality`** – One-time quality check: format:check + lint + typecheck + test + build. Does
+  not modify files.
+- **`pnpm format:staged`** – Format only staged files (runs on pre-commit via Husky).
+
+### Workflow Summary
+
+**During active development:**
+
+```bash
+# Terminal 1: Runtime feedback
+pnpm dev:log
+
+# Terminal 2: Type feedback
+pnpm typecheck:watch:log
+
+# Terminal 3: As you make changes
+pnpm post:report:fast  # After each code change (~30s)
+```
+
+**Before committing:**
+
+```bash
+pnpm post:report  # Full validation (~60s)
+```
+
+**In CI/before merge:**
+
+```bash
+pnpm quality  # Comprehensive check
+```
 
 ## Specs & Documentation
 
