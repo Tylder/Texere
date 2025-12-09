@@ -1101,6 +1101,65 @@ with [ingest_spec.md §6.1](../ingest_spec.md#61-snapshot-selection--branch-base
 The repository contains **5 snapshots** accessible via Git branches. Each snapshot is immutable
 (never rebased or force-pushed) and represents a point in development.
 
+**Branch mapping** (from initial commit to latest):
+
+- `snapshot-1` → Commit 1 (init: base structure)
+- `snapshot-2` → Commit 2 (feat: user-service)
+- `snapshot-3` → Commit 3 (feat: api-routes)
+- `snapshot-4` → Commit 4 (refactor: rename service)
+- `main` → Commit 5 (fix: email-validation) [**Latest/Default**]
+
+### Implementation Workflow
+
+Each snapshot is a **complete, functioning project** that can be indexed independently. Subsequent
+snapshots modify the previous snapshot, adding or changing code—not foundational structure.
+
+1. **snapshot-1** (Complete baseline):
+   - Models (User, Post)
+   - Services (UserService, AuthService, PostService, ExternalApiService)
+   - API routes with 3 HTTP boundaries (GET/POST/DELETE /users)
+   - Middleware and handlers
+   - Utils (validators, helpers, logger)
+   - Errors, constants, validation (Zod)
+   - Documentation (4 markdown files)
+   - Unit tests (models, utils, errors)
+   - Integration tests (API, data-flow)
+   - Prisma schema + migrations
+   - All node/edge types present; fully indexed
+
+2. **snapshot-2** (Modification 1 – Rename + Refactor):
+   - Merge snapshot-1 → snapshot-2
+   - **Change**: Rename UserService → UserRepository (tests delete+add symbol pattern)
+   - Update all imports and usages in handlers, routes, index
+   - Tests still pass
+   - **Indexer tests**: Delete symbol, add symbol, IMPORT edge updates, call graph continuity
+
+3. **snapshot-3** (Modification 2 – New Boundary + Service Method):
+   - Merge snapshot-2 → snapshot-3
+   - **Change**: Add new POST endpoint `POST /auth/login` (new Boundary, new handler)
+   - Add new service method `AuthService.login(email, password)`
+   - Update routes.ts, handlers.ts; add integration test
+   - **Indexer tests**: New Boundary extraction, new Symbol (handler, service method), new CALL
+     edges, LOCATION edges, REALIZES edges (test→handler)
+
+4. **snapshot-4** (Modification 3 – Extract Shared Logic):
+   - Merge snapshot-3 → snapshot-4
+   - **Change**: Extract email validation logic into new UserRepository method
+     `validateEmailFormat()`
+   - Refactor createUser() to use new method (updates call graph)
+   - Update unit tests
+   - **Indexer tests**: New Symbol creation, updated CALL edges (CALLS from createUser to
+     validateEmailFormat), symbol modification tracking
+
+5. **main** (Modification 4 / Latest – Data Contract Change):
+   - Merge snapshot-4 → main
+   - **Change**: Update Zod schemas in validation/schemas.ts (add new fields, refine validation
+     rules)
+   - Update integration tests for new schema
+   - **Indexer tests**: DataContract modification, type inference changes (z.infer updates),
+     DEPENDS_ON library references (zod), symbol updates
+   - Branch is ready for indexer testing
+
 ### `.indexer-config.json` (Configuration)
 
 ```json
