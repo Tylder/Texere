@@ -16,7 +16,15 @@ FOR (n:Module | n:File | n:Symbol | n:Endpoint | n:SchemaEntity | n:TestCase | n
 REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 ```
 
-**Scope**: Module, File, Symbol, Endpoint, SchemaEntity, TestCase, SpecDoc (snapshot-scoped nodes)
+**Scope**: 7 snapshot-scoped node types:
+
+1. Module
+2. File
+3. Symbol
+4. Endpoint
+5. SchemaEntity
+6. TestCase
+7. SpecDoc
 
 **Enforcement**: Database-level (caught at write time, not query time)
 
@@ -237,7 +245,7 @@ MERGE (sym)-[:IN_SNAPSHOT]->(snap2)
 | **Enforcement**    | Database-level (caught at write time)                                         |
 | **Implementation** | Create node + edge in same transaction                                        |
 | **Validation**     | Run post-ingest orphan checks                                                 |
-| **Scope**          | Module, File, Symbol, Endpoint, TestCase, SchemaEntity, SpecDoc               |
+| **Node Types**     | Module, File, Symbol, Endpoint, SchemaEntity, TestCase, SpecDoc (7 types)     |
 
 ---
 

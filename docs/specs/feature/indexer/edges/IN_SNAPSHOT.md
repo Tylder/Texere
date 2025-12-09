@@ -37,8 +37,10 @@ No additional properties.
 | TestCase     | Snapshot | exactly 1   | Test versioned to snapshot     |
 | SpecDoc      | Snapshot | exactly 1   | Doc versioned to snapshot      |
 
-**Cardinality Invariant**: No snapshot-scoped node can exist without exactly 1 incoming
-`[:IN_SNAPSHOT]` edge.
+**Cardinality Invariant**: Every snapshot-scoped node must have exactly 1 incoming `[:IN_SNAPSHOT]`
+edge.
+
+**Applies to**: Module, File, Symbol, Endpoint, SchemaEntity, TestCase, SpecDoc
 
 ---
 
