@@ -1092,69 +1092,386 @@ The test repository includes **5 commits** to validate incremental indexing (Git
 
 #### **Commit 1: `init` (Initial Setup)**
 
-- Files added: `package.json`, `tsconfig.json`, `jest.config.js`, `.env.example`
-- Snapshot 1 baseline
+**Files added**:
 
-**Indexing behavior**: All files indexed fresh.
+- `package.json` – Project metadata, dependencies (express, typescript, zod, vitest, etc.)
+- `tsconfig.json` – TypeScript configuration
+- `.env.example` – Environment template
+- `.gitignore` – Standard TS gitignore
+- `jest.config.js` or `vitest.config.ts` – Test runner config
+- `README.md` – Project overview
+- `src/index.ts` – Empty entry point (re-exports added in Commit 2)
+- `prisma/schema.prisma` – Initial Prisma schema (empty or minimal)
+
+**Symbols created**: 0 (no actual code yet, just configuration)
+
+**Nodes created**:
+
+- Codebase: test-typescript-app (root)
+- Snapshot: commit hash abc1111... (will be provided)
+- Module: src/, tests/, docs/, prisma/ (directories)
+- File: All 8 new files
+- SpecDoc: README.md (basic)
+
+**Edges created**:
+
+- CONTAINS: Module → Module, Module → File (hierarchy)
+- IN_SNAPSHOT: All nodes (8 files)
+- LOCATION: SpecDoc → File
+
+**Total snapshot size**: 8 files, 0 code symbols, 3-4 data nodes
+
+**Indexing behavior**: All files indexed fresh. No code extraction.
+
+**Git status**:
+
+```
+A  .env.example
+A  .gitignore
+A  README.md
+A  jest.config.js
+A  package.json
+A  prisma/schema.prisma
+A  src/index.ts
+A  tsconfig.json
+```
 
 ---
 
 #### **Commit 2: `feat: user-service` (User & Auth Services)**
 
-- Files added: `src/models/user.ts`, `src/models/post.ts`, `src/services/user.service.ts`,
-  `src/services/auth.service.ts`, `tests/unit/services.test.ts`
-- New symbols introduced: UserService, AuthService, IUser, UserRole, UserStatus, Post
+**Files added**:
+
+- `src/models/user.ts` – User types and interfaces
+- `src/models/post.ts` – Post model class
+- `src/models/schemas.ts` – Type definitions (placeholder for v1)
+- `src/services/user.service.ts` – UserService class with CALL edges
+- `src/services/auth.service.ts` – AuthService class (tests circular import to helpers)
+- `src/utils/validators.ts` – Validator utility functions
+- `src/utils/helpers.ts` – Helper functions (circular import)
+- `src/utils/logger.ts` – Logger utility
+- `src/constants/index.ts` – Constants (4 exports)
+- `src/errors/custom.errors.ts` – Error classes
+- `src/config/env.config.ts` – Environment configuration
+- `tests/unit/services.test.ts` – Unit tests for services
+- `docs/README.md` – User Service Module documentation
+
+**Symbols created** (20+ new):
+
+- IUser (interface)
+- UserRole (type)
+- UserStatus (enum)
+- Post (class + 3 methods)
+- UserService (class + 2 methods)
+- AuthService (class + 2 methods)
+- 3x validators (validateEmail, validatePassword, validatePhone)
+- 2x helpers (sanitizeEmail, verifyWithAuth)
+- logger (const/object)
+- 3x error classes (ValidationError, AuthenticationError, NotFoundError)
+- 4x constants (API_VERSION, MAX_USERS_PER_PAGE, TOKEN_EXPIRY_MINUTES, DEFAULT_CONFIG)
+- config (const)
+
+**Nodes created**:
+
+- Symbols: 20+ (all marked INTRODUCED in Snapshot 2)
+- TestCases: 3 (describe + 3 it blocks in services.test.ts)
+- SpecDoc: 1 (README.md)
+- DataContract: 0 (optional for v1)
+
+**Edges created**:
+
+- REFERENCES {type: 'IMPORT'}: 8+ (auth.service → helpers, validators, etc.)
+- REFERENCES {type: 'CALL'}: 10+ (UserService → validators, AuthService)
+- REFERENCES {type: 'TYPE_REF'}: 5+ (Post → IUser, method return types)
+- MUTATES {operation: 'READ'}: 2 (getUser, getPost)
+- MUTATES {operation: 'WRITE'}: 1 (createUser)
+- REALIZES {role: 'TESTS'}: 3 (test cases → services)
+- DOCUMENTS {type: 'MODULE'}: 1 (README → src/)
+- IN_SNAPSHOT: All 20+ symbols
+- CONTAINS: File → Symbol (20+)
+- TRACKS {event: 'INTRODUCED'}: 20+ (all new symbols)
+
+**Total snapshot size**: 8 + 13 files = 21 files, 20+ symbols, 3 test cases, 1 spec doc
+
+**Special features**:
+
+- Circular import: `auth.service.ts` ↔ `helpers.ts` (both import each other)
+- Service dependencies: UserService → AuthService (CALL chain)
+- Type references: Post.author uses IUser type
 
 **Indexing behavior**:
 
-- Git diff reports added files
-- Only these files indexed
-- TRACKS {event: 'INTRODUCED'} → Snapshot 2 for all new symbols
-- TestCases linked via REALIZES
+- Git diff reports 13 added files (all the new ones)
+- Only these 13 files indexed
+- Snapshot 1 files unchanged (reused)
+- TRACKS {event: 'INTRODUCED'} created for all new symbols
+
+**Git status**:
+
+```
+A  docs/README.md
+A  src/config/env.config.ts
+A  src/errors/custom.errors.ts
+A  src/models/post.ts
+A  src/models/schemas.ts
+A  src/models/user.ts
+A  src/services/auth.service.ts
+A  src/services/user.service.ts
+A  src/utils/helpers.ts
+A  src/utils/logger.ts
+A  src/utils/validators.ts
+A  src/constants/index.ts
+A  tests/unit/services.test.ts
+```
 
 ---
 
 #### **Commit 3: `feat: api-routes` (HTTP Boundaries)**
 
-- Files added: `src/api/routes.ts`, `src/api/middleware.ts`,
-  `tests/integration/api.integration.test.ts`
-- New nodes: 3 Boundary nodes (GET, POST, DELETE endpoints)
-- New TestCases: integration tests
+**Files added**:
+
+- `src/api/routes.ts` – Express routes with 3 endpoints (GET /users/:id, POST /users, DELETE
+  /users/:id)
+- `src/api/middleware.ts` – Middleware: authMiddleware, errorHandler
+- `src/api/handlers.ts` – Request/response handler utilities (optional, for handler extraction)
+- `src/validation/schemas.ts` – Zod schemas (userSchema, createUserSchema, loginSchema, postSchema)
+- `tests/validation/schemas.test.ts` – Zod schema validation tests
+- `tests/integration/api.integration.test.ts` – Integration tests for endpoints
+- `docs/API.md` – API documentation
+- `prisma/migrations/init.sql` – SQL schema file (basic DDL)
+
+**Symbols created** (15+ new):
+
+- 3x route handlers (async functions in routes.ts)
+- authMiddleware (function)
+- errorHandler (function)
+- 4x Zod schema objects (userSchema, createUserSchema, loginSchema, postSchema)
+- 4x inferred types (User, CreateUserInput, LoginInput, Post) via z.infer
+
+**Nodes created**:
+
+- Symbols: 15+ (all marked INTRODUCED)
+- Boundaries: 3 (GET /users/:id, POST /users, DELETE /users/:id)
+- TestCases: 6+ (3 in api.integration.test.ts + 4 in schemas.test.ts)
+- SpecDoc: 1 (API.md) + optional handlers doc
+- DataContract: 4 (Zod schema nodes) + 1 (Prisma initial)
+
+**Edges created**:
+
+- REFERENCES {type: 'CALL'}: 3+ (routes call UserService methods)
+- REFERENCES {type: 'IMPORT'}: 5+ (routes import UserService, middleware, etc.)
+- REFERENCES {type: 'IMPORT'}: 1 (validation imports zod)
+- LOCATION {role: 'HANDLED_BY'}: 3 (boundaries → handler functions)
+- LOCATION {role: 'IN_FILE'}: 3 (boundaries IN_FILE routes.ts)
+- REALIZES {role: 'VERIFIES'}: 2 (integration tests verify endpoints)
+- REALIZES {role: 'TESTS'}: 4 (schema tests test Zod schemas)
+- DEPENDS_ON {kind: 'LIBRARY'}: 1 (zod)
+- DOCUMENTS {type: 'ENDPOINT'}: 2 (API.md documents endpoints)
+- IN_SNAPSHOT: All 15+ symbols
+- CONTAINS: File → Symbol
+
+**Total snapshot size**: 21 + 8 files = 29 files, 35+ symbols, 7+ test cases, 2 spec docs
+
+**Special features**:
+
+- HTTP method detection (GET, POST, DELETE)
+- Middleware chaining
+- Zod schema extraction with method chaining
+- Type inference validation
 
 **Indexing behavior**:
 
-- Git diff reports 3 added files
-- Boundary detection triggered
-- REALIZES {role: 'VERIFIES'} edges created for integration tests
+- Git diff reports 8 added files
+- Only these files indexed
+- Snapshot 1-2 files unchanged (reused)
+- Boundary detection: 3 new nodes
+- TRACKS {event: 'INTRODUCED'} for all new symbols
+
+**Git status**:
+
+```
+A  docs/API.md
+A  prisma/migrations/init.sql
+A  src/api/handlers.ts
+A  src/api/middleware.ts
+A  src/api/routes.ts
+A  src/validation/schemas.ts
+A  tests/integration/api.integration.test.ts
+A  tests/validation/schemas.test.ts
+```
 
 ---
 
 #### **Commit 4: `refactor: rename-service` (Rename Detection)**
 
-- Files modified: `src/services/user.service.ts` → content refactored, class rename (UserService →
-  UserRepository)
-- This tests v1 **rename = delete + add** rule
+**Files modified**:
 
-**Indexing behavior**:
+- `src/services/user.service.ts` – Class renamed + method signature changes
 
-- Git diff reports modified file
-- Old symbol (UserService) would be deleted in v1 (renames not tracked)
-- New symbol (UserRepository) created as fresh symbol
-- TRACKS {event: 'MODIFIED'} on file, but renames don't create continuity
+**Specific changes in user.service.ts**:
+
+```typescript
+// BEFORE (Snapshot 3):
+export class UserService {
+  constructor(private authService: AuthService) {}
+  async createUser(email: string): Promise<IUser> { ... }
+  async getUser(id: string): Promise<IUser> { ... }
+}
+
+// AFTER (Snapshot 4):
+export class UserRepository {  // RENAMED
+  constructor(private authService: AuthService) {}
+  async createUser(email: string, name: string): Promise<IUser> { ... }  // MODIFIED signature
+  async getUserById(id: string): Promise<IUser> { ... }  // RENAMED method
+  async deleteUser(id: string): Promise<void> { ... }  // NEW method
+}
+```
+
+**Symbols affected**:
+
+- DELETED: UserService (class)
+- DELETED: UserService.createUser (old signature)
+- DELETED: UserService.getUser
+- INTRODUCED: UserRepository (class)
+- INTRODUCED: UserRepository.createUser (new signature)
+- INTRODUCED: UserRepository.getUserById (renamed)
+- INTRODUCED: UserRepository.deleteUser (new method)
+
+**Files that will need re-indexing** (due to broken imports):
+
+- `src/api/routes.ts` (imports UserService, now broken)
+- `tests/unit/services.test.ts` (imports UserService, now broken)
+
+**Edges affected**:
+
+- REFERENCES {type: 'IMPORT'}: routes.ts imports UserService (becomes stale/broken in v1)
+- REFERENCES {type: 'CALL'}: routes.ts calls UserService methods (old names)
+- REALIZES: tests import and test UserService (old name)
+
+**Indexing behavior** (v1 semantics):
+
+- Git diff reports 1 modified file
+- Only user.service.ts re-indexed
+- Old symbols (UserService, getUser, etc.) are deleted
+- New symbols (UserRepository, getUserById, deleteUser) are created with INTRODUCED
+- TRACKS {event: 'MODIFIED'} on user.service.ts file itself
+- **v1 limitation**: Other files (routes.ts, tests) now have broken references
+  - They still reference old symbol names
+  - Indexer cannot resolve these (missing target symbols)
+  - This is expected v1 behavior (would be fixed in v2 with smarter rename detection)
+
+**Symbol count delta**:
+
+- Removed: 1 class + 2 methods = 3 symbols
+- Added: 1 class + 3 methods = 4 symbols
+- Net: +1 symbol
+
+**Total snapshot size**: 29 files, 36 symbols (35+ - 3 + 4), but with broken references
+
+**Validation expectation**:
+
+- UserService should NOT exist in Snapshot 4
+- UserRepository should exist in Snapshot 4
+- routes.ts should still exist but have stale REFERENCES edges pointing to non-existent symbols
+
+**Git status**:
+
+```
+M  src/services/user.service.ts
+```
 
 ---
 
 #### **Commit 5: `fix: email-validation` (Modify Existing Symbol)**
 
-- Files modified: `src/utils/validators.ts` (validateEmail regex updated)
-- Existing symbol modified
+**Files modified**:
+
+- `src/utils/validators.ts` – validateEmail function regex updated + add new validator
+
+**Specific changes in validators.ts**:
+
+```typescript
+// BEFORE (Snapshots 1-4):
+export const validators = {
+  validateEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); // OLD regex
+  },
+  validatePassword(pwd: string): boolean {
+    return pwd.length >= 8;
+  },
+  validatePhone(phone: string): boolean {
+    return /^\d{10}$/.test(phone);
+  },
+};
+
+// AFTER (Snapshot 5):
+export const validators = {
+  validateEmail(email: string): boolean {
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email); // NEW regex (RFC-like)
+  },
+  validatePassword(pwd: string): boolean {
+    return pwd.length >= 8;
+  },
+  validatePhone(phone: string): boolean {
+    return /^\d{10}$/.test(phone);
+  },
+  validateUsername(username: string): boolean {
+    // NEW validator
+    return /^[a-zA-Z0-9_]{3,20}$/.test(username);
+  },
+};
+```
+
+**Symbols affected**:
+
+- MODIFIED: validateEmail (same location, same name, body changed)
+- UNCHANGED: validatePassword
+- UNCHANGED: validatePhone
+- INTRODUCED: validateUsername (new validator)
+
+**Symbol IDs**:
+
+- validateEmail: ID should be stable (same path, name, line number)
+  - Still `src/utils/validators.ts:validateEmail:7:2` (assuming line 7)
+  - Even though body changed, ID doesn't change
+- validateUsername: ID is new (`src/utils/validators.ts:validateUsername:19:2`, assuming line 19)
+
+**Edges affected**:
+
+- REFERENCES from UserService.createUser → validators.validateEmail (still points to validateEmail)
+  - No change in edge itself, but validateEmail node is updated
+- New REFERENCES if anyone uses validateUsername (none in v1 test repo)
 
 **Indexing behavior**:
 
-- Git diff reports modified file
-- Symbol ID unchanged (same name, location, range)
-- Symbol updated in place
-- TRACKS {event: 'MODIFIED'} → Snapshot 5
+- Git diff reports 1 modified file
+- Only validators.ts re-indexed
+- validateEmail symbol updated in place (same ID)
+- validateUsername symbol created as new (INTRODUCED)
+- TRACKS {event: 'MODIFIED'} → Snapshot 5 for validateEmail
+- TRACKS {event: 'INTRODUCED'} → Snapshot 5 for validateUsername
+
+**Symbol count delta**:
+
+- Modified: 1 symbol (validateEmail)
+- Added: 1 symbol (validateUsername)
+- Net: +1 symbol
+
+**Total snapshot size**: 29 files, 37 symbols (36 - 0 + 1), all references intact
+
+**Validation expectation**:
+
+- validateEmail exists in all snapshots (1-5)
+- validateEmail in Snapshot 5 has updated body
+- validateEmail in Snapshots 1-4 have old body (or not indexed at all)
+- TRACKS {event: 'MODIFIED'} only in Snapshot 5
+- TRACKS {event: 'INTRODUCED'} for validateUsername only in Snapshot 5
+
+**Git status**:
+
+```
+M  src/utils/validators.ts
+```
 
 ---
 
