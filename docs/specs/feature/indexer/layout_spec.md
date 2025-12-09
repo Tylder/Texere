@@ -110,6 +110,57 @@ packages/features/indexer/core/
   project.json
 ```
 
+**Key Responsibility: Constraint Enforcement**
+
+The `graph-writes.ts` module must enforce the **IN_SNAPSHOT cardinality invariant** for all
+snapshot-scoped node creation:
+
+```typescript
+// packages/features/indexer/core/src/graph/graph-writes.ts
+
+export async function upsertSymbol(symbol: Symbol, snapshotId: string): Promise<Symbol> {
+  // Always wrap creation + edge in same transaction
+  return await neo4jTransaction(async (tx) => {
+    // 1. Verify snapshot exists (foreign key)
+    const snapshot = await tx.run('MATCH (snap:Snapshot {id: $snapshotId}) RETURN snap', {
+      snapshotId,
+    });
+    if (!snapshot) throw new Error(`Snapshot ${snapshotId} not found`);
+
+    // 2. Create/upsert symbol + edge atomically
+    const result = await tx.run(
+      `
+      MATCH (snap:Snapshot {id: $snapshotId})
+      MERGE (sym:Symbol {id: $symbolId})
+      SET sym += $props
+      MERGE (sym)-[:IN_SNAPSHOT]->(snap)
+      RETURN sym
+    `,
+      {
+        snapshotId,
+        symbolId: symbol.id,
+        props: {
+          name: symbol.name,
+          filePath: symbol.filePath,
+          kind: symbol.kind,
+          startLine: symbol.startLine,
+          startCol: symbol.startCol,
+          endLine: symbol.endLine,
+          endCol: symbol.endCol,
+          createdAt: Date.now(),
+        },
+      },
+    );
+
+    return result;
+  });
+  // If constraint violated, transaction rolls back
+  // If snapshot not found, error thrown before write
+}
+
+// Similar pattern for: Module, File, Endpoint, TestCase, SchemaEntity, SpecDoc
+```
+
 **Dependencies**:
 
 - Depends on: `indexer/types`.
@@ -119,6 +170,11 @@ packages/features/indexer/core/
 
 - `domain:indexer`
 - `layer:core`
+
+**Note**: See
+[graph_schema_spec.md §4.1B](../graph_schema_spec.md#41b-priority-1b-cardinality--existence-constraints-critical)
+and [ingest_spec.md §6.3](../ingest_spec.md#63-node-edge-creation--cardinality-enforcement) for full
+constraint details.
 
 ---
 

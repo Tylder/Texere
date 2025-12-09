@@ -851,6 +851,95 @@ FOR (n:ExternalService) REQUIRE n.id IS UNIQUE;
 
 **Cite as:** §4.1
 
+---
+
+### 4.1B Priority 1B: Cardinality & Existence Constraints (Critical)
+
+**IN_SNAPSHOT Cardinality Invariant**: Every snapshot-scoped node must have **exactly 1** incoming
+`[:IN_SNAPSHOT]` edge.
+
+This constraint prevents:
+
+- Orphaned nodes (created without snapshot reference)
+- Duplicate edges (multiple snapshots per node)
+- Data corruption (lost nodes due to missing edges)
+
+```cypher
+-- Enforce cardinality: snapshot-scoped nodes MUST have exactly 1 [:IN_SNAPSHOT] edge
+CREATE CONSTRAINT in_snapshot_cardinality IF NOT EXISTS
+FOR (n:Module | n:File | n:Symbol | n:Endpoint | n:SchemaEntity | n:TestCase | n:SpecDoc)
+REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
+```
+
+**Why**: Each snapshot-scoped node belongs to a specific Git commit. Without this constraint:
+
+1. **Ingest bugs silently create orphaned nodes** (not discoverable via snapshot queries)
+2. **Temporal analysis breaks** ("What symbols existed at commit X?" returns incomplete results)
+3. **Version tracking becomes unreliable** (can't distinguish which snapshot a node belongs to)
+
+**Example - Bad (caught at write time)**:
+
+```cypher
+-- This will FAIL due to constraint violation:
+CREATE (sym:Symbol {
+  id: 'snap-123:src/auth.ts:validateAuth:10:0',
+  name: 'validateAuth'
+})
+-- ERROR: Constraint violation! No [:IN_SNAPSHOT] edge to any snapshot
+```
+
+**Example - Good (passes constraint)**:
+
+```cypher
+-- This succeeds:
+MATCH (snap:Snapshot {id: 'snap-123'})
+MERGE (sym:Symbol {id: 'snap-123:src/auth.ts:validateAuth:10:0'})
+SET sym.name = 'validateAuth'
+MERGE (sym)-[:IN_SNAPSHOT]->(snap)
+RETURN sym, snap
+-- Constraint satisfied: sym has exactly 1 [:IN_SNAPSHOT] edge
+```
+
+**Implementation in Ingest** (See also ingest_spec.md §6.3):
+
+```typescript
+// Always wrap node creation + edge creation in same transaction
+const result = await db.transaction(async (tx) => {
+  // 1. Create symbol
+  const sym = await tx.run(
+    `
+    MATCH (snap:Snapshot {id: $snapshotId})
+    MERGE (sym:Symbol {id: $symbolId})
+    SET sym += $props
+    -- 2. Create [:IN_SNAPSHOT] edge in same operation
+    MERGE (sym)-[:IN_SNAPSHOT]->(snap)
+    RETURN sym
+  `,
+    { snapshotId, symbolId, props },
+  );
+
+  return sym;
+});
+// If constraint is violated, entire transaction rolls back
+```
+
+**Validation Queries** (Run post-ingest):
+
+```cypher
+-- Check for orphaned nodes (should return 0)
+MATCH (n:Symbol)
+WHERE NOT (n)-[:IN_SNAPSHOT]->()
+RETURN COUNT(n) as orphaned_symbols
+
+-- Check for multi-snapshot nodes (should return 0)
+MATCH (n:Symbol)-[r:IN_SNAPSHOT]->(snap:Snapshot)
+WITH n, COUNT(r) as edge_count
+WHERE edge_count > 1
+RETURN COUNT(n) as multi_snapshot_symbols, MAX(edge_count) as max_edges
+```
+
+**Cite as:** §4.1B
+
 ### 4.2 Priority 2: Edge Property Indexes (Consolidated Schema)
 
 Indexes on properties of the 10 core edge types for efficient filtering.

@@ -45,21 +45,33 @@ No additional properties.
 ## Schema
 
 ```cypher
--- Enforce cardinality invariant
+-- Enforce cardinality invariant (CRITICAL: blocks orphaned nodes)
 CREATE CONSTRAINT in_snapshot_cardinality IF NOT EXISTS
-FOR (n)
-WHERE (n:Module OR n:File OR n:Symbol OR n:Endpoint OR n:SchemaEntity OR n:TestCase OR n:SpecDoc)
-REQUIRE COUNT((n)-[:IN_SNAPSHOT]->()) = 1;
+FOR (n:Module | n:File | n:Symbol | n:Endpoint | n:SchemaEntity | n:TestCase | n:SpecDoc)
+REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 
 -- Index for version lookups (O(1) on id)
 CREATE INDEX in_snapshot_target IF NOT EXISTS
 FOR ()-[r:IN_SNAPSHOT]->(n:Snapshot) ON (n.id);
 
--- Example
+-- Example: Valid (passes constraint)
 MATCH (sym:Symbol {id: 'snap-123:src/auth/jwt.ts:validateToken:10:0'})
   -[:IN_SNAPSHOT]->(snap:Snapshot {id: 'snap-123'})
 RETURN sym, snap
+-- Constraint satisfied: sym has exactly 1 [:IN_SNAPSHOT] edge
+
+-- Example: Invalid (blocked at write time)
+CREATE (sym:Symbol {id: 'snap-123:src/auth/jwt.ts:validateToken:10:0'})
+-- ERROR: Constraint violation! No [:IN_SNAPSHOT] edge
 ```
+
+**Constraint Details**:
+
+- **Type**: Existence constraint (property constraint requiring relationship)
+- **Applies to**: Module, File, Symbol, Endpoint, SchemaEntity, TestCase, SpecDoc
+- **Enforcement**: Database-level (caught at write time, not query time)
+- **Impact**: Prevents orphaned nodes, guarantees temporal correctness
+- **Implementation**: Ingest must create node + edge in same transaction
 
 ---
 
@@ -187,11 +199,125 @@ This allows:
 
 ## Implementation Notes
 
-- **Cardinality Enforcement**: Some graph databases (e.g., Neo4j 5.0+) support property existence
-  constraints; others require application-level validation
-- **Soft Delete Alternative**: Instead of deleting snapshots, mark `isDeleted: true` and filter in
-  queries
-- **Temporal Indexes**: Consider time-based indexes if frequently querying by date range
+### Constraint Enforcement
+
+**Critical**: Every snapshot-scoped node **must have exactly 1** `[:IN_SNAPSHOT]` edge. This is
+enforced by the database constraint defined in §Schema above.
+
+**Why it matters**:
+
+1. **Prevents silent data loss**: Orphaned nodes (no snapshot linkage) are invisible to
+   version-based queries
+2. **Catches ingest bugs early**: Constraint fails at write time, not query time
+3. **Guarantees temporal correctness**: Can reliably answer "What existed at commit X?"
+
+**Implementation Pattern** (in `indexer/core`):
+
+```typescript
+// Create/upsert snapshot-scoped node atomically with edge
+async function upsertSymbol(symbol: Symbol, snapshotId: string) {
+  return db.transaction(async (tx) => {
+    // 1. Resolve snapshot (foreign key check)
+    const snapshot = await tx.run('MATCH (snap:Snapshot {id: $snapshotId}) RETURN snap', {
+      snapshotId,
+    });
+    if (!snapshot) throw new Error(`Snapshot not found: ${snapshotId}`);
+
+    // 2. Create/upsert node + edge in same operation
+    const result = await tx.run(
+      `
+      MATCH (snap:Snapshot {id: $snapshotId})
+      MERGE (sym:Symbol {id: $symbolId})
+      SET sym += $props
+      MERGE (sym)-[:IN_SNAPSHOT]->(snap)
+      RETURN sym
+    `,
+      { snapshotId, symbolId: symbol.id, props: symbol },
+    );
+
+    return result;
+  });
+  // Transaction rolls back if constraint violated
+}
+```
+
+**Validation Queries** (run post-ingest):
+
+```cypher
+-- Check for orphaned nodes (should return 0)
+MATCH (n:Symbol {snapshotId: $snapshotId})
+WHERE NOT (n)-[:IN_SNAPSHOT]->()
+RETURN COUNT(n) as orphaned_symbols
+
+-- Check for multi-snapshot nodes (should return 0)
+MATCH (n:Symbol)-[r:IN_SNAPSHOT]->(snap:Snapshot)
+WITH n, COUNT(r) as edge_count
+WHERE edge_count > 1
+RETURN COUNT(n) as multi_snapshot_symbols
+```
+
+### Soft Delete Alternative
+
+Instead of deleting snapshots, mark `isDeleted: true` and filter in queries:
+
+```cypher
+MATCH (snap:Snapshot {codebaseId: $codebaseId})
+WHERE snap.isDeleted = false
+RETURN snap
+ORDER BY snap.timestamp DESC
+LIMIT 1
+```
+
+### Temporal Indexes
+
+Consider time-based indexes if frequently querying by date range:
+
+```cypher
+CREATE INDEX snapshot_timestamp IF NOT EXISTS
+FOR (n:Snapshot) ON (n.timestamp);
+```
+
+---
+
+## Common Gotchas
+
+**❌ Creating snapshot-scoped node without edge**:
+
+```cypher
+CREATE (sym:Symbol {id: 'snap-123:src/auth.ts:validateAuth:10:0'})
+-- FAILS: Constraint violation
+```
+
+**✅ Creating with edge (correct)**:
+
+```cypher
+MATCH (snap:Snapshot {id: 'snap-123'})
+MERGE (sym:Symbol {id: 'snap-123:src/auth.ts:validateAuth:10:0'})
+MERGE (sym)-[:IN_SNAPSHOT]->(snap)
+RETURN sym
+-- PASSES: Constraint satisfied
+```
+
+**❌ Moving node between snapshots**:
+
+```cypher
+MATCH (sym:Symbol {id: 'sym-123'})-[r1:IN_SNAPSHOT]->(:Snapshot)
+MATCH (snap2:Snapshot {id: 'snap-456'})
+DELETE r1
+CREATE (sym)-[:IN_SNAPSHOT]->(snap2)
+-- FAILS: Intermediate state violates constraint (no edge)
+```
+
+**✅ Atomic snapshot reassignment**:
+
+```cypher
+MATCH (sym:Symbol {id: 'sym-123'})
+      -[r:IN_SNAPSHOT]->(:Snapshot)
+MATCH (snap:Snapshot {id: 'snap-456'})
+DELETE r
+MERGE (sym)-[:IN_SNAPSHOT]->(snap)
+-- Keep within same transaction; constraint checked at commit
+```
 
 ---
 

@@ -251,7 +251,68 @@ Implemented in `index-snapshot.ts`.
 
 ---
 
-## 6.3 Error Handling Semantics
+## 6.3 Node-Edge Creation & Cardinality Enforcement
+
+**IN_SNAPSHOT Cardinality Constraint** (Critical):
+
+Every snapshot-scoped node (Module, File, Symbol, Endpoint, TestCase, SchemaEntity, SpecDoc) **must
+have exactly 1** incoming `[:IN_SNAPSHOT]` edge. This is enforced by database constraint (§4.1B in
+graph_schema_spec.md).
+
+**Implementation**:
+
+1. **Always create node + edge in same transaction**:
+
+```typescript
+const result = await db.transaction(async (tx) => {
+  // Resolve target snapshot (required)
+  const snapshot = await tx.run('MATCH (snap:Snapshot {id: $snapshotId}) RETURN snap', {
+    snapshotId,
+  });
+
+  // Create/upsert node + edge atomically
+  await tx.run(
+    `
+    MATCH (snap:Snapshot {id: $snapshotId})
+    MERGE (sym:Symbol {id: $symbolId})
+    SET sym += $props
+    MERGE (sym)-[:IN_SNAPSHOT]->(snap)
+    RETURN sym
+  `,
+    { snapshotId, symbolId, props },
+  );
+});
+// If constraint violated, entire batch rolls back
+```
+
+2. **Validate post-ingest**:
+
+```typescript
+// Check for orphaned nodes
+const orphaned = await db.run(
+  `
+  MATCH (n:Symbol {snapshotId: $snapshotId})
+  WHERE NOT (n)-[:IN_SNAPSHOT]->()
+  RETURN COUNT(n) as count
+`,
+  { snapshotId },
+);
+
+if (orphaned.count > 0) {
+  throw new Error(`Found ${orphaned.count} orphaned symbols; ingest failed!`);
+}
+```
+
+3. **Why it matters**:
+   - Prevents silent data loss (orphaned nodes not discoverable via snapshot)
+   - Catches ingest bugs at write time (not query time)
+   - Guarantees temporal analysis correctness
+
+**Cite as:** §6.3 (Constraint Enforcement)
+
+---
+
+## 6.4 Error Handling Semantics
 
 - **File-level failures** (parse errors, invalid syntax):
   - Logged; file is skipped; Snapshot continues.
@@ -259,6 +320,10 @@ Implemented in `index-snapshot.ts`.
   - Mark Snapshot as `index_failed`.
   - Do **not** write partial graph updates.
   - Worker may retry according to configuration.
+- **Constraint violations** (cardinality, uniqueness):
+  - Fail entire batch (transaction rolls back).
+  - Log specific violation (e.g., "Symbol created without [:IN_SNAPSHOT]").
+  - Snapshot marked as `index_failed`; investigation required.
 - **LLM failures**:
   - Skip only the affected mapping (feature/test/endpoint).
   - Never fail the Snapshot due to LLM errors.
