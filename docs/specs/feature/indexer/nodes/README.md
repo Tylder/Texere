@@ -14,17 +14,17 @@ Nodes are grouped into two categories:
 
 Created during indexing for a specific snapshot. Linked via `[:IN_SNAPSHOT]`.
 
-| Node                                  | Purpose                                   | Cardinality     | Key Property                                        |
-| ------------------------------------- | ----------------------------------------- | --------------- | --------------------------------------------------- |
-| **[Codebase](./Codebase.md)**         | Code repository (any code being indexed)  | N per workspace | `id` (unique)                                       |
-| **[Snapshot](./Snapshot.md)**         | Git commit being indexed                  | N per codebase  | `id` (composite: codebaseId:commitHash)             |
-| **[Module](./Module.md)**             | Logical package/library/app               | N per snapshot  | `id` (composite: snapshotId:modulePath)             |
-| **[File](./File.md)**                 | Source code file                          | N per module    | `id` (composite: snapshotId:filePath)               |
-| **[Symbol](./Symbol.md)**             | Function, class, type, interface, const   | N per file      | `id` (composite: snapshotId:filePath:name:line:col) |
-| **[Endpoint](./Endpoint.md)**         | HTTP API route                            | N per snapshot  | `id` (composite: snapshotId:verb:path)              |
-| **[SchemaEntity](./SchemaEntity.md)** | Database model (Prisma, SQLAlchemy, etc.) | N per snapshot  | `id` (composite: snapshotId:entityName)             |
-| **[TestCase](./TestCase.md)**         | Unit/integration/e2e test                 | N per file      | `id` (composite: snapshotId:filePath:testName)      |
-| **[SpecDoc](./SpecDoc.md)**           | Documentation (spec, ADR, design doc)     | N per snapshot  | `id` (composite: snapshotId:docPath)                |
+| Node                                  | Purpose                                            | Cardinality     | Key Property                                        |
+| ------------------------------------- | -------------------------------------------------- | --------------- | --------------------------------------------------- |
+| **[Codebase](./Codebase.md)**         | Code repository (any code being indexed)           | N per workspace | `id` (unique)                                       |
+| **[Snapshot](./Snapshot.md)**         | Git commit being indexed                           | N per codebase  | `id` (composite: codebaseId:commitHash)             |
+| **[Module](./Module.md)**             | Logical package/library/app                        | N per snapshot  | `id` (composite: snapshotId:modulePath)             |
+| **[File](./File.md)**                 | Source code file                                   | N per module    | `id` (composite: snapshotId:filePath)               |
+| **[Symbol](./Symbol.md)**             | Function, class, type, interface, const            | N per file      | `id` (composite: snapshotId:filePath:name:line:col) |
+| **[EntryPoint](./EntryPoint.md)**     | Callable interface (HTTP, CLI, export, event, job) | N per snapshot  | `id` (composite: snapshotId:kind:identifier)        |
+| **[SchemaEntity](./SchemaEntity.md)** | Database model (Prisma, SQLAlchemy, etc.)          | N per snapshot  | `id` (composite: snapshotId:entityName)             |
+| **[TestCase](./TestCase.md)**         | Unit/integration/e2e test                          | N per file      | `id` (composite: snapshotId:filePath:testName)      |
+| **[SpecDoc](./SpecDoc.md)**           | Documentation (spec, ADR, design doc)              | N per snapshot  | `id` (composite: snapshotId:docPath)                |
 
 ---
 
@@ -56,7 +56,7 @@ tracking.
 ### By Domain
 
 - **Code Structure**: [Module](./Module.md), [File](./File.md), [Symbol](./Symbol.md)
-- **Behavior**: [Endpoint](./Endpoint.md), [TestCase](./TestCase.md)
+- **Behavior**: [EntryPoint](./EntryPoint.md), [TestCase](./TestCase.md)
 - **Data**: [SchemaEntity](./SchemaEntity.md)
 - **Metadata**: [SpecDoc](./SpecDoc.md), [StyleGuide](./StyleGuide.md)
 - **External Integration**: [ExternalService](./ExternalService.md)
