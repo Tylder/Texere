@@ -1,9 +1,14 @@
 # Texere Indexer – Test Repository Specification
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Last Updated:** December 2025  
 **Status:** Specification  
 **Purpose:** Define comprehensive TypeScript test repository for indexer development and validation
+
+**Changelog:**
+
+- v1.1 (2025-12-09): Added Zod validation schemas for testing schema extraction and type inference
+- v1.0 (2025-12-09): Initial specification with full node/edge coverage matrix
 
 ---
 
@@ -81,6 +86,8 @@ test-typescript-app/
 │   │   └── custom.errors.ts       # Symbols: error classes (inheritance)
 │   ├── constants/
 │   │   └── index.ts               # Symbols: const exports
+│   ├── validation/
+│   │   └── schemas.ts             # Zod schemas: validation definitions, types
 │   └── index.ts                   # Module entry point, re-exports
 ├── tests/
 │   ├── unit/
@@ -109,17 +116,17 @@ test-typescript-app/
 
 ### Snapshot-Scoped Nodes (v1 Mandatory)
 
-| Node Type        | Count | Primary Location          | Secondary Locations     | Coverage Method                               |
-| ---------------- | ----- | ------------------------- | ----------------------- | --------------------------------------------- |
-| **Codebase**     | 1     | Repository root           | —                       | Root identifier                               |
-| **Snapshot**     | 5     | Via git commits           | —                       | 5 commits (init, feat1, feat2, refactor, fix) |
-| **Module**       | 3     | `src/`, `tests/`, `docs/` | `prisma/`, `config/`    | Directory hierarchy                           |
-| **File**         | 25+   | All `.ts` and `.md` files | —                       | Every source file                             |
-| **Symbol**       | 300+  | Throughout codebase       | —                       | Functions, classes, types, consts             |
-| **Boundary**     | 3     | `src/api/routes.ts`       | `src/api/middleware.ts` | Express routes: GET/POST/DELETE               |
-| **DataContract** | 5+    | `prisma/schema.prisma`    | `src/models/schemas.ts` | Prisma models, SQL schema                     |
-| **TestCase**     | 8+    | `tests/**/*.test.ts`      | —                       | describe/it blocks                            |
-| **SpecDoc**      | 4     | `docs/**/*.md`            | —                       | Markdown documentation files                  |
+| Node Type        | Count | Primary Location          | Secondary Locations                                  | Coverage Method                               |
+| ---------------- | ----- | ------------------------- | ---------------------------------------------------- | --------------------------------------------- |
+| **Codebase**     | 1     | Repository root           | —                                                    | Root identifier                               |
+| **Snapshot**     | 5     | Via git commits           | —                                                    | 5 commits (init, feat1, feat2, refactor, fix) |
+| **Module**       | 3     | `src/`, `tests/`, `docs/` | `prisma/`, `config/`                                 | Directory hierarchy                           |
+| **File**         | 25+   | All `.ts` and `.md` files | —                                                    | Every source file                             |
+| **Symbol**       | 300+  | Throughout codebase       | —                                                    | Functions, classes, types, consts             |
+| **Boundary**     | 3     | `src/api/routes.ts`       | `src/api/middleware.ts`                              | Express routes: GET/POST/DELETE               |
+| **DataContract** | 8+    | `prisma/schema.prisma`    | `src/models/schemas.ts`, `src/validation/schemas.ts` | Prisma models, Zod schemas                    |
+| **TestCase**     | 8+    | `tests/**/*.test.ts`      | —                                                    | describe/it blocks                            |
+| **SpecDoc**      | 4     | `docs/**/*.md`            | —                                                    | Markdown documentation files                  |
 
 ### Symbol Breakdown
 
@@ -129,9 +136,9 @@ test-typescript-app/
 | Classes      | ~12   | user.service.ts, auth.service.ts, post.service.ts, Post, User, errors |
 | Methods      | ~40   | service methods, middleware functions                                 |
 | Interfaces   | ~8    | user.ts (IUser), schemas.ts                                           |
-| Type Aliases | ~10   | user.ts (UserRole), schemas.ts                                        |
+| Type Aliases | ~15   | user.ts (UserRole), schemas.ts, validation/schemas.ts (z.infer)       |
 | Enums        | ~3    | user.ts (UserStatus), custom types                                    |
-| Constants    | ~15   | constants/index.ts, various config                                    |
+| Constants    | ~20   | constants/index.ts, validation/schemas.ts (Zod schemas), config       |
 
 ---
 
@@ -187,12 +194,12 @@ test-typescript-app/
 
 ### Dependencies (DEPENDS_ON)
 
-| Sub-Type        | Source | Target          | Count | Examples                     |
-| --------------- | ------ | --------------- | ----- | ---------------------------- |
-| **LIBRARY**     | Module | ExternalService | 2     | axios (external HTTP client) |
-| **SERVICE**     | Symbol | ExternalService | 2     | Stripe, Auth0 API calls      |
-| **CONFIG**      | Symbol | Configuration   | 3     | env.config.ts references     |
-| **STYLE_GUIDE** | Module | StyleGuide      | 0\*   | \*Reserved for future        |
+| Sub-Type        | Source | Target          | Count | Examples                        |
+| --------------- | ------ | --------------- | ----- | ------------------------------- |
+| **LIBRARY**     | Module | ExternalService | 3     | axios, zod (validation library) |
+| **SERVICE**     | Symbol | ExternalService | 2     | Stripe, Auth0 API calls         |
+| **CONFIG**      | Symbol | Configuration   | 3     | env.config.ts references        |
+| **STYLE_GUIDE** | Module | StyleGuide      | 0\*   | \*Reserved for future           |
 
 ### Documentation (DOCUMENTS)
 
@@ -620,6 +627,154 @@ export const DEFAULT_CONFIG = {
 - Verifies const extraction
 - Verifies exported consts
 - Validates complex object constants
+
+---
+
+### `src/validation/schemas.ts` (Zod Schemas)
+
+**Nodes extracted**:
+
+- Symbol: `userSchema` (Zod schema object)
+- Symbol: `createUserSchema` (Zod schema object)
+- Symbol: `loginSchema` (Zod schema object)
+- Symbol: `postSchema` (Zod schema object)
+- DataContract: Inferred from Zod schema types (User validation shape, Post validation shape)
+
+**Edges**:
+
+- REFERENCES {type: 'TYPE_REF'} → IUser (input type)
+- REFERENCES {type: 'TYPE_REF'} → z.ZodSchema (Zod library)
+- REFERENCES {type: 'IMPORT'} → zod
+- DEPENDS_ON {kind: 'LIBRARY'} → zod
+- IN_SNAPSHOT → Snapshot
+
+**Code**:
+
+```typescript
+import { z } from 'zod';
+import { IUser, UserRole, UserStatus } from '../models/user';
+
+// User validation schema
+export const userSchema = z.object({
+  id: z.string().cuid(),
+  email: z.string().email(),
+  name: z.string().min(1),
+  role: z.enum(['admin', 'user', 'guest'] as const).default('user'),
+  status: z.enum(['active', 'inactive', 'suspended'] as const).default('active'),
+});
+
+// Create user input validation
+export const createUserSchema = userSchema.omit({ id: true, status: true });
+
+// Login validation
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+// Post validation schema
+export const postSchema = z.object({
+  id: z.string().cuid(),
+  title: z.string().min(1).max(255),
+  body: z.string().min(1),
+  authorId: z.string().cuid(),
+});
+
+export const createPostSchema = postSchema.omit({ id: true });
+
+// Type inference from schemas (inferred DataContract)
+export type User = z.infer<typeof userSchema>;
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type Post = z.infer<typeof postSchema>;
+```
+
+**Tests**:
+
+- Verifies Zod schema extraction (z.object, z.string, z.enum patterns)
+- Verifies inferred type definitions (type aliases from z.infer)
+- Verifies library dependency on zod
+- Validates DataContract extraction from validation schemas
+- Tests REFERENCES edges to Zod types and IUser interface
+
+**Edge Cases Tested**:
+
+- Zod method chaining: `.min()`, `.max()`, `.email()`, `.default()`
+- Zod type inference: `z.infer<typeof schema>`
+- Schema composition: `.omit()` chaining
+- Enum validation with type-safe union
+
+---
+
+### `tests/validation/schemas.test.ts` (Validation Tests)
+
+**Nodes extracted**:
+
+- TestCase: describe 'User Schema Validation'
+- TestCase: it 'should validate valid user'
+- TestCase: it 'should reject invalid email'
+- TestCase: it 'should provide default role'
+
+**Edges**:
+
+- REALIZES {role: 'TESTS'} → userSchema, createUserSchema, loginSchema
+- LOCATION {role: 'IN_FILE'} → File
+- IN_SNAPSHOT → Snapshot
+
+**Code**:
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { userSchema, createUserSchema, loginSchema } from '../../src/validation/schemas';
+
+describe('User Schema Validation', () => {
+  it('should validate valid user', () => {
+    const user = {
+      id: 'cuid123',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'user' as const,
+      status: 'active' as const,
+    };
+    expect(userSchema.parse(user)).toEqual(user);
+  });
+
+  it('should reject invalid email', () => {
+    const invalid = {
+      id: 'cuid123',
+      email: 'not-an-email',
+      name: 'Test',
+      role: 'user',
+      status: 'active',
+    };
+    expect(() => userSchema.parse(invalid)).toThrow();
+  });
+
+  it('should provide default role', () => {
+    const input = {
+      id: 'cuid123',
+      email: 'test@example.com',
+      name: 'Test User',
+    };
+    const result = createUserSchema.parse(input);
+    expect(result.role).toBe('user');
+  });
+
+  it('should validate login credentials', () => {
+    const validLogin = {
+      email: 'user@example.com',
+      password: 'securepassword123',
+    };
+    expect(loginSchema.parse(validLogin)).toEqual(validLogin);
+  });
+});
+```
+
+**Tests**:
+
+- Verifies TestCase extraction from validation tests
+- Verifies REALIZES edges linking tests to schema symbols
+- Tests Zod runtime validation patterns
 
 ---
 
@@ -1177,7 +1332,47 @@ it('extracts nested function properties', async () => {
 
 ---
 
-### Edge Case 6: Prisma Schema Parsing
+### Edge Case 6: Zod Schema Parsing & Type Inference
+
+**File**: `src/validation/schemas.ts`
+
+**Behavior**:
+
+- Zod schema variables detected as Symbols (userSchema, createUserSchema, etc.)
+- Zod method chaining parsed (.object(), .string(), .email(), .min(), .max(), .default(), .enum())
+- Type inference via `z.infer<typeof schema>` creates type alias Symbols
+- Exported types (User, CreateUserInput, LoginInput) recognized as DataContract-like nodes
+- Schema composition (z.object.omit()) understood
+
+**Tests**:
+
+```typescript
+it('extracts Zod schema definitions as symbols', async () => {
+  const userSchema = result.symbols.find((s) => s.name === 'userSchema');
+  const createUserSchema = result.symbols.find((s) => s.name === 'createUserSchema');
+  expect([userSchema, createUserSchema]).toHaveLength(2);
+});
+
+it('extracts Zod type inferences as type aliases', async () => {
+  const userType = result.symbols.find((s) => s.name === 'User' && s.kind === 'type');
+  expect(userType).toBeDefined();
+  // Type should reference userSchema via z.infer
+});
+
+it('creates REFERENCES edges for Zod library usage', async () => {
+  // validation/schemas.ts should have REFERENCES {type: 'IMPORT'} → zod
+  // validation/schemas.ts should have DEPENDS_ON {kind: 'LIBRARY'} → zod
+});
+
+it('links validation tests to schemas via REALIZES', async () => {
+  // tests/validation/schemas.test.ts should have
+  // REALIZES {role: 'TESTS'} → userSchema, createUserSchema, loginSchema
+});
+```
+
+---
+
+### Edge Case 7: Prisma Schema Parsing
 
 **File**: `prisma/schema.prisma`
 
@@ -1203,7 +1398,7 @@ it('extracts Prisma schema models as DataContract nodes', async () => {
 
 ---
 
-### Edge Case 7: Error Handling & Try-Catch
+### Edge Case 8: Error Handling & Try-Catch
 
 **File**: `src/services/user.service.ts` (error handling in createUser)
 
@@ -1225,7 +1420,7 @@ it('detects error throwing and handling', async () => {
 
 ---
 
-### Edge Case 8: Re-exports
+### Edge Case 9: Re-exports
 
 **File**: `src/index.ts` (module re-exports)
 
@@ -1279,7 +1474,7 @@ Use this checklist to validate the indexer against the test repository:
 - [ ] **MUTATES {operation: 'READ'}**: Data read operations (3+ edges)
 - [ ] **MUTATES {operation: 'WRITE'}**: Data write operations (2+ edges)
 - [ ] **DEPENDS_ON {kind: 'SERVICE'}**: External API calls (Stripe, Auth0) (2 edges)
-- [ ] **DEPENDS_ON {kind: 'LIBRARY'}**: Third-party libraries (axios) (1+ edges)
+- [ ] **DEPENDS_ON {kind: 'LIBRARY'}**: Third-party libraries (axios, zod) (2+ edges)
 - [ ] **REALIZES {role: 'TESTS'}**: TestCase → Symbol (8+ edges)
 - [ ] **REALIZES {role: 'VERIFIES'}**: TestCase → Boundary (2+ edges)
 - [ ] **DOCUMENTS**: SpecDoc → Module, Boundary, Symbol (4+ edges)
@@ -1300,6 +1495,10 @@ Use this checklist to validate the indexer against the test repository:
 - [ ] **Async methods**: Parsed correctly with Promise<T> type refs
 - [ ] **Union types**: Detected as type aliases
 - [ ] **Nested objects**: validators.validateEmail extracted as symbol
+- [ ] **Zod schemas**: Schema definitions (z.object) extracted as symbols
+- [ ] **Zod type inference**: z.infer<typeof schema> creates type alias symbols
+- [ ] **Zod method chaining**: .object(), .string(), .email(), .min(), .max(), .default(), .enum()
+      recognized
 - [ ] **Error classes**: Inheritance (extends Error) detected
 - [ ] **Re-exports**: Barrel files recognized
 - [ ] **Configuration**: env.config.ts DEPENDS_ON edges created
