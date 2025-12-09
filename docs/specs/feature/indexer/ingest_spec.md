@@ -29,8 +29,8 @@ It is **incremental**, **language‑agnostic**, and uses a unified structure (`F
 - Git-based incremental detection.
 - **TypeScript/JavaScript and Python indexers**.
 - Symbol extraction, references, calls.
-- Endpoints, schema entities, test cases.
-- LLM-assisted feature mapping + test↔feature + endpoint↔feature.
+- Boundaries, schema entities, test cases.
+- LLM-assisted feature mapping + test↔feature + boundary↔feature.
 
 ### Snapshot retention rules:
 
@@ -69,19 +69,19 @@ Output:
 - Symbols
 - Calls
 - References
-- Endpoints
+- Boundaries
 - Test cases
 
 ## 2.3 Higher‑level extraction
 
 Derived from `FileIndexResult` + repo config + LLM assistance:
 
-- Endpoints
+- Boundaries
 - Schema entities
 - Test cases
 - Feature mapping (config + heuristics + LLM)
 - **Test ↔ Feature associations (LLM)**
-- **Endpoint ↔ Feature associations (LLM)**
+- **Boundary ↔ Feature associations (LLM)**
 
 **Design rule:** _missed links are worse than bad links._  
 Ambiguity → prefer generating a plausible association.
@@ -113,7 +113,7 @@ interface FileIndexResult {
   symbols: SymbolIndex[];
   calls: CallIndex[];
   references: ReferenceIndex[];
-  endpoints?: EndpointIndex[];
+  boundaries?: BoundaryIndex[];
   testCases?: TestCaseIndex[];
 }
 ```
@@ -144,7 +144,7 @@ interface ReferenceIndex {
 ```
 
 ```ts
-interface EndpointIndex {
+interface BoundaryIndex {
   verb: string; // 'GET', 'POST', ...
   path: string;
   handlerSymbolId: string;
@@ -207,7 +207,7 @@ export interface LanguageIndexer {
   - Symbol extraction.
   - Basic reference resolution.
   - Call graph extraction.
-  - Endpoint detection (framework heuristics).
+  - Boundary detection (framework heuristics).
   - Test detection (`it`, `test`, `describe`).
 
 ## 5.2 Python Indexer (`py-indexer.ts`)
@@ -255,7 +255,7 @@ Implemented in `index-snapshot.ts`.
 
 **IN_SNAPSHOT Cardinality Constraint** (Critical):
 
-Every snapshot-scoped node (Module, File, Symbol, Endpoint, TestCase, DataContract, SpecDoc) **must
+Every snapshot-scoped node (Module, File, Symbol, Boundary, TestCase, DataContract, SpecDoc) **must
 have exactly 1** incoming `[:IN_SNAPSHOT]` edge. This is enforced by database constraint (§4.1B in
 graph_schema_spec.md).
 
@@ -357,7 +357,7 @@ if (orphaned.count > 0) {
 - LLM usage (per 2.1C):
   - Feature mapping.
   - Test ↔ Feature mapping.
-  - Endpoint ↔ Feature mapping.
+  - Boundary ↔ Feature mapping.
 - LLM determinism: **best-effort** (per 2.2B), not strict.
 
 ---

@@ -34,7 +34,7 @@ Enables multi-modal code analysis queries.
 
 ```cypher
 (caller:Symbol)-[r:REFERENCES {type: 'CALL', line: 42, col: 10}]->(callee:Symbol)
-(endpoint:Endpoint)-[r:REFERENCES {type: 'CALL'}]->(handler:Symbol)
+(endpoint:Boundary)-[r:REFERENCES {type: 'CALL'}]->(handler:Symbol)
 (module:Module)-[r:REFERENCES {type: 'CALL'}]->(symbol:Symbol)
 ```
 
@@ -44,7 +44,7 @@ Enables multi-modal code analysis queries.
 
 - Symbol → Symbol (call graph)
 - Symbol → Pattern (calls pattern implementation)
-- Endpoint → Symbol (handler)
+- Boundary → Symbol (handler)
 - Module → Symbol (module-level calls)
 
 ### TYPE_REF – Type References
@@ -80,7 +80,7 @@ Enables multi-modal code analysis queries.
 ```cypher
 (symbol:Symbol)-[r:REFERENCES {type: 'PATTERN', confidence: 0.85}]->(pattern:Pattern)
 (module:Module)-[r:REFERENCES {type: 'PATTERN'}]->(pattern:Pattern)
-(endpoint:Endpoint)-[r:REFERENCES {type: 'PATTERN'}]->(pattern:Pattern)
+(endpoint:Boundary)-[r:REFERENCES {type: 'PATTERN'}]->(pattern:Pattern)
 ```
 
 **Semantic**: Code adheres to or exemplifies design pattern.
@@ -89,7 +89,7 @@ Enables multi-modal code analysis queries.
 
 - Symbol → Pattern (implements pattern)
 - Module → Pattern (follows pattern)
-- Endpoint → Pattern (REST pattern adherence)
+- Boundary → Pattern (REST pattern adherence)
 
 ### SIMILAR – Embedding Similarity
 
@@ -116,7 +116,7 @@ Enables multi-modal code analysis queries.
 | --------------- | -------- | --------------- | ----------- | -------------------- |
 | Symbol          | CALL     | Symbol          | optional    | Function calls       |
 | Symbol          | CALL     | Pattern         | optional    | Pattern calls        |
-| Endpoint        | CALL     | Symbol          | optional    | Handler              |
+| Boundary        | CALL     | Symbol          | optional    | Handler              |
 | Module          | CALL     | Symbol          | optional    | Module-level calls   |
 | Symbol          | TYPE_REF | Symbol          | optional    | Type annotations     |
 | Symbol          | TYPE_REF | DataContract    | optional    | Data model refs      |
@@ -124,7 +124,7 @@ Enables multi-modal code analysis queries.
 | File            | IMPORT   | Module          | optional    | Module imports       |
 | Symbol          | PATTERN  | Pattern         | optional    | Pattern adherence    |
 | Module          | PATTERN  | Pattern         | optional    | Module pattern       |
-| Endpoint        | PATTERN  | Pattern         | optional    | REST pattern         |
+| Boundary        | PATTERN  | Pattern         | optional    | REST pattern         |
 | Symbol          | SIMILAR  | Symbol          | optional    | Embedding similarity |
 | Feature         | SIMILAR  | Feature         | optional    | Feature similarity   |
 | ExternalService | SIMILAR  | ExternalService | optional    | Service similarity   |
@@ -285,7 +285,7 @@ ORDER BY distance
 - [graph_schema_spec.md](../graph_schema_spec.md) – Core schema
 - [Symbol.md](../nodes/Symbol.md) – Symbol definition
 - [Pattern.md](../nodes/Pattern.md) – Pattern definition
-- [Endpoint.md](../nodes/Endpoint.md) – Endpoint definition
+- [Boundary.md](../nodes/Boundary.md) – Boundary definition
 - [Module.md](../nodes/Module.md) – Module definition
 - [REALIZES.md](./REALIZES.md) – Feature implementation (different semantics)
 - [MUTATES.md](./MUTATES.md) – Data flow (different semantics)

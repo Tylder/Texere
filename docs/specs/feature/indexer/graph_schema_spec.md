@@ -61,7 +61,7 @@ and edge types, constraints, indexes, query patterns, and lifecycle management.
 
 ### 1.5 Snapshot-Scoped vs. Non-Scoped
 
-- **Snapshot-Scoped Nodes**: Created per snapshot (Module, File, Symbol, Endpoint, TestCase,
+- **Snapshot-Scoped Nodes**: Created per snapshot (Module, File, Symbol, Boundary, TestCase,
   SpecDoc, ThirdPartyLib)
   - Linked to Snapshot via `[:IN_SNAPSHOT]` relationship
   - Deleted snapshots remove associated scoped nodes
@@ -181,10 +181,10 @@ FOR (n:Symbol) REQUIRE n.id IS UNIQUE;
 
 ### 2.2 Domain & Behavior Nodes
 
-#### Boundary (formerly Endpoint)
+#### Boundary
 
-**Note**: Renamed from `Endpoint` to support multiple entry point types (HTTP, gRPC, CLI, events,
-etc.)
+**Domain-agnostic callable interface**: Covers HTTP endpoints, gRPC methods, CLI commands, event
+handlers, webhooks, scheduled jobs, and other boundary types.
 
 | Property          | Type      | Constraints | Notes                                                                                                         |
 | ----------------- | --------- | ----------- | ------------------------------------------------------------------------------------------------------------- |
@@ -231,10 +231,10 @@ FOR (n:Boundary) REQUIRE n.id IS UNIQUE;
 })
 ```
 
-#### DataContract (formerly SchemaEntity)
+#### DataContract
 
-**Note**: Renamed from `SchemaEntity` to support data definitions beyond databases (GraphQL,
-Protobuf, API contracts, etc.)
+**Purpose**: Data model/contract definition supporting multiple formats (Prisma, SQL, GraphQL,
+Protobuf, API contracts, JSON Schema, etc.)
 
 | Property      | Type      | Constraints | Notes                                                                                                                             |
 | ------------- | --------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -624,7 +624,7 @@ Every snapshot-scoped node belongs to exactly one snapshot (cardinality invarian
 | From → To                      | Meaning                  | Cardinality | Notes |
 | ------------------------------ | ------------------------ | ----------- | ----- |
 | `Symbol → Snapshot`            | Symbol in Snapshot       | exactly 1   |       |
-| `Endpoint → Snapshot`          | Endpoint in Snapshot     | exactly 1   |       |
+| `Boundary → Snapshot`          | Boundary in Snapshot     | exactly 1   |       |
 | `File → Snapshot`              | File in Snapshot         | exactly 1   |       |
 | `Module → Snapshot`            | Module in Snapshot       | exactly 1   |       |
 | `TestCase → Snapshot`          | TestCase in Snapshot     | exactly 1   |       |
@@ -664,7 +664,7 @@ Consolidates: CALL, TYPE_REF, IMPORT, FOLLOWS_PATTERN, SIMILAR_TO
 
 -- Pattern adherence
 (symbol:Symbol)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.85}]->(pattern:Pattern)
-(endpoint:Endpoint)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.92}]->(pattern:Pattern)
+(endpoint:Boundary)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.92}]->(pattern:Pattern)
 (module:Module)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.78}]->(pattern:Pattern)
 
 -- Embedding similarity
@@ -697,12 +697,12 @@ Semantic: "What realizes this requirement?"
 -- Symbol implements Feature
 (symbol:Symbol)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.88}]->(feature:Feature)
 
--- Endpoint implements Feature
-(endpoint:Endpoint)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.92}]->(feature:Feature)
+-- Boundary implements Feature
+(endpoint:Boundary)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.92}]->(feature:Feature)
 
--- TestCase tests Symbol/Endpoint
+-- TestCase tests Symbol/Boundary
 (testCase:TestCase)-[r:REALIZES {role: 'TESTS', coverage: 'DIRECT'}]->(symbol:Symbol)
-(testCase:TestCase)-[r:REALIZES {role: 'TESTS', coverage: 'INDIRECT'}]->(endpoint:Endpoint)
+(testCase:TestCase)-[r:REALIZES {role: 'TESTS', coverage: 'INDIRECT'}]->(endpoint:Boundary)
 
 -- TestCase verifies Feature
 (testCase:TestCase)-[r:REALIZES {role: 'VERIFIES', confidence: 0.95}]->(feature:Feature)
@@ -744,8 +744,8 @@ Semantic: "What accesses this schema entity?"
 -- Symbol writes to entity
 (symbol:Symbol)-[r:MUTATES {operation: 'WRITE', confidence: 0.82}]->(entity:DataContract)
 
--- Endpoint reads/writes (via handler symbol)
-(endpoint:Endpoint)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.90}]->(entity:DataContract)
+-- Boundary reads/writes (via handler symbol)
+(endpoint:Boundary)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.90}]->(entity:DataContract)
 ```
 
 **Properties**:
@@ -785,8 +785,8 @@ Semantic: "What does this depend on?"
 -- Symbol calls external service
 (symbol:Symbol)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.91}]->(svc:ExternalService)
 
--- Endpoint calls service
-(endpoint:Endpoint)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.88}]->(svc:ExternalService)
+-- Boundary calls service
+(endpoint:Boundary)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.88}]->(svc:ExternalService)
 
 -- Module follows style guide
 (module:Module)-[r:DEPENDS_ON {kind: 'STYLE_GUIDE'}]->(guide:StyleGuide)
@@ -830,8 +830,8 @@ Semantic: "What explains or governs this?"
 -- SpecDoc documents Feature
 (doc:SpecDoc)-[r:DOCUMENTS {target_role: 'FEATURE', similarity: 0.87}]->(f:Feature)
 
--- SpecDoc documents Endpoint
-(doc:SpecDoc)-[r:DOCUMENTS {target_role: 'ENDPOINT', similarity: 0.91}]->(ep:Endpoint)
+-- SpecDoc documents Boundary
+(doc:SpecDoc)-[r:DOCUMENTS {target_role: 'ENDPOINT', similarity: 0.91}]->(ep:Boundary)
 
 -- SpecDoc documents Symbol
 (doc:SpecDoc)-[r:DOCUMENTS {target_role: 'SYMBOL', similarity: 0.79}]->(sym:Symbol)
@@ -875,14 +875,14 @@ Consolidates: IN_FILE, IN_MODULE, HANDLED_BY
 Semantic: "Where is this defined, and what role?"
 
 ```cypher
--- Endpoint handler
-(endpoint:Endpoint)-[r:LOCATION {role: 'HANDLED_BY'}]->(symbol:Symbol)
+-- Boundary handler
+(endpoint:Boundary)-[r:LOCATION {role: 'HANDLED_BY'}]->(symbol:Symbol)
 
--- Endpoint in file
-(endpoint:Endpoint)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
+-- Boundary in file
+(endpoint:Boundary)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
 
--- Endpoint in module
-(endpoint:Endpoint)-[r:LOCATION {role: 'IN_MODULE'}]->(module:Module)
+-- Boundary in module
+(endpoint:Boundary)-[r:LOCATION {role: 'IN_MODULE'}]->(module:Module)
 
 -- TestCase in file
 (testCase:TestCase)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
@@ -905,7 +905,7 @@ indexes.
 
 ```cypher
 -- Find handler for all payment endpoints
-MATCH (ep:Endpoint {path: '/api/payment/*'})-[r:LOCATION {role: 'HANDLED_BY'}]->(sym:Symbol)
+MATCH (ep:Boundary {path: '/api/payment/*'})-[r:LOCATION {role: 'HANDLED_BY'}]->(sym:Symbol)
 RETURN ep, sym
 ```
 
@@ -970,7 +970,7 @@ Semantic: "How does this incident relate to the codebase?"
 (incident:Incident)-[r:IMPACTS {type: 'AFFECTS'}]->(feature:Feature)
 
 -- Incident affects endpoint
-(incident:Incident)-[r:IMPACTS {type: 'AFFECTS'}]->(endpoint:Endpoint)
+(incident:Incident)-[r:IMPACTS {type: 'AFFECTS'}]->(endpoint:Boundary)
 ```
 
 **Properties**:
@@ -1044,9 +1044,9 @@ FOR (n:File) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT symbol_id_unique IF NOT EXISTS
 FOR (n:Symbol) REQUIRE n.id IS UNIQUE;
 
--- Endpoint
+-- Boundary
 CREATE CONSTRAINT endpoint_id_unique IF NOT EXISTS
-FOR (n:Endpoint) REQUIRE n.id IS UNIQUE;
+FOR (n:Boundary) REQUIRE n.id IS UNIQUE;
 
 -- DataContract
 CREATE CONSTRAINT data_contract_id_unique IF NOT EXISTS
@@ -1103,7 +1103,7 @@ This constraint prevents:
 ```cypher
 -- Enforce cardinality: snapshot-scoped nodes MUST have exactly 1 [:IN_SNAPSHOT] edge
 CREATE CONSTRAINT in_snapshot_cardinality IF NOT EXISTS
-FOR (n:Module | n:File | n:Symbol | n:Endpoint | n:DataContract | n:TestCase | n:SpecDoc)
+FOR (n:Module | n:File | n:Symbol | n:Boundary | n:DataContract | n:TestCase | n:SpecDoc)
 REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 ```
 
@@ -1225,9 +1225,9 @@ For filtering and traversal optimization.
 CREATE INDEX file_language IF NOT EXISTS
 FOR (n:File) ON (n.language);
 
--- Endpoint discovery
+-- Boundary discovery
 CREATE INDEX endpoint_verb_path IF NOT EXISTS
-FOR (n:Endpoint) ON (n.verb, n.path);
+FOR (n:Boundary) ON (n.verb, n.path);
 
 -- Feature/Test/Symbol discovery
 CREATE INDEX feature_name IF NOT EXISTS
@@ -1420,12 +1420,12 @@ RETURN {
 
 **Cite as:** §6.1
 
-### 6.2 getEndpointPatternExamples Pattern
+### 6.2 getBoundaryPatternExamples Pattern
 
-Retrieves endpoint examples with their implementation, tests, and patterns.
+Retrieves boundary examples with their implementation, tests, and patterns.
 
 ```cypher
-MATCH (ep:Endpoint)
+MATCH (ep:Boundary)
 OPTIONAL MATCH (ep)-[r1:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
 OPTIONAL MATCH (t:TestCase)-[r2:REALIZES {role: 'TESTS'}]->(handler)
 OPTIONAL MATCH (ep)-[r3:REFERENCES {kind: 'PATTERN'}]->(pattern:Pattern)
@@ -1461,7 +1461,7 @@ MATCH (i:Incident {id: $incidentId})
 -- Root causes and impacts
 OPTIONAL MATCH (i)-[r1:IMPACTS {type: 'CAUSED_BY'}]->(causeSymbol:Symbol)
 OPTIONAL MATCH (i)-[r2:IMPACTS {type: 'AFFECTS'}]->(affectFeature:Feature)
-OPTIONAL MATCH (i)-[r3:IMPACTS {type: 'AFFECTS'}]->(affectEndpoint:Endpoint)
+OPTIONAL MATCH (i)-[r3:IMPACTS {type: 'AFFECTS'}]->(affectEndpoint:Boundary)
 
 -- Evolution tracking
 OPTIONAL MATCH (causeSymbol)-[r4:TRACKS]->(snap:Snapshot)
@@ -1564,10 +1564,10 @@ DETACH DELETE s, n
 
 ## 9. Changelog
 
-| Date       | Version | Editor | Summary                                                                                                                                                                                                                          |
-| ---------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2025-12-09 | 1.1     | @agent | Added 6 optional V2+ nodes (Configuration, Error, Message, Dependency, Secret, Workflow); renamed Endpoint→Boundary and SchemaEntity→DataContract; language/domain-agnostic enums; updated constraints, edges, adoption strategy |
-| 2025-12-08 | 1.0     | @agent | Complete v1 schema spec with node/edge DDL, indexes, query patterns, lifecycle management, and scaling guidance                                                                                                                  |
+| Date       | Version | Editor | Summary                                                                                                                                                                                       |
+| ---------- | ------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-12-09 | 1.1     | @agent | Added 6 optional V2+ nodes (Configuration, Error, Message, Dependency, Secret, Workflow); renamed DataContract; language/domain-agnostic enums; updated constraints, edges, adoption strategy |
+| 2025-12-08 | 1.0     | @agent | Complete v1 schema spec with node/edge DDL, indexes, query patterns, lifecycle management, and scaling guidance                                                                               |
 
 ---
 

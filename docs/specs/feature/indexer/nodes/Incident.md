@@ -48,7 +48,7 @@ CREATE (i:Incident {
 | Edge                             | Target                    | Cardinality | Notes                  |
 | -------------------------------- | ------------------------- | ----------- | ---------------------- |
 | `[:IMPACTS {type: 'CAUSED_BY'}]` | [Symbol](./Symbol.md)     | optional    | Root cause is symbol   |
-| `[:IMPACTS {type: 'CAUSES_BY'}]` | [Endpoint](./Endpoint.md) | optional    | Root cause is endpoint |
+| `[:IMPACTS {type: 'CAUSES_BY'}]` | [Boundary](./Boundary.md) | optional    | Root cause is endpoint |
 | `[:IMPACTS {type: 'AFFECTS'}]`   | [Feature](./Feature.md)   | optional    | Impacts feature        |
 
 ### Incoming
@@ -186,6 +186,6 @@ Agents use incidents for:
 
 - [graph_schema_spec.md](../graph_schema_spec.md) – Node catalog
 - [Symbol.md](./Symbol.md) – Root cause
-- [Endpoint.md](./Endpoint.md) – API endpoint involved
+- [Boundary.md](./Boundary.md) – API endpoint involved
 - [Feature.md](./Feature.md) – Feature impact
 - [../edges/IMPACTS.md](../edges/IMPACTS.md) – Incident relationships

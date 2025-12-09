@@ -28,18 +28,18 @@ reference when:
 | `[:FOLLOWS_PATTERN]`         | `[:REFERENCES]`  | `kind`        | `'PATTERN'`                                 | Pattern adherence                          |
 | `[:SIMILAR_TO]`              | `[:REFERENCES]`  | `kind`        | `'SIMILAR'`                                 | Embedding-based similarity                 |
 | `[:IMPLEMENTS]`              | `[:REALIZES]`    | `role`        | `'IMPLEMENTS'`                              | Feature implementation                     |
-| `[:TESTS]`                   | `[:REALIZES]`    | `role`        | `'TESTS'`                                   | TestCase→Symbol/Endpoint                   |
+| `[:TESTS]`                   | `[:REALIZES]`    | `role`        | `'TESTS'`                                   | TestCase→Symbol/Boundary                   |
 | `[:TESTED_BY]`               | `[:REALIZES]`    | `role`        | `'TESTS'`                                   | Reverse: delete, use forward only          |
 | `[:VERIFIES]`                | `[:REALIZES]`    | `role`        | `'VERIFIES'`                                | TestCase→Feature                           |
-| `[:READS_FROM]`              | `[:MUTATES]`     | `operation`   | `'READ'`                                    | Symbol/Endpoint→DataContract               |
-| `[:WRITES_TO]`               | `[:MUTATES]`     | `operation`   | `'WRITE'`                                   | Symbol/Endpoint→DataContract               |
+| `[:READS_FROM]`              | `[:MUTATES]`     | `operation`   | `'READ'`                                    | Symbol/Boundary→DataContract               |
+| `[:WRITES_TO]`               | `[:MUTATES]`     | `operation`   | `'WRITE'`                                   | Symbol/Boundary→DataContract               |
 | `[:USES_CONFIG]`             | `[:DEPENDS_ON]`  | `kind`        | `'CONFIG'`                                  | Symbol→ConfigurationVariable               |
-| `[:CALLS]`                   | `[:DEPENDS_ON]`  | `kind`        | `'SERVICE'`                                 | Symbol/Endpoint→ExternalService            |
+| `[:CALLS]`                   | `[:DEPENDS_ON]`  | `kind`        | `'SERVICE'`                                 | Symbol/Boundary→ExternalService            |
 | `[:APPLIES_TO]`              | `[:DOCUMENTS]`   | `target_role` | `'MODULE'`                                  | StyleGuide→Module                          |
 | `[:DOCUMENTS]`               | `[:DOCUMENTS]`   | `target_role` | `'FEATURE'\|'ENDPOINT'\|'SYMBOL'\|'MODULE'` | SpecDoc relationships                      |
-| `[:IN_FILE]`                 | `[:LOCATION]`    | `role`        | `'IN_FILE'`                                 | Endpoint/TestCase→File                     |
-| `[:IN_MODULE]`               | `[:LOCATION]`    | `role`        | `'IN_MODULE'`                               | Endpoint/TestCase→Module                   |
-| `[:HANDLED_BY]`              | `[:LOCATION]`    | `role`        | `'HANDLED_BY'`                              | Endpoint→Symbol handler                    |
+| `[:IN_FILE]`                 | `[:LOCATION]`    | `role`        | `'IN_FILE'`                                 | Boundary/TestCase→File                     |
+| `[:IN_MODULE]`               | `[:LOCATION]`    | `role`        | `'IN_MODULE'`                               | Boundary/TestCase→Module                   |
+| `[:HANDLED_BY]`              | `[:LOCATION]`    | `role`        | `'HANDLED_BY'`                              | Boundary→Symbol handler                    |
 | `[:INTRODUCED_IN]`           | `[:TRACKS]`      | `event`       | `'INTRODUCED'`                              | First snapshot appearance                  |
 | `[:MODIFIED_IN]`             | `[:TRACKS]`      | `event`       | `'MODIFIED'`                                | Later snapshot changes                     |
 | `[:CAUSED_BY]`               | `[:IMPACTS]`     | `type`        | `'CAUSED_BY'`                               | Incident root cause                        |
@@ -48,7 +48,7 @@ reference when:
 | `[:CONTAINS]`                | `[:CONTAINS]`    | —             | —                                           | **Unchanged**                              |
 | `[:IN_SNAPSHOT]`             | `[:IN_SNAPSHOT]` | —             | —                                           | **Unchanged**                              |
 | `[:EXEMPLIFIED_BY]`          | `[:REFERENCES]`  | `kind`        | `'PATTERN'`                                 | Delete; use reverse of FOLLOWS_PATTERN     |
-| `[:HAS_INTEGRATION_PATTERN]` | `[:DEPENDS_ON]`  | `kind`        | `'SERVICE'`                                 | Symbol/Endpoint→ExternalService (metadata) |
+| `[:HAS_INTEGRATION_PATTERN]` | `[:DEPENDS_ON]`  | `kind`        | `'SERVICE'`                                 | Symbol/Boundary→ExternalService (metadata) |
 
 ---
 

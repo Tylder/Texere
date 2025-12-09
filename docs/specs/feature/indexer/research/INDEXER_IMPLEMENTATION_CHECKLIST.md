@@ -82,7 +82,7 @@ export async function initializeUniqueConstraints(driver: neo4j.Driver) {
       FOR (n:Symbol) REQUIRE n.id IS UNIQUE
     `);
 
-    // (repeat for other 10 node types: Endpoint, Feature, Pattern, Incident, etc.)
+    // (repeat for other 10 node types: Boundary, Feature, Pattern, Incident, etc.)
 
     console.log('✓ Unique constraints created');
   } finally {
@@ -164,7 +164,7 @@ export async function initializeNodeIndexes(driver: neo4j.Driver) {
       FOR (n:Feature) ON (n.name)
     `);
 
-    // (repeat for 4 more: Endpoint.verb+path, TestCase.name, Snapshot.indexStatus, Incident.severity)
+    // (repeat for 4 more: Boundary.verb+path, TestCase.name, Snapshot.indexStatus, Incident.severity)
 
     console.log('✓ Node property indexes created');
   } finally {
@@ -200,7 +200,7 @@ export async function initializeInSnapshotConstraints(driver: neo4j.Driver) {
       FOR (n:File) REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL
     `);
 
-    // (repeat for: Module, EntryPoint, DataContract, TestCase, SpecDoc)
+    // (repeat for: Module, Boundary, DataContract, TestCase, SpecDoc)
 
     console.log('✓ IN_SNAPSHOT existence constraints created');
   } finally {
@@ -318,7 +318,7 @@ export async function getSymbols(
 }
 
 /**
- * Similar for other scoped node types: getFiles, getModules, getEntryPoints, etc.
+ * Similar for other scoped node types: getFiles, getModules, getBoundaries, etc.
  */
 ```
 

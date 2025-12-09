@@ -62,7 +62,7 @@ Each node/edge has a dedicated file with consistent structure:
 - Created per commit/snapshot
 - Deleted when snapshot is deleted
 - Linked via `[:IN_SNAPSHOT]` (cardinality invariant: exactly 1)
-- Examples: Module, File, Symbol, Endpoint, TestCase
+- Examples: Module, File, Symbol, Boundary, TestCase
 
 **Cross-Snapshot (5 nodes)**:
 
@@ -89,7 +89,7 @@ Each node/edge has a dedicated file with consistent structure:
 | Node                            | File                | Purpose                          | Scope          |
 | ------------------------------- | ------------------- | -------------------------------- | -------------- |
 | [Symbol](./nodes/Symbol.md)     | `nodes/Symbol.md`   | Function, class, type, interface | N per file     |
-| [Endpoint](./nodes/Endpoint.md) | `nodes/Endpoint.md` | HTTP API route                   | N per snapshot |
+| [Boundary](./nodes/Boundary.md) | `nodes/Boundary.md` | HTTP API route                   | N per snapshot |
 
 ### Behavior & Data Nodes (2)
 
@@ -189,7 +189,7 @@ docs/specs/feature/indexer/
 │   ├── Module.md
 │   ├── File.md
 │   ├── Symbol.md
-│   ├── Endpoint.md
+│   ├── Boundary.md
 │   ├── DataContract.md
 │   ├── TestCase.md
 │   ├── SpecDoc.md
@@ -286,11 +286,11 @@ All 15 nodes can connect via various edges. Key patterns:
 
 - **Hierarchy**: File → Module → Snapshot → Codebase (via `[:CONTAINS]`)
 - **Versioning**: All scoped nodes → Snapshot (via `[:IN_SNAPSHOT]`)
-- **Features**: Symbol/Endpoint → Feature (via `[:REALIZES {role: 'IMPLEMENTS'}]`)
-- **Data**: Symbol/Endpoint → DataContract (via `[:MUTATES]`)
+- **Features**: Symbol/Boundary → Feature (via `[:REALIZES {role: 'IMPLEMENTS'}]`)
+- **Data**: Symbol/Boundary → DataContract (via `[:MUTATES]`)
 - **Testing**: TestCase → Symbol/Feature (via `[:REALIZES]`)
 - **Documentation**: SpecDoc/StyleGuide → Feature/Module/Symbol (via `[:DOCUMENTS]`)
-- **Dependencies**: Module/Symbol/Endpoint → ExternalService/Library/Config (via `[:DEPENDS_ON]`)
+- **Dependencies**: Module/Symbol/Boundary → ExternalService/Library/Config (via `[:DEPENDS_ON]`)
 - **Evolution**: All nodes → Snapshot (via `[:TRACKS]`)
 
 **See**: [nodes/README.md](./nodes/README.md) (Cardinality Invariants section) and

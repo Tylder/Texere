@@ -57,7 +57,7 @@ CREATE (f:File {
 | Edge                            | Source                    | Cardinality | Notes                  |
 | ------------------------------- | ------------------------- | ----------- | ---------------------- |
 | `[:CONTAINS]`                   | [Module](./Module.md)     | exactly 1   | File belongs to module |
-| `[:LOCATION {role: 'IN_FILE'}]` | [Endpoint](./Endpoint.md) | optional    | Endpoint location      |
+| `[:LOCATION {role: 'IN_FILE'}]` | [Boundary](./Boundary.md) | optional    | Boundary location      |
 | `[:LOCATION {role: 'IN_FILE'}]` | [TestCase](./TestCase.md) | optional    | Test location          |
 | `[:DOCUMENTS]`                  | [SpecDoc](./SpecDoc.md)   | optional    | Doc references file    |
 

@@ -48,7 +48,7 @@ CREATE (doc:SpecDoc {
 | ---------------------------------------- | ------------------------- | ----------- | ------------------ |
 | `[:IN_SNAPSHOT]`                         | [Snapshot](./Snapshot.md) | exactly 1   | Version scoping    |
 | `[:DOCUMENTS {target_role: 'FEATURE'}]`  | [Feature](./Feature.md)   | optional    | Explains feature   |
-| `[:DOCUMENTS {target_role: 'ENDPOINT'}]` | [Endpoint](./Endpoint.md) | optional    | Documents endpoint |
+| `[:DOCUMENTS {target_role: 'ENDPOINT'}]` | [Boundary](./Boundary.md) | optional    | Documents endpoint |
 | `[:DOCUMENTS {target_role: 'SYMBOL'}]`   | [Symbol](./Symbol.md)     | optional    | References symbol  |
 | `[:DOCUMENTS {target_role: 'MODULE'}]`   | [Module](./Module.md)     | optional    | Applies to module  |
 | `[:DOCUMENTS {target_role: 'FILE'}]`     | [File](./File.md)         | optional    | References file    |
@@ -76,7 +76,7 @@ CREATE (doc:SpecDoc {
 
 ## Embedding-Based Linking
 
-SpecDoc → (Feature \| Endpoint \| Symbol) edges created via:
+SpecDoc → (Feature \| Boundary \| Symbol) edges created via:
 
 1. **Name matching**: Document title contains target name
 2. **Content similarity**: Embedding distance > threshold
@@ -95,10 +95,10 @@ RETURN doc, r.similarity
 ORDER BY r.similarity DESC
 ```
 
-### Find Docs for Endpoint
+### Find Docs for Boundary
 
 ```cypher
-MATCH (ep:Endpoint {id: $endpointId})<-[r:DOCUMENTS {target_role: 'ENDPOINT'}]-(doc:SpecDoc)
+MATCH (ep:Boundary {id: $endpointId})<-[r:DOCUMENTS {target_role: 'ENDPOINT'}]-(doc:SpecDoc)
 RETURN doc, r.similarity
 ORDER BY r.similarity DESC
 ```
@@ -161,7 +161,7 @@ Agent Task: "Implement payment feature"
   ├─ Find Feature('payment')
   ├─ Find SpecDoc -[:DOCUMENTS]-> Feature
   ├─ Read SpecDoc content (context)
-  ├─ Find Symbol/Endpoint -[:REALIZES]-> Feature
+  ├─ Find Symbol/Boundary -[:REALIZES]-> Feature
   └─ Implement with guidance from docs
 ```
 

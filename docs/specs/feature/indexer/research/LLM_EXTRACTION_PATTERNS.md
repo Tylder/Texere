@@ -402,7 +402,7 @@ is injected."
 
 How do we integrate with Stripe? Is there a local pattern?
 
-**Current:** Endpoint `[:CALLS]` ExternalService, but no pattern/example.
+**Current:** Boundary `[:CALLS]` ExternalService, but no pattern/example.
 
 ### LLM Prompt
 
@@ -625,7 +625,7 @@ interface Symbol {
 ```
 4. Higher-Level Extraction: FROM FileIndexResult + repo config + LLM:
 
-   a. Endpoint extraction (AST + heuristics)
+   a. Boundary extraction (AST + heuristics)
 
    b. Schema entity extraction (ORM parsing)
 
@@ -646,7 +646,7 @@ interface Symbol {
 
    f. Test↔Feature mapping (LLM)
 
-   g. Endpoint↔Feature mapping (LLM)
+   g. Boundary↔Feature mapping (LLM)
 ```
 
 ---

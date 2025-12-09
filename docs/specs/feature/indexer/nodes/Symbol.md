@@ -81,7 +81,7 @@ CREATE (sym:Symbol {
 | `[:REFERENCES {kind: 'CALL'}]`            | [Symbol](./Symbol.md)     | optional    | Called by other symbols     |
 | `[:REFERENCES {kind: 'TYPE_REF'}]`        | [Symbol](./Symbol.md)     | optional    | Referenced by other symbols |
 | `[:REFERENCES {kind: 'SIMILAR'}]`         | [Symbol](./Symbol.md)     | optional    | Similar symbols (embedding) |
-| `[:LOCATION {role: 'HANDLED_BY'}]`        | [Endpoint](./Endpoint.md) | optional    | Handler for endpoint        |
+| `[:LOCATION {role: 'HANDLED_BY'}]`        | [Boundary](./Boundary.md) | optional    | Handler for endpoint        |
 | `[:REALIZES {role: 'TESTS'}]`             | [TestCase](./TestCase.md) | optional    | Tested by test case         |
 | `[:MUTATES {operation: 'READ'\|'WRITE'}]` | [Symbol](./Symbol.md)     | optional    | Accessed by other symbols   |
 | `[:IMPACTS {type: 'CAUSED_BY'}]`          | [Incident](./Incident.md) | optional    | Root cause of incident      |

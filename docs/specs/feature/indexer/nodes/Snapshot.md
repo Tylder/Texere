@@ -56,7 +56,7 @@ CREATE (snap:Snapshot {
 | `[:CONTAINS]` | [Module](./Module.md)                       | many-to-one | Modules in this snapshot  |
 | `[:CONTAINS]` | [File](./File.md)                           | many-to-one | Files in this snapshot    |
 | `[:CONTAINS]` | [Symbol](./Symbol.md)                       | many-to-one | Symbols in this snapshot  |
-| `[:CONTAINS]` | [Endpoint](./Endpoint.md)                   | many-to-one | Optional: endpoints found |
+| `[:CONTAINS]` | [Boundary](./Boundary.md)                   | many-to-one | Optional: endpoints found |
 | `[:CONTAINS]` | [DataContract](DataContract.md)             | many-to-one | Optional: ORM entities    |
 | `[:CONTAINS]` | [TestCase](./TestCase.md)                   | many-to-one | Optional: tests found     |
 | `[:CONTAINS]` | [SpecDoc](./SpecDoc.md)                     | many-to-one | Optional: docs indexed    |
@@ -130,7 +130,7 @@ RETURN snap
 All of these must point to exactly one snapshot via `[:IN_SNAPSHOT]`:
 
 - [Symbol](./Symbol.md)
-- [Endpoint](./Endpoint.md)
+- [Boundary](./Boundary.md)
 - [File](./File.md)
 - [Module](./Module.md)
 - [TestCase](./TestCase.md)

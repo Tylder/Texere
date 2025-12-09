@@ -51,7 +51,7 @@ CREATE (tc:TestCase {
 | `[:LOCATION {role: 'IN_FILE'}]`   | [File](./File.md)         | exactly 1   | Test file location    |
 | `[:LOCATION {role: 'IN_MODULE'}]` | [Module](./Module.md)     | optional    | Test module           |
 | `[:REALIZES {role: 'TESTS'}]`     | [Symbol](./Symbol.md)     | optional    | Tests symbol (direct) |
-| `[:REALIZES {role: 'TESTS'}]`     | [Endpoint](./Endpoint.md) | optional    | Tests endpoint        |
+| `[:REALIZES {role: 'TESTS'}]`     | [Boundary](./Boundary.md) | optional    | Tests endpoint        |
 | `[:REALIZES {role: 'VERIFIES'}]`  | [Feature](./Feature.md)   | optional    | Verifies feature      |
 
 ### Incoming (3 edge types)
@@ -98,10 +98,10 @@ MATCH (f:Feature {id: $featureId})<-[r:REALIZES {role: 'VERIFIES'}]-(tc:TestCase
 RETURN tc, r.confidence
 ```
 
-### Find Tests for Endpoint
+### Find Tests for Boundary
 
 ```cypher
-MATCH (ep:Endpoint {id: $endpointId})<-[r:REALIZES {role: 'TESTS'}]-(tc:TestCase)
+MATCH (ep:Boundary {id: $endpointId})<-[r:REALIZES {role: 'TESTS'}]-(tc:TestCase)
 RETURN tc
 ```
 
@@ -136,7 +136,7 @@ RETURN tc.kind, count
 Tests can relate to:
 
 1. **Symbol**: Direct import or call (heuristic: test imports symbol)
-2. **Endpoint**: Via handler symbol or explicit path matching
+2. **Boundary**: Via handler symbol or explicit path matching
 3. **Feature**: Naming + LLM inference (test name contains feature name)
 
 ---

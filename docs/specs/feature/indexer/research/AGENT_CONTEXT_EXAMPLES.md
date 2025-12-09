@@ -22,7 +22,7 @@ them. It validates schema design and reveals missing patterns.
 
 ```cypher
 -- Agent calls: getEndpointPatternExamples(limit: 5)
-MATCH (ep:Endpoint)
+MATCH (ep:Boundary)
 WHERE ep.path STARTS WITH "/api/features"  -- Filter by pattern
 OPTIONAL MATCH (sym:Symbol {id: ep.handlerSymbolId})
 OPTIONAL MATCH (t:TestCase)-[:TESTS]->(sym)
@@ -55,7 +55,7 @@ LIMIT 5
 
 - Handler **source code snippet** (currently just `docstring`)
 - **HTTP status codes** endpoint returns (stored where?)
-- **Request/response schema** (could add to Endpoint properties)
+- **Request/response schema** (could add to Boundary properties)
 - **Error handling patterns** (separate pattern type?)
 
 ---
@@ -93,7 +93,7 @@ LIMIT 1  -- Latest modification
 OPTIONAL MATCH (test:TestCase)-[:TESTS]->(authSym)
 
 -- 4. Find endpoints using auth
-OPTIONAL MATCH (authSym)<-[:REFERENCES* 0..3]-(ep:Endpoint)
+OPTIONAL MATCH (authSym)<-[:REFERENCES* 0..3]-(ep:Boundary)
 
 RETURN {
   incidents: collect(DISTINCT i),
@@ -144,10 +144,10 @@ MATCH (feat:Feature {name: "billing"})
 
 -- Get implementing symbols/endpoints
 OPTIONAL MATCH (feat)-[:IMPLEMENTS]->(sym:Symbol)
-OPTIONAL MATCH (feat)-[:IMPLEMENTS]->(ep:Endpoint)
+OPTIONAL MATCH (feat)-[:IMPLEMENTS]->(ep:Boundary)
 
 -- Find similar external service integrations
-OPTIONAL MATCH (anotherEp:Endpoint)-[:CALLS]->(extSvc:ExternalService)
+OPTIONAL MATCH (anotherEp:Boundary)-[:CALLS]->(extSvc:ExternalService)
 WHERE extSvc.id IN ["stripe", "auth0", "sendgrid"]  -- Example services
 
 -- For each integration, get handler + tests
@@ -219,7 +219,7 @@ WITH entity, sym, r
 OPTIONAL MATCH (test:TestCase)-[:TESTS]->(sym)
 
 -- Find endpoints serving User
-OPTIONAL MATCH (sym)<-[:REFERENCES* 0..2]-(ep:Endpoint)
+OPTIONAL MATCH (sym)<-[:REFERENCES* 0..2]-(ep:Boundary)
 
 -- Find features using User
 OPTIONAL MATCH (feat:Feature)-[:IMPLEMENTS]->(sym)
@@ -280,7 +280,7 @@ OPTIONAL MATCH (guide)-[:APPLIES_TO]->(module:Module)
 
 -- Find endpoints in that module
 OPTIONAL MATCH (module)-[:CONTAINS*]->(f:File)
-OPTIONAL MATCH (f)-[:CONTAINS]->(ep:Endpoint)
+OPTIONAL MATCH (f)-[:CONTAINS]->(ep:Boundary)
 
 -- Find which endpoints follow the pattern
 OPTIONAL MATCH (guide)-[:REFERENCES]->(correctPattern:Pattern)
@@ -400,25 +400,25 @@ RETURN {
 1. **Pattern discovery** – Examples via `[:FOLLOWS_PATTERN]`
 2. **Impact analysis** – Via `[:IMPLEMENTS]`, `[:READS_FROM]`, `[:REFERENCES]`
 3. **Feature context** – `getFeatureContext()` returns all needed data
-4. **Endpoint discovery** – Filtering by path, verb, patterns
+4. **Boundary discovery** – Filtering by path, verb, patterns
 5. **Incident investigation** – Via `[:CAUSED_BY]`, `[:AFFECTS]`, `[:MODIFIED_IN]`
 
 ### What's Missing or Underspecified ⚠️
 
 1. **Source code snippets** – Only `docstring`; full source needed
 2. **Diff/change details** – Snapshot timestamp exists, but not diff metadata
-3. **Request/response schemas** – Should Endpoint include OpenAPI schema?
+3. **Request/response schemas** – Should Boundary include OpenAPI schema?
 4. **Field-level mutations** – Which fields of DataContract are read/written?
 5. **Test data / fixtures** – No representation of mock data patterns
 6. **Configuration variables** – Where are API_KEY patterns stored?
 7. **Deployment context** – Which endpoints are deployed where?
-8. **Performance metadata** – Endpoint latency, query complexity?
+8. **Performance metadata** – Boundary latency, query complexity?
 
 ### Recommended Schema Extensions (Post-v1)
 
 ```typescript
-// Endpoint enhancement
-interface Endpoint {
+// Boundary enhancement
+interface Boundary {
   // ... existing ...
   requestSchema?: string; // JSON Schema or OpenAPI
   responseSchema?: string; // JSON Schema or OpenAPI

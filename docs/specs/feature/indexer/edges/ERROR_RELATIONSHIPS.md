@@ -286,7 +286,7 @@ errorLogger() → logs/retries (handles)
 ### Best Practices
 
 1. **Comprehensive Throwing**: Mark all errors a symbol can throw
-2. **Catch at Boundaries**: Catch at Boundary/Endpoint level when possible
+2. **Catch at Boundaries**: Catch at Boundary/Boundary level when possible
 3. **Implement Handlers**: For critical errors, create explicit recovery
 4. **Document Hierarchies**: Model error inheritance for clarity
 5. **Test Coverage**: Add tests for error paths

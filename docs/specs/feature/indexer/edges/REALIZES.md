@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Connects implementation artifacts (Symbol, Endpoint, TestCase) to their responsibilities (Feature,
+Connects implementation artifacts (Symbol, Boundary, TestCase) to their responsibilities (Feature,
 TestCase). Consolidates: feature implementation, test coverage, and feature verification.
 
 **Key Characteristic**: Multi-directional semantics (IMPLEMENTS, TESTS, VERIFIES) using `role`
@@ -27,11 +27,11 @@ property.
 
 ## Sub-Types
 
-### IMPLEMENTS – Symbol/Endpoint Implements Feature
+### IMPLEMENTS – Symbol/Boundary Implements Feature
 
 ```cypher
 (symbol:Symbol)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.9}]->(feature:Feature)
-(endpoint:Endpoint)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.95}]->(feature:Feature)
+(endpoint:Boundary)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.95}]->(feature:Feature)
 ```
 
 **Semantic**: Code directly realizes/implements user-facing feature.
@@ -39,15 +39,15 @@ property.
 **Source → Target**:
 
 - Symbol → Feature (symbol implements feature)
-- Endpoint → Feature (endpoint serves feature)
+- Boundary → Feature (endpoint serves feature)
 
 **Common**: High confidence; typically 1+ symbols per feature; 0 or 1 endpoint per feature.
 
-### TESTS – TestCase Tests Symbol/Endpoint
+### TESTS – TestCase Tests Symbol/Boundary
 
 ```cypher
 (test:TestCase)-[r:REALIZES {role: 'TESTS', confidence: 0.99}]->(symbol:Symbol)
-(test:TestCase)-[r:REALIZES {role: 'TESTS', confidence: 0.99}]->(endpoint:Endpoint)
+(test:TestCase)-[r:REALIZES {role: 'TESTS', confidence: 0.99}]->(endpoint:Boundary)
 ```
 
 **Semantic**: Test case covers/exercises symbol or endpoint.
@@ -55,7 +55,7 @@ property.
 **Source → Target**:
 
 - TestCase → Symbol (unit test)
-- TestCase → Endpoint (integration/e2e test)
+- TestCase → Boundary (integration/e2e test)
 
 **Common**: Very high confidence (syntactic match); typically many tests per symbol.
 
@@ -80,9 +80,9 @@ property.
 | Source   | Role       | Target   | Cardinality | Notes                 |
 | -------- | ---------- | -------- | ----------- | --------------------- |
 | Symbol   | IMPLEMENTS | Feature  | optional    | Core implementation   |
-| Endpoint | IMPLEMENTS | Feature  | optional    | API entry point       |
+| Boundary | IMPLEMENTS | Feature  | optional    | API boundary          |
 | TestCase | TESTS      | Symbol   | optional    | Unit/integration test |
-| TestCase | TESTS      | Endpoint | optional    | E2E test              |
+| TestCase | TESTS      | Boundary | optional    | E2E test              |
 | TestCase | VERIFIES   | Feature  | optional    | Feature verification  |
 
 ---
@@ -113,12 +113,12 @@ ORDER BY r.confidence DESC
 -- What implements feature X?
 MATCH (f:Feature {id: 'payment-processing'})
 OPTIONAL MATCH (sym:Symbol)-[r1:REALIZES {role: 'IMPLEMENTS'}]->(f)
-OPTIONAL MATCH (ep:Endpoint)-[r2:REALIZES {role: 'IMPLEMENTS'}]->(f)
+OPTIONAL MATCH (ep:Boundary)-[r2:REALIZES {role: 'IMPLEMENTS'}]->(f)
 OPTIONAL MATCH (test:TestCase)-[r3:REALIZES {role: 'VERIFIES'}]->(f)
 RETURN {
   feature: f,
   implementingSymbols: collect(DISTINCT sym),
-  implementingEndpoints: collect(DISTINCT ep),
+  implementingBoundaries: collect(DISTINCT ep),
   verifyingTests: collect(DISTINCT test)
 }
 ```
@@ -202,7 +202,7 @@ RETURN test, sym, r.confidence
 ### Confidence Scoring
 
 - **IMPLEMENTS (Symbol→Feature)**: 0.7–1.0 (LLM-derived; can be speculative)
-- **IMPLEMENTS (Endpoint→Feature)**: 0.95–1.0 (syntactic; very reliable)
+- **IMPLEMENTS (Boundary→Feature)**: 0.95–1.0 (syntactic; very reliable)
 - **TESTS**: 0.95–1.0 (syntactic; test name → symbol name matching)
 - **VERIFIES**: 0.6–0.9 (LLM-derived; requires semantic understanding)
 
@@ -221,7 +221,7 @@ Query to check if feature is fully implemented:
 ```cypher
 MATCH (f:Feature {id: 'payment'})
 OPTIONAL MATCH (sym:Symbol)-[:REALIZES {role: 'IMPLEMENTS'}]->(f)
-OPTIONAL MATCH (ep:Endpoint)-[:REALIZES {role: 'IMPLEMENTS'}]->(f)
+OPTIONAL MATCH (ep:Boundary)-[:REALIZES {role: 'IMPLEMENTS'}]->(f)
 WHERE ep IS NOT NULL OR sym IS NOT NULL
 RETURN f, 'implemented' as status
 ```
@@ -248,7 +248,7 @@ RETURN f, 'implemented' as status
 
 - [graph_schema_spec.md](../graph_schema_spec.md) – Core schema
 - [Symbol.md](../nodes/Symbol.md) – Symbol definition
-- [Endpoint.md](../nodes/Endpoint.md) – Endpoint definition
+- [Boundary.md](../nodes/Boundary.md) – Boundary definition
 - [Feature.md](../nodes/Feature.md) – Feature definition
 - [TestCase.md](../nodes/TestCase.md) – Test definition
 - [REFERENCES.md](./REFERENCES.md) – Code relations

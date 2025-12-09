@@ -45,15 +45,15 @@ _(To be detailed: feature definitions, endpoints, symbols)_
 
 ### 2.1 Feature Mapping Prompt
 
-_(To be detailed: map Symbol/Endpoint to Feature)_
+_(To be detailed: map Symbol/Boundary to Feature)_
 
 ### 2.2 Test↔Feature Mapping Prompt
 
 _(To be detailed: link TestCase to Feature)_
 
-### 2.3 Endpoint↔Feature Mapping Prompt
+### 2.3 Boundary↔Feature Mapping Prompt
 
-_(To be detailed: link Endpoint to Feature)_
+_(To be detailed: link Boundary to Feature)_
 
 ---
 

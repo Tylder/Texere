@@ -239,13 +239,13 @@ MATCH (boundary)-[:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
 RETURN workflow.name, boundary.endpoint, handler.name
 ```
 
-### Find Workflows Triggered by HTTP Endpoints
+### Find Workflows Triggered by HTTP Boundaries
 
 ```cypher
--- HTTP endpoints that start workflows
-MATCH (boundary:Boundary {kind: 'HTTP'})
+-- HTTP boundaries that start workflows
+MATCH (boundary:Boundary {kind: 'http'})
 MATCH (boundary)-[:STARTS]->(workflow:Workflow)
-RETURN boundary.endpoint, workflow.name, workflow.kind
+RETURN boundary.identifier, workflow.name, workflow.kind
 ```
 
 ### Workflows by Kind (distribution analysis)
@@ -271,8 +271,8 @@ RETURN workflow.kind, COUNT(DISTINCT workflow) as count
 1. Add `Workflow` node type
 2. Parse workflow definitions from files (Airflow DAGs, Temporal workflows, Step Functions
    definitions, GitHub Actions YAML, Jenkins pipelines)
-3. Create Workflow nodes with kind and entry point
-4. Map workflow steps to Symbol nodes or Boundary entry points
+3. Create Workflow nodes with kind and boundary
+4. Map workflow steps to Symbol nodes or Boundary boundarys
 5. Link step dependencies via existing `[:REFERENCES {type: 'CALL'}]`
 6. Link external service dependencies via `[:DEPENDS_ON {kind: 'SERVICE'}]`
 7. Track workflow evolution via `[:TRACKS]` relationships

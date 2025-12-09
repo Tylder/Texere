@@ -96,23 +96,23 @@ complexity while maintaining query expressiveness.
 | Symbol → Symbol                            | REFERENCES {type: 'IMPORT'}      | Import statements       |
 | Symbol → Pattern                           | REFERENCES {type: 'PATTERN'}     | Pattern adherence       |
 | Symbol → Symbol                            | REFERENCES {type: 'SIMILAR'}     | Embedding similarity    |
-| Symbol/Endpoint → DataContract             | MUTATES                          | Data flow (READ/WRITE)  |
-| Symbol/Endpoint → Feature                  | REALIZES {role: 'IMPLEMENTS'}    | Implementation          |
-| TestCase → Symbol/Endpoint                 | REALIZES {role: 'TESTS'}         | Test coverage           |
+| Symbol/Boundary → DataContract             | MUTATES                          | Data flow (READ/WRITE)  |
+| Symbol/Boundary → Feature                  | REALIZES {role: 'IMPLEMENTS'}    | Implementation          |
+| TestCase → Symbol/Boundary                 | REALIZES {role: 'TESTS'}         | Test coverage           |
 | TestCase → Feature                         | REALIZES {role: 'VERIFIES'}      | Feature verification    |
 | Symbol/Module → Pattern                    | REFERENCES {type: 'PATTERN'}     | Pattern usage           |
-| Module/Symbol/Endpoint → ExternalService   | DEPENDS_ON {kind: 'SERVICE'}     | External APIs           |
+| Module/Symbol/Boundary → ExternalService   | DEPENDS_ON {kind: 'SERVICE'}     | External APIs           |
 | Module/Symbol → ConfigurationVariable      | DEPENDS_ON {kind: 'CONFIG'}      | Configuration           |
-| Module/Symbol/Endpoint → ExternalService   | DEPENDS_ON {kind: 'LIBRARY'}     | Libraries (not indexed) |
+| Module/Symbol/Boundary → ExternalService   | DEPENDS_ON {kind: 'LIBRARY'}     | Libraries (not indexed) |
 | Module/Symbol → StyleGuide                 | DEPENDS_ON {kind: 'STYLE_GUIDE'} | Style conformance       |
 | SpecDoc/StyleGuide → Feature/Module/Symbol | DOCUMENTS                        | Documentation           |
-| Endpoint → Symbol                          | LOCATION {role: 'HANDLED_BY'}    | Endpoint handler        |
-| Endpoint/TestCase → File                   | LOCATION {role: 'IN_FILE'}       | Location in file        |
-| Endpoint/TestCase → Module                 | LOCATION {role: 'IN_MODULE'}     | Location in module      |
+| Boundary → Symbol                          | LOCATION {role: 'HANDLED_BY'}    | Boundary handler        |
+| Boundary/TestCase → File                   | LOCATION {role: 'IN_FILE'}       | Location in file        |
+| Boundary/TestCase → Module                 | LOCATION {role: 'IN_MODULE'}     | Location in module      |
 | Symbol/Feature/TestCase → Snapshot         | TRACKS {event: 'INTRODUCED'}     | Introduction            |
 | Symbol/Feature/TestCase → Snapshot         | TRACKS {event: 'MODIFIED'}       | Modification            |
-| Incident → Symbol/Feature/Endpoint         | IMPACTS {type: 'CAUSED_BY'}      | Root cause              |
-| Incident → Symbol/Feature/Endpoint         | IMPACTS {type: 'AFFECTS'}        | Impact                  |
+| Incident → Symbol/Feature/Boundary         | IMPACTS {type: 'CAUSED_BY'}      | Root cause              |
+| Incident → Symbol/Feature/Boundary         | IMPACTS {type: 'AFFECTS'}        | Impact                  |
 | Symbol/Module → Configuration              | DEPENDS_ON {kind: 'CONFIG'}      | Config usage (v2+)      |
 | Configuration → ExternalService            | AUTHENTICATES                    | Creds for service (v2+) |
 | Symbol → Error                             | THROWS                           | Error throwing (v2+)    |
@@ -152,7 +152,7 @@ complexity while maintaining query expressiveness.
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `[:CONTAINS]`    | **Transitive tree**: Forms hierarchy for breadth-first exploration (`[:CONTAINS*]`). Merging breaks path finding. Requires tree-optimized indexes.                       |
 | `[:IN_SNAPSHOT]` | **Cardinality invariant**: Every snapshot-scoped node has **exactly 1**. Critical for version tracking and temporal queries. Separate index for O(1) lookups.            |
-| `[:LOCATION]`    | **Role-based semantics**: Same source/target pairs (Symbol→File, Endpoint→Module) but different roles (HANDLER vs. DEFINED_IN vs. IN_FILE). Role property distinguishes. |
+| `[:LOCATION]`    | **Role-based semantics**: Same source/target pairs (Symbol→File, Boundary→Module) but different roles (HANDLER vs. DEFINED_IN vs. IN_FILE). Role property distinguishes. |
 
 ---
 

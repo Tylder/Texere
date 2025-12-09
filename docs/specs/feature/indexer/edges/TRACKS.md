@@ -72,8 +72,8 @@ No additional properties.
 | Feature  | MODIFIED   | Snapshot | optional (0+) | Feature changes    |
 | TestCase | INTRODUCED | Snapshot | exactly 1     | Test addition      |
 | TestCase | MODIFIED   | Snapshot | optional (0+) | Test updates       |
-| Endpoint | INTRODUCED | Snapshot | exactly 1     | Endpoint creation  |
-| Endpoint | MODIFIED   | Snapshot | optional (0+) | Endpoint changes   |
+| Boundary | INTRODUCED | Snapshot | exactly 1     | Boundary creation  |
+| Boundary | MODIFIED   | Snapshot | optional (0+) | Boundary changes   |
 | SpecDoc  | INTRODUCED | Snapshot | exactly 1     | Doc creation       |
 | SpecDoc  | MODIFIED   | Snapshot | optional (0+) | Doc updates        |
 

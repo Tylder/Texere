@@ -192,7 +192,7 @@ MATCH (workflow)-[:TRIGGERS]->(boundary:Boundary)
 RETURN boundary.endpoint, boundary.kind
 ```
 
-### End-to-End Flow: Event → Workflow → Endpoint
+### End-to-End Flow: Event → Workflow → Boundary
 
 ```cypher
 -- Complete flow: event → workflow start → workflow steps → invoked boundaries

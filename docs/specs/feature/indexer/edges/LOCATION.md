@@ -31,10 +31,10 @@ vs. tree traversal.
 
 ## Sub-Types
 
-### HANDLED_BY – Symbol Handles Endpoint
+### HANDLED_BY – Symbol Handles Boundary
 
 ```cypher
-(endpoint:Endpoint)-[r:LOCATION {role: 'HANDLED_BY'}]->(symbol:Symbol)
+(endpoint:Boundary)-[r:LOCATION {role: 'HANDLED_BY'}]->(symbol:Symbol)
 ```
 
 **Semantic**: Symbol is the handler/implementation of HTTP endpoint.
@@ -53,7 +53,7 @@ vs. tree traversal.
 ### IN_FILE – Location in File
 
 ```cypher
-(endpoint:Endpoint)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
+(endpoint:Boundary)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
 (testCase:TestCase)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
 ```
 
@@ -64,7 +64,7 @@ vs. tree traversal.
 ### IN_MODULE – Location in Module
 
 ```cypher
-(endpoint:Endpoint)-[r:LOCATION {role: 'IN_MODULE'}]->(module:Module)
+(endpoint:Boundary)-[r:LOCATION {role: 'IN_MODULE'}]->(module:Module)
 (testCase:TestCase)-[r:LOCATION {role: 'IN_MODULE'}]->(module:Module)
 ```
 
@@ -78,9 +78,9 @@ vs. tree traversal.
 
 | Source   | Role       | Target | Cardinality | Notes               |
 | -------- | ---------- | ------ | ----------- | ------------------- |
-| Endpoint | HANDLED_BY | Symbol | exactly 1   | Handler requirement |
-| Endpoint | IN_FILE    | File   | exactly 1   | File requirement    |
-| Endpoint | IN_MODULE  | Module | exactly 1   | Module requirement  |
+| Boundary | HANDLED_BY | Symbol | exactly 1   | Handler requirement |
+| Boundary | IN_FILE    | File   | exactly 1   | File requirement    |
+| Boundary | IN_MODULE  | Module | exactly 1   | Module requirement  |
 | TestCase | IN_FILE    | File   | exactly 1   | File requirement    |
 | TestCase | IN_MODULE  | Module | exactly 1   | Module requirement  |
 
@@ -95,11 +95,11 @@ FOR ()-[r:LOCATION]-() ON (r.role);
 
 -- Enforce cardinality for HANDLED_BY
 CREATE CONSTRAINT endpoint_handler_unique IF NOT EXISTS
-FOR (ep:Endpoint)
+FOR (ep:Boundary)
 REQUIRE SIZE([(ep)-[:LOCATION {role: 'HANDLED_BY'}]->()]) = 1;
 
 -- Example: Find handler for endpoint
-MATCH (ep:Endpoint {id: 'snap-123:POST:/api/payment'})
+MATCH (ep:Boundary {id: 'snap-123:POST:/api/payment'})
   -[r:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
 RETURN handler
 ```
@@ -108,20 +108,20 @@ RETURN handler
 
 ## Query Patterns
 
-### Find Endpoint Handler
+### Find Boundary Handler
 
 ```cypher
 -- Get handler for specific endpoint
-MATCH (ep:Endpoint {id: $endpointId})
+MATCH (ep:Boundary {id: $endpointId})
   -[r:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
 RETURN handler
 
 -- All endpoints and their handlers
-MATCH (ep:Endpoint)-[r:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
+MATCH (ep:Boundary)-[r:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
 RETURN ep, handler
 
--- Endpoints in module and their handlers
-MATCH (ep:Endpoint)-[r:LOCATION {role: 'IN_MODULE'}]->(mod:Module {id: $moduleId})
+-- Boundaries in module and their handlers
+MATCH (ep:Boundary)-[r:LOCATION {role: 'IN_MODULE'}]->(mod:Module {id: $moduleId})
 OPTIONAL MATCH (ep)-[r2:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
 RETURN ep, handler
 ```
@@ -129,9 +129,9 @@ RETURN ep, handler
 ### File Location
 
 ```cypher
--- All endpoints defined in file
+-- All boundaries defined in file
 MATCH (file:File {id: $fileId})
-  <-[r:LOCATION {role: 'IN_FILE'}]-(ep:Endpoint)
+  <-[r:LOCATION {role: 'IN_FILE'}]-(ep:Boundary)
 RETURN ep
 
 -- Test cases in file
@@ -139,7 +139,7 @@ MATCH (file:File {id: $fileId})
   <-[r:LOCATION {role: 'IN_FILE'}]-(test:TestCase)
 RETURN test
 
--- Endpoints and tests in same file
+-- Boundaries and tests in same file
 MATCH (file:File {id: $fileId})<-[:LOCATION {role: 'IN_FILE'}]-(item)
 RETURN item, labels(item) as type
 ```
@@ -147,9 +147,9 @@ RETURN item, labels(item) as type
 ### Module Inventory
 
 ```cypher
--- All endpoints in module
+-- All boundaries in module
 MATCH (mod:Module {id: $moduleId})
-  <-[r:LOCATION {role: 'IN_MODULE'}]-(ep:Endpoint)
+  <-[r:LOCATION {role: 'IN_MODULE'}]-(ep:Boundary)
 RETURN ep
 
 -- Test cases in module
@@ -157,9 +157,9 @@ MATCH (mod:Module {id: $moduleId})
   <-[r:LOCATION {role: 'IN_MODULE'}]-(test:TestCase)
 RETURN test
 
--- Full endpoint location info
+-- Full boundary location info
 MATCH (mod:Module {id: $moduleId})
-  <-[r1:LOCATION {role: 'IN_MODULE'}]-(ep:Endpoint)
+  <-[r1:LOCATION {role: 'IN_MODULE'}]-(ep:Boundary)
 OPTIONAL MATCH (ep)-[r2:LOCATION {role: 'IN_FILE'}]->(file:File)
 OPTIONAL MATCH (ep)-[r3:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
 RETURN ep, file, handler
@@ -168,19 +168,19 @@ RETURN ep, file, handler
 ### Handler Analysis
 
 ```cypher
--- Handlers for payment-related endpoints
-MATCH (ep:Endpoint {path: '/api/payment*'})
+-- Handlers for payment-related boundaries
+MATCH (ep:Boundary {path: '/api/payment*'})
   -[r:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
-RETURN handler, COUNT(ep) as endpoint_count
+RETURN handler, COUNT(ep) as boundary_count
 GROUP BY handler
 
--- Endpoints handled by symbol
+-- Boundaries handled by symbol
 MATCH (sym:Symbol {id: $symbolId})
-  <-[r:LOCATION {role: 'HANDLED_BY'}]-(ep:Endpoint)
+  <-[r:LOCATION {role: 'HANDLED_BY'}]-(ep:Boundary)
 RETURN ep
 
 -- Test coverage for endpoint handlers
-MATCH (ep:Endpoint)-[r1:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
+MATCH (ep:Boundary)-[r1:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
 OPTIONAL MATCH (test:TestCase)-[r2:REALIZES {role: 'TESTS'}]->(handler)
 RETURN ep, handler, COUNT(test) as test_count
 ```
@@ -188,8 +188,8 @@ RETURN ep, handler, COUNT(test) as test_count
 ### Missing Locations
 
 ```cypher
--- Endpoints without handler (invalid state)
-MATCH (ep:Endpoint)
+-- Boundaries without handler (invalid state)
+MATCH (ep:Boundary)
 WHERE NOT EXISTS((ep)-[:LOCATION {role: 'HANDLED_BY'}]->())
 RETURN ep
 
@@ -204,8 +204,8 @@ RETURN test
 ## Constraints & Indexes
 
 - **Role Index**: `location_role` for filtering by role
-- **Handler Uniqueness**: Enforce exactly 1 `HANDLED_BY` per Endpoint
-- **File/Module Cardinality**: Exactly 1 `IN_FILE` and 1 `IN_MODULE` per Endpoint/TestCase
+- **Handler Uniqueness**: Enforce exactly 1 `HANDLED_BY` per Boundary
+- **File/Module Cardinality**: Exactly 1 `IN_FILE` and 1 `IN_MODULE` per Boundary/TestCase
 - **No Cycles**: LOCATION edges never form cycles
 
 ---
@@ -214,9 +214,9 @@ RETURN test
 
 | Relationship                   | Source    | Cardinality      |
 | ------------------------------ | --------- | ---------------- |
-| Endpoint → HANDLED_BY → Symbol | exactly 1 | Handler required |
-| Endpoint → IN_FILE → File      | exactly 1 | File required    |
-| Endpoint → IN_MODULE → Module  | exactly 1 | Module required  |
+| Boundary → HANDLED_BY → Symbol | exactly 1 | Handler required |
+| Boundary → IN_FILE → File      | exactly 1 | File required    |
+| Boundary → IN_MODULE → Module  | exactly 1 | Module required  |
 | TestCase → IN_FILE → File      | exactly 1 | File required    |
 | TestCase → IN_MODULE → Module  | exactly 1 | Module required  |
 
@@ -224,7 +224,7 @@ RETURN test
 
 ## Common Use Cases
 
-1. **Endpoint discovery**: "What function handles this API route?"
+1. **Boundary discovery**: "What function handles this API route?"
 2. **File inventory**: "What endpoints are defined in this file?"
 3. **Module organization**: "All endpoints in auth module?"
 4. **Test location**: "Where are tests for this endpoint?"
@@ -278,7 +278,7 @@ Trade-off: Redundant relationships but enable role-specific queries.
 ## References
 
 - [graph_schema_spec.md](../graph_schema_spec.md) – Core schema
-- [Endpoint.md](../nodes/Endpoint.md) – Endpoint definition
+- [Boundary.md](../nodes/Boundary.md) – Boundary definition
 - [TestCase.md](../nodes/TestCase.md) – Test definition
 - [Symbol.md](../nodes/Symbol.md) – Handler symbol
 - [File.md](../nodes/File.md) – File definition

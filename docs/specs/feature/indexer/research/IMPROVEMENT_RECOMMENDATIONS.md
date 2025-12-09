@@ -293,7 +293,7 @@ CREATE CONSTRAINT file_in_snapshot_required IF NOT EXISTS
 FOR (n:File) REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 
 CREATE CONSTRAINT endpoint_in_snapshot_required IF NOT EXISTS
-FOR (n:Endpoint) REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
+FOR (n:Boundary) REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 
 -- Cardinality check (run during indexing): at most 1 IN_SNAPSHOT per scoped node
 MATCH (n:Symbol)-[r:IN_SNAPSHOT]->(snap)
@@ -323,7 +323,7 @@ Update edge specs (e.g., `edges/REALIZES.md`) with cardinality hints:
 | Source   | Target  | Role       | Typical Edges/Node |
 | -------- | ------- | ---------- | ------------------ |
 | Symbol   | Feature | IMPLEMENTS | 1–3 per symbol     |
-| Endpoint | Feature | IMPLEMENTS | 1–5 per endpoint   |
+| Boundary | Feature | IMPLEMENTS | 1–5 per endpoint   |
 | TestCase | Feature | VERIFIES   | 1–2 per test       |
 | Symbol   | Feature | PATTERN    | 0–1 per symbol     |
 
@@ -644,7 +644,7 @@ LIMIT 100
 
 ### Recommendation 7.1: Document Derived Edges Strategy
 
-**Current Issue**: Derived edges (e.g., `Endpoint -[:IN_MODULE]`) lack explicit documentation.
+**Current Issue**: Derived edges (e.g., `Boundary -[:IN_MODULE]`) lack explicit documentation.
 
 **Neo4j Best Practice**: Clearly state which edges are derived and when to update them.
 
@@ -657,8 +657,8 @@ Add to `NODE_EDGE_MAPPING.md`:
 
 | Edge                   | Derived From                               | Update Condition           |
 | ---------------------- | ------------------------------------------ | -------------------------- |
-| Endpoint -[:IN_FILE]   | Endpoint.handlerSymbolId → Symbol.filePath | On handler change          |
-| Endpoint -[:IN_MODULE] | Endpoint.handlerSymbolId → Symbol.module   | On handler change          |
+| Boundary -[:IN_FILE]   | Boundary.handlerSymbolId → Symbol.filePath | On handler change          |
+| Boundary -[:IN_MODULE] | Boundary.handlerSymbolId → Symbol.module   | On handler change          |
 | TestCase -[:IN_MODULE] | TestCase.location.file → Module            | On file location change    |
 | Symbol -[:SIMILAR_TO]  | Embedding distance < threshold             | On embedding recomputation |
 
@@ -674,7 +674,7 @@ async function updateEndpointHandler(endpointId: string, newHandlerSymbolId: str
     // Update handler
     const handler = await tx.run(
       `
-      MATCH (ep:Endpoint {id: $endpointId})
+      MATCH (ep:Boundary {id: $endpointId})
       MATCH (sym:Symbol {id: $newHandlerSymbolId})
       SET ep.handlerSymbolId = $newHandlerSymbolId
     `,
@@ -684,7 +684,7 @@ async function updateEndpointHandler(endpointId: string, newHandlerSymbolId: str
     // Re-derive IN_FILE, IN_MODULE
     await tx.run(
       `
-      MATCH (ep:Endpoint {id: $endpointId})
+      MATCH (ep:Boundary {id: $endpointId})
       MATCH (sym:Symbol {id: $newHandlerSymbolId})
       MATCH (sym)-[:CONTAINS]->(f:File)
       MATCH (f)-[:CONTAINS]->(m:Module)

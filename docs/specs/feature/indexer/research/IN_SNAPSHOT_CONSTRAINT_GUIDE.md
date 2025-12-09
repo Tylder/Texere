@@ -12,7 +12,7 @@ incoming `[:IN_SNAPSHOT]` edge.
 
 ```cypher
 CREATE CONSTRAINT in_snapshot_cardinality IF NOT EXISTS
-FOR (n:Module | n:File | n:Symbol | n:Endpoint | n:DataContract | n:TestCase | n:SpecDoc)
+FOR (n:Module | n:File | n:Symbol | n:Boundary | n:DataContract | n:TestCase | n:SpecDoc)
 REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 ```
 
@@ -21,7 +21,7 @@ REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 1. Module
 2. File
 3. Symbol
-4. Endpoint
+4. Boundary
 5. DataContract
 6. TestCase
 7. SpecDoc
@@ -168,7 +168,7 @@ WHERE edge_count > 1
 RETURN COUNT(n) as multi_snapshot_symbols, MAX(edge_count) as max_edges;
 
 -- 3. Check all snapshot-scoped nodes
-MATCH (n:Module|n:File|n:TestCase|n:Endpoint|n:DataContract|n:SpecDoc)
+MATCH (n:Module|n:File|n:TestCase|n:Boundary|n:DataContract|n:SpecDoc)
 WHERE NOT (n)-[:IN_SNAPSHOT]->()
 RETURN labels(n)[0] as node_type, COUNT(n) as orphaned_count;
 ```
@@ -245,7 +245,7 @@ MERGE (sym)-[:IN_SNAPSHOT]->(snap2)
 | **Enforcement**    | Database-level (caught at write time)                                         |
 | **Implementation** | Create node + edge in same transaction                                        |
 | **Validation**     | Run post-ingest orphan checks                                                 |
-| **Node Types**     | Module, File, Symbol, Endpoint, DataContract, TestCase, SpecDoc (7 types)     |
+| **Node Types**     | Module, File, Symbol, Boundary, DataContract, TestCase, SpecDoc (7 types)     |
 
 ---
 

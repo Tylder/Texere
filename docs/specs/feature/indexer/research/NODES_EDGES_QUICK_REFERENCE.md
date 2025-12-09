@@ -23,8 +23,8 @@ HIERARCHY TREE
               ┌──────────────┼──────────────┐
               │ [:CONTAINS]  │ [:CONTAINS]  │
     ┌─────────▼────────┐  ┌──▼──────────┐  │
-    │      Module      │  │  EntryPoint │  │
-    │  (Nx app/lib)    │  │   (HTTP,CLI)│  │
+    │      Module      │  │  Boundary   │  │
+    │  (Nx app/lib)    │  │  (HTTP etc) │  │
     └─────────┬────────┘  └─────────────┘  │
               │ [:CONTAINS]                │
          ┌────▼─────┐                      │
@@ -54,7 +54,7 @@ ALL SCOPED NODES: [:IN_SNAPSHOT] → Snapshot (cardinality = 1, CRITICAL)
 | **Module**       | id, path, type, language                       | 10–100+ per snapshot  | Tree (parent = Snapshot \| Module) |
 | **File**         | id, path, language, isTest, isDeleted          | 100–10K+ per snapshot | Tree (parent = Module)             |
 | **Symbol**       | id, name, kind, docstring, embeddingId         | 1K–100K+ per snapshot | Tree (parent = File)               |
-| **EntryPoint**   | id, verb, path, handlerSymbolId                | 10–100+ per snapshot  | Independent                        |
+| **Boundary**     | id, kind, identifier, handlerSymbolId          | 10–100+ per snapshot  | Independent                        |
 | **DataContract** | id, name, kind, description                    | 10–50+ per snapshot   | Independent                        |
 | **TestCase**     | id, filePath, name, kind                       | 100–1K+ per snapshot  | Tree (parent = File)               |
 | **SpecDoc**      | id, path, name, kind, content, embeddingId     | 1–20+ per snapshot    | Independent                        |
@@ -139,10 +139,10 @@ RETURN {
 } AS context
 ```
 
-### Pattern 2: Find Tests for Endpoint
+### Pattern 2: Find Tests for Boundary
 
 ```cypher
-MATCH (ep:Endpoint {path: '/api/payments', verb: 'POST'})
+MATCH (ep:Boundary {path: '/api/payments', verb: 'POST'})
 MATCH (ep)-[:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
 OPTIONAL MATCH (t:TestCase)-[:REALIZES {role: 'TESTS'}]->(handler)
 RETURN t
@@ -223,7 +223,7 @@ RETURN {
 - Symbol ↔ Feature (via REALIZES)
 - Symbol ↔ Pattern (via REFERENCES)
 - Symbol ↔ TestCase (via REALIZES)
-- Feature ↔ Endpoint (via REALIZES)
+- Feature ↔ Boundary (via REALIZES)
 - Feature ↔ Incident (via IMPACTS)
 
 ### Edge Density
@@ -232,7 +232,7 @@ RETURN {
 | -------------------------------- | ------------------- | ------------------ |
 | Symbol → Symbol (CALL)           | 5–20 outgoing calls |
 | Symbol → Feature (REALIZES)      | 0–3 per symbol      |
-| Endpoint → Feature (REALIZES)    | 1–5 per endpoint    |
+| Boundary → Feature (REALIZES)    | 1–5 per endpoint    |
 | Feature → Symbols (implementers) | 1–50 per feature    |
 | TestCase → Symbol (TESTS)        | 1 per test          |
 
@@ -248,7 +248,7 @@ RETURN {
 ✓ Module.id
 ✓ File.id
 ✓ Symbol.id
-✓ EntryPoint.id (verb + path composite)
+✓ Boundary.id (snapshotId:kind:identifier composite)
 ✓ Feature.id
 ✓ Pattern.id
 ✓ Incident.id

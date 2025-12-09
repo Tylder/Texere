@@ -258,13 +258,13 @@ RETURN snap1.timestamp, msg1.schema, snap2.timestamp, msg2.schema
 
 ### PUBLISHES vs EMITS
 
-- **PUBLISHES**: Used with [Boundary](../nodes/Boundary.md) nodes (entry points)
+- **PUBLISHES**: Used with [Boundary](../nodes/Boundary.md) nodes (boundarys)
 - **EMITS**: Used with [Symbol](../nodes/Symbol.md) nodes (internal functions)
 
 Choose based on abstraction level:
 
 ```cypher
--- HTTP endpoint (entry point) publishes
+-- HTTP endpoint (boundary) publishes
 (boundary:Boundary {kind: 'HTTP'})-[:PUBLISHES]->(msg:Message)
 
 -- Internal function emits

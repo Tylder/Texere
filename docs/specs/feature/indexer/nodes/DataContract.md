@@ -50,9 +50,9 @@ CREATE (se:DataContract {
 | --------------------------------- | ------------------------- | ----------- | ------------------- |
 | `[:CONTAINS]`                     | [Snapshot](./Snapshot.md) | optional    | Snapshot scoping    |
 | `[:MUTATES {operation: 'READ'}]`  | [Symbol](./Symbol.md)     | optional    | Read by symbol      |
-| `[:MUTATES {operation: 'READ'}]`  | [Endpoint](./Endpoint.md) | optional    | Read by endpoint    |
+| `[:MUTATES {operation: 'READ'}]`  | [Boundary](./Boundary.md) | optional    | Read by endpoint    |
 | `[:MUTATES {operation: 'WRITE'}]` | [Symbol](./Symbol.md)     | optional    | Written by symbol   |
-| `[:MUTATES {operation: 'WRITE'}]` | [Endpoint](./Endpoint.md) | optional    | Written by endpoint |
+| `[:MUTATES {operation: 'WRITE'}]` | [Boundary](./Boundary.md) | optional    | Written by endpoint |
 
 ---
 
@@ -87,11 +87,11 @@ MATCH (se:DataContract {name: 'User'})<-[r:MUTATES]-(x)
 RETURN x, r.operation
 ```
 
-### Find Endpoints Accessing Entity
+### Find Boundaries Accessing Entity
 
 ```cypher
-MATCH (ep:Endpoint)-[r:MUTATES {operation: 'READ'|'WRITE'}]->(se:DataContract {id: $entityId})
-RETURN ep, r.operation
+MATCH (b:Boundary)-[r:MUTATES {operation: 'READ'|'WRITE'}]->(se:DataContract {id: $entityId})
+RETURN b, r.operation
 ```
 
 ### Find All Entities in Schema
@@ -120,13 +120,13 @@ RETURN se
 
 ---
 
-## Integration with Symbol & Endpoint
+## Integration with Symbol & Boundary
 
 Data access relationships flow through both direct and transitive paths:
 
 ```
 [Symbol] --[:MUTATES]--> [DataContract]
-[Endpoint] --[:LOCATION {role: 'HANDLED_BY'}]--> [Symbol]
+[Boundary] --[:LOCATION {role: 'HANDLED_BY'}]--> [Symbol]
                                                        |
                                                    [:MUTATES]--> [DataContract]
 ```
@@ -140,5 +140,5 @@ Both direct and transitive queries are supported.
 - [graph_schema_spec.md](../graph_schema_spec.md) – Node catalog
 - [Snapshot.md](./Snapshot.md) – Version scoping
 - [Symbol.md](./Symbol.md) – Code accessing entity
-- [Endpoint.md](./Endpoint.md) – API accessing entity
+- [Boundary.md](./Boundary.md) – API accessing entity
 - [../edges/MUTATES.md](../edges/MUTATES.md) – Data flow

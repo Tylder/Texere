@@ -71,10 +71,10 @@ interface SymbolSource {
 
 ### The Problem
 
-**Current state:** Endpoint stores `verb` and `path` only.
+**Current state:** Boundary stores `verb` and `path` only.
 
 ```cypher
-MATCH (ep:Endpoint {path: "/api/payments"})
+MATCH (ep:Boundary {path: "/api/payments"})
 RETURN ep.verb, ep.path  -- GET /api/payments
 ```
 
@@ -102,10 +102,10 @@ Agent finds `/api/payments` endpoint but:
 
 ### Recommendation
 
-Add schema properties to Endpoint:
+Add schema properties to Boundary:
 
 ```typescript
-interface Endpoint {
+interface Boundary {
   // ... existing ...
   requestSchema?: {
     contentType: 'application/json';
@@ -141,7 +141,7 @@ interface Endpoint {
 
 - Extract from OpenAPI/Swagger definitions if available
 - LLM can infer from endpoint handler code + tests
-- Store as JSON on Endpoint node
+- Store as JSON on Boundary node
 - Build full OpenAPI doc from all endpoints at query time
 
 ---
@@ -419,8 +419,8 @@ interface FeatureFlag {
   releasedAt?: timestamp;
 }
 
-(endpoint:Endpoint)-[:DEPLOYED_TO]->(target:DeploymentTarget)
-(endpoint:Endpoint)-[:BEHIND_FLAG]->(flag:FeatureFlag)
+(endpoint:Boundary)-[:DEPLOYED_TO]->(target:DeploymentTarget)
+(endpoint:Boundary)-[:BEHIND_FLAG]->(flag:FeatureFlag)
 (feature:Feature)-[:GATED_BY]->(flag:FeatureFlag)
 ```
 
@@ -469,7 +469,7 @@ Agent should:
 ### v1 Must-Have
 
 1. **Source code snippets** → Symbol.sourceCode (first 2KB)
-2. **Request/response schemas** → Endpoint.requestSchema, Endpoint.responseSchema
+2. **Request/response schemas** → Boundary.requestSchema, Boundary.responseSchema
 3. **Configuration variables** → New ConfigurationVariable node type + discovery
 
 ### v1+ Should-Have

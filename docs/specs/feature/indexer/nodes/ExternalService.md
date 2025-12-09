@@ -58,7 +58,7 @@ CREATE (svc:ExternalService {
 | Edge                              | Source                                  | Cardinality | Notes               |
 | --------------------------------- | --------------------------------------- | ----------- | ------------------- |
 | `[:DEPENDS_ON {kind: 'SERVICE'}]` | [Symbol](./Symbol.md)                   | optional    | Called by symbols   |
-| `[:DEPENDS_ON {kind: 'SERVICE'}]` | [Endpoint](./Endpoint.md)               | optional    | Called by endpoints |
+| `[:DEPENDS_ON {kind: 'SERVICE'}]` | [Boundary](./Boundary.md)               | optional    | Called by endpoints |
 | `[:DEPENDS_ON]`                   | [ExternalService](./ExternalService.md) | optional    | Reverse: dependency |
 
 ---
@@ -88,7 +88,7 @@ ORDER BY svc.category, svc.name
 ```cypher
 MATCH (svc:ExternalService {id: 'stripe'})
 OPTIONAL MATCH (sym:Symbol)-[r:DEPENDS_ON {kind: 'SERVICE'}]->(svc)
-OPTIONAL MATCH (ep:Endpoint)-[r2:DEPENDS_ON {kind: 'SERVICE'}]->(svc)
+OPTIONAL MATCH (ep:Boundary)-[r2:DEPENDS_ON {kind: 'SERVICE'}]->(svc)
 RETURN {
   service: svc,
   symbols: collect(DISTINCT sym),
@@ -148,6 +148,6 @@ GROUP BY sym, svc
 
 - [graph_schema_spec.md](../graph_schema_spec.md) – Node catalog
 - [Symbol.md](./Symbol.md) – Service consumers
-- [Endpoint.md](./Endpoint.md) – API endpoints calling services
+- [Boundary.md](./Boundary.md) – API endpoints calling services
 - [../edges/DEPENDS_ON.md](../edges/DEPENDS_ON.md) – Service dependencies
 - [../edges/REFERENCES.md](../edges/REFERENCES.md) – Similarity relationships

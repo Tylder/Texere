@@ -168,7 +168,7 @@ NOTES:
 
 | Node                  | Properties                                                                        | Extraction Method                                          |
 | --------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| **Endpoint**          | `id`, `snapshotId`, `verb`, `path`, `handlerSymbolId`, `description`, `createdAt` | Framework pattern matching (Express, Fastify, Flask, etc.) |
+| **Boundary**          | `id`, `snapshotId`, `verb`, `path`, `handlerSymbolId`, `description`, `createdAt` | Framework pattern matching (Express, Fastify, Flask, etc.) |
 | **DataContract**      | `id`, `snapshotId`, `name`, `kind`, `description`, `createdAt`                    | ORM detection (Prisma, SQLAlchemy, TypeORM, etc.)          |
 | **ThirdPartyLibrary** | `id`, `snapshotId`, `name`, `version`, `registry`, `createdAt`                    | Lockfile parsing (package-lock.json, poetry.lock, etc.)    |
 
@@ -176,11 +176,11 @@ NOTES:
 
 | Relationship                                | Cardinality  | Extraction Method |
 | ------------------------------------------- | ------------ | ----------------- |
-| `Endpoint -[:IN_SNAPSHOT]-> Snapshot`       | many-to-one  | Snapshot scoping  |
+| `Boundary -[:IN_SNAPSHOT]-> Snapshot`       | many-to-one  | Snapshot scoping  |
 | `DataContract -[:IN_SNAPSHOT]-> Snapshot`   | many-to-one  | Snapshot scoping  |
 | `Module -[:DEPENDS_ON]-> ThirdPartyLibrary` | many-to-many | Manifest parsing  |
 
-#### Endpoint Extraction
+#### Boundary Extraction
 
 **TypeScript (Express/Fastify/SvelteKit):**
 
@@ -201,7 +201,7 @@ Patterns to match:
    - Path from file location
 
 FOR EACH CallExpression matching app.VERB(path, handler):
-  - Create Endpoint node
+  - Create Boundary node
   - Link to handler symbol via handlerSymbolId
   - Store verb, path, location
 ```
@@ -221,7 +221,7 @@ Patterns to match:
 FOR EACH FunctionDef with decorator matching @app.VERB or @router.VERB:
   - Extract path from decorator argument
   - Extract verb from decorator method name
-  - Create Endpoint node
+  - Create Boundary node
   - Link to function symbol
 ```
 
@@ -346,7 +346,7 @@ Create Module -[:DEPENDS_ON]-> ThirdPartyLibrary edge for each dependency
 
 ---
 
-### GROUP 5: Test ↔ Feature & Endpoint ↔ Feature Mapping (LLM-Assisted)
+### GROUP 5: Test ↔ Feature & Boundary ↔ Feature Mapping (LLM-Assisted)
 
 **Extraction Step:** Semantic matching via LLM  
 **Difficulty:** ⭐⭐⭐ Hard (LLM-based, requires fallback)  
@@ -355,14 +355,14 @@ Create Module -[:DEPENDS_ON]-> ThirdPartyLibrary edge for each dependency
 
 #### Nodes
 
-- (Reuse: TestCase, Endpoint, Symbol, Feature from previous groups)
+- (Reuse: TestCase, Boundary, Symbol, Feature from previous groups)
 
 #### Edges
 
 | Relationship                        | Cardinality  | Confidence Stored?            |
 | ----------------------------------- | ------------ | ----------------------------- |
 | `TestCase -[:VERIFIES]-> Feature`   | many-to-many | ✅ Yes: `confidence: 0.0–1.0` |
-| `Endpoint -[:IMPLEMENTS]-> Feature` | many-to-many | ✅ Yes: `confidence: 0.0–1.0` |
+| `Boundary -[:IMPLEMENTS]-> Feature` | many-to-many | ✅ Yes: `confidence: 0.0–1.0` |
 | `Symbol -[:IMPLEMENTS]-> Feature`   | many-to-many | ✅ Yes: `confidence: 0.0–1.0` |
 
 #### Feature Source
@@ -407,25 +407,25 @@ DESIGN PRINCIPLE:
   - Agent can filter by confidence threshold when querying
 ```
 
-#### Endpoint ↔ Feature Mapping
+#### Boundary ↔ Feature Mapping
 
 ```
 FOR EACH endpoint in snapshot.endpoints:
   STEP 1 – Path heuristic (high confidence):
     IF endpoint.path CONTAINS feature.name:
-      Create Endpoint -[:IMPLEMENTS {confidence: 0.95}]-> Feature
+      Create Boundary -[:IMPLEMENTS {confidence: 0.95}]-> Feature
       Continue to next endpoint
 
   STEP 2 – Handler symbol analysis:
     Handler symbol = lookup handlerSymbolId
     IF handler -[:IMPLEMENTS]-> feature (from GROUP 5 mapping):
-      Create Endpoint -[:IMPLEMENTS {confidence: 0.90}]-> Feature
+      Create Boundary -[:IMPLEMENTS {confidence: 0.90}]-> Feature
       Continue to next endpoint
 
   STEP 3 – LLM fallback:
     IF no match in steps 1–2:
       Send to LLM:
-        "Endpoint: [verb] [path]
+        "Boundary: [verb] [path]
          Handler code: [handler.sourceCode]
          Which feature does this implement? (from list: [all feature names])
          Answer: [feature_name] or 'unclear'"
@@ -716,13 +716,13 @@ NOTES:
 | Relationship                             | Cardinality  | Inference                            |
 | ---------------------------------------- | ------------ | ------------------------------------ |
 | `SpecDoc -[:DOCUMENTS]-> Feature`        | many-to-many | Name/content similarity + embeddings |
-| `SpecDoc -[:DOCUMENTS]-> Endpoint`       | many-to-many | Content matching                     |
+| `SpecDoc -[:DOCUMENTS]-> Boundary`       | many-to-many | Content matching                     |
 | `SpecDoc -[:DOCUMENTS]-> Symbol`         | many-to-many | Explicit tagging or semantic match   |
 | `SpecDoc -[:DOCUMENTS]-> Module`         | many-to-many | Via tagging in doc                   |
 | `StyleGuide -[:APPLIES_TO]-> Module`     | many-to-many | Tagging or path patterns             |
 | `StyleGuide -[:REFERENCES]-> Pattern`    | many-to-many | Explicit tagging                     |
 | `Symbol -[:FOLLOWS_PATTERN]-> Pattern`   | many-to-many | Heuristic + LLM                      |
-| `Endpoint -[:FOLLOWS_PATTERN]-> Pattern` | many-to-many | Heuristic + LLM                      |
+| `Boundary -[:FOLLOWS_PATTERN]-> Pattern` | many-to-many | Heuristic + LLM                      |
 
 #### SpecDoc Discovery & Linking
 
@@ -746,11 +746,11 @@ STEP 2 – SpecDoc ↔ Feature linking (embeddings + name):
         Create SpecDoc -[:DOCUMENTS]-> Feature
         confidence = similarity
 
-STEP 3 – SpecDoc ↔ Endpoint linking (content):
+STEP 3 – SpecDoc ↔ Boundary linking (content):
   FOR EACH SpecDoc:
     Extract verb + path patterns from content
-    IF pattern matches Endpoint:
-      Create SpecDoc -[:DOCUMENTS]-> Endpoint
+    IF pattern matches Boundary:
+      Create SpecDoc -[:DOCUMENTS]-> Boundary
 
 STEP 4 – SpecDoc ↔ Module linking (tagging):
   FOR EACH SpecDoc:
@@ -806,7 +806,7 @@ STEP 3 – LLM pattern matching (when uncertain):
       confidence = 0.75
 
 STEP 4 – Link endpoints to patterns (same flow):
-  Same as symbols, but for Endpoint handler symbols
+  Same as symbols, but for Boundary handler symbols
 ```
 
 #### Notes
@@ -926,7 +926,7 @@ EXAMPLES for agents:
 | Relationship                                            | Cardinality  | Inference            |
 | ------------------------------------------------------- | ------------ | -------------------- |
 | `Symbol -[:USES_CONFIG]-> ConfigurationVariable`        | many-to-many | Code scanning + LLM  |
-| `Endpoint -[:CALLS]-> ExternalService`                  | many-to-many | Heuristic + LLM      |
+| `Boundary -[:CALLS]-> ExternalService`                  | many-to-many | Heuristic + LLM      |
 | `ExternalService -[:HAS_INTEGRATION_PATTERN]-> Pattern` | many-to-many | LLM + manual tagging |
 
 #### ThirdPartyLibrary Extraction (from GROUP 3, repeated for completeness)
@@ -974,7 +974,7 @@ STEP 2 – Unknown services (LLM):
 
 STEP 3 – Link to symbols:
   FOR EACH Symbol calling external service:
-    Create Endpoint -[:CALLS]-> ExternalService
+    Create Boundary -[:CALLS]-> ExternalService
     or Symbol -[:CALLS]-> ExternalService (if not endpoint)
 
 STEP 4 – Extract integration patterns (GROUP 6 style):

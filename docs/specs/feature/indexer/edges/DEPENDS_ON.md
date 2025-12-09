@@ -33,7 +33,7 @@ STYLE_GUIDE, FEATURE).
 
 ```cypher
 (symbol:Symbol)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.9}]->(service:ExternalService)
-(endpoint:Endpoint)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.95}]->(service:ExternalService)
+(endpoint:Boundary)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.95}]->(service:ExternalService)
 (module:Module)-[r:DEPENDS_ON {kind: 'SERVICE'}]->(service:ExternalService)
 ```
 
@@ -51,7 +51,7 @@ STYLE_GUIDE, FEATURE).
 
 ```cypher
 (symbol:Symbol)-[r:DEPENDS_ON {kind: 'CONFIG', required: true}]->(config:ConfigurationVariable)
-(endpoint:Endpoint)-[r:DEPENDS_ON {kind: 'CONFIG', required: false}]->(config:ConfigurationVariable)
+(endpoint:Boundary)-[r:DEPENDS_ON {kind: 'CONFIG', required: false}]->(config:ConfigurationVariable)
 ```
 
 **Semantic**: Code uses environment variable or config value.
@@ -148,10 +148,10 @@ compliance tracking.
 | Source   | Kind         | Target                | Cardinality | Notes                                 |
 | -------- | ------------ | --------------------- | ----------- | ------------------------------------- |
 | Symbol   | SERVICE      | ExternalService       | optional    | Symbol calls service                  |
-| Endpoint | SERVICE      | ExternalService       | optional    | Endpoint calls service                |
+| Boundary | SERVICE      | ExternalService       | optional    | Boundary calls service                |
 | Module   | SERVICE      | ExternalService       | optional    | Module integrates service             |
 | Symbol   | CONFIG       | ConfigurationVariable | optional    | Symbol uses config                    |
-| Endpoint | CONFIG       | ConfigurationVariable | optional    | Endpoint uses config                  |
+| Boundary | CONFIG       | ConfigurationVariable | optional    | Boundary uses config                  |
 | Module   | CONFIG       | ConfigurationVariable | optional    | Module uses config                    |
 | Module   | LIBRARY      | ExternalService       | optional    | Module imports library (not indexed)  |
 | File     | LIBRARY      | ExternalService       | optional    | File imports library (not indexed)    |
@@ -199,7 +199,7 @@ RETURN sym, r.confidence
 ORDER BY r.confidence DESC
 
 -- What endpoints integrate with payment services?
-MATCH (ep:Endpoint)-[r:DEPENDS_ON {kind: 'SERVICE'}]->(service:ExternalService {category: 'payment'})
+MATCH (ep:Boundary)-[r:DEPENDS_ON {kind: 'SERVICE'}]->(service:ExternalService {category: 'payment'})
 RETURN DISTINCT ep
 ```
 
@@ -207,7 +207,7 @@ RETURN DISTINCT ep
 
 ```cypher
 -- What config does endpoint use?
-MATCH (ep:Endpoint {id: $endpointId})-[r:DEPENDS_ON {kind: 'CONFIG'}]->(config:ConfigurationVariable)
+MATCH (ep:Boundary {id: $endpointId})-[r:DEPENDS_ON {kind: 'CONFIG'}]->(config:ConfigurationVariable)
 RETURN config, r.required
 ORDER BY r.required DESC
 
@@ -337,7 +337,7 @@ ORDER BY transitive.name
 
 - [graph_schema_spec.md](../graph_schema_spec.md) – Core schema
 - [Symbol.md](../nodes/Symbol.md) – Symbol definition
-- [Endpoint.md](../nodes/Endpoint.md) – Endpoint definition
+- [Boundary.md](../nodes/Boundary.md) – Boundary definition
 - [Module.md](../nodes/Module.md) – Module definition
 - [Feature.md](../nodes/Feature.md) – Feature definition
 - [ExternalService.md](../nodes/ExternalService.md) – Service definition

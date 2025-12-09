@@ -49,17 +49,17 @@ GET /api/features/{featureName}/context?depth=2
 
 ---
 
-### 1.2 GET /api/endpoints/patterns
+### 1.2 GET /api/boundaries/patterns
 
-_(To be detailed: getEndpointPatternExamples endpoint)_
+_(To be detailed: getBoundaryPatternExamples endpoint)_
 
 **Request**:
 
 ```
-GET /api/endpoints/patterns?limit=10
+GET /api/boundaries/patterns?limit=10
 ```
 
-**Response**: Array of EndpointPatternExample
+**Response**: Array of BoundaryPatternExample
 
 ---
 

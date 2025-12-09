@@ -54,17 +54,17 @@ features, tests, patterns, and incidents. The schema is **well-architected** wit
 
 Created per commit; versioned; linked via `[:IN_SNAPSHOT]` (cardinality = 1).
 
-| Node             | Purpose                                                     | Key Properties                                                                          | Cardinality     |
-| ---------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------- |
-| **Codebase**     | Repository root                                             | `id`, `name`, `url`, `createdAt`, `updatedAt`                                           | N per workspace |
-| **Snapshot**     | Git commit being indexed                                    | `id` (composite: codebaseId:commitHash), `branch`, `indexStatus`                        | N per codebase  |
-| **Module**       | Package/app/lib (Nx module)                                 | `id` (composite: snapshotId:modulePath), `type`, `language`                             | N per snapshot  |
-| **File**         | Source code file                                            | `id` (composite: snapshotId:filePath), `language`, `isTest`, `isDeleted`                | N per module    |
-| **Symbol**       | Function/class/type/interface/const                         | `id` (composite: snapshotId:filePath:name:line:col), `kind`, `docstring`, `embeddingId` | N per file      |
-| **EntryPoint**   | Callable interface (HTTP endpoint, CLI, export, event, job) | `id` (composite: snapshotId:kind:identifier), `verb`, `path`, `handlerSymbolId`         | N per snapshot  |
-| **DataContract** | Database model (Prisma, SQLAlchemy)                         | `id` (composite: snapshotId:entityName), `kind`, `description`                          | N per snapshot  |
-| **TestCase**     | Unit/integration/e2e test                                   | `id` (composite: snapshotId:filePath:testName), `kind`, `name`                          | N per file      |
-| **SpecDoc**      | Documentation (spec, ADR, design doc)                       | `id` (composite: snapshotId:docPath), `kind`, `content`, `embeddingId`                  | N per snapshot  |
+| Node             | Purpose                                                                             | Key Properties                                                                          | Cardinality     |
+| ---------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------- |
+| **Codebase**     | Repository root                                                                     | `id`, `name`, `url`, `createdAt`, `updatedAt`                                           | N per workspace |
+| **Snapshot**     | Git commit being indexed                                                            | `id` (composite: codebaseId:commitHash), `branch`, `indexStatus`                        | N per codebase  |
+| **Module**       | Package/app/lib (Nx module)                                                         | `id` (composite: snapshotId:modulePath), `type`, `language`                             | N per snapshot  |
+| **File**         | Source code file                                                                    | `id` (composite: snapshotId:filePath), `language`, `isTest`, `isDeleted`                | N per module    |
+| **Symbol**       | Function/class/type/interface/const                                                 | `id` (composite: snapshotId:filePath:name:line:col), `kind`, `docstring`, `embeddingId` | N per file      |
+| **Boundary**     | Callable interface (HTTP, gRPC, GraphQL, CLI, export, event, webhook, job, handler) | `id` (composite: snapshotId:kind:identifier), `kind`, `identifier`, `handlerSymbolId`   | N per snapshot  |
+| **DataContract** | Database model (Prisma, SQLAlchemy)                                                 | `id` (composite: snapshotId:entityName), `kind`, `description`                          | N per snapshot  |
+| **TestCase**     | Unit/integration/e2e test                                                           | `id` (composite: snapshotId:filePath:testName), `kind`, `name`                          | N per file      |
+| **SpecDoc**      | Documentation (spec, ADR, design doc)                                               | `id` (composite: snapshotId:docPath), `kind`, `content`, `embeddingId`                  | N per snapshot  |
 
 ### Cross-Snapshot Nodes (5)
 
@@ -158,7 +158,7 @@ property for type discrimination.
 
 **Priority 3**: Node property indexes (7)
 
-- `File.language`, `Endpoint.verb,path`, `Feature.name`, `TestCase.name`, `Symbol.name`,
+- `File.language`, `Boundary.verb,path`, `Feature.name`, `TestCase.name`, `Symbol.name`,
   `Snapshot.indexStatus`, `Incident.severity`
 
 **Priority 4**: Full-text indexes (2)
@@ -314,7 +314,7 @@ OPTIONS { indexConfig: { 'vector.dimensions': 384, 'vector.similarity_function':
 - `:IN_SNAPSHOT`: Always top-down (Symbol → Snapshot)
 - `:REFERENCES`: Bidirectional (query both directions equally)
 - `:REALIZES`: High-traffic in both directions:
-  - Forward: "What implements this feature?" → Symbol/Endpoint → Feature
+  - Forward: "What implements this feature?" → Symbol/Boundary → Feature
   - Reverse: "What is implemented by this symbol?" → Feature ← Symbol
 
 ---
@@ -355,7 +355,7 @@ CREATE CONSTRAINT file_in_snapshot_required IF NOT EXISTS
 FOR (n:File) REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 
 CREATE CONSTRAINT endpoint_in_snapshot_required IF NOT EXISTS
-FOR (n:Endpoint) REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
+FOR (n:Boundary) REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 ```
 
 **Benefit**: Data corruption caught at write time, not query time.
@@ -370,7 +370,7 @@ Document expected cardinality per edge type (e.g., 1–3 IMPLEMENTS edges per Sy
 | Source   | Target  | Role       | Typical Edges/Node |
 | -------- | ------- | ---------- | ------------------ |
 | Symbol   | Feature | IMPLEMENTS | 1–3 per symbol     |
-| Endpoint | Feature | IMPLEMENTS | 1–5 per endpoint   |
+| Boundary | Feature | IMPLEMENTS | 1–5 per endpoint   |
 | TestCase | Feature | VERIFIES   | 1–2 per test       |
 ```
 
@@ -577,8 +577,8 @@ LIMIT 100
 
 | Edge                   | Derived From                               | Update Condition           |
 | ---------------------- | ------------------------------------------ | -------------------------- |
-| Endpoint -[:IN_FILE]   | Endpoint.handlerSymbolId → Symbol.filePath | On handler change          |
-| Endpoint -[:IN_MODULE] | Endpoint.handlerSymbolId → Symbol.module   | On handler change          |
+| Boundary -[:IN_FILE]   | Boundary.handlerSymbolId → Symbol.filePath | On handler change          |
+| Boundary -[:IN_MODULE] | Boundary.handlerSymbolId → Symbol.module   | On handler change          |
 | TestCase -[:IN_MODULE] | TestCase.location.file → Module            | On file location change    |
 | Symbol -[:SIMILAR_TO]  | Embedding distance < threshold             | On embedding recomputation |
 

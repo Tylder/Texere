@@ -48,7 +48,7 @@ CREATE (f:Feature {
 | Edge                                          | Target                    | Cardinality | Notes                        |
 | --------------------------------------------- | ------------------------- | ----------- | ---------------------------- |
 | `[:REALIZES {role: 'IMPLEMENTS'}]`            | [Symbol](./Symbol.md)     | optional    | Symbols implementing feature |
-| `[:REALIZES {role: 'IMPLEMENTS'}]`            | [Endpoint](./Endpoint.md) | optional    | Endpoints serving feature    |
+| `[:REALIZES {role: 'IMPLEMENTS'}]`            | [Boundary](./Boundary.md) | optional    | Boundaries serving feature   |
 | `[:REALIZES {role: 'TESTS'}]`                 | [TestCase](./TestCase.md) | optional    | Tests verifying feature      |
 | `[:DEPENDS_ON]`                               | [Feature](./Feature.md)   | optional    | Feature depends on feature   |
 | `[:TRACKS {event: 'INTRODUCED'\|'MODIFIED'}]` | [Snapshot](./Snapshot.md) | optional    | Evolution tracking           |
@@ -59,7 +59,7 @@ CREATE (f:Feature {
 | Edge                               | Source                    | Cardinality | Notes                   |
 | ---------------------------------- | ------------------------- | ----------- | ----------------------- |
 | `[:REALIZES {role: 'IMPLEMENTS'}]` | [Symbol](./Symbol.md)     | optional    | Reverse: implementation |
-| `[:REALIZES {role: 'IMPLEMENTS'}]` | [Endpoint](./Endpoint.md) | optional    | Reverse: serving        |
+| `[:REALIZES {role: 'IMPLEMENTS'}]` | [Boundary](./Boundary.md) | optional    | Reverse: serving        |
 | `[:REALIZES {role: 'VERIFIES'}]`   | [TestCase](./TestCase.md) | optional    | Reverse: verification   |
 | `[:DOCUMENTS]`                     | [SpecDoc](./SpecDoc.md)   | optional    | Documented by spec      |
 | `[:IMPACTS {type: 'AFFECTS'}]`     | [Incident](./Incident.md) | optional    | Affected by incident    |
@@ -87,7 +87,7 @@ MATCH (f:Feature {id: $featureId})
 
 -- What implements it?
 OPTIONAL MATCH (sym:Symbol)-[r1:REALIZES {role: 'IMPLEMENTS'}]->(f)
-OPTIONAL MATCH (ep:Endpoint)-[r2:REALIZES {role: 'IMPLEMENTS'}]->(f)
+OPTIONAL MATCH (ep:Boundary)-[r2:REALIZES {role: 'IMPLEMENTS'}]->(f)
 
 -- What tests it?
 OPTIONAL MATCH (t:TestCase)-[r3:REALIZES {role: 'VERIFIES'}]->(f)
@@ -98,7 +98,7 @@ OPTIONAL MATCH (doc:SpecDoc)-[r4:DOCUMENTS {target_role: 'FEATURE'}]->(f)
 RETURN {
   feature: f,
   implementingSymbols: collect(DISTINCT sym),
-  implementingEndpoints: collect(DISTINCT ep),
+  implementingBoundaries: collect(DISTINCT ep),
   verifyingTests: collect(DISTINCT t),
   documentation: collect(DISTINCT doc)
 }
@@ -178,7 +178,7 @@ features:
 
 - [graph_schema_spec.md](../graph_schema_spec.md) – Node catalog
 - [Symbol.md](./Symbol.md) – Implementation
-- [Endpoint.md](./Endpoint.md) – API serving feature
+- [Boundary.md](./Boundary.md) – API serving feature
 - [TestCase.md](./TestCase.md) – Feature verification
 - [SpecDoc.md](./SpecDoc.md) – Feature documentation
 - [../edges/REALIZES.md](../edges/REALIZES.md) – Implementation

@@ -172,21 +172,21 @@ From `NODE_EDGE_MAPPING.md`, you currently have:
 1. [:CONTAINS]           – Hierarchy (no change)
 2. [:IN_SNAPSHOT]        – Scoping (no change)
 3. [:REFERENCES]         – Code relations: CALL, TYPE_REF, IMPORT
-4. [:IMPLEMENTS]         – Symbol/Endpoint implements Feature
-5. [:MUTATES]            – Symbol/Endpoint reads/writes DataContract
+4. [:IMPLEMENTS]         – Symbol/Boundary implements Feature
+5. [:MUTATES]            – Symbol/Boundary reads/writes DataContract
                            {operation: 'READ'|'WRITE'}
 6. [:FOLLOWS_PATTERN]    – Code/Module follows Pattern
 7. [:USES_CONFIG]        – Symbol uses ConfigurationVariable
-8. [:CALLS]              – Symbol/Endpoint calls ExternalService
-9. [:DOCUMENTS]          – SpecDoc documents Feature/Endpoint/Symbol/Module
+8. [:CALLS]              – Symbol/Boundary calls ExternalService
+9. [:DOCUMENTS]          – SpecDoc documents Feature/Boundary/Symbol/Module
 10. [:APPLIES_TO]        – StyleGuide applies to Module
-11. [:TESTS]             – TestCase tests Symbol/Endpoint
+11. [:TESTS]             – TestCase tests Symbol/Boundary
 12. [:VERIFIES]          – TestCase verifies Feature
 13. [:TRACK_EVOLUTION]   – INTRODUCED_IN, MODIFIED_IN
                            {event: 'INTRODUCED'|'MODIFIED'}
 14. [:IMPACTS]           – Incident caused by / affects
                            {type: 'CAUSED_BY'|'AFFECTS'}
-15. [:LOCATION]          – Endpoint in File/Module, TestCase in File
+15. [:LOCATION]          – Boundary in File/Module, TestCase in File
                            {role: 'DEFINED_IN'|'CONTAINED_IN'}
 ```
 
@@ -241,7 +241,7 @@ These three are **structural backbone edges** with distinct characteristics:
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `[:CONTAINS]`    | **Transitive tree**: Forms hierarchy for breadth-first exploration (`[:CONTAINS*]`). Merging breaks path finding. Requires tree-optimized indexes.                     |
 | `[:IN_SNAPSHOT]` | **Cardinality invariant**: Every snapshot-scoped node has **exactly 1**. Critical for version tracking and temporal queries. Separate index for O(1) lookups.          |
-| `[:LOCATION]`    | **Role-based semantics**: Same source/target nodes (Symbol→File, Endpoint→Module) but different roles (HANDLER vs DEFINED_IN vs IN_FILE). Role property distinguishes. |
+| `[:LOCATION]`    | **Role-based semantics**: Same source/target nodes (Symbol→File, Boundary→Module) but different roles (HANDLER vs DEFINED_IN vs IN_FILE). Role property distinguishes. |
 
 **All three are position/containment semantically, but:**
 
@@ -259,7 +259,7 @@ MATCH (m:Module)-[:CONTAINS*]->(sym:Symbol)
 MATCH (sym:Symbol)-[:IN_SNAPSHOT]->(snap:Snapshot)
 
 -- LOCATION: Role-filtered (ownership query)
-MATCH (ep:Endpoint)-[:LOCATION {role: 'HANDLED_BY'}]->(sym:Symbol)
+MATCH (ep:Boundary)-[:LOCATION {role: 'HANDLED_BY'}]->(sym:Symbol)
 ```
 
 ### Implementation Plan
@@ -299,7 +299,7 @@ MATCH (codebase:Codebase)-[:CONTAINS*]->(symbol:Symbol)
 
 ```cypher
 (symbol:Symbol)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
-(endpoint:Endpoint)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
+(endpoint:Boundary)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
 (testCase:TestCase)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
 (specDoc:SpecDoc)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
 (file:File)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
@@ -326,9 +326,9 @@ MATCH (codebase:Codebase)-[:CONTAINS*]->(symbol:Symbol)
 (symbol:Symbol)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.0-1.0}]->(pattern:Pattern)
 (symbol:Symbol)-[r:REFERENCES {kind: 'SIMILAR', distance: 0.0-1.0}]->(symbol2:Symbol)
 
--- Endpoint pattern references
-(endpoint:Endpoint)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.0-1.0}]->(pattern:Pattern)
-(endpoint:Endpoint)-[r:REFERENCES {kind: 'SIMILAR', distance: 0.0-1.0}]->(endpoint2:Endpoint)
+-- Boundary pattern references
+(endpoint:Boundary)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.0-1.0}]->(pattern:Pattern)
+(endpoint:Boundary)-[r:REFERENCES {kind: 'SIMILAR', distance: 0.0-1.0}]->(endpoint2:Boundary)
 
 -- Module pattern references
 (module:Module)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.0-1.0}]->(pattern:Pattern)
@@ -349,13 +349,13 @@ MATCH (codebase:Codebase)-[:CONTAINS*]->(symbol:Symbol)
 **Semantic**: "What realizes this requirement?"
 
 ```cypher
--- Symbol/Endpoint implements Feature
+-- Symbol/Boundary implements Feature
 (symbol:Symbol)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.0-1.0}]->(feature:Feature)
-(endpoint:Endpoint)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.0-1.0}]->(feature:Feature)
+(endpoint:Boundary)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.0-1.0}]->(feature:Feature)
 
--- TestCase tests Symbol/Endpoint
+-- TestCase tests Symbol/Boundary
 (testCase:TestCase)-[r:REALIZES {role: 'TESTS', coverage: 'DIRECT'|'INDIRECT'}]->(symbol:Symbol)
-(testCase:TestCase)-[r:REALIZES {role: 'TESTS', coverage: 'DIRECT'|'INDIRECT'}]->(endpoint:Endpoint)
+(testCase:TestCase)-[r:REALIZES {role: 'TESTS', coverage: 'DIRECT'|'INDIRECT'}]->(endpoint:Boundary)
 
 -- TestCase verifies Feature
 (testCase:TestCase)-[r:REALIZES {role: 'VERIFIES', confidence: 0.0-1.0}]->(feature:Feature)
@@ -383,7 +383,7 @@ RETURN x, r.role
 
 ```cypher
 (symbol:Symbol)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.0-1.0}]->(entity:DataContract)
-(endpoint:Endpoint)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.0-1.0}]->(entity:DataContract)
+(endpoint:Boundary)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.0-1.0}]->(entity:DataContract)
 ```
 
 **Properties**:
@@ -406,8 +406,8 @@ RETURN x, r.role
 (symbol:Symbol)-[r:DEPENDS_ON {kind: 'CONFIG', required: boolean}]->(config:ConfigurationVariable)
 (symbol:Symbol)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.0-1.0}]->(service:ExternalService)
 
--- Endpoint calls service
-(endpoint:Endpoint)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.0-1.0}]->(service:ExternalService)
+-- Boundary calls service
+(endpoint:Boundary)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.0-1.0}]->(service:ExternalService)
 
 -- Feature depends on Feature (transitive)
 (feature:Feature)-[r:DEPENDS_ON]->(feature2:Feature)
@@ -433,7 +433,7 @@ RETURN sym, dep, r.kind
 **Semantic**: "What explains or governs this?"
 
 ```cypher
--- SpecDoc documents Feature/Endpoint/Symbol/Module
+-- SpecDoc documents Feature/Boundary/Symbol/Module
 (doc:SpecDoc)-[r:DOCUMENTS {target_role: 'FEATURE'|'ENDPOINT'|'SYMBOL'|'MODULE', similarity: 0.0-1.0}]->(target)
 
 -- StyleGuide documents Module/Pattern
@@ -460,12 +460,12 @@ RETURN doc
 **Semantic**: "Where is this defined, and what role?"
 
 ```cypher
--- Endpoint handler
-(endpoint:Endpoint)-[r:LOCATION {role: 'HANDLED_BY'}]->(symbol:Symbol)
+-- Boundary handler
+(endpoint:Boundary)-[r:LOCATION {role: 'HANDLED_BY'}]->(symbol:Symbol)
 
 -- Location in files/modules
-(endpoint:Endpoint)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
-(endpoint:Endpoint)-[r:LOCATION {role: 'IN_MODULE'}]->(module:Module)
+(endpoint:Boundary)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
+(endpoint:Boundary)-[r:LOCATION {role: 'IN_MODULE'}]->(module:Module)
 (testCase:TestCase)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
 (testCase:TestCase)-[r:LOCATION {role: 'IN_MODULE'}]->(module:Module)
 ```
@@ -510,7 +510,7 @@ ORDER BY snap.timestamp
 ```cypher
 (incident:Incident)-[r:IMPACTS {type: 'CAUSED_BY'|'AFFECTS'}]->(symbol:Symbol)
 (incident:Incident)-[r:IMPACTS {type: 'CAUSED_BY'|'AFFECTS'}]->(feature:Feature)
-(incident:Incident)-[r:IMPACTS {type: 'CAUSED_BY'|'AFFECTS'}]->(endpoint:Endpoint)
+(incident:Incident)-[r:IMPACTS {type: 'CAUSED_BY'|'AFFECTS'}]->(endpoint:Boundary)
 ```
 
 **Properties**:
@@ -525,12 +525,12 @@ ORDER BY snap.timestamp
 | ---------------- | ---------- | ------------------------------------------ | -------------------------------- | ------------------ |
 | `[:CONTAINS]`    | Tree       | —                                          | File/Module/Snapshot→Codebase    | Hierarchy          |
 | `[:IN_SNAPSHOT]` | Direct     | —                                          | All scoped→Snapshot              | Version membership |
-| `[:REFERENCES]`  | Code       | CALL, TYPE_REF, IMPORT, PATTERN, SIMILAR   | Symbol/Endpoint/Module           | Code relations     |
-| `[:REALIZES]`    | Semantic   | IMPLEMENTS, TESTS, VERIFIES                | Symbol/Endpoint/TestCase         | Implementation     |
-| `[:MUTATES]`     | Data       | READ, WRITE                                | Symbol/Endpoint→DataContract     | Data flow          |
-| `[:DEPENDS_ON]`  | Dependency | LIBRARY, SERVICE, CONFIG, STYLE_GUIDE      | Module/Symbol/Endpoint/Feature   | Dependencies       |
+| `[:REFERENCES]`  | Code       | CALL, TYPE_REF, IMPORT, PATTERN, SIMILAR   | Symbol/Boundary/Module           | Code relations     |
+| `[:REALIZES]`    | Semantic   | IMPLEMENTS, TESTS, VERIFIES                | Symbol/Boundary/TestCase         | Implementation     |
+| `[:MUTATES]`     | Data       | READ, WRITE                                | Symbol/Boundary→DataContract     | Data flow          |
+| `[:DEPENDS_ON]`  | Dependency | LIBRARY, SERVICE, CONFIG, STYLE_GUIDE      | Module/Symbol/Boundary/Feature   | Dependencies       |
 | `[:DOCUMENTS]`   | Knowledge  | FEATURE, ENDPOINT, SYMBOL, MODULE, PATTERN | SpecDoc/StyleGuide               | Governance         |
-| `[:LOCATION]`    | Position   | HANDLED_BY, IN_FILE, IN_MODULE             | Endpoint/TestCase                | Ownership          |
+| `[:LOCATION]`    | Position   | HANDLED_BY, IN_FILE, IN_MODULE             | Boundary/TestCase                | Ownership          |
 | `[:TRACKS]`      | Evolution  | INTRODUCED, MODIFIED                       | Symbol/Feature/TestCase→Snapshot | Version history    |
 | `[:IMPACTS]`     | Incident   | CAUSED_BY, AFFECTS                         | Incident                         | Impact tracking    |
 
@@ -543,7 +543,7 @@ ORDER BY snap.timestamp
 **Before (with ~25 types):**
 
 ```cypher
-MATCH (module:Module)-[:CONTAINS*]->(file:File)-[:CONTAINS]->(endpoint:Endpoint)
+MATCH (module:Module)-[:CONTAINS*]->(file:File)-[:CONTAINS]->(endpoint:Boundary)
 RETURN endpoint
 ```
 
@@ -551,12 +551,12 @@ RETURN endpoint
 
 ```cypher
 MATCH (module:Module)-[:CONTAINS*]->(file:File)
-MATCH (endpoint:Endpoint)-[r:LOCATION {role: 'IN_FILE'}]->(file)
+MATCH (endpoint:Boundary)-[r:LOCATION {role: 'IN_FILE'}]->(file)
 RETURN endpoint
 
 -- OR use the explicit IN_FILE edge:
 MATCH (module:Module)-[:CONTAINS*]->(file:File)
-MATCH (endpoint:Endpoint)-[:LOCATION {role: 'IN_FILE'}]->(file)
+MATCH (endpoint:Boundary)-[:LOCATION {role: 'IN_FILE'}]->(file)
 RETURN endpoint
 ```
 

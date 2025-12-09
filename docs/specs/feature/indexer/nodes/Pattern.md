@@ -38,18 +38,18 @@ CREATE (p:Pattern {
 
 ### Outgoing (3 edge types)
 
-| Edge                              | Target                    | Cardinality | Notes                          |
-| --------------------------------- | ------------------------- | ----------- | ------------------------------ |
-| `[:REFERENCES {kind: 'PATTERN'}]` | [Symbol](./Symbol.md)     | optional    | Symbols exemplifying pattern   |
-| `[:REFERENCES {kind: 'PATTERN'}]` | [Endpoint](./Endpoint.md) | optional    | Endpoints exemplifying pattern |
-| `[:REFERENCES {kind: 'PATTERN'}]` | [Module](./Module.md)     | optional    | Modules exemplifying pattern   |
+| Edge                              | Target                    | Cardinality | Notes                           |
+| --------------------------------- | ------------------------- | ----------- | ------------------------------- |
+| `[:REFERENCES {kind: 'PATTERN'}]` | [Symbol](./Symbol.md)     | optional    | Symbols exemplifying pattern    |
+| `[:REFERENCES {kind: 'PATTERN'}]` | [Boundary](./Boundary.md) | optional    | Boundaries exemplifying pattern |
+| `[:REFERENCES {kind: 'PATTERN'}]` | [Module](./Module.md)     | optional    | Modules exemplifying pattern    |
 
 ### Incoming (4 edge types)
 
 | Edge                              | Source                        | Cardinality | Notes                     |
 | --------------------------------- | ----------------------------- | ----------- | ------------------------- |
 | `[:REFERENCES {kind: 'PATTERN'}]` | [Symbol](./Symbol.md)         | optional    | Symbol follows pattern    |
-| `[:REFERENCES {kind: 'PATTERN'}]` | [Endpoint](./Endpoint.md)     | optional    | Endpoint follows pattern  |
+| `[:REFERENCES {kind: 'PATTERN'}]` | [Boundary](./Boundary.md)     | optional    | Boundary follows pattern  |
 | `[:REFERENCES {kind: 'PATTERN'}]` | [Module](./Module.md)         | optional    | Module follows pattern    |
 | `[:DOCUMENTS]`                    | [StyleGuide](./StyleGuide.md) | optional    | Documented by style guide |
 
@@ -72,7 +72,7 @@ Patterns can originate from two sources:
 
 ```cypher
 MATCH (p:Pattern {id: $patternId})<-[r:REFERENCES {kind: 'PATTERN'}]-(x)
-WHERE x:Symbol OR x:Endpoint OR x:Module
+WHERE x:Symbol OR x:Boundary OR x:Module
 RETURN x, r.confidence
 ORDER BY r.confidence DESC
 ```
@@ -163,7 +163,7 @@ Agents can use patterns to:
 
 - [graph_schema_spec.md](../graph_schema_spec.md) – Node catalog
 - [Symbol.md](./Symbol.md) – Code exemplifying pattern
-- [Endpoint.md](./Endpoint.md) – API following pattern
+- [Boundary.md](./Boundary.md) – API following pattern
 - [Module.md](./Module.md) – Module structure
 - [StyleGuide.md](./StyleGuide.md) – Pattern documentation
 - [../edges/REFERENCES.md](../edges/REFERENCES.md) – Pattern adherence

@@ -23,7 +23,7 @@ each edge:
    - [Module](#module)
    - [File](#file)
    - [Symbol](#symbol)
-   - [Endpoint](#endpoint)
+   - [Boundary](#endpoint)
    - [DataContract](#datacontract)
    - [TestCase](#testcase)
    - [SpecDoc](#specdoc)
@@ -74,7 +74,7 @@ Node represents a Git commit being indexed.
 | `[:CONTAINS]` | Module            | **Required** | 1     | File path parsing; one Module per unique directory structure |
 | `[:CONTAINS]` | File              | **Required** | 1     | All files in snapshot (from Git tree)                        |
 | `[:CONTAINS]` | Symbol            | **Required** | 1     | All symbols extracted from files                             |
-| `[:CONTAINS]` | Endpoint          | Optional     | 3     | Only if endpoints found in code (framework pattern matching) |
+| `[:CONTAINS]` | Boundary          | Optional     | 3     | Only if endpoints found in code (framework pattern matching) |
 | `[:CONTAINS]` | DataContract      | Optional     | 3     | Only if ORM models found                                     |
 | `[:CONTAINS]` | TestCase          | Optional     | 4     | Only if test files present                                   |
 | `[:CONTAINS]` | SpecDoc           | Optional     | 1     | Only if docs/ present in snapshot                            |
@@ -188,7 +188,7 @@ Node represents a code definition (function, class, variable, type, interface, e
 | ----------------------------------- | -------- | ----------- | ------ | ------------------------------------------------------------------ |
 | `[:REFERENCES {type: 'CALL'}]`      | Symbol   | Optional    | 2      | Called by another symbol (reverse of outgoing CALL edge)           |
 | `[:REFERENCES {type: 'REFERENCE'}]` | Symbol   | Optional    | 2      | Referenced by another symbol (reverse of outgoing REFERENCE edge)  |
-| `[:HANDLED_BY]`                     | Endpoint | Optional    | 3      | This symbol is the handler for an endpoint                         |
+| `[:HANDLED_BY]`                     | Boundary | Optional    | 3      | This symbol is the handler for an endpoint                         |
 | `[:TESTS]`                          | TestCase | Optional    | 4      | Test case tests this symbol (import or explicit reference)         |
 | `[:READS_FROM]`                     | Symbol   | Optional    | 6      | Another symbol reads data that this symbol provides (transitively) |
 | `[:WRITES_TO]`                      | Symbol   | Optional    | 6      | Another symbol writes data that this symbol uses (transitively)    |
@@ -208,7 +208,7 @@ Node represents a code definition (function, class, variable, type, interface, e
 
 ---
 
-### Endpoint
+### Boundary
 
 Node represents an HTTP API endpoint (verb + path).
 
@@ -217,16 +217,16 @@ Node represents an HTTP API endpoint (verb + path).
 | Edge                 | Target          | Optionality  | Group | Method                                                                       |
 | -------------------- | --------------- | ------------ | ----- | ---------------------------------------------------------------------------- |
 | `[:IN_SNAPSHOT]`     | Snapshot        | **Required** | 3     | Scoping; endpoint exists in this snapshot                                    |
-| `[:HANDLED_BY]`      | Symbol          | **Required** | 3     | Endpoint handler symbol (extracted from framework pattern)                   |
-| `[:IN_FILE]`         | File            | **Required** | 3     | Endpoint definition location (derived from handler symbol's file)            |
-| `[:IN_MODULE]`       | Module          | Optional     | 3     | Endpoint's module (derived: handler symbol's module, or from path heuristic) |
-| `[:IMPLEMENTS]`      | Feature         | Optional     | 5     | Endpoint implements this feature (feature name matching or LLM)              |
-| `[:READS_FROM]`      | DataContract    | Optional     | 6     | Endpoint reads from data model (via handler symbol field analysis)           |
-| `[:WRITES_TO]`       | DataContract    | Optional     | 6     | Endpoint writes to data model (via handler symbol field analysis)            |
-| `[:CALLS]`           | ExternalService | Optional     | 9     | Endpoint calls external API (handler symbol analysis or code scanning)       |
-| `[:FOLLOWS_PATTERN]` | Pattern         | Optional     | 7     | Endpoint handler matches pattern (heuristic or LLM detection)                |
-| `[:INTRODUCED_IN]`   | Snapshot        | Optional     | 8     | Endpoint first appeared in this snapshot                                     |
-| `[:MODIFIED_IN]`     | Snapshot        | Optional     | 8     | Endpoint modified in later snapshot                                          |
+| `[:HANDLED_BY]`      | Symbol          | **Required** | 3     | Boundary handler symbol (extracted from framework pattern)                   |
+| `[:IN_FILE]`         | File            | **Required** | 3     | Boundary definition location (derived from handler symbol's file)            |
+| `[:IN_MODULE]`       | Module          | Optional     | 3     | Boundary's module (derived: handler symbol's module, or from path heuristic) |
+| `[:IMPLEMENTS]`      | Feature         | Optional     | 5     | Boundary implements this feature (feature name matching or LLM)              |
+| `[:READS_FROM]`      | DataContract    | Optional     | 6     | Boundary reads from data model (via handler symbol field analysis)           |
+| `[:WRITES_TO]`       | DataContract    | Optional     | 6     | Boundary writes to data model (via handler symbol field analysis)            |
+| `[:CALLS]`           | ExternalService | Optional     | 9     | Boundary calls external API (handler symbol analysis or code scanning)       |
+| `[:FOLLOWS_PATTERN]` | Pattern         | Optional     | 7     | Boundary handler matches pattern (heuristic or LLM detection)                |
+| `[:INTRODUCED_IN]`   | Snapshot        | Optional     | 8     | Boundary first appeared in this snapshot                                     |
+| `[:MODIFIED_IN]`     | Snapshot        | Optional     | 8     | Boundary modified in later snapshot                                          |
 
 #### Incoming Edges
 
@@ -239,14 +239,14 @@ Node represents an HTTP API endpoint (verb + path).
 
 #### Notes
 
-- Endpoint ID is composite: `snapshotId:verb:path`
+- Boundary ID is composite: `snapshotId:verb:path`
 - `handlerSymbolId` property + `[:HANDLED_BY]` edge both exist (property faster for single lookup,
   edge better for graph traversal)
 - `[:IN_FILE]` and `[:IN_MODULE]` are derived from handler symbol but essential for queries like
   "endpoints in module"
 - `[:READS_FROM]` and `[:WRITES_TO]` are derived from handler symbol but explicit for agent
   convenience
-- Endpoint is API-centric view; queries like "all endpoints calling Stripe" are straightforward
+- Boundary is API-centric view; queries like "all endpoints calling Stripe" are straightforward
 
 ---
 
@@ -266,13 +266,13 @@ Node represents a database model/entity (Prisma model, SQLAlchemy class, TypeORM
 | --------------- | -------- | ----------- | ----- | ------------------------------------------------------------- |
 | `[:CONTAINS]`   | Snapshot | Optional    | 3     | Snapshot scoping                                              |
 | `[:READS_FROM]` | Symbol   | Optional    | 6     | Symbol reads this entity (ORM pattern or LLM field analysis)  |
-| `[:READS_FROM]` | Endpoint | Optional    | 6     | Endpoint reads this entity (via handler symbol)               |
+| `[:READS_FROM]` | Boundary | Optional    | 6     | Boundary reads this entity (via handler symbol)               |
 | `[:WRITES_TO]`  | Symbol   | Optional    | 6     | Symbol writes this entity (ORM pattern or LLM field analysis) |
-| `[:WRITES_TO]`  | Endpoint | Optional    | 6     | Endpoint writes this entity (via handler symbol)              |
+| `[:WRITES_TO]`  | Boundary | Optional    | 6     | Boundary writes this entity (via handler symbol)              |
 
 #### Notes
 
-- DataContract is relatively sparse in edges (mostly incoming from Symbol/Endpoint)
+- DataContract is relatively sparse in edges (mostly incoming from Symbol/Boundary)
 - Useful for refactoring queries: "all symbols touching User entity" or "impact of User → User +
   Profile split"
 - No `[:DEPENDS_ON]` edge in v1; FK relationships handled implicitly (refactor analysis via field
@@ -300,7 +300,7 @@ Node represents a single test (unit, integration, e2e).
 | Edge           | Source   | Optionality | Group | Method                                                                            |
 | -------------- | -------- | ----------- | ----- | --------------------------------------------------------------------------------- |
 | `[:CONTAINS]`  | Snapshot | Optional    | 4     | Snapshot scoping                                                                  |
-| `[:TESTED_BY]` | Endpoint | Optional    | 4     | Endpoint is tested by this test (reverse of TESTS edge, often via handler symbol) |
+| `[:TESTED_BY]` | Boundary | Optional    | 4     | Boundary is tested by this test (reverse of TESTS edge, often via handler symbol) |
 | `[:VERIFIES]`  | Feature  | Optional    | 5     | Feature edge from feature side (reverse)                                          |
 
 #### Notes
@@ -324,7 +324,7 @@ Node represents a documentation file (spec, ADR, design doc, guide, ticket).
 | ---------------- | -------- | ------------ | ----- | ------------------------------------------------------------------------- |
 | `[:IN_SNAPSHOT]` | Snapshot | **Required** | 1     | Scoping; doc indexed in this snapshot                                     |
 | `[:DOCUMENTS]`   | Feature  | Optional     | 7     | Doc explains this feature (name/content similarity or tagging)            |
-| `[:DOCUMENTS]`   | Endpoint | Optional     | 7     | Doc describes this endpoint (content matching or explicit path reference) |
+| `[:DOCUMENTS]`   | Boundary | Optional     | 7     | Doc describes this endpoint (content matching or explicit path reference) |
 | `[:DOCUMENTS]`   | Symbol   | Optional     | 7     | Doc references this symbol (explicit tagging or semantic matching)        |
 | `[:DOCUMENTS]`   | Module   | Optional     | 7     | Doc applies to this module (metadata tagging)                             |
 | `[:DOCUMENTS]`   | File     | Optional     | 7     | Doc references this file (explicit path mention)                          |
@@ -388,7 +388,7 @@ Node represents a user-facing feature (persistent across snapshots).
 | Edge               | Target   | Optionality | Group  | Method                                                                     |
 | ------------------ | -------- | ----------- | ------ | -------------------------------------------------------------------------- |
 | `[:IMPLEMENTS]`    | Symbol   | Optional    | 5      | Symbols implementing this feature (reverse: symbols [:IMPLEMENTS] feature) |
-| `[:IMPLEMENTS]`    | Endpoint | Optional    | 5      | Endpoints serving this feature (reverse: endpoints [:IMPLEMENTS] feature)  |
+| `[:IMPLEMENTS]`    | Boundary | Optional    | 5      | Endpoints serving this feature (reverse: endpoints [:IMPLEMENTS] feature)  |
 | `[:IMPLEMENTS]`    | TestCase | Optional    | 5      | Tests verifying this feature (reverse: tests [:VERIFIES] feature)          |
 | `[:DEPENDS_ON]`    | Feature  | Optional    | manual | Feature depends on another feature (transitive)                            |
 | `[:INTRODUCED_IN]` | Snapshot | Optional    | 8      | Snapshot where this feature first appeared (first symbol implementing it)  |
@@ -399,7 +399,7 @@ Node represents a user-facing feature (persistent across snapshots).
 | Edge            | Source   | Optionality | Group  | Method                              |
 | --------------- | -------- | ----------- | ------ | ----------------------------------- |
 | `[:IMPLEMENTS]` | Symbol   | Optional    | 5      | Symbol implements feature           |
-| `[:IMPLEMENTS]` | Endpoint | Optional    | 5      | Endpoint implements feature         |
+| `[:IMPLEMENTS]` | Boundary | Optional    | 5      | Boundary implements feature         |
 | `[:VERIFIES]`   | TestCase | Optional    | 5      | Test verifies feature               |
 | `[:DOCUMENTS]`  | SpecDoc  | Optional    | 7      | Doc describes feature               |
 | `[:AFFECTS]`    | Incident | Optional    | manual | Incident affects this feature       |
@@ -426,7 +426,7 @@ Node represents a code pattern (e.g., "express-middleware", "error-handling-try-
 | Edge                | Target   | Optionality | Group | Method                                                                           |
 | ------------------- | -------- | ----------- | ----- | -------------------------------------------------------------------------------- |
 | `[:EXEMPLIFIED_BY]` | Symbol   | Optional    | 7     | Symbol exemplifies this pattern (reverse: symbol [:FOLLOWS_PATTERN] pattern)     |
-| `[:EXEMPLIFIED_BY]` | Endpoint | Optional    | 7     | Endpoint exemplifies this pattern (reverse: endpoint [:FOLLOWS_PATTERN] pattern) |
+| `[:EXEMPLIFIED_BY]` | Boundary | Optional    | 7     | Boundary exemplifies this pattern (reverse: endpoint [:FOLLOWS_PATTERN] pattern) |
 | `[:EXEMPLIFIED_BY]` | Module   | Optional    | 7     | Module exemplifies this pattern (reverse: module [:FOLLOWS_PATTERN] pattern)     |
 
 #### Incoming Edges
@@ -434,7 +434,7 @@ Node represents a code pattern (e.g., "express-middleware", "error-handling-try-
 | Edge                 | Source     | Optionality | Group | Method                                                 |
 | -------------------- | ---------- | ----------- | ----- | ------------------------------------------------------ |
 | `[:FOLLOWS_PATTERN]` | Symbol     | Optional    | 7     | Symbol matches this pattern (heuristic or LLM)         |
-| `[:FOLLOWS_PATTERN]` | Endpoint   | Optional    | 7     | Endpoint matches this pattern (heuristic or LLM)       |
+| `[:FOLLOWS_PATTERN]` | Boundary   | Optional    | 7     | Boundary matches this pattern (heuristic or LLM)       |
 | `[:FOLLOWS_PATTERN]` | Module     | Optional    | 7     | Module matches this pattern (heuristic or LLM)         |
 | `[:REFERENCES]`      | StyleGuide | Optional    | 7     | Style guide references this pattern (metadata tagging) |
 
@@ -459,7 +459,7 @@ Node represents a reported issue/bug (persistent, not tied to specific snapshot)
 | -------------- | -------- | ----------- | ------ | ------------------------------------------------------- |
 | `[:CAUSED_BY]` | Symbol   | Optional    | manual | Root cause is this symbol (manual incident mapping)     |
 | `[:AFFECTS]`   | Feature  | Optional    | manual | Incident affects this feature (manual incident mapping) |
-| `[:CAUSED_BY]` | Endpoint | Optional    | manual | Root cause is this endpoint (manual incident mapping)   |
+| `[:CAUSED_BY]` | Boundary | Optional    | manual | Root cause is this endpoint (manual incident mapping)   |
 
 #### Incoming Edges
 
@@ -491,7 +491,7 @@ Node represents a third-party API/service (Stripe, Auth0, Sendgrid, etc.).
 | Edge       | Source   | Optionality | Group | Method                                                     |
 | ---------- | -------- | ----------- | ----- | ---------------------------------------------------------- |
 | `[:CALLS]` | Symbol   | Optional    | 9     | Symbol calls this service (code scanning or LLM detection) |
-| `[:CALLS]` | Endpoint | Optional    | 9     | Endpoint calls this service (via handler symbol)           |
+| `[:CALLS]` | Boundary | Optional    | 9     | Boundary calls this service (via handler symbol)           |
 
 #### Notes
 
@@ -567,7 +567,7 @@ Node represents an environment variable or configuration setting.
 | **Module**                | 4        | 4        | 8     | Medium         |
 | **File**                  | 2        | 2        | 4     | Sparse         |
 | **Symbol**                | 11       | 8        | 19    | **Very Dense** |
-| **Endpoint**              | 11       | 4        | 15    | **Dense**      |
+| **Boundary**              | 11       | 4        | 15    | **Dense**      |
 | **DataContract**          | 1        | 5        | 6     | Sparse         |
 | **TestCase**              | 5        | 3        | 8     | Medium         |
 | **SpecDoc**               | 6        | 2        | 8     | Medium         |
@@ -579,7 +579,7 @@ Node represents an environment variable or configuration setting.
 | **StyleGuide**            | 2        | 1        | 3     | Sparse         |
 | **ConfigurationVariable** | 0        | 1        | 1     | Sparse         |
 
-**Most connected**: Symbol (19), Endpoint (15), Snapshot (15), Feature (12)  
+**Most connected**: Symbol (19), Boundary (15), Snapshot (15), Feature (12)  
 **Least connected**: ConfigurationVariable (1), Codebase (1), ExternalService (2)
 
 ---
@@ -589,9 +589,9 @@ Node represents an environment variable or configuration setting.
 Some edges are **derived** (can be computed from other edges) but stored explicitly for **query
 convenience**:
 
-- `Endpoint -[:IN_FILE]`, `[:IN_MODULE]` (derived from `[:HANDLED_BY]` → Symbol → containing
+- `Boundary -[:IN_FILE]`, `[:IN_MODULE]` (derived from `[:HANDLED_BY]` → Symbol → containing
   File/Module)
-- `Endpoint -[:READS_FROM]`, `[:WRITES_TO]` (derived from handler Symbol's edges)
+- `Boundary -[:READS_FROM]`, `[:WRITES_TO]` (derived from handler Symbol's edges)
 - `TestCase -[:IN_MODULE]` (derived from File → Module)
 - `Symbol -[:SIMILAR_TO]` (computed from embeddings, not structural)
 

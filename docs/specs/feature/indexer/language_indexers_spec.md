@@ -70,11 +70,11 @@ _(To be detailed: what's skipped in basic analysis, graceful degradation)_
 
 ## 3. Framework Heuristics
 
-### 3.1 Express Endpoint Detection
+### 3.1 Express Boundary Detection
 
 _(To be detailed: route handler patterns)_
 
-### 3.2 FastAPI Endpoint Detection
+### 3.2 FastAPI Boundary Detection
 
 _(To be detailed: decorator-based endpoint patterns)_
 

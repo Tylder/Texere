@@ -32,7 +32,7 @@ No additional properties.
 | Module       | Snapshot | exactly 1   | Module versioned to snapshot   |
 | File         | Snapshot | exactly 1   | File versioned to snapshot     |
 | Symbol       | Snapshot | exactly 1   | Symbol versioned to snapshot   |
-| Endpoint     | Snapshot | exactly 1   | Endpoint versioned to snapshot |
+| Boundary     | Snapshot | exactly 1   | Boundary versioned to snapshot |
 | DataContract | Snapshot | exactly 1   | Entity versioned to snapshot   |
 | TestCase     | Snapshot | exactly 1   | Test versioned to snapshot     |
 | SpecDoc      | Snapshot | exactly 1   | Doc versioned to snapshot      |
@@ -40,7 +40,7 @@ No additional properties.
 **Cardinality Invariant**: Every snapshot-scoped node must have exactly 1 incoming `[:IN_SNAPSHOT]`
 edge.
 
-**Applies to**: Module, File, Symbol, Endpoint, DataContract, TestCase, SpecDoc
+**Applies to**: Module, File, Symbol, Boundary, DataContract, TestCase, SpecDoc
 
 ---
 
@@ -49,7 +49,7 @@ edge.
 ```cypher
 -- Enforce cardinality invariant (CRITICAL: blocks orphaned nodes)
 CREATE CONSTRAINT in_snapshot_cardinality IF NOT EXISTS
-FOR (n:Module | n:File | n:Symbol | n:Endpoint | n:DataContract | n:TestCase | n:SpecDoc)
+FOR (n:Module | n:File | n:Symbol | n:Boundary | n:DataContract | n:TestCase | n:SpecDoc)
 REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 
 -- Index for version lookups (O(1) on id)
@@ -70,7 +70,7 @@ CREATE (sym:Symbol {id: 'snap-123:src/auth/jwt.ts:validateToken:10:0'})
 **Constraint Details**:
 
 - **Type**: Existence constraint (property constraint requiring relationship)
-- **Applies to**: Module, File, Symbol, Endpoint, DataContract, TestCase, SpecDoc
+- **Applies to**: Module, File, Symbol, Boundary, DataContract, TestCase, SpecDoc
 - **Enforcement**: Database-level (caught at write time, not query time)
 - **Impact**: Prevents orphaned nodes, guarantees temporal correctness
 - **Implementation**: Ingest must create node + edge in same transaction
@@ -89,7 +89,7 @@ RETURN sym
 
 -- All endpoints and their handlers
 MATCH (snap:Snapshot {id: $snapshotId})
-  <-[:IN_SNAPSHOT]-(ep:Endpoint)
+  <-[:IN_SNAPSHOT]-(ep:Boundary)
 OPTIONAL MATCH (ep)-[:LOCATION {role: 'HANDLED_BY'}]->(sym:Symbol)
 RETURN ep, sym
 

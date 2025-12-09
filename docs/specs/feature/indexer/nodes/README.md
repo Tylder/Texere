@@ -23,13 +23,10 @@ Created during indexing for a specific snapshot. Linked via `[:IN_SNAPSHOT]`.
 | **[Module](./Module.md)**              | Logical package/library/app                        | N per snapshot  | `id` (composite: snapshotId:modulePath)             |
 | **[File](./File.md)**                  | Source code file                                   | N per module    | `id` (composite: snapshotId:filePath)               |
 | **[Symbol](./Symbol.md)**              | Function, class, type, interface, const            | N per file      | `id` (composite: snapshotId:filePath:name:line:col) |
-| **[Boundary](./EntryPoint.md)** ⚠️     | Callable interface (HTTP, gRPC, CLI, events, etc.) | N per snapshot  | `id` (composite: snapshotId:kind:identifier)        |
+| **[Boundary](./Boundary.md)** ⚠️       | Callable interface (HTTP, gRPC, CLI, events, etc.) | N per snapshot  | `id` (composite: snapshotId:kind:identifier)        |
 | **[DataContract](DataContract.md)** ⚠️ | Data model (Prisma, SQL, GraphQL, Protobuf, etc.)  | N per snapshot  | `id` (composite: snapshotId:entityName)             |
 | **[TestCase](./TestCase.md)**          | Unit/integration/e2e test                          | N per file      | `id` (composite: snapshotId:filePath:testName)      |
 | **[SpecDoc](./SpecDoc.md)**            | Documentation (spec, ADR, design doc)              | N per snapshot  | `id` (composite: snapshotId:docPath)                |
-
-⚠️ **Recently renamed**: Endpoint → Boundary (planned), SchemaEntity → DataContract (to support more
-domains)
 
 ### Optional (V2+)
 
@@ -74,7 +71,7 @@ tracking.
 ### By Domain
 
 - **Code Structure**: [Module](./Module.md), [File](./File.md), [Symbol](./Symbol.md)
-- **Behavior**: [Boundary](./EntryPoint.md), [TestCase](./TestCase.md), [Workflow](./Workflow.md)
+- **Behavior**: [Boundary](./Boundary.md), [TestCase](./TestCase.md), [Workflow](./Workflow.md)
   (v2+)
 - **Data**: [DataContract](DataContract.md), [Message](./Message.md) (v2+)
 - **Metadata**: [SpecDoc](./SpecDoc.md), [StyleGuide](./StyleGuide.md)
@@ -110,7 +107,7 @@ tracking.
 **Many-to-Many**:
 
 - Feature ↔ Symbol (via `[:REALIZES]`)
-- Feature ↔ Endpoint (via `[:REALIZES]`)
+- Feature ↔ Boundary (via `[:REALIZES]`)
 - Symbol ↔ Pattern (via `[:REFERENCES {kind: 'PATTERN'}]`)
 - Symbol ↔ TestCase (via `[:REALIZES {role: 'TESTS'}]`)
 

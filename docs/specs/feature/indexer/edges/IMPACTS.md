@@ -32,7 +32,7 @@ analysis and blame tracking.
 
 ```cypher
 (incident:Incident)-[r:IMPACTS {type: 'CAUSED_BY', severity: 'critical', confidence: 0.95}]->(symbol:Symbol)
-(incident:Incident)-[r:IMPACTS {type: 'CAUSED_BY', severity: 'high', confidence: 0.8}]->(endpoint:Endpoint)
+(incident:Incident)-[r:IMPACTS {type: 'CAUSED_BY', severity: 'high', confidence: 0.8}]->(endpoint:Boundary)
 ```
 
 **Semantic**: Incident was directly caused by code (bug, incorrect logic, missing validation).
@@ -49,7 +49,7 @@ analysis and blame tracking.
 
 ```cypher
 (incident:Incident)-[r:IMPACTS {type: 'AFFECTS', severity: 'high'}]->(feature:Feature)
-(incident:Incident)-[r:IMPACTS {type: 'AFFECTS', severity: 'medium'}]->(endpoint:Endpoint)
+(incident:Incident)-[r:IMPACTS {type: 'AFFECTS', severity: 'medium'}]->(endpoint:Boundary)
 (incident:Incident)-[r:IMPACTS {type: 'AFFECTS', severity: 'critical'}]->(symbol:Symbol)
 ```
 
@@ -63,7 +63,7 @@ analysis and blame tracking.
 **Common impacts**:
 
 - Feature unavailable due to upstream service failure
-- Endpoint degraded due to database issue
+- Boundary degraded due to database issue
 - Symbol execution blocked by missing dependency
 
 ---
@@ -73,9 +73,9 @@ analysis and blame tracking.
 | Source   | Type      | Target          | Cardinality | Notes                             |
 | -------- | --------- | --------------- | ----------- | --------------------------------- |
 | Incident | CAUSED_BY | Symbol          | optional    | Bug/defect in symbol              |
-| Incident | CAUSED_BY | Endpoint        | optional    | Endpoint mishandling              |
+| Incident | CAUSED_BY | Boundary        | optional    | Boundary mishandling              |
 | Incident | AFFECTS   | Symbol          | optional    | Symbol broken/unavailable         |
-| Incident | AFFECTS   | Endpoint        | optional    | Endpoint degraded                 |
+| Incident | AFFECTS   | Boundary        | optional    | Boundary degraded                 |
 | Incident | AFFECTS   | Feature         | optional    | Feature unavailable               |
 | Incident | AFFECTS   | ExternalService | optional    | External service dependency issue |
 
@@ -173,11 +173,11 @@ ORDER BY incident_count DESC
 ### Service Outage Impact
 
 ```cypher
--- Endpoints affected by external service incident
+-- Boundaries affected by external service incident
 MATCH (incident:Incident {description: '*Stripe outage*'})
   -[r:IMPACTS {type: 'AFFECTS'}]->(service:ExternalService)
-MATCH (ep:Endpoint)-[:DEPENDS_ON {kind: 'SERVICE'}]->(service)
-RETURN ep, r.severity
+MATCH (b:Boundary)-[:DEPENDS_ON {kind: 'SERVICE'}]->(service)
+RETURN b, r.severity
 
 -- Features broken by external service
 MATCH (service:ExternalService {id: 'auth0'})
@@ -318,7 +318,7 @@ For serious incidents, create postmortem linking to:
 - [graph_schema_spec.md](../graph_schema_spec.md) – Core schema
 - [Incident.md](../nodes/Incident.md) – Incident definition
 - [Symbol.md](../nodes/Symbol.md) – Code artifacts
-- [Endpoint.md](../nodes/Endpoint.md) – API endpoints
+- [Boundary.md](../nodes/Boundary.md) – API endpoints
 - [Feature.md](../nodes/Feature.md) – Features
 - [ExternalService.md](../nodes/ExternalService.md) – External dependencies
 - [REFERENCES.md](./REFERENCES.md) – Code relations (transitive impact)

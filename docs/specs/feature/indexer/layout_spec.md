@@ -47,9 +47,9 @@ root/
 
 **Responsibility**:
 
-- Node and edge type definitions (Codebase, Snapshot, Module, File, Symbol, Feature, Endpoint,
+- Node and edge type definitions (Codebase, Snapshot, Module, File, Symbol, Feature, Boundary,
   etc.).
-- Query bundle types: `FeatureContextBundle`, `EndpointPatternExample`, `IncidentSliceBundle`.
+- Query bundle types: `FeatureContextBundle`, `BoundaryPatternExample`, `IncidentSliceBundle`.
 - JSON Schema definitions or Zod schemas (optional) for the bundles.
 
 **Example structure**:
@@ -158,7 +158,7 @@ export async function upsertSymbol(symbol: Symbol, snapshotId: string): Promise<
   // If snapshot not found, error thrown before write
 }
 
-// Similar pattern for: Module, File, Endpoint, TestCase, DataContract, SpecDoc
+// Similar pattern for: Module, File, Boundary, TestCase, DataContract, SpecDoc
 ```
 
 **Dependencies**:
@@ -188,7 +188,7 @@ constraint details.
 - Per-language indexers (TS, Python, etc.) implementing a common interface.
 - Extraction of:
   - Symbols, calls, references.
-  - Endpoints, SchemaEntities, TestCases.
+  - Boundaries, SchemaEntities, TestCases.
   - Feature mappings (from `features.yaml` + LLM assistance).
 - Conversion of `FileIndexResult` → graph nodes/edges via `indexer/core`.
 
@@ -234,7 +234,7 @@ packages/features/indexer/ingest/
 
 - Implement the v1 Query API from the Texere Indexer spec:
   - `getFeatureContext(featureName: string, options?: ...)`
-  - `getEndpointPatternExamples(options?: ...)`
+  - `getBoundaryPatternExamples(options?: ...)`
   - `getIncidentSlice(incidentId: string, options?: ...)`
 - Compose data from Neo4j + Qdrant via `indexer/core`.
 - Return strictly typed bundles (`FeatureContextBundle`, etc.).

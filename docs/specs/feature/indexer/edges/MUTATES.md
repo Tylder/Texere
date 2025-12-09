@@ -31,7 +31,7 @@ analysis.
 
 ```cypher
 (symbol:Symbol)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract)
-(endpoint:Endpoint)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract)
+(endpoint:Boundary)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract)
 ```
 
 **Semantic**: Code reads from database entity (SELECT, query, fetch).
@@ -46,7 +46,7 @@ analysis.
 
 ```cypher
 (symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
-(endpoint:Endpoint)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
+(endpoint:Boundary)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
 ```
 
 **Semantic**: Code writes to database entity (INSERT, UPDATE, DELETE).
@@ -64,7 +64,7 @@ analysis.
 | Source   | Operation     | Target       | Cardinality | Notes                |
 | -------- | ------------- | ------------ | ----------- | -------------------- |
 | Symbol   | READ \| WRITE | DataContract | optional    | Symbol data access   |
-| Endpoint | READ \| WRITE | DataContract | optional    | Endpoint data access |
+| Boundary | READ \| WRITE | DataContract | optional    | Boundary data access |
 
 ---
 
@@ -79,7 +79,7 @@ CREATE INDEX mutates_operation_target IF NOT EXISTS
 FOR ()-[r:MUTATES]->(n:DataContract) ON (r.operation, n.id);
 
 -- Example: Get all data accesses for an endpoint
-MATCH (ep:Endpoint {id: 'snap-123:POST:/api/users'})
+MATCH (ep:Boundary {id: 'snap-123:POST:/api/users'})
   -[r:MUTATES {operation: operation}]->(entity:DataContract)
 RETURN entity, r.operation
 ```
@@ -131,19 +131,19 @@ WHERE EXISTS((writer)-[:MUTATES {operation: 'WRITE'}]->(entity))
 RETURN entity
 ```
 
-### Endpoint Data Footprint
+### Boundary Data Footprint
 
 ```cypher
 -- What data does endpoint access?
-MATCH (ep:Endpoint {id: $endpointId})
+MATCH (ep:Boundary {id: $endpointId})
   -[r:MUTATES]->(entity:DataContract)
 RETURN entity, r.operation
 ORDER BY r.operation
 
--- Endpoints reading User data
-MATCH (ep:Endpoint)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract {name: 'User'})
-RETURN ep, COUNT(r) as read_count
-GROUP BY ep
+-- Boundaries reading User data
+MATCH (b:Boundary)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract {name: 'User'})
+RETURN b, COUNT(r) as read_count
+GROUP BY b
 ```
 
 ### Data Modification Tracking
@@ -155,7 +155,7 @@ RETURN symbol
 ORDER BY symbol.startLine
 
 -- Write operations in endpoint
-MATCH (ep:Endpoint {id: $endpointId})
+MATCH (ep:Boundary {id: $endpointId})
   -[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
 RETURN entity, COUNT(*) as write_count
 GROUP BY entity
@@ -207,7 +207,7 @@ patterns = [
 ]
 ```
 
-**Endpoint-level extraction**:
+**Boundary-level extraction**:
 
 - Trace Symbol dependencies via call graph
 - Aggregate transitive data accesses
@@ -241,10 +241,10 @@ RETURN accessor, entity, r.operation
 ### Authorization Checks
 
 ```cypher
--- Endpoints writing to sensitive entities
-MATCH (ep:Endpoint)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract {sensitive: true})
-MATCH (ep)-[:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
-RETURN ep, handler, entity
+-- Boundaries writing to sensitive entities
+MATCH (b:Boundary)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract {sensitive: true})
+MATCH (b)-[:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
+RETURN b, handler, entity
 ```
 
 ---
@@ -253,7 +253,7 @@ RETURN ep, handler, entity
 
 - [graph_schema_spec.md](../graph_schema_spec.md) – Core schema
 - [Symbol.md](../nodes/Symbol.md) – Symbol definition
-- [Endpoint.md](../nodes/Endpoint.md) – Endpoint definition
+- [Boundary.md](../nodes/Boundary.md) – Boundary definition
 - [DataContract.md](../nodes/DataContract.md) – Database entity definition
 - [REFERENCES.md](./REFERENCES.md) – Code relations (CALL for transitive analysis)
 - [REALIZES.md](./REALIZES.md) – Feature implementation

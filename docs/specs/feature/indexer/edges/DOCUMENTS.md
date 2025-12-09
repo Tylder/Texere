@@ -10,7 +10,7 @@
 Represents documentation and governance relationships: specification documents, architectural
 decisions, style guides, and guides that explain or govern code artifacts.
 
-**Key Characteristic**: `target_role` property indicates what's being documented (Feature, Endpoint,
+**Key Characteristic**: `target_role` property indicates what's being documented (Feature, Boundary,
 Symbol, Module, Pattern).
 
 ---
@@ -42,10 +42,10 @@ Symbol, Module, Pattern).
 - Feature proposal/ADR
 - Implementation guide
 
-### SpecDoc → Endpoint
+### SpecDoc → Boundary
 
 ```cypher
-(doc:SpecDoc)-[r:DOCUMENTS {target_role: 'ENDPOINT'}]->(endpoint:Endpoint)
+(doc:SpecDoc)-[r:DOCUMENTS {target_role: 'ENDPOINT'}]->(endpoint:Boundary)
 ```
 
 **Semantic**: API documentation describes endpoint behavior, parameters, responses.
@@ -53,7 +53,7 @@ Symbol, Module, Pattern).
 **Common sources**:
 
 - API spec (OpenAPI/Swagger)
-- Endpoint documentation
+- Boundary documentation
 - API design doc
 
 ### SpecDoc → Symbol
@@ -128,7 +128,7 @@ Symbol, Module, Pattern).
 | Source     | Target Role | Target   | Cardinality | Notes                    |
 | ---------- | ----------- | -------- | ----------- | ------------------------ |
 | SpecDoc    | FEATURE     | Feature  | optional    | Feature specification    |
-| SpecDoc    | ENDPOINT    | Endpoint | optional    | API documentation        |
+| SpecDoc    | ENDPOINT    | Boundary | optional    | API documentation        |
 | SpecDoc    | SYMBOL      | Symbol   | optional    | Function documentation   |
 | SpecDoc    | MODULE      | Module   | optional    | Module guide             |
 | SpecDoc    | PATTERN     | Pattern  | optional    | Pattern documentation    |
@@ -169,26 +169,26 @@ ORDER BY r.similarity DESC
 MATCH (f:Feature {id: 'payment'})
 OPTIONAL MATCH (doc:SpecDoc)-[r1:DOCUMENTS {target_role: 'FEATURE'}]->(f)
 OPTIONAL MATCH (sym:Symbol)-[r2:REALIZES {role: 'IMPLEMENTS'}]->(f)
-OPTIONAL MATCH (ep:Endpoint)-[r3:REALIZES {role: 'IMPLEMENTS'}]->(f)
+OPTIONAL MATCH (ep:Boundary)-[r3:REALIZES {role: 'IMPLEMENTS'}]->(f)
 RETURN {
   feature: f,
   documentation: collect(DISTINCT {doc: doc, similarity: r1.similarity}),
   implementingSymbols: collect(DISTINCT sym),
-  implementingEndpoints: collect(DISTINCT ep)
+  implementingBoundaries: collect(DISTINCT ep)
 }
 ```
 
 ### API Documentation
 
 ```cypher
--- Get all documentation for endpoint
-MATCH (doc:SpecDoc)-[r:DOCUMENTS {target_role: 'ENDPOINT'}]->(ep:Endpoint {id: $endpointId})
+-- Get all documentation for boundary
+MATCH (doc:SpecDoc)-[r:DOCUMENTS {target_role: 'BOUNDARY'}]->(b:Boundary {id: $boundaryId})
 RETURN doc
 
--- Endpoints without documentation
-MATCH (ep:Endpoint)
-WHERE NOT EXISTS((doc:SpecDoc)-[:DOCUMENTS {target_role: 'ENDPOINT'}]->(ep))
-RETURN ep
+-- Boundaries without documentation
+MATCH (b:Boundary)
+WHERE NOT EXISTS((doc:SpecDoc)-[:DOCUMENTS {target_role: 'BOUNDARY'}]->(b))
+RETURN b
 LIMIT 50
 ```
 
@@ -328,7 +328,7 @@ SpecDoc nodes store first 5KB of content for display/search:
 ## Cross-References
 
 - **Feature Documentation Flow**: Feature ← SpecDoc → (DEPENDS_ON) → Symbol
-- **Endpoint API Flow**: Endpoint ← SpecDoc → (LOCATION) → Symbol
+- **Boundary API Flow**: Boundary ← SpecDoc → (LOCATION) → Symbol
 - **Module Architecture**: Module ← StyleGuide + SpecDoc
 
 ---
@@ -344,7 +344,7 @@ SpecDoc nodes store first 5KB of content for display/search:
 
 - [graph_schema_spec.md](../graph_schema_spec.md) – Core schema
 - [Feature.md](../nodes/Feature.md) – Feature definition
-- [Endpoint.md](../nodes/Endpoint.md) – Endpoint definition
+- [Boundary.md](../nodes/Boundary.md) – Boundary definition
 - [Symbol.md](../nodes/Symbol.md) – Symbol definition
 - [Module.md](../nodes/Module.md) – Module definition
 - [Pattern.md](../nodes/Pattern.md) – Pattern definition
