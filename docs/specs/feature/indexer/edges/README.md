@@ -98,7 +98,7 @@ complexity while maintaining query expressiveness.
 | Symbol/Module → Pattern                    | REFERENCES {type: 'PATTERN'}     | Pattern usage          |
 | Module/Symbol/Endpoint → ExternalService   | DEPENDS_ON {kind: 'SERVICE'}     | External APIs          |
 | Module/Symbol → ConfigurationVariable      | DEPENDS_ON {kind: 'CONFIG'}      | Configuration          |
-| Module → ThirdPartyLibrary                 | DEPENDS_ON {kind: 'LIBRARY'}     | Library dependencies   |
+| Module/Symbol/Endpoint → ExternalService   | DEPENDS_ON {kind: 'LIBRARY'}     | Libraries (not indexed)|
 | Module/Symbol → StyleGuide                 | DEPENDS_ON {kind: 'STYLE_GUIDE'} | Style conformance      |
 | SpecDoc/StyleGuide → Feature/Module/Symbol | DOCUMENTS                        | Documentation          |
 | Endpoint → Symbol                          | LOCATION {role: 'HANDLED_BY'}    | Endpoint handler       |

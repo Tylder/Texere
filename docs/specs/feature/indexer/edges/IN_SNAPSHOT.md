@@ -27,16 +27,15 @@ No additional properties.
 
 ## Source → Target Pairs
 
-| Source            | Target   | Cardinality | Notes                          |
-| ----------------- | -------- | ----------- | ------------------------------ |
-| Module            | Snapshot | exactly 1   | Module versioned to snapshot   |
-| File              | Snapshot | exactly 1   | File versioned to snapshot     |
-| Symbol            | Snapshot | exactly 1   | Symbol versioned to snapshot   |
-| Endpoint          | Snapshot | exactly 1   | Endpoint versioned to snapshot |
-| SchemaEntity      | Snapshot | exactly 1   | Entity versioned to snapshot   |
-| TestCase          | Snapshot | exactly 1   | Test versioned to snapshot     |
-| SpecDoc           | Snapshot | exactly 1   | Doc versioned to snapshot      |
-| ThirdPartyLibrary | Snapshot | exactly 1   | Library versioned to snapshot  |
+| Source       | Target   | Cardinality | Notes                          |
+| ------------ | -------- | ----------- | ------------------------------ |
+| Module       | Snapshot | exactly 1   | Module versioned to snapshot   |
+| File         | Snapshot | exactly 1   | File versioned to snapshot     |
+| Symbol       | Snapshot | exactly 1   | Symbol versioned to snapshot   |
+| Endpoint     | Snapshot | exactly 1   | Endpoint versioned to snapshot |
+| SchemaEntity | Snapshot | exactly 1   | Entity versioned to snapshot   |
+| TestCase     | Snapshot | exactly 1   | Test versioned to snapshot     |
+| SpecDoc      | Snapshot | exactly 1   | Doc versioned to snapshot      |
 
 **Cardinality Invariant**: No snapshot-scoped node can exist without exactly 1 incoming
 `[:IN_SNAPSHOT]` edge.
@@ -49,7 +48,7 @@ No additional properties.
 -- Enforce cardinality invariant
 CREATE CONSTRAINT in_snapshot_cardinality IF NOT EXISTS
 FOR (n)
-WHERE (n:Module OR n:File OR n:Symbol OR n:Endpoint OR n:SchemaEntity OR n:TestCase OR n:SpecDoc OR n:ThirdPartyLibrary)
+WHERE (n:Module OR n:File OR n:Symbol OR n:Endpoint OR n:SchemaEntity OR n:TestCase OR n:SpecDoc)
 REQUIRE COUNT((n)-[:IN_SNAPSHOT]->()) = 1;
 
 -- Index for version lookups (O(1) on id)

@@ -1,6 +1,6 @@
 # Texere Indexer – Node Type Catalog
 
-**Overview**: This directory contains detailed specifications for all 15 node types in the Texere
+**Overview**: This directory contains detailed specifications for all 14 node types in the Texere
 Knowledge Graph.
 
 Nodes are grouped into two categories:
@@ -10,22 +10,21 @@ Nodes are grouped into two categories:
 
 ---
 
-## Snapshot-Scoped Nodes (10)
+## Snapshot-Scoped Nodes (9)
 
 Created during indexing for a specific snapshot. Linked via `[:IN_SNAPSHOT]`.
 
-| Node                                            | Purpose                                   | Cardinality    | Key Property                                        |
-| ----------------------------------------------- | ----------------------------------------- | -------------- | --------------------------------------------------- |
-| **[Codebase](./Codebase.md)**                   | Git repository root                       | 1 per repo     | `id` (unique)                                       |
-| **[Snapshot](./Snapshot.md)**                   | Git commit being indexed                  | N per codebase | `id` (composite: codebaseId:commitHash)             |
-| **[Module](./Module.md)**                       | Logical package/library/app               | N per snapshot | `id` (composite: snapshotId:modulePath)             |
-| **[File](./File.md)**                           | Source code file                          | N per module   | `id` (composite: snapshotId:filePath)               |
-| **[Symbol](./Symbol.md)**                       | Function, class, type, interface, const   | N per file     | `id` (composite: snapshotId:filePath:name:line:col) |
-| **[Endpoint](./Endpoint.md)**                   | HTTP API route                            | N per snapshot | `id` (composite: snapshotId:verb:path)              |
-| **[SchemaEntity](./SchemaEntity.md)**           | Database model (Prisma, SQLAlchemy, etc.) | N per snapshot | `id` (composite: snapshotId:entityName)             |
-| **[TestCase](./TestCase.md)**                   | Unit/integration/e2e test                 | N per file     | `id` (composite: snapshotId:filePath:testName)      |
-| **[SpecDoc](./SpecDoc.md)**                     | Documentation (spec, ADR, design doc)     | N per snapshot | `id` (composite: snapshotId:docPath)                |
-| **[ThirdPartyLibrary](./ThirdPartyLibrary.md)** | Installed dependency                      | N per snapshot | `id` (composite: snapshotId:packageName:version)    |
+| Node                                  | Purpose                                   | Cardinality     | Key Property                                        |
+| ------------------------------------- | ----------------------------------------- | --------------- | --------------------------------------------------- |
+| **[Codebase](./Codebase.md)**         | Code repository (any code being indexed)  | N per workspace | `id` (unique)                                       |
+| **[Snapshot](./Snapshot.md)**         | Git commit being indexed                  | N per codebase  | `id` (composite: codebaseId:commitHash)             |
+| **[Module](./Module.md)**             | Logical package/library/app               | N per snapshot  | `id` (composite: snapshotId:modulePath)             |
+| **[File](./File.md)**                 | Source code file                          | N per module    | `id` (composite: snapshotId:filePath)               |
+| **[Symbol](./Symbol.md)**             | Function, class, type, interface, const   | N per file      | `id` (composite: snapshotId:filePath:name:line:col) |
+| **[Endpoint](./Endpoint.md)**         | HTTP API route                            | N per snapshot  | `id` (composite: snapshotId:verb:path)              |
+| **[SchemaEntity](./SchemaEntity.md)** | Database model (Prisma, SQLAlchemy, etc.) | N per snapshot  | `id` (composite: snapshotId:entityName)             |
+| **[TestCase](./TestCase.md)**         | Unit/integration/e2e test                 | N per file      | `id` (composite: snapshotId:filePath:testName)      |
+| **[SpecDoc](./SpecDoc.md)**           | Documentation (spec, ADR, design doc)     | N per snapshot  | `id` (composite: snapshotId:docPath)                |
 
 ---
 
@@ -60,8 +59,7 @@ tracking.
 - **Behavior**: [Endpoint](./Endpoint.md), [TestCase](./TestCase.md)
 - **Data**: [SchemaEntity](./SchemaEntity.md)
 - **Metadata**: [SpecDoc](./SpecDoc.md), [StyleGuide](./StyleGuide.md)
-- **Dependencies**: [ThirdPartyLibrary](./ThirdPartyLibrary.md),
-  [ExternalService](./ExternalService.md)
+- **External Integration**: [ExternalService](./ExternalService.md)
 - **Features & Issues**: [Feature](./Feature.md), [Incident](./Incident.md)
 - **Patterns**: [Pattern](./Pattern.md)
 

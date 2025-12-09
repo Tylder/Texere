@@ -1,19 +1,21 @@
 # Codebase Node
 
 **Category**: Snapshot-Scoped  
-**Purpose**: Represents a Git repository being indexed.
+**Purpose**: Any code repository being indexed. Can be main repo, vendored dependencies, monorepo
+sub-projects, or external code. Configuration determines what gets indexed.
 
 ---
 
 ## Properties
 
-| Property    | Type      | Constraints | Notes                                     |
-| ----------- | --------- | ----------- | ----------------------------------------- |
-| `id`        | string    | UNIQUE      | Codebase identifier (e.g., "texere-main") |
-| `name`      | string    | Required    | Human-readable name                       |
-| `url`       | string    | Optional    | Repository URL (e.g., GitHub URL)         |
-| `createdAt` | timestamp | Required    | When indexing began                       |
-| `updatedAt` | timestamp | Required    | Last index/update                         |
+| Property    | Type      | Constraints | Notes                                                                                          |
+| ----------- | --------- | ----------- | ---------------------------------------------------------------------------------------------- |
+| `id`        | string    | UNIQUE      | Codebase identifier (e.g., "texere-main", "package:@monorepo/ui", "github.com/facebook/react") |
+| `name`      | string    | Required    | Human-readable name                                                                            |
+| `url`       | string    | Optional    | Repository URL (e.g., GitHub URL)                                                              |
+| `kind`      | enum      | Optional    | "main" \| "vendored" \| "monorepo-sub" \| "external"                                           |
+| `createdAt` | timestamp | Required    | When indexing began                                                                            |
+| `updatedAt` | timestamp | Required    | Last index/update                                                                              |
 
 ---
 
@@ -27,6 +29,7 @@ CREATE (cb:Codebase {
   id: "texere-main",
   name: "Texere Main Repository",
   url: "https://github.com/Tylder/Texere",
+  kind: "main",
   createdAt: timestamp(),
   updatedAt: timestamp()
 })
@@ -52,9 +55,33 @@ None. Codebase is the root node.
 
 ## Lifecycle
 
-1. **Creation**: Created on first indexing of a Git repository
-2. **Persistence**: Persists as long as indexing is active
-3. **Multiple Snapshots**: Can have many snapshots (one per tracked branch + historical)
+1. **Creation**: Created on first indexing (main repo, vendored dependency, or configured
+   sub-project)
+2. **Configuration-Driven**: What gets indexed determined by `indexer.config.yaml`
+3. **Multiple Snapshots**: Can have many snapshots (one per tracked branch + historical commits)
+4. **Persistence**: Persists for entire codebase lifecycle; never deleted
+
+## Examples
+
+```cypher
+-- Main repository
+(cb:Codebase {id: "texere-main", kind: "main"})
+  -[:CONTAINS]->(snap1:Snapshot {commitHash: "abc123"})
+  -[:CONTAINS*]->(sym:Symbol {name: "validateAuth"})
+
+-- Vendored dependency in monorepo
+(cb:Codebase {id: "vendor:stripe-api", kind: "vendored"})
+  -[:CONTAINS]->(snap2:Snapshot {commitHash: "abc123"})
+  -[:CONTAINS*]->(mod:Module {name: "src/stripe"})
+
+-- Monorepo sub-project
+(cb:Codebase {id: "monorepo:@texere/ui", kind: "monorepo-sub"})
+  -[:CONTAINS]->(snap3:Snapshot {commitHash: "abc123"})
+
+-- External open-source indexed from source
+(cb:Codebase {id: "github.com/facebook/react", kind: "external"})
+  -[:CONTAINS]->(snap4:Snapshot {commitHash: "v18.2.0"})
+```
 
 ---
 

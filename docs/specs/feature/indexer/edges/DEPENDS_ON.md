@@ -62,20 +62,27 @@ STYLE_GUIDE, FEATURE).
 - Feature flags (`ENABLE_PAYMENTS`, `DEBUG_MODE`)
 - URLs (`DATABASE_URL`, `CACHE_REDIS_URL`)
 
-### LIBRARY – Third-Party Library Dependencies
+### LIBRARY – Library Dependencies (Not Indexed)
 
 ```cypher
-(module:Module)-[r:DEPENDS_ON {kind: 'LIBRARY', version: '1.2.0'}]->(lib:ThirdPartyLibrary)
-(file:File)-[r:DEPENDS_ON {kind: 'LIBRARY', version: '^1.0.0'}]->(lib:ThirdPartyLibrary)
+(module:Module)-[r:DEPENDS_ON {kind: 'LIBRARY', version: '1.2.0'}]->(lib:ExternalService)
+(file:File)-[r:DEPENDS_ON {kind: 'LIBRARY', version: '^1.0.0'}]->(lib:ExternalService)
 ```
 
-**Semantic**: Code imports or uses third-party library.
+**Semantic**: Code imports or uses third-party library/package that is NOT being indexed as a
+Codebase.
 
-**Common libraries**:
+**When to use LIBRARY**:
 
-- Frameworks (React, Vue, Express)
+- External npm/pip packages without source code access
+- Frameworks we don't analyze (React, Vue, Express)
 - Utilities (lodash, axios, moment)
-- Testing (Jest, Vitest, Cypress)
+
+**When NOT to use LIBRARY**:
+
+- If library code IS indexed → create separate [Codebase](../nodes/Codebase.md) (vendored
+  dependency, monorepo sub-project, or configured for indexing)
+- If tracking external API → use SERVICE kind instead
 
 ### STYLE_GUIDE – Style Guide Conformance
 
@@ -109,19 +116,19 @@ STYLE_GUIDE, FEATURE).
 
 ## Source → Target Pairs
 
-| Source   | Kind        | Target                | Cardinality | Notes                      |
-| -------- | ----------- | --------------------- | ----------- | -------------------------- |
-| Symbol   | SERVICE     | ExternalService       | optional    | Symbol calls service       |
-| Endpoint | SERVICE     | ExternalService       | optional    | Endpoint calls service     |
-| Module   | SERVICE     | ExternalService       | optional    | Module integrates service  |
-| Symbol   | CONFIG      | ConfigurationVariable | optional    | Symbol uses config         |
-| Endpoint | CONFIG      | ConfigurationVariable | optional    | Endpoint uses config       |
-| Module   | CONFIG      | ConfigurationVariable | optional    | Module uses config         |
-| Module   | LIBRARY     | ThirdPartyLibrary     | optional    | Module imports library     |
-| File     | LIBRARY     | ThirdPartyLibrary     | optional    | File imports library       |
-| Module   | STYLE_GUIDE | StyleGuide            | optional    | Module follows guide       |
-| Symbol   | STYLE_GUIDE | StyleGuide            | optional    | Symbol follows guide       |
-| Feature  | FEATURE     | Feature               | optional    | Feature depends on feature |
+| Source   | Kind        | Target                | Cardinality | Notes                                |
+| -------- | ----------- | --------------------- | ----------- | ------------------------------------ |
+| Symbol   | SERVICE     | ExternalService       | optional    | Symbol calls service                 |
+| Endpoint | SERVICE     | ExternalService       | optional    | Endpoint calls service               |
+| Module   | SERVICE     | ExternalService       | optional    | Module integrates service            |
+| Symbol   | CONFIG      | ConfigurationVariable | optional    | Symbol uses config                   |
+| Endpoint | CONFIG      | ConfigurationVariable | optional    | Endpoint uses config                 |
+| Module   | CONFIG      | ConfigurationVariable | optional    | Module uses config                   |
+| Module   | LIBRARY     | ExternalService       | optional    | Module imports library (not indexed) |
+| File     | LIBRARY     | ExternalService       | optional    | File imports library (not indexed)   |
+| Module   | STYLE_GUIDE | StyleGuide            | optional    | Module follows guide                 |
+| Symbol   | STYLE_GUIDE | StyleGuide            | optional    | Symbol follows guide                 |
+| Feature  | FEATURE     | Feature               | optional    | Feature depends on feature           |
 
 ---
 
@@ -185,15 +192,15 @@ RETURN DISTINCT config
 
 ```cypher
 -- What libraries does module use?
-MATCH (mod:Module {id: $moduleId})-[r:DEPENDS_ON {kind: 'LIBRARY'}]->(lib:ThirdPartyLibrary)
+MATCH (mod:Module {id: $moduleId})-[r:DEPENDS_ON {kind: 'LIBRARY'}]->(lib:ExternalService)
 RETURN lib, r.version
 
--- All modules using React
-MATCH (mod:Module)-[r:DEPENDS_ON {kind: 'LIBRARY'}]->(lib:ThirdPartyLibrary {name: 'react'})
+-- All modules using React (not indexed)
+MATCH (mod:Module)-[r:DEPENDS_ON {kind: 'LIBRARY'}]->(lib:ExternalService {name: 'react'})
 RETURN DISTINCT mod
 
 -- Version compatibility check
-MATCH (mod:Module)-[r:DEPENDS_ON {kind: 'LIBRARY', version: version}]->(lib:ThirdPartyLibrary {name: 'axios'})
+MATCH (mod:Module)-[r:DEPENDS_ON {kind: 'LIBRARY', version: version}]->(lib:ExternalService {name: 'axios'})
 RETURN mod, version
 GROUP BY mod, version
 ```
@@ -302,6 +309,6 @@ ORDER BY transitive.name
 - [Feature.md](../nodes/Feature.md) – Feature definition
 - [ExternalService.md](../nodes/ExternalService.md) – Service definition
 - [StyleGuide.md](../nodes/StyleGuide.md) – Guide definition
-- [ThirdPartyLibrary.md](../nodes/ThirdPartyLibrary.md) – Library definition
+- [ExternalService.md](../nodes/ExternalService.md) – External service/library definition
 - [REFERENCES.md](./REFERENCES.md) – Code relations (imports)
 - [DOCUMENTS.md](./DOCUMENTS.md) – Documentation (config docs)

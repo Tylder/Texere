@@ -64,20 +64,18 @@ No additional properties.
 
 ## Source → Target Pairs
 
-| Source            | Event      | Target   | Cardinality   | Notes              |
-| ----------------- | ---------- | -------- | ------------- | ------------------ |
-| Symbol            | INTRODUCED | Snapshot | exactly 1     | First snapshot     |
-| Symbol            | MODIFIED   | Snapshot | optional (0+) | Change snapshots   |
-| Feature           | INTRODUCED | Snapshot | exactly 1     | Feature definition |
-| Feature           | MODIFIED   | Snapshot | optional (0+) | Feature changes    |
-| TestCase          | INTRODUCED | Snapshot | exactly 1     | Test addition      |
-| TestCase          | MODIFIED   | Snapshot | optional (0+) | Test updates       |
-| Endpoint          | INTRODUCED | Snapshot | exactly 1     | Endpoint creation  |
-| Endpoint          | MODIFIED   | Snapshot | optional (0+) | Endpoint changes   |
-| SpecDoc           | INTRODUCED | Snapshot | exactly 1     | Doc creation       |
-| SpecDoc           | MODIFIED   | Snapshot | optional (0+) | Doc updates        |
-| ThirdPartyLibrary | INTRODUCED | Snapshot | exactly 1     | Library added      |
-| ThirdPartyLibrary | MODIFIED   | Snapshot | optional (0+) | Version changes    |
+| Source   | Event      | Target   | Cardinality   | Notes              |
+| -------- | ---------- | -------- | ------------- | ------------------ |
+| Symbol   | INTRODUCED | Snapshot | exactly 1     | First snapshot     |
+| Symbol   | MODIFIED   | Snapshot | optional (0+) | Change snapshots   |
+| Feature  | INTRODUCED | Snapshot | exactly 1     | Feature definition |
+| Feature  | MODIFIED   | Snapshot | optional (0+) | Feature changes    |
+| TestCase | INTRODUCED | Snapshot | exactly 1     | Test addition      |
+| TestCase | MODIFIED   | Snapshot | optional (0+) | Test updates       |
+| Endpoint | INTRODUCED | Snapshot | exactly 1     | Endpoint creation  |
+| Endpoint | MODIFIED   | Snapshot | optional (0+) | Endpoint changes   |
+| SpecDoc  | INTRODUCED | Snapshot | exactly 1     | Doc creation       |
+| SpecDoc  | MODIFIED   | Snapshot | optional (0+) | Doc updates        |
 
 ---
 
