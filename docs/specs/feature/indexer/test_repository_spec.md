@@ -1084,13 +1084,79 @@ export class ExternalAPIService {
 
 ---
 
-## Git History & Incremental Testing
+## Git History & Branch-Based Snapshots
 
-### Commit Strategy
+### Branch Strategy (Configuration-Driven)
 
-The test repository includes **5 commits** to validate incremental indexing (Git diff detection):
+The test repository uses **Git branches** (not linear commits) to represent snapshots. This aligns
+with [ingest_spec.md §6.1](../ingest_spec.md#61-snapshot-selection--branch-based-indexing):
 
-#### **Commit 1: `init` (Initial Setup)**
+- `.indexer-config.json` specifies `trackedBranches: ["main", "snapshot-1", "snapshot-2", ...]`
+- Each branch points to a commit with specific code/structure
+- Indexer resolves branch → commit hash and creates immutable Snapshots
+- Incremental indexing uses Git diff between old and new commit hashes per branch
+
+### Snapshot Structure (5 Snapshots)
+
+The repository contains **5 snapshots** accessible via Git branches. Each snapshot is immutable
+(never rebased or force-pushed) and represents a point in development.
+
+### `.indexer-config.json` (Configuration)
+
+```json
+{
+  "version": "1.0",
+  "codebases": [
+    {
+      "id": "test-typescript-app",
+      "root": ".",
+      "trackedBranches": ["main", "snapshot-1", "snapshot-2", "snapshot-3", "snapshot-4"],
+      "languages": ["ts", "tsx", "js"],
+      "defaultBranch": "main"
+    }
+  ],
+  "graph": {
+    "neo4jUri": "${NEO4J_URI}",
+    "neo4jUser": "${NEO4J_USER}",
+    "neo4jPassword": "${NEO4J_PASSWORD}"
+  },
+  "vectors": {
+    "qdrantUrl": "${QDRANT_URL}",
+    "collectionName": "texere-embeddings"
+  },
+  "security": {
+    "denyPatterns": [".env", "*.key", "*.pem"],
+    "allowPatterns": null
+  },
+  "embedding": {
+    "model": "openai",
+    "modelName": "text-embedding-3-small",
+    "dimensions": 1536
+  },
+  "llm": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "temperature": 0.3
+  },
+  "worker": {
+    "type": "local",
+    "concurrency": 4
+  }
+}
+```
+
+**Usage**: When indexer runs, it:
+
+1. Loads `trackedBranches: ["main", "snapshot-1", "snapshot-2", "snapshot-3", "snapshot-4"]`
+2. For each branch, resolves to commit hash: `git rev-parse main`, `git rev-parse snapshot-1`, etc.
+3. Creates/updates Snapshot nodes with `snapshotType: "branch"` and branch-specific metadata
+4. On branch updates, uses Git diff to detect incremental changes
+
+---
+
+### Snapshot Definitions
+
+#### **Snapshot 1: `main` / `snapshot-1` – Initial Setup (Commit ABC1)**
 
 **Files added**:
 
@@ -1138,7 +1204,7 @@ A  tsconfig.json
 
 ---
 
-#### **Commit 2: `feat: user-service` (User & Auth Services)**
+#### **Snapshot 2: `snapshot-1` – User Service (Commit ABC2)**
 
 **Files added**:
 
@@ -1226,7 +1292,7 @@ A  tests/unit/services.test.ts
 
 ---
 
-#### **Commit 3: `feat: api-routes` (HTTP Boundaries)**
+#### **Snapshot 3: `snapshot-2` – API Routes & Endpoints (Commit ABC3)**
 
 **Files added**:
 
@@ -1302,7 +1368,7 @@ A  tests/validation/schemas.test.ts
 
 ---
 
-#### **Commit 4: `refactor: rename-service` (Rename Detection)**
+#### **Snapshot 4: `snapshot-3` – Refactor (Commit ABC4)**
 
 **Files modified**:
 
@@ -1382,7 +1448,7 @@ M  src/services/user.service.ts
 
 ---
 
-#### **Commit 5: `fix: email-validation` (Modify Existing Symbol)**
+#### **Snapshot 5: `snapshot-4` – Bug Fix (Commit ABC5)**
 
 **Files modified**:
 
@@ -1475,43 +1541,129 @@ M  src/utils/validators.ts
 
 ---
 
+### Git Branch Structure (Setup Guide)
+
+Each snapshot is accessible via a Git branch. This structure enables configuration-driven indexing
+per [configuration_spec.md §3](../configuration_spec.md#3-tracked-branches).
+
+**Branch creation steps**:
+
+```bash
+# Start on main
+git checkout -b main
+# (Initial setup files)
+git commit -m "init: setup"
+# Commit ABC1
+
+# Create snapshot-1 branch at this point
+git branch snapshot-1 HEAD
+
+# Add user service files
+# git add src/models/... src/services/... tests/unit/... docs/README.md
+git commit -m "feat: user-service"
+# Commit ABC2
+
+# Create snapshot-2 branch at this point
+git branch snapshot-2 HEAD
+
+# Add API routes files
+# git add src/api/... src/errors/... src/config/... tests/integration/...
+git commit -m "feat: api-routes"
+# Commit ABC3
+
+# Create snapshot-3 branch at this point
+git branch snapshot-3 HEAD
+
+# Refactor: rename UserService → UserRepository
+# git add src/services/user.service.ts
+git commit -m "refactor: rename-service"
+# Commit ABC4
+
+# Create snapshot-4 branch at this point
+git branch snapshot-4 HEAD
+
+# Fix: update validateEmail regex
+# git add src/utils/validators.ts
+git commit -m "fix: email-validation"
+# Commit ABC5
+```
+
+**Result**: Five branches—`main`, `snapshot-1`, `snapshot-2`, `snapshot-3`, `snapshot-4`—each
+pointing to a distinct commit with immutable code state.
+
+**Note**: `main` and `snapshot-1` point to the same commit (ABC1). This is optional but useful for
+testing both "default branch indexing" and "alternate branch indexing" scenarios.
+
+---
+
+### Incremental Validation Table
+
+| Scenario         | From Branch | To Branch  | Git Diff   | Expected Behavior                                                   |
+| ---------------- | ----------- | ---------- | ---------- | ------------------------------------------------------------------- |
+| Fresh index      | (none)      | snapshot-1 | All files  | All files indexed; Codebase, Module, File, Symbol nodes created     |
+| Add service code | snapshot-1  | snapshot-2 | +13 files  | New symbols, test cases, calls indexed; prior files untouched       |
+| Add API code     | snapshot-2  | snapshot-3 | +8 files   | Boundary detection; handler LOCATION edges created                  |
+| Rename symbol    | snapshot-3  | snapshot-4 | 1 modified | UserService deleted; UserRepository added; broken imports detected  |
+| Modify validator | snapshot-4  | snapshot-5 | 1 modified | validateEmail symbol unchanged (same id); body updated; no deletion |
+
+---
+
 ### Incremental Testing Workflow
+
+**Test setup**: Load `.indexer-config.json` with
+`trackedBranches: ["main", "snapshot-1", "snapshot-2", "snapshot-3", "snapshot-4"]`. Indexer
+resolves each branch to its commit hash and indexes incrementally.
 
 ```typescript
 // Pseudo-test outline
-describe('Incremental Indexing via Git History', () => {
-  it('Snapshot 1 (init): Base structure', async () => {
-    // Index commit 1
-    // Assert: Codebase, Snapshot, Module nodes created
-    // Assert: File, Symbol counts match expected
+describe('Branch-Based Incremental Indexing', () => {
+  let indexer: TexereIndexer;
+  let config: IndexerConfig;
+
+  beforeAll(async () => {
+    // Load .indexer-config.json with trackedBranches
+    config = loadConfig('.indexer-config.json');
+    indexer = new TexereIndexer(config);
   });
 
-  it('Snapshot 2 (feat: user-service): New symbols introduced', async () => {
-    // Index commit 2
-    // Assert: New symbols have TRACKS {event: 'INTRODUCED'} → Snapshot 2
-    // Assert: TestCases created and linked
-    // Assert: Call graph between services extracted
+  it('Snapshot 1 (snapshot-1 branch): Base structure', async () => {
+    // Resolve snapshot-1 branch to commit ABC1 via git rev-parse
+    // Index snapshot-1
+    // Assert: Codebase, Snapshot (snapshotType: "branch", branch: "snapshot-1"), Module nodes
+    // Assert: File count = 8, Symbol count = 0
+    // Assert: All nodes have IN_SNAPSHOT edge
   });
 
-  it('Snapshot 3 (feat: api-routes): Boundaries extracted', async () => {
-    // Index commit 3
-    // Assert: 3 Boundary nodes created
-    // Assert: LOCATION edges to handlers
-    // Assert: Integration tests linked via VERIFIES
+  it('Snapshot 2 (snapshot-1 branch update): New symbols introduced', async () => {
+    // Update snapshot-1 branch to commit ABC2
+    // Compute Git diff: snapshot-1@old..snapshot-1@new
+    // Reindex changed files
+    // Assert: 20+ new symbols created with TRACKS {event: 'INTRODUCED'} → Snapshot 2
+    // Assert: TestCases extracted from *.test.ts files
+    // Assert: Call edges between services (UserService.createUser → validators.validateEmail)
   });
 
-  it('Snapshot 4 (refactor): Renames = delete + add', async () => {
-    // Index commit 4 (rename UserService → UserRepository)
-    // Assert: Old symbol is marked deleted/removed
-    // Assert: New symbol has INTRODUCED marker
-    // Assert: Imports referencing old name need graph adjustment (v1 limitation)
+  it('Snapshot 3 (snapshot-2 branch): Boundaries & endpoints extracted', async () => {
+    // Index snapshot-2 branch (commit ABC3)
+    // Assert: 3 Boundary nodes created (GET /users/:id, POST /users, DELETE /users/:id)
+    // Assert: LOCATION {role: 'HANDLED_BY'} edges link boundaries to handler symbols
+    // Assert: Integration test cases linked via VERIFIES
   });
 
-  it('Snapshot 5 (fix): Modified symbol tracking', async () => {
-    // Index commit 5 (validateEmail modified)
-    // Assert: Symbol ID stable (same name, location)
+  it('Snapshot 4 (snapshot-3 branch): Rename = delete + add (v1 limitation)', async () => {
+    // Index snapshot-3 branch (commit ABC4, UserService → UserRepository rename)
+    // Assert: Old UserService symbol marked deleted/removed
+    // Assert: New UserRepository symbol has TRACKS {event: 'INTRODUCED'}
+    // Assert: Files importing old UserService name have broken references (detected in validation)
+    // Assert: Tests demonstrate v1 limitation and guide future v2 rename tracking
+  });
+
+  it('Snapshot 5 (snapshot-4 branch): Modified symbol tracking', async () => {
+    // Index snapshot-4 branch (commit ABC5, validateEmail regex updated)
+    // Assert: validateEmail symbol ID stable (same name, same location)
     // Assert: Symbol has TRACKS {event: 'MODIFIED'} → Snapshot 5
-    // Assert: Previous snapshots still have old version
+    // Assert: Previous snapshots retain old version of validateEmail
+    // Assert: New validatePhone function has TRACKS {event: 'INTRODUCED'} → Snapshot 5
   });
 
   it('Snapshot diff (2→3): Only changed files indexed', async () => {

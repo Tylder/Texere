@@ -7,18 +7,19 @@
 
 ## Properties
 
-| Property      | Type      | Constraints | Notes                                    |
-| ------------- | --------- | ----------- | ---------------------------------------- |
-| `id`          | string    | UNIQUE      | Composite: `codebaseId:commitHash`       |
-| `codebaseId`  | string    | Required    | Foreign key to [Codebase](./Codebase.md) |
-| `commitHash`  | string    | Required    | Git commit SHA-1                         |
-| `author`      | string    | Optional    | Commit author                            |
-| `message`     | string    | Optional    | Commit message                           |
-| `timestamp`   | timestamp | Required    | Commit timestamp                         |
-| `branch`      | string    | Optional    | Branch name (e.g., "main")               |
-| `indexStatus` | enum      | Required    | "success" \| "failed" \| "partial"       |
-| `indexedAt`   | timestamp | Required    | When indexed                             |
-| `createdAt`   | timestamp | Required    | Snapshot creation time                   |
+| Property       | Type      | Constraints | Notes                                                      |
+| -------------- | --------- | ----------- | ---------------------------------------------------------- |
+| `id`           | string    | UNIQUE      | Composite: `codebaseId:commitHash`                         |
+| `codebaseId`   | string    | Required    | Foreign key to [Codebase](./Codebase.md)                   |
+| `commitHash`   | string    | Required    | Git commit SHA-1                                           |
+| `author`       | string    | Optional    | Commit author                                              |
+| `message`      | string    | Optional    | Commit message                                             |
+| `timestamp`    | timestamp | Required    | Commit timestamp                                           |
+| `branch`       | string    | Optional    | Branch name (e.g., "main", "snapshot-1"); tracked source   |
+| `snapshotType` | enum      | Required    | "branch" \| "commit" \| "tag"; how snapshot was identified |
+| `indexStatus`  | enum      | Required    | "success" \| "failed" \| "partial"                         |
+| `indexedAt`    | timestamp | Required    | When indexed                                               |
+| `createdAt`    | timestamp | Required    | Snapshot creation time                                     |
 
 ---
 
@@ -39,6 +40,7 @@ CREATE (snap:Snapshot {
   message: "feat: add indexer",
   timestamp: timestamp(1700000000),
   branch: "main",
+  snapshotType: "branch",
   indexStatus: "success",
   indexedAt: timestamp(),
   createdAt: timestamp()
@@ -72,32 +74,106 @@ CREATE (snap:Snapshot {
 
 ---
 
+## Snapshot Types
+
+### Branch Snapshots (`snapshotType: "branch"`)
+
+- **Purpose**: Represent tracked branches in config (e.g., `main`, `develop`, `snapshot-1`)
+- **Indexing**: Triggered by config's `trackedBranches` list
+- **Usage**: Default v1 approach; one snapshot per tracked branch
+- **Property**: `branch` field stores source branch name
+
+**Example**:
+
+```cypher
+Snapshot {
+  snapshotType: "branch",
+  branch: "main",
+  commitHash: "abc123...",
+  id: "my-repo:abc123..."
+}
+```
+
+### Commit Snapshots (`snapshotType: "commit"`)
+
+- **Purpose**: Full Git history snapshots (optional v2+)
+- **Indexing**: Index every commit in history
+- **Usage**: For detailed evolution tracking
+- **Property**: `branch` may be null or contain original branch
+
+**Example**:
+
+```cypher
+Snapshot {
+  snapshotType: "commit",
+  branch: null,
+  commitHash: "abc123...",
+  id: "my-repo:abc123..."
+}
+```
+
+### Tag Snapshots (`snapshotType: "tag"`)
+
+- **Purpose**: Release/version snapshots (optional v2+)
+- **Indexing**: Track Git tags (e.g., `v1.0.0`, `release/2024`)
+- **Usage**: Stable version points
+- **Property**: `branch` may store tag name
+
+**Example**:
+
+```cypher
+Snapshot {
+  snapshotType: "tag",
+  branch: "v1.0.0",
+  commitHash: "def456...",
+  id: "my-repo:def456..."
+}
+```
+
+---
+
 ## Lifecycle
 
-1. **Creation**: Created when a new commit is indexed
+1. **Creation**: Created when a branch/commit/tag is indexed (per config)
 2. **Immutability**: Snapshot data never changes (represents fixed point in time)
-3. **Historical**: Multiple snapshots per codebase (one per branch + history)
+3. **Historical**: Multiple snapshots per codebase (one per tracked branch, or full history in v2+)
 4. **Archival**: Old snapshots marked `indexStatus: "archived"` (optional post-v1)
 
 ---
 
 ## Usage Patterns
 
-### Get Latest Snapshot for Branch
+### Get Latest Snapshot for Tracked Branch
 
 ```cypher
-MATCH (cb:Codebase {id: $codebaseId})-[:CONTAINS]->(snap:Snapshot {branch: $branch})
+MATCH (cb:Codebase {id: $codebaseId})-[:CONTAINS]->(snap:Snapshot {snapshotType: "branch", branch: $branchName})
 RETURN snap
 ORDER BY snap.timestamp DESC
 LIMIT 1
 ```
 
-### Find All Snapshots
+### Find All Branch Snapshots (Tracked Branches)
 
 ```cypher
-MATCH (cb:Codebase {id: $codebaseId})-[:CONTAINS]->(snap:Snapshot)
+MATCH (cb:Codebase {id: $codebaseId})-[:CONTAINS]->(snap:Snapshot {snapshotType: "branch"})
 RETURN snap
 ORDER BY snap.timestamp DESC
+```
+
+### Find All Snapshots by Type
+
+```cypher
+MATCH (cb:Codebase {id: $codebaseId})-[:CONTAINS]->(snap:Snapshot {snapshotType: $type})
+RETURN snap, snap.snapshotType AS type
+```
+
+### Incremental Diff Between Branch Snapshots
+
+```cypher
+MATCH (cb:Codebase {id: $codebaseId})-[:CONTAINS]->(snap1:Snapshot {snapshotType: "branch", branch: $branch1})
+MATCH (cb)-[:CONTAINS]->(snap2:Snapshot {snapshotType: "branch", branch: $branch2})
+RETURN snap1, snap2
+// Then use: git diff snap1.commitHash..snap2.commitHash
 ```
 
 ### Get All Code in Snapshot

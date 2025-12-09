@@ -32,11 +32,13 @@ It is **incremental**, **language‑agnostic**, and uses a unified structure (`F
 - Boundaries, schema entities, test cases.
 - LLM-assisted feature mapping + test↔feature + boundary↔feature.
 
-### Snapshot retention rules:
+### Snapshot retention & selection (Branch-Based):
 
-- **Own repos**: index **only the latest commit** of each configured branch (e.g. `main`,
-  `develop`).
-- **Dependencies**: index **only the specific versions** referenced in lockfiles (e.g.
+- **Own repos**: Configuration file (`.indexer-config.json`) specifies `trackedBranches` array.
+  Ingest resolves each branch to its commit hash and indexes **only the latest commit** of each
+  configured branch (e.g. `main`, `develop`, `snapshot-1`). Each snapshot is immutable and tagged
+  with `snapshotType: "branch"` and `branch: "<branch-name>"`.
+- **Dependencies**: Index **only the specific versions** referenced in lockfiles (e.g.
   `package-lock.json`, `poetry.lock`).
 
 Output flows through `indexer/core` to **Neo4j** (graph) and **Qdrant** (vectors).
@@ -227,14 +229,30 @@ export interface LanguageIndexer {
 
 Implemented in `index-snapshot.ts`.
 
-## 6.1 Snapshot selection & retention (per 3.1)
+## 6.1 Snapshot selection & branch-based indexing (per 3.1)
 
-- Own repos:
-  - Config lists tracked branches.
-  - Ingest stores **only the latest commit** of each tracked branch.
-- Third-party dependencies:
-  - Index **only the exact versions used** in lockfiles.
-  - No historic indexing.
+### Own Repositories (Configuration-Driven)
+
+1. **Read config**: Load `.indexer-config.json` (or env var) to get `trackedBranches` array (e.g.,
+   `["main", "develop", "snapshot-1"]`).
+2. **Resolve branches**: For each branch name:
+   - Execute `git rev-parse <branch-name>` to get commit hash.
+   - Check if Snapshot already exists for that (codebaseId, commitHash) pair.
+3. **Index per branch**:
+   - If Snapshot is new: create it with `snapshotType: "branch"` and `branch: "<branch-name>"`.
+   - Compute Git diff (`git diff <oldCommit>..<newCommit>`) to find changed files.
+   - Index changed files and update the graph.
+4. **Incremental behavior**:
+   - Deleted files → mark removed.
+   - Renamed files → treat as delete + add (v1 limitation).
+   - Unchanged files → reuse prior graph state.
+5. **Immutability**: Snapshots are immutable; branch updates create new Snapshot nodes.
+
+### Third-party Dependencies
+
+- Index **only the exact versions** used in lockfiles (e.g. `package-lock.json`, `poetry.lock`).
+- No historic indexing of older versions.
+- (Future v2+: may support version ranges or multiple pinned versions.)
 
 ## 6.2 Steps
 
