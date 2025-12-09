@@ -57,7 +57,7 @@ CREATE (snap:Snapshot {
 | `[:CONTAINS]` | [File](./File.md)                           | many-to-one | Files in this snapshot    |
 | `[:CONTAINS]` | [Symbol](./Symbol.md)                       | many-to-one | Symbols in this snapshot  |
 | `[:CONTAINS]` | [Endpoint](./Endpoint.md)                   | many-to-one | Optional: endpoints found |
-| `[:CONTAINS]` | [SchemaEntity](./SchemaEntity.md)           | many-to-one | Optional: ORM entities    |
+| `[:CONTAINS]` | [DataContract](DataContract.md)             | many-to-one | Optional: ORM entities    |
 | `[:CONTAINS]` | [TestCase](./TestCase.md)                   | many-to-one | Optional: tests found     |
 | `[:CONTAINS]` | [SpecDoc](./SpecDoc.md)                     | many-to-one | Optional: docs indexed    |
 | `[:CONTAINS]` | [ThirdPartyLibrary](./ThirdPartyLibrary.md) | many-to-one | Optional: from lockfile   |
@@ -135,7 +135,7 @@ All of these must point to exactly one snapshot via `[:IN_SNAPSHOT]`:
 - [Module](./Module.md)
 - [TestCase](./TestCase.md)
 - [SpecDoc](./SpecDoc.md)
-- [SchemaEntity](./SchemaEntity.md)
+- [DataContract](DataContract.md)
 - [ThirdPartyLibrary](./ThirdPartyLibrary.md)
 
 ---

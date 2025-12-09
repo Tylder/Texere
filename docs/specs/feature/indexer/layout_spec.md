@@ -158,7 +158,7 @@ export async function upsertSymbol(symbol: Symbol, snapshotId: string): Promise<
   // If snapshot not found, error thrown before write
 }
 
-// Similar pattern for: Module, File, Endpoint, TestCase, SchemaEntity, SpecDoc
+// Similar pattern for: Module, File, Endpoint, TestCase, DataContract, SpecDoc
 ```
 
 **Dependencies**:

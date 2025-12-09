@@ -282,7 +282,7 @@ Create **FieldMutation** relationship:
   operation: 'READ' | 'WRITE',
   confidence: 0.95,
   contexts: ["const email = user.email", "..."]
-}]->(entity:SchemaEntity)
+}]->(entity:DataContract)
 
 // Better structure using relationship property:
 (symbol:Symbol)-[r:FIELD_MUTATION {

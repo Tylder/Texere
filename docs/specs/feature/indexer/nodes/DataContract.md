@@ -1,4 +1,4 @@
-# SchemaEntity Node
+# DataContract Node
 
 **Category**: Snapshot-Scoped  
 **Purpose**: Database model/entity (Prisma model, SQLAlchemy class, TypeORM entity, SQL table).
@@ -22,9 +22,9 @@
 
 ```cypher
 CREATE CONSTRAINT schema_entity_id_unique IF NOT EXISTS
-FOR (n:SchemaEntity) REQUIRE n.id IS UNIQUE;
+FOR (n:DataContract) REQUIRE n.id IS UNIQUE;
 
-CREATE (se:SchemaEntity {
+CREATE (se:DataContract {
   id: "snap-123:User",
   snapshotId: "snap-123",
   name: "User",
@@ -58,7 +58,7 @@ CREATE (se:SchemaEntity {
 
 ## Sparse Node
 
-SchemaEntity has minimal outgoing edges (sparse). Primary value is as **target** of `[:MUTATES]`
+DataContract has minimal outgoing edges (sparse). Primary value is as **target** of `[:MUTATES]`
 edges.
 
 ---
@@ -68,14 +68,14 @@ edges.
 ### Find All Symbols Reading Entity
 
 ```cypher
-MATCH (sym:Symbol)-[r:MUTATES {operation: 'READ'}]->(se:SchemaEntity {id: $entityId})
+MATCH (sym:Symbol)-[r:MUTATES {operation: 'READ'}]->(se:DataContract {id: $entityId})
 RETURN sym, r.confidence
 ```
 
 ### Find All Symbols Writing Entity
 
 ```cypher
-MATCH (sym:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(se:SchemaEntity {id: $entityId})
+MATCH (sym:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(se:DataContract {id: $entityId})
 RETURN sym, r.confidence
 ```
 
@@ -83,21 +83,21 @@ RETURN sym, r.confidence
 
 ```cypher
 -- Find all code that would be affected
-MATCH (se:SchemaEntity {name: 'User'})<-[r:MUTATES]-(x)
+MATCH (se:DataContract {name: 'User'})<-[r:MUTATES]-(x)
 RETURN x, r.operation
 ```
 
 ### Find Endpoints Accessing Entity
 
 ```cypher
-MATCH (ep:Endpoint)-[r:MUTATES {operation: 'READ'|'WRITE'}]->(se:SchemaEntity {id: $entityId})
+MATCH (ep:Endpoint)-[r:MUTATES {operation: 'READ'|'WRITE'}]->(se:DataContract {id: $entityId})
 RETURN ep, r.operation
 ```
 
 ### Find All Entities in Schema
 
 ```cypher
-MATCH (snap:Snapshot {id: $snapshotId})-[:CONTAINS]->(se:SchemaEntity)
+MATCH (snap:Snapshot {id: $snapshotId})-[:CONTAINS]->(se:DataContract)
 RETURN se
 ```
 
@@ -125,10 +125,10 @@ RETURN se
 Data access relationships flow through both direct and transitive paths:
 
 ```
-[Symbol] --[:MUTATES]--> [SchemaEntity]
+[Symbol] --[:MUTATES]--> [DataContract]
 [Endpoint] --[:LOCATION {role: 'HANDLED_BY'}]--> [Symbol]
-                                                      |
-                                                  [:MUTATES]--> [SchemaEntity]
+                                                       |
+                                                   [:MUTATES]--> [DataContract]
 ```
 
 Both direct and transitive queries are supported.

@@ -69,7 +69,7 @@ CREATE (sym:Symbol {
 | `[:REFERENCES {kind: 'PATTERN'}]`             | [Pattern](./Pattern.md)                 | optional    | Adheres to pattern   |
 | `[:REFERENCES {kind: 'SIMILAR'}]`             | [Symbol](./Symbol.md)                   | optional    | Embedding similarity |
 | `[:REALIZES {role: 'IMPLEMENTS'}]`            | [Feature](./Feature.md)                 | optional    | Implements feature   |
-| `[:MUTATES {operation: 'READ'\|'WRITE'}]`     | [SchemaEntity](./SchemaEntity.md)       | optional    | Data access          |
+| `[:MUTATES {operation: 'READ'\|'WRITE'}]`     | [DataContract](DataContract.md)         | optional    | Data access          |
 | `[:DEPENDS_ON {kind: 'CONFIG'}]`              | ConfigurationVariable                   | optional    | Uses config/env      |
 | `[:DEPENDS_ON {kind: 'SERVICE'}]`             | [ExternalService](./ExternalService.md) | optional    | Calls external API   |
 | `[:TRACKS {event: 'INTRODUCED'\|'MODIFIED'}]` | [Snapshot](./Snapshot.md)               | optional    | Evolution tracking   |
@@ -113,7 +113,7 @@ RETURN reachable
 
 ```cypher
 -- What does this symbol read/write?
-MATCH (sym:Symbol {id: $symbolId})-[r:MUTATES]->(entity:SchemaEntity)
+MATCH (sym:Symbol {id: $symbolId})-[r:MUTATES]->(entity:DataContract)
 RETURN entity, r.operation
 ```
 

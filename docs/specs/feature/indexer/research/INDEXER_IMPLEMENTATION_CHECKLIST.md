@@ -200,7 +200,7 @@ export async function initializeInSnapshotConstraints(driver: neo4j.Driver) {
       FOR (n:File) REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL
     `);
 
-    // (repeat for: Module, EntryPoint, SchemaEntity, TestCase, SpecDoc)
+    // (repeat for: Module, EntryPoint, DataContract, TestCase, SpecDoc)
 
     console.log('✓ IN_SNAPSHOT existence constraints created');
   } finally {

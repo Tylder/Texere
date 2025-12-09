@@ -24,7 +24,7 @@ each edge:
    - [File](#file)
    - [Symbol](#symbol)
    - [Endpoint](#endpoint)
-   - [SchemaEntity](#schemaentity)
+   - [DataContract](#datacontract)
    - [TestCase](#testcase)
    - [SpecDoc](#specdoc)
    - [ThirdPartyLibrary](#thirdpartylibrary)
@@ -75,7 +75,7 @@ Node represents a Git commit being indexed.
 | `[:CONTAINS]` | File              | **Required** | 1     | All files in snapshot (from Git tree)                        |
 | `[:CONTAINS]` | Symbol            | **Required** | 1     | All symbols extracted from files                             |
 | `[:CONTAINS]` | Endpoint          | Optional     | 3     | Only if endpoints found in code (framework pattern matching) |
-| `[:CONTAINS]` | SchemaEntity      | Optional     | 3     | Only if ORM models found                                     |
+| `[:CONTAINS]` | DataContract      | Optional     | 3     | Only if ORM models found                                     |
 | `[:CONTAINS]` | TestCase          | Optional     | 4     | Only if test files present                                   |
 | `[:CONTAINS]` | SpecDoc           | Optional     | 1     | Only if docs/ present in snapshot                            |
 | `[:CONTAINS]` | ThirdPartyLibrary | Optional     | 3     | Only if lockfile present                                     |
@@ -174,8 +174,8 @@ Node represents a code definition (function, class, variable, type, interface, e
 | `[:REFERENCES {type: 'CALL'}]`      | Symbol                | Optional     | 2     | Function call within this symbol's body (AST call expression → target symbol) |
 | `[:REFERENCES {type: 'REFERENCE'}]` | Symbol                | Optional     | 2     | Type or const reference (import, type annotation, variable reference)         |
 | `[:IMPLEMENTS]`                     | Feature               | Optional     | 5     | Symbol is part of feature implementation (features.yaml or LLM inference)     |
-| `[:READS_FROM]`                     | SchemaEntity          | Optional     | 6     | Symbol reads from data model (ORM pattern or LLM field analysis)              |
-| `[:WRITES_TO]`                      | SchemaEntity          | Optional     | 6     | Symbol writes to data model (ORM pattern or LLM field analysis)               |
+| `[:READS_FROM]`                     | DataContract          | Optional     | 6     | Symbol reads from data model (ORM pattern or LLM field analysis)              |
+| `[:WRITES_TO]`                      | DataContract          | Optional     | 6     | Symbol writes to data model (ORM pattern or LLM field analysis)               |
 | `[:FOLLOWS_PATTERN]`                | Pattern               | Optional     | 7     | Symbol matches known code pattern (heuristic or LLM detection)                |
 | `[:USES_CONFIG]`                    | ConfigurationVariable | Optional     | 9     | Symbol accesses environment variable (code scanning or LLM extraction)        |
 | `[:INTRODUCED_IN]`                  | Snapshot              | Optional     | 8     | First snapshot where this symbol appears (Git diff)                           |
@@ -201,7 +201,7 @@ Node represents a code definition (function, class, variable, type, interface, e
 - Symbol is central; most queries flow through symbol connections
 - `id` is composite: `snapshotId:filePath:symbolName:startLine:startCol` (stable within snapshot)
 - `[:REFERENCES]` is single edge type with `type` property (`'CALL'` or `'REFERENCE'`)
-- `[:IMPLEMENTS]` connects to Feature; `[:READS_FROM]`/`[:WRITES_TO]` connect to SchemaEntity
+- `[:IMPLEMENTS]` connects to Feature; `[:READS_FROM]`/`[:WRITES_TO]` connect to DataContract
 - Embedding ID stored on node; used for `[:SIMILAR_TO]` edge creation
 - Properties on node include extracted patterns: `codeTemplate`, `fieldMutations`,
   `configVariables`, `externalServices`, `dataFlow` (from GROUP 6 LLM extraction)
@@ -221,8 +221,8 @@ Node represents an HTTP API endpoint (verb + path).
 | `[:IN_FILE]`         | File            | **Required** | 3     | Endpoint definition location (derived from handler symbol's file)            |
 | `[:IN_MODULE]`       | Module          | Optional     | 3     | Endpoint's module (derived: handler symbol's module, or from path heuristic) |
 | `[:IMPLEMENTS]`      | Feature         | Optional     | 5     | Endpoint implements this feature (feature name matching or LLM)              |
-| `[:READS_FROM]`      | SchemaEntity    | Optional     | 6     | Endpoint reads from data model (via handler symbol field analysis)           |
-| `[:WRITES_TO]`       | SchemaEntity    | Optional     | 6     | Endpoint writes to data model (via handler symbol field analysis)            |
+| `[:READS_FROM]`      | DataContract    | Optional     | 6     | Endpoint reads from data model (via handler symbol field analysis)           |
+| `[:WRITES_TO]`       | DataContract    | Optional     | 6     | Endpoint writes to data model (via handler symbol field analysis)            |
 | `[:CALLS]`           | ExternalService | Optional     | 9     | Endpoint calls external API (handler symbol analysis or code scanning)       |
 | `[:FOLLOWS_PATTERN]` | Pattern         | Optional     | 7     | Endpoint handler matches pattern (heuristic or LLM detection)                |
 | `[:INTRODUCED_IN]`   | Snapshot        | Optional     | 8     | Endpoint first appeared in this snapshot                                     |
@@ -250,7 +250,7 @@ Node represents an HTTP API endpoint (verb + path).
 
 ---
 
-### SchemaEntity
+### DataContract
 
 Node represents a database model/entity (Prisma model, SQLAlchemy class, TypeORM entity, etc.).
 
@@ -272,7 +272,7 @@ Node represents a database model/entity (Prisma model, SQLAlchemy class, TypeORM
 
 #### Notes
 
-- SchemaEntity is relatively sparse in edges (mostly incoming from Symbol/Endpoint)
+- DataContract is relatively sparse in edges (mostly incoming from Symbol/Endpoint)
 - Useful for refactoring queries: "all symbols touching User entity" or "impact of User → User +
   Profile split"
 - No `[:DEPENDS_ON]` edge in v1; FK relationships handled implicitly (refactor analysis via field
@@ -568,7 +568,7 @@ Node represents an environment variable or configuration setting.
 | **File**                  | 2        | 2        | 4     | Sparse         |
 | **Symbol**                | 11       | 8        | 19    | **Very Dense** |
 | **Endpoint**              | 11       | 4        | 15    | **Dense**      |
-| **SchemaEntity**          | 1        | 5        | 6     | Sparse         |
+| **DataContract**          | 1        | 5        | 6     | Sparse         |
 | **TestCase**              | 5        | 3        | 8     | Medium         |
 | **SpecDoc**               | 6        | 2        | 8     | Medium         |
 | **ThirdPartyLibrary**     | 1        | 2        | 3     | Sparse         |

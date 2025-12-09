@@ -16,19 +16,19 @@ Created during indexing for a specific snapshot. Linked via `[:IN_SNAPSHOT]`.
 
 ### Mandatory (V1)
 
-| Node                                     | Purpose                                            | Cardinality     | Key Property                                        |
-| ---------------------------------------- | -------------------------------------------------- | --------------- | --------------------------------------------------- |
-| **[Codebase](./Codebase.md)**            | Code repository (any code being indexed)           | N per workspace | `id` (unique)                                       |
-| **[Snapshot](./Snapshot.md)**            | Git commit being indexed                           | N per codebase  | `id` (composite: codebaseId:commitHash)             |
-| **[Module](./Module.md)**                | Logical package/library/app                        | N per snapshot  | `id` (composite: snapshotId:modulePath)             |
-| **[File](./File.md)**                    | Source code file                                   | N per module    | `id` (composite: snapshotId:filePath)               |
-| **[Symbol](./Symbol.md)**                | Function, class, type, interface, const            | N per file      | `id` (composite: snapshotId:filePath:name:line:col) |
-| **[Boundary](./EntryPoint.md)** ⚠️       | Callable interface (HTTP, gRPC, CLI, events, etc.) | N per snapshot  | `id` (composite: snapshotId:kind:identifier)        |
-| **[DataContract](./SchemaEntity.md)** ⚠️ | Data model (Prisma, SQL, GraphQL, Protobuf, etc.)  | N per snapshot  | `id` (composite: snapshotId:entityName)             |
-| **[TestCase](./TestCase.md)**            | Unit/integration/e2e test                          | N per file      | `id` (composite: snapshotId:filePath:testName)      |
-| **[SpecDoc](./SpecDoc.md)**              | Documentation (spec, ADR, design doc)              | N per snapshot  | `id` (composite: snapshotId:docPath)                |
+| Node                                   | Purpose                                            | Cardinality     | Key Property                                        |
+| -------------------------------------- | -------------------------------------------------- | --------------- | --------------------------------------------------- |
+| **[Codebase](./Codebase.md)**          | Code repository (any code being indexed)           | N per workspace | `id` (unique)                                       |
+| **[Snapshot](./Snapshot.md)**          | Git commit being indexed                           | N per codebase  | `id` (composite: codebaseId:commitHash)             |
+| **[Module](./Module.md)**              | Logical package/library/app                        | N per snapshot  | `id` (composite: snapshotId:modulePath)             |
+| **[File](./File.md)**                  | Source code file                                   | N per module    | `id` (composite: snapshotId:filePath)               |
+| **[Symbol](./Symbol.md)**              | Function, class, type, interface, const            | N per file      | `id` (composite: snapshotId:filePath:name:line:col) |
+| **[Boundary](./EntryPoint.md)** ⚠️     | Callable interface (HTTP, gRPC, CLI, events, etc.) | N per snapshot  | `id` (composite: snapshotId:kind:identifier)        |
+| **[DataContract](DataContract.md)** ⚠️ | Data model (Prisma, SQL, GraphQL, Protobuf, etc.)  | N per snapshot  | `id` (composite: snapshotId:entityName)             |
+| **[TestCase](./TestCase.md)**          | Unit/integration/e2e test                          | N per file      | `id` (composite: snapshotId:filePath:testName)      |
+| **[SpecDoc](./SpecDoc.md)**            | Documentation (spec, ADR, design doc)              | N per snapshot  | `id` (composite: snapshotId:docPath)                |
 
-⚠️ **Recently renamed**: EntryPoint → Boundary, SchemaEntity → DataContract (to support more
+⚠️ **Recently renamed**: Endpoint → Boundary (planned), SchemaEntity → DataContract (to support more
 domains)
 
 ### Optional (V2+)
@@ -76,7 +76,7 @@ tracking.
 - **Code Structure**: [Module](./Module.md), [File](./File.md), [Symbol](./Symbol.md)
 - **Behavior**: [Boundary](./EntryPoint.md), [TestCase](./TestCase.md), [Workflow](./Workflow.md)
   (v2+)
-- **Data**: [DataContract](./SchemaEntity.md), [Message](./Message.md) (v2+)
+- **Data**: [DataContract](DataContract.md), [Message](./Message.md) (v2+)
 - **Metadata**: [SpecDoc](./SpecDoc.md), [StyleGuide](./StyleGuide.md)
 - **External Integration**: [ExternalService](./ExternalService.md), [Dependency](./Dependency.md)
   (v2+)

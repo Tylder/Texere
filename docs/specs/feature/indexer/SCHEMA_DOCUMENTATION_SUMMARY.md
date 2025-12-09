@@ -93,10 +93,10 @@ Each node/edge has a dedicated file with consistent structure:
 
 ### Behavior & Data Nodes (2)
 
-| Node                                    | File                    | Purpose                   | Scope          |
-| --------------------------------------- | ----------------------- | ------------------------- | -------------- |
-| [TestCase](./nodes/TestCase.md)         | `nodes/TestCase.md`     | Unit/integration/e2e test | N per file     |
-| [SchemaEntity](./nodes/SchemaEntity.md) | `nodes/SchemaEntity.md` | Database model            | N per snapshot |
+| Node                                  | File                    | Purpose                   | Scope          |
+| ------------------------------------- | ----------------------- | ------------------------- | -------------- |
+| [TestCase](./nodes/TestCase.md)       | `nodes/TestCase.md`     | Unit/integration/e2e test | N per file     |
+| [DataContract](nodes/DataContract.md) | `nodes/DataContract.md` | Database model            | N per snapshot |
 
 ### Metadata Nodes (2)
 
@@ -190,7 +190,7 @@ docs/specs/feature/indexer/
 │   ├── File.md
 │   ├── Symbol.md
 │   ├── Endpoint.md
-│   ├── SchemaEntity.md
+│   ├── DataContract.md
 │   ├── TestCase.md
 │   ├── SpecDoc.md
 │   ├── ThirdPartyLibrary.md
@@ -256,8 +256,8 @@ All consolidated edges follow this pattern:
 (symbol:Symbol)-[r:REFERENCES {type: 'IMPORT', line: 1, col: 0}]->(imported:Symbol)
 
 -- Example: [:MUTATES] with operation property
-(symbol:Symbol)-[r:MUTATES {operation: 'READ'}]->(entity:SchemaEntity)
-(symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:SchemaEntity)
+(symbol:Symbol)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract)
+(symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
 
 -- Example: [:REALIZES] with role property
 (symbol:Symbol)-[r:REALIZES {role: 'IMPLEMENTS'}]->(feature:Feature)
@@ -287,7 +287,7 @@ All 15 nodes can connect via various edges. Key patterns:
 - **Hierarchy**: File → Module → Snapshot → Codebase (via `[:CONTAINS]`)
 - **Versioning**: All scoped nodes → Snapshot (via `[:IN_SNAPSHOT]`)
 - **Features**: Symbol/Endpoint → Feature (via `[:REALIZES {role: 'IMPLEMENTS'}]`)
-- **Data**: Symbol/Endpoint → SchemaEntity (via `[:MUTATES]`)
+- **Data**: Symbol/Endpoint → DataContract (via `[:MUTATES]`)
 - **Testing**: TestCase → Symbol/Feature (via `[:REALIZES]`)
 - **Documentation**: SpecDoc/StyleGuide → Feature/Module/Symbol (via `[:DOCUMENTS]`)
 - **Dependencies**: Module/Symbol/Endpoint → ExternalService/Library/Config (via `[:DEPENDS_ON]`)
@@ -397,7 +397,7 @@ RETURN reachable
 ### Data Dependency
 
 ```cypher
-MATCH (sym:Symbol)-[r:MUTATES {operation: op}]->(entity:SchemaEntity)
+MATCH (sym:Symbol)-[r:MUTATES {operation: op}]->(entity:DataContract)
 RETURN entity, r.operation
 ```
 

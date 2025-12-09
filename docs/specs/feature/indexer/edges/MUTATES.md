@@ -30,8 +30,8 @@ analysis.
 ### READ – Data Read Operations
 
 ```cypher
-(symbol:Symbol)-[r:MUTATES {operation: 'READ'}]->(entity:SchemaEntity)
-(endpoint:Endpoint)-[r:MUTATES {operation: 'READ'}]->(entity:SchemaEntity)
+(symbol:Symbol)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract)
+(endpoint:Endpoint)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract)
 ```
 
 **Semantic**: Code reads from database entity (SELECT, query, fetch).
@@ -45,8 +45,8 @@ analysis.
 ### WRITE – Data Write Operations
 
 ```cypher
-(symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:SchemaEntity)
-(endpoint:Endpoint)-[r:MUTATES {operation: 'WRITE'}]->(entity:SchemaEntity)
+(symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
+(endpoint:Endpoint)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
 ```
 
 **Semantic**: Code writes to database entity (INSERT, UPDATE, DELETE).
@@ -63,8 +63,8 @@ analysis.
 
 | Source   | Operation     | Target       | Cardinality | Notes                |
 | -------- | ------------- | ------------ | ----------- | -------------------- |
-| Symbol   | READ \| WRITE | SchemaEntity | optional    | Symbol data access   |
-| Endpoint | READ \| WRITE | SchemaEntity | optional    | Endpoint data access |
+| Symbol   | READ \| WRITE | DataContract | optional    | Symbol data access   |
+| Endpoint | READ \| WRITE | DataContract | optional    | Endpoint data access |
 
 ---
 
@@ -76,11 +76,11 @@ CREATE INDEX mutates_operation IF NOT EXISTS
 FOR ()-[r:MUTATES]-() ON (r.operation);
 
 CREATE INDEX mutates_operation_target IF NOT EXISTS
-FOR ()-[r:MUTATES]->(n:SchemaEntity) ON (r.operation, n.id);
+FOR ()-[r:MUTATES]->(n:DataContract) ON (r.operation, n.id);
 
 -- Example: Get all data accesses for an endpoint
 MATCH (ep:Endpoint {id: 'snap-123:POST:/api/users'})
-  -[r:MUTATES {operation: operation}]->(entity:SchemaEntity)
+  -[r:MUTATES {operation: operation}]->(entity:DataContract)
 RETURN entity, r.operation
 ```
 
@@ -92,12 +92,12 @@ RETURN entity, r.operation
 
 ```cypher
 -- What data does this symbol read/write?
-MATCH (sym:Symbol {id: $symbolId})-[r:MUTATES]->(entity:SchemaEntity)
+MATCH (sym:Symbol {id: $symbolId})-[r:MUTATES]->(entity:DataContract)
 RETURN entity, r.operation
 ORDER BY r.operation DESC
 
 -- Get all entities accessed by symbol
-MATCH (sym:Symbol {id: $symbolId})-[r:MUTATES]->(entity:SchemaEntity)
+MATCH (sym:Symbol {id: $symbolId})-[r:MUTATES]->(entity:DataContract)
 RETURN DISTINCT entity
 ```
 
@@ -105,15 +105,15 @@ RETURN DISTINCT entity
 
 ```cypher
 -- What reads from User entity?
-MATCH (reader)-[r:MUTATES {operation: 'READ'}]->(entity:SchemaEntity {name: 'User'})
+MATCH (reader)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract {name: 'User'})
 RETURN reader
 
 -- What writes to User entity?
-MATCH (writer)-[r:MUTATES {operation: 'WRITE'}]->(entity:SchemaEntity {name: 'User'})
+MATCH (writer)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract {name: 'User'})
 RETURN writer
 
 -- Complete data dependency
-MATCH (sym:Symbol)-[r:MUTATES {operation: op}]->(entity:SchemaEntity)
+MATCH (sym:Symbol)-[r:MUTATES {operation: op}]->(entity:DataContract)
 RETURN sym, entity, op
 ```
 
@@ -121,11 +121,11 @@ RETURN sym, entity, op
 
 ```cypher
 -- What accesses this entity?
-MATCH (node)-[r:MUTATES]->(entity:SchemaEntity {id: $entityId})
+MATCH (node)-[r:MUTATES]->(entity:DataContract {id: $entityId})
 RETURN node, r.operation
 
 -- Entities with no read access (write-only)
-MATCH (entity:SchemaEntity)
+MATCH (entity:DataContract)
 WHERE EXISTS((writer)-[:MUTATES {operation: 'WRITE'}]->(entity))
   AND NOT EXISTS((reader)-[:MUTATES {operation: 'READ'}]->(entity))
 RETURN entity
@@ -136,12 +136,12 @@ RETURN entity
 ```cypher
 -- What data does endpoint access?
 MATCH (ep:Endpoint {id: $endpointId})
-  -[r:MUTATES]->(entity:SchemaEntity)
+  -[r:MUTATES]->(entity:DataContract)
 RETURN entity, r.operation
 ORDER BY r.operation
 
 -- Endpoints reading User data
-MATCH (ep:Endpoint)-[r:MUTATES {operation: 'READ'}]->(entity:SchemaEntity {name: 'User'})
+MATCH (ep:Endpoint)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract {name: 'User'})
 RETURN ep, COUNT(r) as read_count
 GROUP BY ep
 ```
@@ -150,13 +150,13 @@ GROUP BY ep
 
 ```cypher
 -- All writes to entity (audit trail source)
-MATCH (symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:SchemaEntity {name: 'User'})
+MATCH (symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract {name: 'User'})
 RETURN symbol
 ORDER BY symbol.startLine
 
 -- Write operations in endpoint
 MATCH (ep:Endpoint {id: $endpointId})
-  -[r:MUTATES {operation: 'WRITE'}]->(entity:SchemaEntity)
+  -[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
 RETURN entity, COUNT(*) as write_count
 GROUP BY entity
 ```
@@ -233,8 +233,8 @@ patterns = [
 ### PII Data Protection
 
 ```cypher
--- Who accesses PII data (tagged SchemaEntity)?
-MATCH (accessor)-[r:MUTATES]->(entity:SchemaEntity {isPII: true})
+-- Who accesses PII data (tagged DataContract)?
+MATCH (accessor)-[r:MUTATES]->(entity:DataContract {isPII: true})
 RETURN accessor, entity, r.operation
 ```
 
@@ -242,7 +242,7 @@ RETURN accessor, entity, r.operation
 
 ```cypher
 -- Endpoints writing to sensitive entities
-MATCH (ep:Endpoint)-[r:MUTATES {operation: 'WRITE'}]->(entity:SchemaEntity {sensitive: true})
+MATCH (ep:Endpoint)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract {sensitive: true})
 MATCH (ep)-[:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
 RETURN ep, handler, entity
 ```
@@ -254,6 +254,6 @@ RETURN ep, handler, entity
 - [graph_schema_spec.md](../graph_schema_spec.md) – Core schema
 - [Symbol.md](../nodes/Symbol.md) – Symbol definition
 - [Endpoint.md](../nodes/Endpoint.md) – Endpoint definition
-- [SchemaEntity.md](../nodes/SchemaEntity.md) – Database entity definition
+- [DataContract.md](../nodes/DataContract.md) – Database entity definition
 - [REFERENCES.md](./REFERENCES.md) – Code relations (CALL for transitive analysis)
 - [REALIZES.md](./REALIZES.md) – Feature implementation

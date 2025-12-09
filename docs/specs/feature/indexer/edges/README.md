@@ -96,7 +96,7 @@ complexity while maintaining query expressiveness.
 | Symbol → Symbol                            | REFERENCES {type: 'IMPORT'}      | Import statements       |
 | Symbol → Pattern                           | REFERENCES {type: 'PATTERN'}     | Pattern adherence       |
 | Symbol → Symbol                            | REFERENCES {type: 'SIMILAR'}     | Embedding similarity    |
-| Symbol/Endpoint → SchemaEntity             | MUTATES                          | Data flow (READ/WRITE)  |
+| Symbol/Endpoint → DataContract             | MUTATES                          | Data flow (READ/WRITE)  |
 | Symbol/Endpoint → Feature                  | REALIZES {role: 'IMPLEMENTS'}    | Implementation          |
 | TestCase → Symbol/Endpoint                 | REALIZES {role: 'TESTS'}         | Test coverage           |
 | TestCase → Feature                         | REALIZES {role: 'VERIFIES'}      | Feature verification    |
@@ -167,8 +167,8 @@ Each consolidated edge type uses a relationship property to differentiate sub-ty
 (symbol:Symbol)-[r:REFERENCES {type: 'IMPORT'}]->(target:Symbol)
 
 -- Example: [:MUTATES] edge with operation property
-(symbol:Symbol)-[r:MUTATES {operation: 'READ'}]->(entity:SchemaEntity)
-(symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:SchemaEntity)
+(symbol:Symbol)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract)
+(symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
 
 -- Example: [:TRACKS] edge with event property
 (symbol:Symbol)-[r:TRACKS {event: 'INTRODUCED'}]->(snapshot:Snapshot)
@@ -183,7 +183,7 @@ MATCH (sym:Symbol)-[r:REFERENCES {type: 'CALL'}]->(target:Symbol)
 RETURN target
 
 -- Get all READ operations (data flow analysis)
-MATCH (sym:Symbol)-[r:MUTATES {operation: 'READ'}]->(entity:SchemaEntity)
+MATCH (sym:Symbol)-[r:MUTATES {operation: 'READ'}]->(entity:DataContract)
 RETURN entity
 
 -- Track when symbol was introduced (no property filter needed)

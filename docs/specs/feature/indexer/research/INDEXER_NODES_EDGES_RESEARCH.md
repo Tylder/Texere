@@ -62,7 +62,7 @@ Created per commit; versioned; linked via `[:IN_SNAPSHOT]` (cardinality = 1).
 | **File**         | Source code file                                            | `id` (composite: snapshotId:filePath), `language`, `isTest`, `isDeleted`                | N per module    |
 | **Symbol**       | Function/class/type/interface/const                         | `id` (composite: snapshotId:filePath:name:line:col), `kind`, `docstring`, `embeddingId` | N per file      |
 | **EntryPoint**   | Callable interface (HTTP endpoint, CLI, export, event, job) | `id` (composite: snapshotId:kind:identifier), `verb`, `path`, `handlerSymbolId`         | N per snapshot  |
-| **SchemaEntity** | Database model (Prisma, SQLAlchemy)                         | `id` (composite: snapshotId:entityName), `kind`, `description`                          | N per snapshot  |
+| **DataContract** | Database model (Prisma, SQLAlchemy)                         | `id` (composite: snapshotId:entityName), `kind`, `description`                          | N per snapshot  |
 | **TestCase**     | Unit/integration/e2e test                                   | `id` (composite: snapshotId:filePath:testName), `kind`, `name`                          | N per file      |
 | **SpecDoc**      | Documentation (spec, ADR, design doc)                       | `id` (composite: snapshotId:docPath), `kind`, `content`, `embeddingId`                  | N per snapshot  |
 
@@ -121,7 +121,7 @@ property for type discrimination.
 (testCase:TestCase)-[r:REALIZES {role: 'TESTS', coverage: 'DIRECT'}]->(symbol:Symbol)
 
 -- Data mutation
-(symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:SchemaEntity)
+(symbol:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
 
 -- Evolution tracking
 (symbol:Symbol)-[r:TRACKS {event: 'MODIFIED'}]->(snapshot:Snapshot)

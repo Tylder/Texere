@@ -36,7 +36,7 @@ HIERARCHY TREE
          │ (func/cls)│                     │
          └───────────┘                     │
                                      ┌─────▼─────────┐
-                                     │  SchemaEntity │
+                                     │  DataContract │
                                      │  (Prisma,ORM) │
                                      └───────────────┘
                                      │  TestCase
@@ -55,7 +55,7 @@ ALL SCOPED NODES: [:IN_SNAPSHOT] → Snapshot (cardinality = 1, CRITICAL)
 | **File**         | id, path, language, isTest, isDeleted          | 100–10K+ per snapshot | Tree (parent = Module)             |
 | **Symbol**       | id, name, kind, docstring, embeddingId         | 1K–100K+ per snapshot | Tree (parent = File)               |
 | **EntryPoint**   | id, verb, path, handlerSymbolId                | 10–100+ per snapshot  | Independent                        |
-| **SchemaEntity** | id, name, kind, description                    | 10–50+ per snapshot   | Independent                        |
+| **DataContract** | id, name, kind, description                    | 10–50+ per snapshot   | Independent                        |
 | **TestCase**     | id, filePath, name, kind                       | 100–1K+ per snapshot  | Tree (parent = File)               |
 | **SpecDoc**      | id, path, name, kind, content, embeddingId     | 1–20+ per snapshot    | Independent                        |
 
@@ -121,7 +121,7 @@ OPTIONAL MATCH (x)-[r1:REALIZES {role: 'IMPLEMENTS'}]->(f)
 OPTIONAL MATCH (x)-[r2:REFERENCES {kind: 'CALL'}*0..2]->(deeper:Symbol)
 
 -- Data access
-OPTIONAL MATCH (deeper)-[r3:MUTATES {operation: 'WRITE'}]->(entity:SchemaEntity)
+OPTIONAL MATCH (deeper)-[r3:MUTATES {operation: 'WRITE'}]->(entity:DataContract)
 
 -- Tests
 OPTIONAL MATCH (t:TestCase)-[r4:REALIZES {role: 'TESTS'}]->(x)

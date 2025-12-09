@@ -37,7 +37,7 @@ This document organizes all graph nodes and edges by **extraction difficulty** a
 | **Codebase** | `id`, `name`, `url`, `createdAt`, `updatedAt`                                                                                                                    | Git metadata (repo URL, ID)                                                                             |
 | **Snapshot** | `id`, `codebaseId`, `commitHash`, `author`, `message`, `timestamp`, `branch`, `indexStatus`, `indexedAt`, `createdAt`                                            | Git commit info via `git log` and `git show`                                                            |
 | **Module**   | `id`, `snapshotId`, `name`, `path`, `type`, `language`, `createdAt`                                                                                              | Directory structure inferred from file paths; Nx detection for type                                     |
-| **File**     | `id`, `snapshotId`, `path`, `name`, `language`, `isTest`, `isDeleted`, `createdAt`                                                                               | File extension determines language; name patterns (_.test.ts, test\__.py) determine `isTest`            |
+| **File**     | `id`, `snapshotId`, `path`, `name`, `language`, `isTest`, `isDeleted`, `createdAt`                                                                               | File extension determines language; name patterns (\_.test.ts, test\_\_.py) determine `isTest`          |
 | **Symbol**   | `id`, `snapshotId`, `filePath`, `name`, `kind`, `startLine`, `startCol`, `endLine`, `endCol`, `isExported`, `docstring`, `embeddingId`, `isDeleted`, `createdAt` | AST traversal to extract all definitions (functions, classes, methods, consts, types, interfaces, etc.) |
 
 #### Edges
@@ -169,7 +169,7 @@ NOTES:
 | Node                  | Properties                                                                        | Extraction Method                                          |
 | --------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | **Endpoint**          | `id`, `snapshotId`, `verb`, `path`, `handlerSymbolId`, `description`, `createdAt` | Framework pattern matching (Express, Fastify, Flask, etc.) |
-| **SchemaEntity**      | `id`, `snapshotId`, `name`, `kind`, `description`, `createdAt`                    | ORM detection (Prisma, SQLAlchemy, TypeORM, etc.)          |
+| **DataContract**      | `id`, `snapshotId`, `name`, `kind`, `description`, `createdAt`                    | ORM detection (Prisma, SQLAlchemy, TypeORM, etc.)          |
 | **ThirdPartyLibrary** | `id`, `snapshotId`, `name`, `version`, `registry`, `createdAt`                    | Lockfile parsing (package-lock.json, poetry.lock, etc.)    |
 
 #### Edges
@@ -177,7 +177,7 @@ NOTES:
 | Relationship                                | Cardinality  | Extraction Method |
 | ------------------------------------------- | ------------ | ----------------- |
 | `Endpoint -[:IN_SNAPSHOT]-> Snapshot`       | many-to-one  | Snapshot scoping  |
-| `SchemaEntity -[:IN_SNAPSHOT]-> Snapshot`   | many-to-one  | Snapshot scoping  |
+| `DataContract -[:IN_SNAPSHOT]-> Snapshot`   | many-to-one  | Snapshot scoping  |
 | `Module -[:DEPENDS_ON]-> ThirdPartyLibrary` | many-to-many | Manifest parsing  |
 
 #### Endpoint Extraction
@@ -231,13 +231,13 @@ FOR EACH FunctionDef with decorator matching @app.VERB or @router.VERB:
 
 ```
 1. Prisma:
-   - Parse schema.prisma file separately (not code)
-   - Extract model blocks → SchemaEntity nodes
-   - kind: 'prisma-model'
+    - Parse schema.prisma file separately (not code)
+    - Extract model blocks → DataContract nodes
+    - kind: 'prisma-model'
 
 2. TypeORM:
    - Find class declarations with @Entity decorator
-   - Extract class name → SchemaEntity
+   - Extract class name → DataContract
    - kind: 'orm-entity'
 
 3. Generic interfaces:
@@ -250,12 +250,12 @@ FOR EACH FunctionDef with decorator matching @app.VERB or @router.VERB:
 ```
 1. SQLAlchemy:
    - Find class definitions extending declarative_base() or Base
-   - Extract class name → SchemaEntity
+   - Extract class name → DataContract
    - kind: 'orm-entity'
 
 2. Pydantic:
    - Find class definitions extending BaseModel
-   - Extract class name → SchemaEntity
+   - Extract class name → DataContract
    - kind: 'orm-entity' (or 'pydantic-model')
 ```
 

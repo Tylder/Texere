@@ -103,7 +103,7 @@ CREATE (evt:EntryPoint {
 | `[:LOCATION {role: 'IN_FILE'}]`               | [File](./File.md)                       | exactly 1   | Handler file           |
 | `[:LOCATION {role: 'IN_MODULE'}]`             | [Module](./Module.md)                   | optional    | Handler module         |
 | `[:REALIZES {role: 'IMPLEMENTS'}]`            | [Feature](./Feature.md)                 | optional    | Feature implementation |
-| `[:MUTATES {operation: 'READ'\|'WRITE'}]`     | [SchemaEntity](./SchemaEntity.md)       | optional    | Data access            |
+| `[:MUTATES {operation: 'READ'\|'WRITE'}]`     | [DataContract](DataContract.md)         | optional    | Data access            |
 | `[:DEPENDS_ON {kind: 'SERVICE'}]`             | [ExternalService](./ExternalService.md) | optional    | External APIs          |
 | `[:REFERENCES {kind: 'PATTERN'}]`             | [Pattern](./Pattern.md)                 | optional    | Pattern adherence      |
 | `[:REFERENCES {kind: 'SIMILAR'}]`             | [EntryPoint](./EntryPoint.md)           | optional    | Similar entry points   |
@@ -156,7 +156,7 @@ RETURN handler
 
 ```cypher
 MATCH (ep:EntryPoint {id: $entryPointId})-[r1:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
-MATCH (handler)-[r2:MUTATES]->(entity:SchemaEntity)
+MATCH (handler)-[r2:MUTATES]->(entity:DataContract)
 RETURN entity, r2.operation
 ```
 

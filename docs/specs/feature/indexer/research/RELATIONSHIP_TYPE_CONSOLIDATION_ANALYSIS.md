@@ -140,7 +140,7 @@ From `NODE_EDGE_MAPPING.md`, you currently have:
                            {subject: 'symbol'|'endpoint', feature}
 
 5. [:MUTATES]            – Data flow
-                           {operation: 'READ'|'WRITE', entity: 'SchemaEntity'}
+                           {operation: 'READ'|'WRITE', entity: 'DataContract'}
 
 6. [:TRACKS_EVOLUTION]   – Snapshot tracking
                            {event: 'INTRODUCED'|'MODIFIED'}
@@ -173,7 +173,7 @@ From `NODE_EDGE_MAPPING.md`, you currently have:
 2. [:IN_SNAPSHOT]        – Scoping (no change)
 3. [:REFERENCES]         – Code relations: CALL, TYPE_REF, IMPORT
 4. [:IMPLEMENTS]         – Symbol/Endpoint implements Feature
-5. [:MUTATES]            – Symbol/Endpoint reads/writes SchemaEntity
+5. [:MUTATES]            – Symbol/Endpoint reads/writes DataContract
                            {operation: 'READ'|'WRITE'}
 6. [:FOLLOWS_PATTERN]    – Code/Module follows Pattern
 7. [:USES_CONFIG]        – Symbol uses ConfigurationVariable
@@ -304,7 +304,7 @@ MATCH (codebase:Codebase)-[:CONTAINS*]->(symbol:Symbol)
 (specDoc:SpecDoc)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
 (file:File)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
 (module:Module)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
-(schemaEntity:SchemaEntity)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
+(dataContract:DataContract)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
 (thirdPartyLib:ThirdPartyLibrary)-[:IN_SNAPSHOT]->(snapshot:Snapshot)
 ```
 
@@ -382,8 +382,8 @@ RETURN x, r.role
 **Semantic**: "What accesses this schema entity?"
 
 ```cypher
-(symbol:Symbol)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.0-1.0}]->(entity:SchemaEntity)
-(endpoint:Endpoint)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.0-1.0}]->(entity:SchemaEntity)
+(symbol:Symbol)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.0-1.0}]->(entity:DataContract)
+(endpoint:Endpoint)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.0-1.0}]->(entity:DataContract)
 ```
 
 **Properties**:
@@ -527,7 +527,7 @@ ORDER BY snap.timestamp
 | `[:IN_SNAPSHOT]` | Direct     | —                                          | All scoped→Snapshot              | Version membership |
 | `[:REFERENCES]`  | Code       | CALL, TYPE_REF, IMPORT, PATTERN, SIMILAR   | Symbol/Endpoint/Module           | Code relations     |
 | `[:REALIZES]`    | Semantic   | IMPLEMENTS, TESTS, VERIFIES                | Symbol/Endpoint/TestCase         | Implementation     |
-| `[:MUTATES]`     | Data       | READ, WRITE                                | Symbol/Endpoint→SchemaEntity     | Data flow          |
+| `[:MUTATES]`     | Data       | READ, WRITE                                | Symbol/Endpoint→DataContract     | Data flow          |
 | `[:DEPENDS_ON]`  | Dependency | LIBRARY, SERVICE, CONFIG, STYLE_GUIDE      | Module/Symbol/Endpoint/Feature   | Dependencies       |
 | `[:DOCUMENTS]`   | Knowledge  | FEATURE, ENDPOINT, SYMBOL, MODULE, PATTERN | SpecDoc/StyleGuide               | Governance         |
 | `[:LOCATION]`    | Position   | HANDLED_BY, IN_FILE, IN_MODULE             | Endpoint/TestCase                | Ownership          |
@@ -570,15 +570,15 @@ RETURN endpoint
 
 ```cypher
 MATCH (symbol:Symbol)
-OPTIONAL MATCH (symbol)-[:READS_FROM]->(entity:SchemaEntity)
-OPTIONAL MATCH (symbol)-[:WRITES_TO]->(entity2:SchemaEntity)
+OPTIONAL MATCH (symbol)-[:READS_FROM]->(entity:DataContract)
+OPTIONAL MATCH (symbol)-[:WRITES_TO]->(entity2:DataContract)
 RETURN symbol, entity, entity2
 ```
 
 **After:**
 
 ```cypher
-MATCH (symbol:Symbol)-[r:MUTATES]->(entity:SchemaEntity)
+MATCH (symbol:Symbol)-[r:MUTATES]->(entity:DataContract)
 RETURN symbol, entity, r.operation
 ```
 

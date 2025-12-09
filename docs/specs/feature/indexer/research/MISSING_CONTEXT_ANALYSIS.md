@@ -150,10 +150,10 @@ interface Endpoint {
 
 ### The Problem
 
-**Current state:** Symbol links to SchemaEntity with generic `READS_FROM` / `WRITES_TO`.
+**Current state:** Symbol links to DataContract with generic `READS_FROM` / `WRITES_TO`.
 
 ```cypher
-MATCH (s:Symbol)-[r:READS_FROM|:WRITES_TO]->(e:SchemaEntity {name: "User"})
+MATCH (s:Symbol)-[r:READS_FROM|:WRITES_TO]->(e:DataContract {name: "User"})
 RETURN s.name, r.type  -- "validateUser" READS_FROM User
 ```
 
@@ -192,11 +192,11 @@ Add field-level mutation tracking:
 // Option A: Relationship properties
 (symbol:Symbol)-[r:READS_FROM {
   fields: ["id", "email", "createdAt"]
-}]->(entity:SchemaEntity)
+}]->(entity:DataContract)
 
 (symbol:Symbol)-[r:WRITES_TO {
   fields: ["lastLoginAt", "preferences"]
-}]->(entity:SchemaEntity)
+}]->(entity:DataContract)
 
 // Query
 MATCH (s:Symbol)-[r:WRITES_TO {fields: ["email"]}]->(User)

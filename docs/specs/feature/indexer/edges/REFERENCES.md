@@ -51,7 +51,7 @@ Enables multi-modal code analysis queries.
 
 ```cypher
 (symbol:Symbol)-[r:REFERENCES {type: 'TYPE_REF', line: 25, col: 5}]->(type:Symbol)
-(symbol:Symbol)-[r:REFERENCES {type: 'TYPE_REF'}]->(entity:SchemaEntity)
+(symbol:Symbol)-[r:REFERENCES {type: 'TYPE_REF'}]->(entity:DataContract)
 ```
 
 **Semantic**: Use of type/interface/class in type annotations, inheritance, generics.
@@ -59,7 +59,7 @@ Enables multi-modal code analysis queries.
 **Source → Target**:
 
 - Symbol → Symbol (type reference)
-- Symbol → SchemaEntity (data model reference)
+- Symbol → DataContract (data model reference)
 
 ### IMPORT – Module Imports
 
@@ -119,7 +119,7 @@ Enables multi-modal code analysis queries.
 | Endpoint        | CALL     | Symbol          | optional    | Handler              |
 | Module          | CALL     | Symbol          | optional    | Module-level calls   |
 | Symbol          | TYPE_REF | Symbol          | optional    | Type annotations     |
-| Symbol          | TYPE_REF | SchemaEntity    | optional    | Data model refs      |
+| Symbol          | TYPE_REF | DataContract    | optional    | Data model refs      |
 | Symbol          | IMPORT   | Symbol          | optional    | Imported symbols     |
 | File            | IMPORT   | Module          | optional    | Module imports       |
 | Symbol          | PATTERN  | Pattern         | optional    | Pattern adherence    |

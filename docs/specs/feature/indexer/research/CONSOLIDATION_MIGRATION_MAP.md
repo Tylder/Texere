@@ -31,8 +31,8 @@ reference when:
 | `[:TESTS]`                   | `[:REALIZES]`    | `role`        | `'TESTS'`                                   | TestCase→Symbol/Endpoint                   |
 | `[:TESTED_BY]`               | `[:REALIZES]`    | `role`        | `'TESTS'`                                   | Reverse: delete, use forward only          |
 | `[:VERIFIES]`                | `[:REALIZES]`    | `role`        | `'VERIFIES'`                                | TestCase→Feature                           |
-| `[:READS_FROM]`              | `[:MUTATES]`     | `operation`   | `'READ'`                                    | Symbol/Endpoint→SchemaEntity               |
-| `[:WRITES_TO]`               | `[:MUTATES]`     | `operation`   | `'WRITE'`                                   | Symbol/Endpoint→SchemaEntity               |
+| `[:READS_FROM]`              | `[:MUTATES]`     | `operation`   | `'READ'`                                    | Symbol/Endpoint→DataContract               |
+| `[:WRITES_TO]`               | `[:MUTATES]`     | `operation`   | `'WRITE'`                                   | Symbol/Endpoint→DataContract               |
 | `[:USES_CONFIG]`             | `[:DEPENDS_ON]`  | `kind`        | `'CONFIG'`                                  | Symbol→ConfigurationVariable               |
 | `[:CALLS]`                   | `[:DEPENDS_ON]`  | `kind`        | `'SERVICE'`                                 | Symbol/Endpoint→ExternalService            |
 | `[:APPLIES_TO]`              | `[:DOCUMENTS]`   | `target_role` | `'MODULE'`                                  | StyleGuide→Module                          |
@@ -179,15 +179,15 @@ RETURN f, sym, t
 
 ```cypher
 MATCH (sym:Symbol)
-OPTIONAL MATCH (sym)-[:READS_FROM]->(entity:SchemaEntity)
-OPTIONAL MATCH (sym)-[:WRITES_TO]->(entity2:SchemaEntity)
+OPTIONAL MATCH (sym)-[:READS_FROM]->(entity:DataContract)
+OPTIONAL MATCH (sym)-[:WRITES_TO]->(entity2:DataContract)
 RETURN sym, entity, entity2
 ```
 
 **New:**
 
 ```cypher
-MATCH (sym:Symbol)-[r:MUTATES]->(entity:SchemaEntity)
+MATCH (sym:Symbol)-[r:MUTATES]->(entity:DataContract)
 RETURN sym, entity, r.operation
 ```
 

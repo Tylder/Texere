@@ -255,7 +255,7 @@ Implemented in `index-snapshot.ts`.
 
 **IN_SNAPSHOT Cardinality Constraint** (Critical):
 
-Every snapshot-scoped node (Module, File, Symbol, Endpoint, TestCase, SchemaEntity, SpecDoc) **must
+Every snapshot-scoped node (Module, File, Symbol, Endpoint, TestCase, DataContract, SpecDoc) **must
 have exactly 1** incoming `[:IN_SNAPSHOT]` edge. This is enforced by database constraint (§4.1B in
 graph_schema_spec.md).
 

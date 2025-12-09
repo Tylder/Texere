@@ -28,7 +28,7 @@ OPTIONAL MATCH (sym:Symbol {id: ep.handlerSymbolId})
 OPTIONAL MATCH (t:TestCase)-[:TESTS]->(sym)
 OPTIONAL MATCH (ep)-[:IMPLEMENTS]->(feat:Feature)
 OPTIONAL MATCH (ep)-[:FOLLOWS_PATTERN]->(pat:Pattern)
-OPTIONAL MATCH (sym)-[:READS_FROM|:WRITES_TO]->(entity:SchemaEntity)
+OPTIONAL MATCH (sym)-[:READS_FROM|:WRITES_TO]->(entity:DataContract)
 
 RETURN {
   endpoint: ep,
@@ -209,7 +209,7 @@ RETURN {
 
 ```cypher
 -- Find the User schema entity
-MATCH (entity:SchemaEntity {name: "User"})
+MATCH (entity:DataContract {name: "User"})
 
 -- Find all symbols reading/writing to User
 OPTIONAL MATCH (sym:Symbol)-[r:READS_FROM|:WRITES_TO]->(entity)
@@ -225,10 +225,10 @@ OPTIONAL MATCH (sym)<-[:REFERENCES* 0..2]-(ep:Endpoint)
 OPTIONAL MATCH (feat:Feature)-[:IMPLEMENTS]->(sym)
 
 -- Find related entities (FK constraints, etc.)
-OPTIONAL MATCH (entity)-[:DEPENDS_ON]->(relatedEntity:SchemaEntity)
+OPTIONAL MATCH (entity)-[:DEPENDS_ON]->(relatedEntity:DataContract)
 
 RETURN {
-  schemaEntity: entity,
+  dataContract: entity,
   usingSym: collect({
     symbol: sym,
     usage: r.type,  -- READS_FROM or WRITES_TO
@@ -408,7 +408,7 @@ RETURN {
 1. **Source code snippets** – Only `docstring`; full source needed
 2. **Diff/change details** – Snapshot timestamp exists, but not diff metadata
 3. **Request/response schemas** – Should Endpoint include OpenAPI schema?
-4. **Field-level mutations** – Which fields of SchemaEntity are read/written?
+4. **Field-level mutations** – Which fields of DataContract are read/written?
 5. **Test data / fixtures** – No representation of mock data patterns
 6. **Configuration variables** – Where are API_KEY patterns stored?
 7. **Deployment context** – Which endpoints are deployed where?
@@ -427,8 +427,8 @@ interface Endpoint {
   deploymentEnvironment?: string; // prod, staging, etc.
 }
 
-// SchemaEntity enhancement
-interface SchemaEntity {
+// DataContract enhancement
+interface DataContract {
   // ... existing ...
   fieldUsage?: {
     fieldName: string;

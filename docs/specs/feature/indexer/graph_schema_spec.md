@@ -629,7 +629,7 @@ Every snapshot-scoped node belongs to exactly one snapshot (cardinality invarian
 | `Module → Snapshot`            | Module in Snapshot       | exactly 1   |       |
 | `TestCase → Snapshot`          | TestCase in Snapshot     | exactly 1   |       |
 | `SpecDoc → Snapshot`           | SpecDoc in Snapshot      | exactly 1   |       |
-| `SchemaEntity → Snapshot`      | SchemaEntity in Snapshot | exactly 1   |       |
+| `DataContract → Snapshot`      | DataContract in Snapshot | exactly 1   |       |
 | `ThirdPartyLibrary → Snapshot` | Library in Snapshot      | exactly 1   |       |
 
 ```cypher
@@ -739,13 +739,13 @@ Semantic: "What accesses this schema entity?"
 
 ```cypher
 -- Symbol reads from entity
-(symbol:Symbol)-[r:MUTATES {operation: 'READ', confidence: 0.85}]->(entity:SchemaEntity)
+(symbol:Symbol)-[r:MUTATES {operation: 'READ', confidence: 0.85}]->(entity:DataContract)
 
 -- Symbol writes to entity
-(symbol:Symbol)-[r:MUTATES {operation: 'WRITE', confidence: 0.82}]->(entity:SchemaEntity)
+(symbol:Symbol)-[r:MUTATES {operation: 'WRITE', confidence: 0.82}]->(entity:DataContract)
 
 -- Endpoint reads/writes (via handler symbol)
-(endpoint:Endpoint)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.90}]->(entity:SchemaEntity)
+(endpoint:Endpoint)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.90}]->(entity:DataContract)
 ```
 
 **Properties**:
@@ -759,7 +759,7 @@ Semantic: "What accesses this schema entity?"
 
 ```cypher
 -- Impact of renaming User entity
-MATCH (sym:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(e:SchemaEntity {name: 'User'})
+MATCH (sym:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(e:DataContract {name: 'User'})
 RETURN sym, r.confidence
 ```
 
@@ -1048,9 +1048,9 @@ FOR (n:Symbol) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT endpoint_id_unique IF NOT EXISTS
 FOR (n:Endpoint) REQUIRE n.id IS UNIQUE;
 
--- SchemaEntity
-CREATE CONSTRAINT schema_entity_id_unique IF NOT EXISTS
-FOR (n:SchemaEntity) REQUIRE n.id IS UNIQUE;
+-- DataContract
+CREATE CONSTRAINT data_contract_id_unique IF NOT EXISTS
+FOR (n:DataContract) REQUIRE n.id IS UNIQUE;
 
 -- TestCase
 CREATE CONSTRAINT test_case_id_unique IF NOT EXISTS
@@ -1103,7 +1103,7 @@ This constraint prevents:
 ```cypher
 -- Enforce cardinality: snapshot-scoped nodes MUST have exactly 1 [:IN_SNAPSHOT] edge
 CREATE CONSTRAINT in_snapshot_cardinality IF NOT EXISTS
-FOR (n:Module | n:File | n:Symbol | n:Endpoint | n:SchemaEntity | n:TestCase | n:SpecDoc)
+FOR (n:Module | n:File | n:Symbol | n:Endpoint | n:DataContract | n:TestCase | n:SpecDoc)
 REQUIRE (n)-[:IN_SNAPSHOT]->() IS NOT NULL;
 ```
 
@@ -1390,7 +1390,7 @@ OPTIONAL MATCH (sym:Symbol) WHERE x IN [$x] OR r1.role = 'IMPLEMENTS'
 OPTIONAL MATCH (sym)-[r2:REFERENCES {kind: 'CALL'}* 0..2]->(calleeSymbol:Symbol)
 
 -- Data access patterns
-OPTIONAL MATCH (calleeSymbol)-[r3:MUTATES]->(entity:SchemaEntity)
+OPTIONAL MATCH (calleeSymbol)-[r3:MUTATES]->(entity:DataContract)
 
 -- Tests for feature
 OPTIONAL MATCH (t:TestCase)-[r4:REALIZES {role: 'VERIFIES'|'TESTS'}]->(f)
@@ -1432,7 +1432,7 @@ OPTIONAL MATCH (ep)-[r3:REFERENCES {kind: 'PATTERN'}]->(pattern:Pattern)
 OPTIONAL MATCH (handler)-[:IN_SNAPSHOT]->(snap:Snapshot)
 OPTIONAL MATCH (handler)-[:CONTAINS*0..1]->(m:Module)
 OPTIONAL MATCH (guide:StyleGuide)-[r4:DOCUMENTS {target_role: 'MODULE'}]->(m)
-OPTIONAL MATCH (handler)-[r5:MUTATES]->(entity:SchemaEntity)
+OPTIONAL MATCH (handler)-[r5:MUTATES]->(entity:DataContract)
 OPTIONAL MATCH (ep)-[r6:DEPENDS_ON {kind: 'SERVICE'}]->(service:ExternalService)
 
 RETURN {
