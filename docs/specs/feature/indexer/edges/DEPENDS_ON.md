@@ -17,13 +17,13 @@ STYLE_GUIDE, FEATURE).
 
 ## Properties
 
-| Property     | Type      | Required | Notes                                                            |
-| ------------ | --------- | -------- | ---------------------------------------------------------------- |
-| `kind`       | enum      | Yes      | 'SERVICE' \| 'CONFIG' \| 'LIBRARY' \| 'STYLE_GUIDE' \| 'FEATURE' |
-| `version`    | string    | Optional | Version constraint (e.g., "^1.2.0", ">=2.0.0")                   |
-| `required`   | boolean   | Optional | Is dependency mandatory? (for CONFIG)                            |
-| `confidence` | float     | Optional | LLM extraction confidence (0.0–1.0)                              |
-| `createdAt`  | timestamp | Yes      | When relationship created                                        |
+| Property     | Type      | Required | Notes                                                                              |
+| ------------ | --------- | -------- | ---------------------------------------------------------------------------------- |
+| `kind`       | enum      | Yes      | 'SERVICE' \| 'CONFIG' \| 'LIBRARY' \| 'STYLE_GUIDE' \| 'FEATURE' \| 'SECRET' (v2+) |
+| `version`    | string    | Optional | Version constraint (e.g., "^1.2.0", ">=2.0.0")                                     |
+| `required`   | boolean   | Optional | Is dependency mandatory? (for CONFIG, SECRET)                                      |
+| `confidence` | float     | Optional | LLM extraction confidence (0.0–1.0)                                                |
+| `createdAt`  | timestamp | Yes      | When relationship created                                                          |
 
 ---
 
@@ -67,16 +67,22 @@ STYLE_GUIDE, FEATURE).
 ```cypher
 (module:Module)-[r:DEPENDS_ON {kind: 'LIBRARY', version: '1.2.0'}]->(lib:ExternalService)
 (file:File)-[r:DEPENDS_ON {kind: 'LIBRARY', version: '^1.0.0'}]->(lib:ExternalService)
+
+-- V2+ option: Link to Dependency nodes for explicit supply chain tracking
+(module:Module)-[r:DEPENDS_ON {kind: 'LIBRARY'}]->(dep:Dependency)
 ```
 
-**Semantic**: Code imports or uses third-party library/package that is NOT being indexed as a
-Codebase.
+**Semantic**: Code imports or uses third-party library/package.
+
+**V1 (Legacy)**: Target is ExternalService (external service registry)  
+**V2+ (Recommended)**: Target is Dependency node (explicit package with version)
 
 **When to use LIBRARY**:
 
-- External npm/pip packages without source code access
+- External npm/pip/Maven packages without source code access
 - Frameworks we don't analyze (React, Vue, Express)
 - Utilities (lodash, axios, moment)
+- Supply chain auditing (version tracking, security scanning)
 
 **When NOT to use LIBRARY**:
 
@@ -99,6 +105,29 @@ Codebase.
 - Architecture principles (Clean Code, SOLID)
 - Naming conventions
 
+### SECRET – Secret Dependencies (V2+)
+
+```cypher
+-- Symbol uses secret (API key, password, token)
+(symbol:Symbol)-[r:DEPENDS_ON {kind: 'SECRET', required: true}]->(secret:Secret)
+
+-- Module requires credentials
+(module:Module)-[r:DEPENDS_ON {kind: 'SECRET', required: false}]->(secret:Secret)
+```
+
+**Semantic**: Code uses a secret, credential, API key, or token (requires v2+ Secret nodes).
+
+**Common secrets**:
+
+- API keys (`STRIPE_API_KEY`, `OPENAI_API_KEY`)
+- Database passwords
+- Encryption keys
+- JWT signing keys
+- TLS certificates
+
+**When to use**: You have enabled [Secret](../nodes/Secret.md) nodes and need credential auditing or
+compliance tracking.
+
 ### FEATURE – Feature Dependencies
 
 ```cypher
@@ -116,19 +145,23 @@ Codebase.
 
 ## Source → Target Pairs
 
-| Source   | Kind        | Target                | Cardinality | Notes                                |
-| -------- | ----------- | --------------------- | ----------- | ------------------------------------ |
-| Symbol   | SERVICE     | ExternalService       | optional    | Symbol calls service                 |
-| Endpoint | SERVICE     | ExternalService       | optional    | Endpoint calls service               |
-| Module   | SERVICE     | ExternalService       | optional    | Module integrates service            |
-| Symbol   | CONFIG      | ConfigurationVariable | optional    | Symbol uses config                   |
-| Endpoint | CONFIG      | ConfigurationVariable | optional    | Endpoint uses config                 |
-| Module   | CONFIG      | ConfigurationVariable | optional    | Module uses config                   |
-| Module   | LIBRARY     | ExternalService       | optional    | Module imports library (not indexed) |
-| File     | LIBRARY     | ExternalService       | optional    | File imports library (not indexed)   |
-| Module   | STYLE_GUIDE | StyleGuide            | optional    | Module follows guide                 |
-| Symbol   | STYLE_GUIDE | StyleGuide            | optional    | Symbol follows guide                 |
-| Feature  | FEATURE     | Feature               | optional    | Feature depends on feature           |
+| Source   | Kind         | Target                | Cardinality | Notes                                 |
+| -------- | ------------ | --------------------- | ----------- | ------------------------------------- |
+| Symbol   | SERVICE      | ExternalService       | optional    | Symbol calls service                  |
+| Endpoint | SERVICE      | ExternalService       | optional    | Endpoint calls service                |
+| Module   | SERVICE      | ExternalService       | optional    | Module integrates service             |
+| Symbol   | CONFIG       | ConfigurationVariable | optional    | Symbol uses config                    |
+| Endpoint | CONFIG       | ConfigurationVariable | optional    | Endpoint uses config                  |
+| Module   | CONFIG       | ConfigurationVariable | optional    | Module uses config                    |
+| Module   | LIBRARY      | ExternalService       | optional    | Module imports library (not indexed)  |
+| File     | LIBRARY      | ExternalService       | optional    | File imports library (not indexed)    |
+| Module   | LIBRARY      | Dependency (v2+)      | optional    | Module uses package (supply chain)    |
+| Symbol   | LIBRARY      | Dependency (v2+)      | optional    | Symbol imports package (supply chain) |
+| Module   | STYLE_GUIDE  | StyleGuide            | optional    | Module follows guide                  |
+| Symbol   | STYLE_GUIDE  | StyleGuide            | optional    | Symbol follows guide                  |
+| Feature  | FEATURE      | Feature               | optional    | Feature depends on feature            |
+| Symbol   | SECRET (v2+) | Secret                | optional    | Symbol uses credential                |
+| Module   | SECRET (v2+) | Secret                | optional    | Module requires credential            |
 
 ---
 

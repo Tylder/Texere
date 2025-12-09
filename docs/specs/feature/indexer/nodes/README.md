@@ -10,21 +10,39 @@ Nodes are grouped into two categories:
 
 ---
 
-## Snapshot-Scoped Nodes (9)
+## Snapshot-Scoped Nodes (9 Mandatory + 6 Optional)
 
 Created during indexing for a specific snapshot. Linked via `[:IN_SNAPSHOT]`.
 
-| Node                                  | Purpose                                            | Cardinality     | Key Property                                        |
-| ------------------------------------- | -------------------------------------------------- | --------------- | --------------------------------------------------- |
-| **[Codebase](./Codebase.md)**         | Code repository (any code being indexed)           | N per workspace | `id` (unique)                                       |
-| **[Snapshot](./Snapshot.md)**         | Git commit being indexed                           | N per codebase  | `id` (composite: codebaseId:commitHash)             |
-| **[Module](./Module.md)**             | Logical package/library/app                        | N per snapshot  | `id` (composite: snapshotId:modulePath)             |
-| **[File](./File.md)**                 | Source code file                                   | N per module    | `id` (composite: snapshotId:filePath)               |
-| **[Symbol](./Symbol.md)**             | Function, class, type, interface, const            | N per file      | `id` (composite: snapshotId:filePath:name:line:col) |
-| **[EntryPoint](./EntryPoint.md)**     | Callable interface (HTTP, CLI, export, event, job) | N per snapshot  | `id` (composite: snapshotId:kind:identifier)        |
-| **[SchemaEntity](./SchemaEntity.md)** | Database model (Prisma, SQLAlchemy, etc.)          | N per snapshot  | `id` (composite: snapshotId:entityName)             |
-| **[TestCase](./TestCase.md)**         | Unit/integration/e2e test                          | N per file      | `id` (composite: snapshotId:filePath:testName)      |
-| **[SpecDoc](./SpecDoc.md)**           | Documentation (spec, ADR, design doc)              | N per snapshot  | `id` (composite: snapshotId:docPath)                |
+### Mandatory (V1)
+
+| Node                                     | Purpose                                            | Cardinality     | Key Property                                        |
+| ---------------------------------------- | -------------------------------------------------- | --------------- | --------------------------------------------------- |
+| **[Codebase](./Codebase.md)**            | Code repository (any code being indexed)           | N per workspace | `id` (unique)                                       |
+| **[Snapshot](./Snapshot.md)**            | Git commit being indexed                           | N per codebase  | `id` (composite: codebaseId:commitHash)             |
+| **[Module](./Module.md)**                | Logical package/library/app                        | N per snapshot  | `id` (composite: snapshotId:modulePath)             |
+| **[File](./File.md)**                    | Source code file                                   | N per module    | `id` (composite: snapshotId:filePath)               |
+| **[Symbol](./Symbol.md)**                | Function, class, type, interface, const            | N per file      | `id` (composite: snapshotId:filePath:name:line:col) |
+| **[Boundary](./EntryPoint.md)** ⚠️       | Callable interface (HTTP, gRPC, CLI, events, etc.) | N per snapshot  | `id` (composite: snapshotId:kind:identifier)        |
+| **[DataContract](./SchemaEntity.md)** ⚠️ | Data model (Prisma, SQL, GraphQL, Protobuf, etc.)  | N per snapshot  | `id` (composite: snapshotId:entityName)             |
+| **[TestCase](./TestCase.md)**            | Unit/integration/e2e test                          | N per file      | `id` (composite: snapshotId:filePath:testName)      |
+| **[SpecDoc](./SpecDoc.md)**              | Documentation (spec, ADR, design doc)              | N per snapshot  | `id` (composite: snapshotId:docPath)                |
+
+⚠️ **Recently renamed**: EntryPoint → Boundary, SchemaEntity → DataContract (to support more
+domains)
+
+### Optional (V2+)
+
+Add these nodes only when your domain requires them.
+
+| Node                                    | Purpose                                  | When to Use                                    |
+| --------------------------------------- | ---------------------------------------- | ---------------------------------------------- |
+| **[Configuration](./Configuration.md)** | Environment variables, config files      | Config drift tracking, secret auditing         |
+| **[Error](./Error.md)**                 | Custom exceptions & error types          | Error flow analysis, exception handling chains |
+| **[Message](./Message.md)**             | Pub/sub topics, events (Kafka, RabbitMQ) | Event-driven architectures, message tracing    |
+| **[Dependency](./Dependency.md)**       | External packages (npm, pip, Maven)      | Supply chain security, version auditing        |
+| **[Secret](./Secret.md)**               | API keys, credentials, tokens            | Credential auditing, compliance (SOC2, etc.)   |
+| **[Workflow](./Workflow.md)**           | Orchestrations (Airflow, Temporal)       | Orchestration tracking, workflow evolution     |
 
 ---
 
@@ -56,12 +74,16 @@ tracking.
 ### By Domain
 
 - **Code Structure**: [Module](./Module.md), [File](./File.md), [Symbol](./Symbol.md)
-- **Behavior**: [EntryPoint](./EntryPoint.md), [TestCase](./TestCase.md)
-- **Data**: [SchemaEntity](./SchemaEntity.md)
+- **Behavior**: [Boundary](./EntryPoint.md), [TestCase](./TestCase.md), [Workflow](./Workflow.md)
+  (v2+)
+- **Data**: [DataContract](./SchemaEntity.md), [Message](./Message.md) (v2+)
 - **Metadata**: [SpecDoc](./SpecDoc.md), [StyleGuide](./StyleGuide.md)
-- **External Integration**: [ExternalService](./ExternalService.md)
+- **External Integration**: [ExternalService](./ExternalService.md), [Dependency](./Dependency.md)
+  (v2+)
 - **Features & Issues**: [Feature](./Feature.md), [Incident](./Incident.md)
 - **Patterns**: [Pattern](./Pattern.md)
+- **Operations**: [Configuration](./Configuration.md) (v2+), [Secret](./Secret.md) (v2+),
+  [Error](./Error.md) (v2+)
 
 ---
 

@@ -77,37 +77,60 @@ complexity while maintaining query expressiveness.
 - **Test Coverage**: [REALIZES {role: 'TESTS'|'VERIFIES'}](./REALIZES.md)
 - **Documentation**: [DOCUMENTS](./DOCUMENTS.md)
 - **Evolution Tracking**: [TRACKS](./TRACKS.md)
+- **Authentication** (v2+): [AUTHENTICATES](./AUTHENTICATES.md)
+- **Event Flows** (v2+): [PUBLISHES, CONSUMES, EMITS, LISTENS_TO](./EVENT_RELATIONSHIPS.md)
+- **Error Handling** (v2+): [THROWS, CATCHES, HANDLES, EXTENDS](./ERROR_RELATIONSHIPS.md)
+- **Workflow Orchestration** (v2+):
+  [CONTAINS, TRIGGERS, STARTS, PART_OF](./WORKFLOW_RELATIONSHIPS.md)
 
 ### By Source/Target Node Pairs
 
-| Source → Target                            | Edges                            | Notes                  |
-| ------------------------------------------ | -------------------------------- | ---------------------- |
-| File → Module                              | CONTAINS                         | Hierarchy              |
-| Module → Snapshot                          | CONTAINS                         | Hierarchy              |
-| Snapshot → Codebase                        | CONTAINS                         | Hierarchy              |
-| \*Scoped → Snapshot                        | IN_SNAPSHOT                      | Version membership     |
-| Symbol → Symbol                            | REFERENCES {type: 'CALL'}        | Call graph             |
-| Symbol → Symbol                            | REFERENCES {type: 'TYPE_REF'}    | Type references        |
-| Symbol → Symbol                            | REFERENCES {type: 'IMPORT'}      | Import statements      |
-| Symbol → Pattern                           | REFERENCES {type: 'PATTERN'}     | Pattern adherence      |
-| Symbol → Symbol                            | REFERENCES {type: 'SIMILAR'}     | Embedding similarity   |
-| Symbol/Endpoint → SchemaEntity             | MUTATES                          | Data flow (READ/WRITE) |
-| Symbol/Endpoint → Feature                  | REALIZES {role: 'IMPLEMENTS'}    | Implementation         |
-| TestCase → Symbol/Endpoint                 | REALIZES {role: 'TESTS'}         | Test coverage          |
-| TestCase → Feature                         | REALIZES {role: 'VERIFIES'}      | Feature verification   |
-| Symbol/Module → Pattern                    | REFERENCES {type: 'PATTERN'}     | Pattern usage          |
-| Module/Symbol/Endpoint → ExternalService   | DEPENDS_ON {kind: 'SERVICE'}     | External APIs          |
-| Module/Symbol → ConfigurationVariable      | DEPENDS_ON {kind: 'CONFIG'}      | Configuration          |
-| Module/Symbol/Endpoint → ExternalService   | DEPENDS_ON {kind: 'LIBRARY'}     | Libraries (not indexed)|
-| Module/Symbol → StyleGuide                 | DEPENDS_ON {kind: 'STYLE_GUIDE'} | Style conformance      |
-| SpecDoc/StyleGuide → Feature/Module/Symbol | DOCUMENTS                        | Documentation          |
-| Endpoint → Symbol                          | LOCATION {role: 'HANDLED_BY'}    | Endpoint handler       |
-| Endpoint/TestCase → File                   | LOCATION {role: 'IN_FILE'}       | Location in file       |
-| Endpoint/TestCase → Module                 | LOCATION {role: 'IN_MODULE'}     | Location in module     |
-| Symbol/Feature/TestCase → Snapshot         | TRACKS {event: 'INTRODUCED'}     | Introduction           |
-| Symbol/Feature/TestCase → Snapshot         | TRACKS {event: 'MODIFIED'}       | Modification           |
-| Incident → Symbol/Feature/Endpoint         | IMPACTS {type: 'CAUSED_BY'}      | Root cause             |
-| Incident → Symbol/Feature/Endpoint         | IMPACTS {type: 'AFFECTS'}        | Impact                 |
+| Source → Target                            | Edges                            | Notes                   |
+| ------------------------------------------ | -------------------------------- | ----------------------- |
+| File → Module                              | CONTAINS                         | Hierarchy               |
+| Module → Snapshot                          | CONTAINS                         | Hierarchy               |
+| Snapshot → Codebase                        | CONTAINS                         | Hierarchy               |
+| \*Scoped → Snapshot                        | IN_SNAPSHOT                      | Version membership      |
+| Symbol → Symbol                            | REFERENCES {type: 'CALL'}        | Call graph              |
+| Symbol → Symbol                            | REFERENCES {type: 'TYPE_REF'}    | Type references         |
+| Symbol → Symbol                            | REFERENCES {type: 'IMPORT'}      | Import statements       |
+| Symbol → Pattern                           | REFERENCES {type: 'PATTERN'}     | Pattern adherence       |
+| Symbol → Symbol                            | REFERENCES {type: 'SIMILAR'}     | Embedding similarity    |
+| Symbol/Endpoint → SchemaEntity             | MUTATES                          | Data flow (READ/WRITE)  |
+| Symbol/Endpoint → Feature                  | REALIZES {role: 'IMPLEMENTS'}    | Implementation          |
+| TestCase → Symbol/Endpoint                 | REALIZES {role: 'TESTS'}         | Test coverage           |
+| TestCase → Feature                         | REALIZES {role: 'VERIFIES'}      | Feature verification    |
+| Symbol/Module → Pattern                    | REFERENCES {type: 'PATTERN'}     | Pattern usage           |
+| Module/Symbol/Endpoint → ExternalService   | DEPENDS_ON {kind: 'SERVICE'}     | External APIs           |
+| Module/Symbol → ConfigurationVariable      | DEPENDS_ON {kind: 'CONFIG'}      | Configuration           |
+| Module/Symbol/Endpoint → ExternalService   | DEPENDS_ON {kind: 'LIBRARY'}     | Libraries (not indexed) |
+| Module/Symbol → StyleGuide                 | DEPENDS_ON {kind: 'STYLE_GUIDE'} | Style conformance       |
+| SpecDoc/StyleGuide → Feature/Module/Symbol | DOCUMENTS                        | Documentation           |
+| Endpoint → Symbol                          | LOCATION {role: 'HANDLED_BY'}    | Endpoint handler        |
+| Endpoint/TestCase → File                   | LOCATION {role: 'IN_FILE'}       | Location in file        |
+| Endpoint/TestCase → Module                 | LOCATION {role: 'IN_MODULE'}     | Location in module      |
+| Symbol/Feature/TestCase → Snapshot         | TRACKS {event: 'INTRODUCED'}     | Introduction            |
+| Symbol/Feature/TestCase → Snapshot         | TRACKS {event: 'MODIFIED'}       | Modification            |
+| Incident → Symbol/Feature/Endpoint         | IMPACTS {type: 'CAUSED_BY'}      | Root cause              |
+| Incident → Symbol/Feature/Endpoint         | IMPACTS {type: 'AFFECTS'}        | Impact                  |
+| Symbol/Module → Configuration              | DEPENDS_ON {kind: 'CONFIG'}      | Config usage (v2+)      |
+| Configuration → ExternalService            | AUTHENTICATES                    | Creds for service (v2+) |
+| Symbol → Error                             | THROWS                           | Error throwing (v2+)    |
+| Symbol → Error                             | CATCHES                          | Error catching (v2+)    |
+| Symbol → Error                             | HANDLES                          | Error recovery (v2+)    |
+| Error → Error                              | EXTENDS                          | Error hierarchy (v2+)   |
+| Boundary → Message                         | PUBLISHES                        | Event publishing (v2+)  |
+| Boundary → Message                         | CONSUMES                         | Event consuming (v2+)   |
+| Symbol → Message                           | EMITS                            | Event emitting (v2+)    |
+| Symbol → Message                           | LISTENS_TO                       | Event listening (v2+)   |
+| Module/Symbol → Dependency                 | DEPENDS_ON {kind: 'LIBRARY'}     | Package dep (v2+)       |
+| Symbol/Module → Secret                     | DEPENDS_ON {kind: 'SECRET'}      | Secret usage (v2+)      |
+| Secret → ExternalService                   | AUTHENTICATES                    | Service auth (v2+)      |
+| Workflow → Symbol                          | CONTAINS                         | Workflow step (v2+)     |
+| Workflow → Boundary                        | TRIGGERS                         | Triggers boundary (v2+) |
+| Boundary → Workflow                        | STARTS                           | Starts workflow (v2+)   |
+| Symbol → Workflow                          | PART_OF                          | Workflow step (v2+)     |
+| Workflow → ExternalService                 | DEPENDS_ON {kind: 'SERVICE'}     | External service (v2+)  |
 
 ---
 

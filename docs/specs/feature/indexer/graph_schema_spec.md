@@ -15,6 +15,10 @@ and edge types, constraints, indexes, query patterns, and lifecycle management.
 
 1. [Design Principles](#1-design-principles)
 2. [Node Type Catalog](#2-node-type-catalog)
+   - 2.1 [Structural Nodes](#21-structural-nodes)
+   - 2.2 [Domain & Behavior Nodes](#22-domain--behavior-nodes)
+   - 2.3 [Cross-Snapshot Nodes](#23-cross-snapshot-nodes)
+   - 2.4 [Optional Nodes (V2+)](#24-optional-nodes-v2-features)
 3. [Relationship Catalog](#3-relationship-catalog)
 4. [Constraints & Indexes](#4-constraints--indexes)
 5. [CONTAINS Hierarchy Algorithm](#5-contains-hierarchy-algorithm)
@@ -177,37 +181,98 @@ FOR (n:Symbol) REQUIRE n.id IS UNIQUE;
 
 ### 2.2 Domain & Behavior Nodes
 
-#### Endpoint
+#### Boundary (formerly Endpoint)
 
-| Property          | Type      | Constraints | Notes                                           |
-| ----------------- | --------- | ----------- | ----------------------------------------------- |
-| `id`              | string    | UNIQUE      | Composite: `snapshotId:verb:path`               |
-| `snapshotId`      | string    | Required    | Foreign key to Snapshot                         |
-| `verb`            | string    | Required    | "GET" \| "POST" \| "PUT" \| "DELETE" \| "PATCH" |
-| `path`            | string    | Required    | API path (e.g., "/api/features/:id")            |
-| `handlerSymbolId` | string    | Required    | Foreign key to Symbol                           |
-| `description`     | string    | Optional    | Endpoint description                            |
-| `createdAt`       | timestamp | Required    | When created in snapshot                        |
+**Note**: Renamed from `Endpoint` to support multiple entry point types (HTTP, gRPC, CLI, events,
+etc.)
+
+| Property          | Type      | Constraints | Notes                                                                                                         |
+| ----------------- | --------- | ----------- | ------------------------------------------------------------------------------------------------------------- |
+| `id`              | string    | UNIQUE      | Composite: `snapshotId:kind:identifier` (e.g., `snap:HTTP:GET:/api/users`)                                    |
+| `snapshotId`      | string    | Required    | Foreign key to Snapshot                                                                                       |
+| `kind`            | enum      | Required    | "HTTP" \| "gRPC" \| "CLI" \| "EXPORT" \| "EVENT" \| "JOB" \| "LAMBDA" \| "TRIGGER" \| "CONSUMER" \| "WEBHOOK" |
+| `endpoint`        | string    | Required    | REST path (e.g., "/api/users"), gRPC service, CLI command, topic/queue name, etc.                             |
+| `verb`            | string    | Optional    | HTTP verb: "GET" \| "POST" \| "PUT" \| "DELETE" \| "PATCH" (HTTP only)                                        |
+| `handlerSymbolId` | string    | Required    | Foreign key to Symbol (handler/implementation)                                                                |
+| `description`     | string    | Optional    | Boundary description                                                                                          |
+| `createdAt`       | timestamp | Required    | When created in snapshot                                                                                      |
 
 ```cypher
-CREATE CONSTRAINT endpoint_id_unique IF NOT EXISTS
-FOR (n:Endpoint) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT boundary_id_unique IF NOT EXISTS
+FOR (n:Boundary) REQUIRE n.id IS UNIQUE;
 ```
 
-#### SchemaEntity
-
-| Property      | Type      | Constraints | Notes                                         |
-| ------------- | --------- | ----------- | --------------------------------------------- |
-| `id`          | string    | UNIQUE      | Composite: `snapshotId:entityName`            |
-| `snapshotId`  | string    | Required    | Foreign key to Snapshot                       |
-| `name`        | string    | Required    | Entity/model name (e.g., "User", "Feature")   |
-| `kind`        | enum      | Required    | "prisma-model" \| "sql-table" \| "orm-entity" |
-| `description` | string    | Optional    | Entity description                            |
-| `createdAt`   | timestamp | Required    | When created in snapshot                      |
+**Examples**:
 
 ```cypher
-CREATE CONSTRAINT schema_entity_id_unique IF NOT EXISTS
-FOR (n:SchemaEntity) REQUIRE n.id IS UNIQUE;
+-- HTTP endpoint
+(b:Boundary {
+  id: 'snap123:HTTP:GET:/api/users',
+  kind: 'HTTP',
+  endpoint: '/api/users',
+  verb: 'GET',
+  handlerSymbolId: 'listUsers'
+})
+
+-- Kafka consumer
+(b:Boundary {
+  id: 'snap123:CONSUMER:payment-processed',
+  kind: 'CONSUMER',
+  endpoint: 'payment-processed',
+  handlerSymbolId: 'handlePaymentEvent'
+})
+
+-- Lambda handler
+(b:Boundary {
+  id: 'snap123:LAMBDA:processS3Upload',
+  kind: 'LAMBDA',
+  endpoint: 'processS3Upload',
+  handlerSymbolId: 's3UploadHandler'
+})
+```
+
+#### DataContract (formerly SchemaEntity)
+
+**Note**: Renamed from `SchemaEntity` to support data definitions beyond databases (GraphQL,
+Protobuf, API contracts, etc.)
+
+| Property      | Type      | Constraints | Notes                                                                                                                             |
+| ------------- | --------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `id`          | string    | UNIQUE      | Composite: `snapshotId:entityName`                                                                                                |
+| `snapshotId`  | string    | Required    | Foreign key to Snapshot                                                                                                           |
+| `name`        | string    | Required    | Entity/schema name (e.g., "User", "PaymentRequest")                                                                               |
+| `kind`        | enum      | Required    | "PRISMA_MODEL" \| "SQL_TABLE" \| "ORM_ENTITY" \| "GRAPHQL_TYPE" \| "PROTOBUF" \| "JSON_SCHEMA" \| "API_REQUEST" \| "API_RESPONSE" |
+| `description` | string    | Optional    | Data contract description                                                                                                         |
+| `createdAt`   | timestamp | Required    | When created in snapshot                                                                                                          |
+
+```cypher
+CREATE CONSTRAINT data_contract_id_unique IF NOT EXISTS
+FOR (n:DataContract) REQUIRE n.id IS UNIQUE;
+```
+
+**Examples**:
+
+```cypher
+-- Prisma model
+(dc:DataContract {
+  id: 'snap123:User',
+  kind: 'PRISMA_MODEL',
+  name: 'User'
+})
+
+-- GraphQL type
+(dc:DataContract {
+  id: 'snap123:PaymentIntent',
+  kind: 'GRAPHQL_TYPE',
+  name: 'PaymentIntent'
+})
+
+-- API request schema
+(dc:DataContract {
+  id: 'snap123:CreatePaymentRequest',
+  kind: 'API_REQUEST',
+  name: 'CreatePaymentRequest'
+})
 ```
 
 #### TestCase
@@ -344,6 +409,177 @@ FOR (n:ExternalService) REQUIRE n.id IS UNIQUE;
 ```
 
 **Cite as:** §2.3
+
+---
+
+## 2.4 Optional Nodes (V2+ Features)
+
+These nodes are **OPTIONAL** and should be added when your domain requires them. Create constraints
+and indexes only when needed.
+
+**Adoption Strategy**:
+
+- V1.0: Ship with mandatory 14 nodes
+- V1.1+: Add optional nodes per domain requirements
+- V2.0: All nodes production-ready
+
+---
+
+### 2.4.1 Configuration (Optional, v2+)
+
+For tracking config/secrets used by code.
+
+| Property      | Type      | Constraints | Notes                                                                         |
+| ------------- | --------- | ----------- | ----------------------------------------------------------------------------- |
+| `id`          | string    | UNIQUE      | Composite: `snapshotId:configPath`                                            |
+| `snapshotId`  | string    | Required    | Foreign key to Snapshot                                                       |
+| `path`        | string    | Required    | Config path (e.g., `.env`, `config.yaml`, `settings.json`)                    |
+| `kind`        | enum      | Required    | "ENV_VAR" \| "YAML_CONFIG" \| "JSON_CONFIG" \| "ENV_FILE" \| "SECRET_MANAGER" |
+| `key`         | string    | Optional    | For ENV_VAR: the environment variable name                                    |
+| `valueType`   | enum      | Optional    | "SECRET" \| "URL" \| "STRING" \| "NUMBER" \| "BOOLEAN"                        |
+| `description` | string    | Optional    | What this config does                                                         |
+| `createdAt`   | timestamp | Required    | When indexed                                                                  |
+
+```cypher
+-- OPTIONAL: Create only when needed
+CREATE CONSTRAINT configuration_id_unique IF NOT EXISTS
+FOR (n:Configuration) REQUIRE n.id IS UNIQUE;
+```
+
+**When to use**: You need to track which symbols use specific config values, audit config drift, or
+find secrets in code.
+
+---
+
+### 2.4.2 Error (Optional, v2+)
+
+For tracking custom exceptions and error types.
+
+| Property      | Type      | Constraints | Notes                                                    |
+| ------------- | --------- | ----------- | -------------------------------------------------------- |
+| `id`          | string    | UNIQUE      | Composite: `snapshotId:filePath:className`               |
+| `snapshotId`  | string    | Required    | Foreign key to Snapshot                                  |
+| `filePath`    | string    | Required    | File defining the error                                  |
+| `name`        | string    | Required    | Error name (e.g., `PaymentError`, `ValidationException`) |
+| `kind`        | enum      | Required    | "CUSTOM_ERROR" \| "BUILT_IN_ERROR" \| "EXCEPTION_CLASS"  |
+| `baseClass`   | string    | Optional    | What it extends (e.g., `Error`, `Exception`)             |
+| `description` | string    | Optional    | Error documentation                                      |
+| `createdAt`   | timestamp | Required    | When indexed                                             |
+
+```cypher
+-- OPTIONAL: Create only when needed
+CREATE CONSTRAINT error_id_unique IF NOT EXISTS
+FOR (n:Error) REQUIRE n.id IS UNIQUE;
+```
+
+**When to use**: You need error flow analysis, exception handling chains, or error recovery
+patterns.
+
+---
+
+### 2.4.3 Message (Optional, v2+)
+
+For tracking pub/sub events/messages (Kafka, RabbitMQ, etc.).
+
+| Property      | Type      | Constraints | Notes                                                                              |
+| ------------- | --------- | ----------- | ---------------------------------------------------------------------------------- |
+| `id`          | string    | UNIQUE      | Composite: `snapshotId:topicOrQueueName`                                           |
+| `snapshotId`  | string    | Required    | Foreign key to Snapshot                                                            |
+| `topic`       | string    | Required    | Topic/queue name (e.g., `payment-processed`, `user-created-events`)                |
+| `kind`        | enum      | Required    | "KAFKA_TOPIC" \| "SQS_QUEUE" \| "PUBSUB_TOPIC" \| "EVENT_CLASS" \| "MESSAGE_CLASS" |
+| `schema`      | string    | Optional    | Message schema (JSON schema, Protobuf, etc.)                                       |
+| `description` | string    | Optional    | What this message represents                                                       |
+| `createdAt`   | timestamp | Required    | When indexed                                                                       |
+
+```cypher
+-- OPTIONAL: Create only when needed
+CREATE CONSTRAINT message_id_unique IF NOT EXISTS
+FOR (n:Message) REQUIRE n.id IS UNIQUE;
+```
+
+**When to use**: You have event-driven architecture (Kafka, event sourcing) or need to trace event
+flows.
+
+---
+
+### 2.4.4 Dependency (Optional, v2+)
+
+For explicit tracking of external package dependencies.
+
+| Property      | Type      | Constraints | Notes                                                    |
+| ------------- | --------- | ----------- | -------------------------------------------------------- |
+| `id`          | string    | UNIQUE      | Composite: `snapshotId:packageName:version`              |
+| `snapshotId`  | string    | Required    | Foreign key to Snapshot                                  |
+| `name`        | string    | Required    | Package name (e.g., `express`, `numpy`, `spring-boot`)   |
+| `version`     | string    | Required    | Semantic version (e.g., `1.6.0`)                         |
+| `kind`        | enum      | Required    | "NPM" \| "PIP" \| "MAVEN" \| "CARGO" \| "GO" \| "JAR"    |
+| `registry`    | string    | Optional    | Registry URL (npm, pypi, maven central, crates.io, etc.) |
+| `description` | string    | Optional    | What this package does                                   |
+| `createdAt`   | timestamp | Required    | When indexed                                             |
+
+```cypher
+-- OPTIONAL: Create only when needed
+CREATE CONSTRAINT dependency_id_unique IF NOT EXISTS
+FOR (n:Dependency) REQUIRE n.id IS UNIQUE;
+```
+
+**When to use**: You need explicit dependency tracking for supply chain security, version auditing,
+or deprecation warnings.
+
+---
+
+### 2.4.5 Secret (Optional, v2+)
+
+For tracking secrets, credentials, API keys.
+
+| Property           | Type      | Constraints | Notes                                                                            |
+| ------------------ | --------- | ----------- | -------------------------------------------------------------------------------- |
+| `id`               | string    | UNIQUE      | Composite: `snapshotId:secretName`                                               |
+| `snapshotId`       | string    | Required    | Foreign key to Snapshot                                                          |
+| `name`             | string    | Required    | Secret name (e.g., `STRIPE_API_KEY`, `DB_PASSWORD`)                              |
+| `kind`             | enum      | Required    | "API_KEY" \| "DATABASE_PASSWORD" \| "ENCRYPTION_KEY" \| "TOKEN" \| "CERTIFICATE" |
+| `provider`         | string    | Optional    | Where it's stored (AWS Secrets Manager, Vault, GitHub Secrets, etc.)             |
+| `rotationRequired` | boolean   | Optional    | Needs periodic rotation                                                          |
+| `description`      | string    | Optional    | What this secret is used for                                                     |
+| `createdAt`        | timestamp | Required    | When indexed                                                                     |
+
+```cypher
+-- OPTIONAL: Create only when needed
+CREATE CONSTRAINT secret_id_unique IF NOT EXISTS
+FOR (n:Secret) REQUIRE n.id IS UNIQUE;
+```
+
+**When to use**: You need credential auditing, secret rotation tracking, or compliance reporting
+(SOC2, etc.).
+
+---
+
+### 2.4.6 Workflow (Optional, v2+)
+
+For tracking long-running orchestrations (Airflow, Temporal, Step Functions, etc.).
+
+| Property      | Type      | Constraints | Notes                                                                                            |
+| ------------- | --------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| `id`          | string    | UNIQUE      | Composite: `snapshotId:workflowName`                                                             |
+| `snapshotId`  | string    | Required    | Foreign key to Snapshot                                                                          |
+| `name`        | string    | Required    | Workflow name (e.g., `payment-processing`, `data-pipeline`)                                      |
+| `kind`        | enum      | Required    | "AIRFLOW" \| "TEMPORAL" \| "STEP_FUNCTIONS" \| "GITHUB_ACTION" \| "JENKINS_PIPELINE" \| "CUSTOM" |
+| `entryPoint`  | string    | Optional    | Entry point symbol name                                                                          |
+| `description` | string    | Optional    | What this workflow does                                                                          |
+| `createdAt`   | timestamp | Required    | When indexed                                                                                     |
+
+```cypher
+-- OPTIONAL: Create only when needed
+CREATE CONSTRAINT workflow_id_unique IF NOT EXISTS
+FOR (n:Workflow) REQUIRE n.id IS UNIQUE;
+```
+
+**When to use**: You have orchestration/automation (Airflow, Temporal) and need to track workflow
+evolution, step dependencies, or execution tracing.
+
+---
+
+**Cite as:** §2.4
 
 ---
 
@@ -1038,6 +1274,53 @@ CALL db.index.fulltext.createNodeIndex(
 
 **Cite as:** §4.4
 
+### 4.5 Priority 5: Optional Constraints (V2+)
+
+Create these constraints **only when** you enable the corresponding optional node types.
+
+```cypher
+-- OPTIONAL: Create only if using Configuration nodes
+CREATE CONSTRAINT configuration_id_unique IF NOT EXISTS
+FOR (n:Configuration) REQUIRE n.id IS UNIQUE;
+
+-- OPTIONAL: Create only if using Error nodes
+CREATE CONSTRAINT error_id_unique IF NOT EXISTS
+FOR (n:Error) REQUIRE n.id IS UNIQUE;
+
+-- OPTIONAL: Create only if using Message nodes
+CREATE CONSTRAINT message_id_unique IF NOT EXISTS
+FOR (n:Message) REQUIRE n.id IS UNIQUE;
+
+-- OPTIONAL: Create only if using Dependency nodes
+CREATE CONSTRAINT dependency_id_unique IF NOT EXISTS
+FOR (n:Dependency) REQUIRE n.id IS UNIQUE;
+
+-- OPTIONAL: Create only if using Secret nodes
+CREATE CONSTRAINT secret_id_unique IF NOT EXISTS
+FOR (n:Secret) REQUIRE n.id IS UNIQUE;
+
+-- OPTIONAL: Create only if using Workflow nodes
+CREATE CONSTRAINT workflow_id_unique IF NOT EXISTS
+FOR (n:Workflow) REQUIRE n.id IS UNIQUE;
+```
+
+**When to create**:
+
+- Configuration: If tracking environment variables, config files, or secrets
+- Error: If analyzing error flows or exception hierarchies
+- Message: If you have Kafka, RabbitMQ, event-driven architecture
+- Dependency: If doing supply chain security scanning or version auditing
+- Secret: If auditing credentials or compliance reporting (SOC2, PCI-DSS)
+- Workflow: If tracking orchestrations (Airflow, Temporal, Step Functions)
+
+**Adoption Strategy**:
+
+- **V1.0**: Ship with mandatory 14 nodes + 4.1/4.2/4.3/4.4 constraints
+- **V1.1+**: Enable optional constraints as domains require them
+- **V2.0**: All constraints production-ready
+
+**Cite as:** §4.5
+
 ---
 
 ## 5. CONTAINS Hierarchy Algorithm
@@ -1281,9 +1564,10 @@ DETACH DELETE s, n
 
 ## 9. Changelog
 
-| Date       | Version | Editor | Summary                                                                                                         |
-| ---------- | ------- | ------ | --------------------------------------------------------------------------------------------------------------- |
-| 2025-12-08 | 1.0     | @agent | Complete v1 schema spec with node/edge DDL, indexes, query patterns, lifecycle management, and scaling guidance |
+| Date       | Version | Editor | Summary                                                                                                                                                                                                                          |
+| ---------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-12-09 | 1.1     | @agent | Added 6 optional V2+ nodes (Configuration, Error, Message, Dependency, Secret, Workflow); renamed Endpoint→Boundary and SchemaEntity→DataContract; language/domain-agnostic enums; updated constraints, edges, adoption strategy |
+| 2025-12-08 | 1.0     | @agent | Complete v1 schema spec with node/edge DDL, indexes, query patterns, lifecycle management, and scaling guidance                                                                                                                  |
 
 ---
 
