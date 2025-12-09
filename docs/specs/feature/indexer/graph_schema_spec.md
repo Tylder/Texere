@@ -349,89 +349,435 @@ FOR (n:ExternalService) REQUIRE n.id IS UNIQUE;
 
 ## 3. Relationship Catalog
 
-### 3.1 Hierarchy (CONTAINS)
+This section defines the 10 core consolidated edge types. See
+[RELATIONSHIP_TYPE_CONSOLIDATION_ANALYSIS.md](./research/RELATIONSHIP_TYPE_CONSOLIDATION_ANALYSIS.md)
+for detailed rationale and migration guidance.
 
-All directed bottom-up; single type enables transitive queries.
+### 3.1 Structural Backbone (Unchanged)
 
-| From → To             | Meaning              | Cardinality | Notes         |
-| --------------------- | -------------------- | ----------- | ------------- |
-| `File → Module`       | File in Module       | many-to-one | `[:CONTAINS]` |
-| `Module → Snapshot`   | Module in Snapshot   | many-to-one | `[:CONTAINS]` |
-| `Snapshot → Codebase` | Snapshot of Codebase | many-to-one | `[:CONTAINS]` |
-| `Snapshot → SpecDoc`  | SpecDoc in Snapshot  | many-to-one | `[:CONTAINS]` |
-| `Snapshot → TestCase` | TestCase in Snapshot | many-to-one | `[:CONTAINS]` |
+#### [:CONTAINS] – Hierarchy Tree
+
+Bottom-up containment forming the repo structure. Enables transitive queries.
+
+| From → To             | Meaning              | Cardinality | Notes     |
+| --------------------- | -------------------- | ----------- | --------- |
+| `File → Module`       | File in Module       | many-to-one | Tree edge |
+| `Module → Snapshot`   | Module in Snapshot   | many-to-one | Tree edge |
+| `Snapshot → Codebase` | Snapshot of Codebase | many-to-one | Tree edge |
 
 ```cypher
-// Query: All symbols in a module
+-- Transitive: all symbols in a module
 MATCH (m:Module)-[:CONTAINS*]->(s:Symbol)
 RETURN s
+
+-- Why separate: Transitive tree requires dedicated index strategy
+-- Merging breaks [:CONTAINS*] optimization
 ```
+
+**Properties**: None  
+**Index priority**: High (tree traversal)
 
 **Cite as:** §3.1
 
-### 3.2 Code Relations (Single `:REFERENCES` Type)
+---
 
-| Property   | Type    | Meaning               | Notes                 |
-| ---------- | ------- | --------------------- | --------------------- |
-| `type`     | enum    | "CALL" \| "REFERENCE" | Relationship type     |
-| `filePath` | string  | Source file           | For location tracking |
-| `line`     | integer | Line number           | For navigation        |
-| `col`      | integer | Column number         | For navigation        |
+#### [:IN_SNAPSHOT] – Version Membership
+
+Every snapshot-scoped node belongs to exactly one snapshot (cardinality invariant).
+
+| From → To                      | Meaning                  | Cardinality | Notes |
+| ------------------------------ | ------------------------ | ----------- | ----- |
+| `Symbol → Snapshot`            | Symbol in Snapshot       | exactly 1   |       |
+| `Endpoint → Snapshot`          | Endpoint in Snapshot     | exactly 1   |       |
+| `File → Snapshot`              | File in Snapshot         | exactly 1   |       |
+| `Module → Snapshot`            | Module in Snapshot       | exactly 1   |       |
+| `TestCase → Snapshot`          | TestCase in Snapshot     | exactly 1   |       |
+| `SpecDoc → Snapshot`           | SpecDoc in Snapshot      | exactly 1   |       |
+| `SchemaEntity → Snapshot`      | SchemaEntity in Snapshot | exactly 1   |       |
+| `ThirdPartyLibrary → Snapshot` | Library in Snapshot      | exactly 1   |       |
 
 ```cypher
-// Single edge type with type property
-(symbol1:Symbol)-[:REFERENCES {type: 'CALL', line: 42, col: 5}]->(symbol2:Symbol)
-(symbol1:Symbol)-[:REFERENCES {type: 'REFERENCE', line: 10, col: 0}]->(symbol2:Symbol)
+-- Direct lookup: "What snapshot is this symbol in?"
+MATCH (sym:Symbol)-[:IN_SNAPSHOT]->(snap:Snapshot)
+RETURN snap
 ```
+
+**Properties**: None  
+**Cardinality invariant**: CRITICAL (every scoped node has exactly 1)  
+**Index priority**: Critical (O(1) version lookup)
+
+**Cite as:** §3.1
+
+---
+
+### 3.2 Code Relations
+
+#### [:REFERENCES] – Code Relations & Pattern Adherence
+
+Consolidates: CALL, TYPE_REF, IMPORT, FOLLOWS_PATTERN, SIMILAR_TO
+
+```cypher
+-- Function calls
+(symbol:Symbol)-[r:REFERENCES {kind: 'CALL', line: 42, col: 5}]->(symbol2:Symbol)
+
+-- Type references
+(symbol:Symbol)-[r:REFERENCES {kind: 'TYPE_REF', line: 10, col: 0}]->(symbol2:Symbol)
+
+-- Imports
+(symbol:Symbol)-[r:REFERENCES {kind: 'IMPORT', line: 15, col: 3}]->(symbol2:Symbol)
+
+-- Pattern adherence
+(symbol:Symbol)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.85}]->(pattern:Pattern)
+(endpoint:Endpoint)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.92}]->(pattern:Pattern)
+(module:Module)-[r:REFERENCES {kind: 'PATTERN', confidence: 0.78}]->(pattern:Pattern)
+
+-- Embedding similarity
+(symbol:Symbol)-[r:REFERENCES {kind: 'SIMILAR', distance: 0.12}]->(symbol2:Symbol)
+(feature:Feature)-[r:REFERENCES {kind: 'SIMILAR', distance: 0.15}]->(feature2:Feature)
+```
+
+**Properties**:
+
+- `kind`: 'CALL' | 'TYPE_REF' | 'IMPORT' | 'PATTERN' | 'SIMILAR'
+- `line`, `col`: Integer (for code relations only)
+- `confidence`: Float 0.0-1.0 (for PATTERN)
+- `distance`: Float 0.0-1.0 (for SIMILAR, embedding distance)
+
+**Index priority**: High (call graph, pattern discovery)
 
 **Cite as:** §3.2
 
-### 3.3 Semantic Relations
+---
 
-| From → To                    | Relationship    | Cardinality  | Inference           |
-| ---------------------------- | --------------- | ------------ | ------------------- |
-| `Feature → Endpoint`         | `[:IMPLEMENTS]` | many-to-many | features.yaml + LLM |
-| `Feature → Symbol`           | `[:IMPLEMENTS]` | many-to-many | features.yaml + LLM |
-| `Symbol → SchemaEntity`      | `[:READS_FROM]` | many-to-many | ORM patterns        |
-| `Symbol → SchemaEntity`      | `[:WRITES_TO]`  | many-to-many | ORM patterns        |
-| `Module → ThirdPartyLib`     | `[:DEPENDS_ON]` | many-to-many | Manifest files      |
-| `Endpoint → ExternalService` | `[:CALLS]`      | many-to-many | Heuristics + code   |
-| `Feature → ExternalService`  | `[:DEPENDS_ON]` | many-to-many | Transitive          |
+### 3.3 Realization & Implementation
+
+#### [:REALIZES] – Implementation, Testing, Verification
+
+Consolidates: IMPLEMENTS, TESTS, VERIFIES
+
+Semantic: "What realizes this requirement?"
+
+```cypher
+-- Symbol implements Feature
+(symbol:Symbol)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.88}]->(feature:Feature)
+
+-- Endpoint implements Feature
+(endpoint:Endpoint)-[r:REALIZES {role: 'IMPLEMENTS', confidence: 0.92}]->(feature:Feature)
+
+-- TestCase tests Symbol/Endpoint
+(testCase:TestCase)-[r:REALIZES {role: 'TESTS', coverage: 'DIRECT'}]->(symbol:Symbol)
+(testCase:TestCase)-[r:REALIZES {role: 'TESTS', coverage: 'INDIRECT'}]->(endpoint:Endpoint)
+
+-- TestCase verifies Feature
+(testCase:TestCase)-[r:REALIZES {role: 'VERIFIES', confidence: 0.95}]->(feature:Feature)
+```
+
+**Properties**:
+
+- `role`: 'IMPLEMENTS' | 'TESTS' | 'VERIFIES'
+- `confidence`: Float 0.0-1.0 (for IMPLEMENTS, VERIFIES)
+- `coverage`: 'DIRECT' | 'INDIRECT' (for TESTS only)
+
+**Cardinality**: many-to-many
+
+**Query example**:
+
+```cypher
+-- All ways feature X is realized
+MATCH (x)-[r:REALIZES]->(f:Feature {id: 'payment'})
+WHERE r.role IN ['IMPLEMENTS', 'TESTS', 'VERIFIES']
+RETURN x, r.role, r.confidence
+```
 
 **Cite as:** §3.3
 
-### 3.4 Testing & Documentation
+---
 
-| From → To              | Relationship    | Cardinality  | Inference                  |
-| ---------------------- | --------------- | ------------ | -------------------------- |
-| `TestCase → Symbol`    | `[:TESTS]`      | many-to-many | Imports + heuristics + LLM |
-| `TestCase → Feature`   | `[:VERIFIES]`   | many-to-many | Naming + LLM               |
-| `SpecDoc → Feature`    | `[:DOCUMENTS]`  | many-to-many | Name/content similarity    |
-| `SpecDoc → Endpoint`   | `[:DOCUMENTS]`  | many-to-many | Name/content similarity    |
-| `SpecDoc → Module`     | `[:DOCUMENTS]`  | many-to-many | Tagging                    |
-| `StyleGuide → Module`  | `[:APPLIES_TO]` | many-to-many | Tagging                    |
-| `StyleGuide → Pattern` | `[:REFERENCES]` | many-to-many | Tagging                    |
+### 3.4 Data Flow
+
+#### [:MUTATES] – Data Access (Read/Write)
+
+Consolidates: READS_FROM, WRITES_TO
+
+Semantic: "What accesses this schema entity?"
+
+```cypher
+-- Symbol reads from entity
+(symbol:Symbol)-[r:MUTATES {operation: 'READ', confidence: 0.85}]->(entity:SchemaEntity)
+
+-- Symbol writes to entity
+(symbol:Symbol)-[r:MUTATES {operation: 'WRITE', confidence: 0.82}]->(entity:SchemaEntity)
+
+-- Endpoint reads/writes (via handler symbol)
+(endpoint:Endpoint)-[r:MUTATES {operation: 'READ'|'WRITE', confidence: 0.90}]->(entity:SchemaEntity)
+```
+
+**Properties**:
+
+- `operation`: 'READ' | 'WRITE'
+- `confidence`: Float 0.0-1.0 (LLM field analysis)
+
+**Cardinality**: many-to-many
+
+**Query example**:
+
+```cypher
+-- Impact of renaming User entity
+MATCH (sym:Symbol)-[r:MUTATES {operation: 'WRITE'}]->(e:SchemaEntity {name: 'User'})
+RETURN sym, r.confidence
+```
 
 **Cite as:** §3.4
 
-### 3.5 Patterns & History
+---
 
-| From → To            | Relationship         | Cardinality  | Inference                   |
-| -------------------- | -------------------- | ------------ | --------------------------- |
-| `Symbol → Pattern`   | `[:FOLLOWS_PATTERN]` | many-to-many | Heuristics + LLM            |
-| `Endpoint → Pattern` | `[:FOLLOWS_PATTERN]` | many-to-many | Heuristics + LLM            |
-| `Module → Pattern`   | `[:FOLLOWS_PATTERN]` | many-to-many | Heuristics + LLM            |
-| `Symbol → Snapshot`  | `[:INTRODUCED_IN]`   | many-to-one  | Git diff (first occurrence) |
-| `Symbol → Snapshot`  | `[:MODIFIED_IN]`     | many-to-many | Git diff (changes)          |
-| `Feature → Snapshot` | `[:INTRODUCED_IN]`   | many-to-one  | Graph analysis              |
-| `Feature → Snapshot` | `[:MODIFIED_IN]`     | many-to-many | Graph analysis              |
-| `Incident → Symbol`  | `[:CAUSED_BY]`       | many-to-many | Manual mapping              |
-| `Incident → Feature` | `[:AFFECTS]`         | many-to-many | Manual mapping              |
-| `Symbol ↔ Symbol`    | `[:SIMILAR_TO]`      | many-to-many | Embedding distance          |
-| `Feature ↔ Feature`  | `[:SIMILAR_TO]`      | many-to-many | Embedding distance          |
-| `File → Symbol`      | `[:IN_SNAPSHOT]`     | (via Symbol) | Scoping mechanism           |
+### 3.5 Dependencies
+
+#### [:DEPENDS_ON] – All Dependency Types
+
+Consolidates: USES_CONFIG, CALLS (external services), DEPENDS_ON (libraries), APPLIES_TO
+
+Semantic: "What does this depend on?"
+
+```cypher
+-- Module depends on library
+(module:Module)-[r:DEPENDS_ON {kind: 'LIBRARY', version: '3.0.1'}]->(lib:ThirdPartyLibrary)
+
+-- Symbol uses config/env
+(symbol:Symbol)-[r:DEPENDS_ON {kind: 'CONFIG', required: true}]->(cfg:ConfigurationVariable)
+
+-- Symbol calls external service
+(symbol:Symbol)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.91}]->(svc:ExternalService)
+
+-- Endpoint calls service
+(endpoint:Endpoint)-[r:DEPENDS_ON {kind: 'SERVICE', confidence: 0.88}]->(svc:ExternalService)
+
+-- Module follows style guide
+(module:Module)-[r:DEPENDS_ON {kind: 'STYLE_GUIDE'}]->(guide:StyleGuide)
+
+-- Feature depends on Feature (transitive)
+(feature:Feature)-[r:DEPENDS_ON]->(feature2:Feature)
+```
+
+**Properties**:
+
+- `kind`: 'LIBRARY' | 'SERVICE' | 'CONFIG' | 'STYLE_GUIDE'
+- `version`: String (for LIBRARY)
+- `required`: Boolean (for CONFIG)
+- `confidence`: Float 0.0-1.0 (for SERVICE)
+
+**Cardinality**: many-to-many
+
+**Query example**:
+
+```cypher
+-- All external dependencies for payment symbol
+MATCH (sym:Symbol {name: 'processPayment'})-[r:DEPENDS_ON {kind: 'SERVICE'|'CONFIG'}]->(dep)
+RETURN dep, r.kind
+```
+
+**Index priority**: High (dependency analysis, security scanning)
 
 **Cite as:** §3.5
+
+---
+
+### 3.6 Documentation & Governance
+
+#### [:DOCUMENTS] – Knowledge & Coverage
+
+Consolidates: DOCUMENTS, APPLIES_TO
+
+Semantic: "What explains or governs this?"
+
+```cypher
+-- SpecDoc documents Feature
+(doc:SpecDoc)-[r:DOCUMENTS {target_role: 'FEATURE', similarity: 0.87}]->(f:Feature)
+
+-- SpecDoc documents Endpoint
+(doc:SpecDoc)-[r:DOCUMENTS {target_role: 'ENDPOINT', similarity: 0.91}]->(ep:Endpoint)
+
+-- SpecDoc documents Symbol
+(doc:SpecDoc)-[r:DOCUMENTS {target_role: 'SYMBOL', similarity: 0.79}]->(sym:Symbol)
+
+-- SpecDoc documents Module
+(doc:SpecDoc)-[r:DOCUMENTS {target_role: 'MODULE'}]->(m:Module)
+
+-- StyleGuide documents Module
+(guide:StyleGuide)-[r:DOCUMENTS {target_role: 'MODULE'}]->(m:Module)
+
+-- StyleGuide documents Pattern
+(guide:StyleGuide)-[r:DOCUMENTS {target_role: 'PATTERN'}]->(pat:Pattern)
+```
+
+**Properties**:
+
+- `target_role`: 'FEATURE' | 'ENDPOINT' | 'SYMBOL' | 'MODULE' | 'PATTERN'
+- `similarity`: Float 0.0-1.0 (for LLM-derived links)
+
+**Cardinality**: many-to-many
+
+**Query example**:
+
+```cypher
+-- All documentation for feature X
+MATCH (doc:SpecDoc)-[r:DOCUMENTS {target_role: 'FEATURE'}]->(f:Feature {id: 'payment'})
+RETURN doc, r.similarity
+ORDER BY r.similarity DESC
+```
+
+**Cite as:** §3.6
+
+---
+
+### 3.7 Position & Ownership
+
+#### [:LOCATION] – Where Things Are Defined
+
+Consolidates: IN_FILE, IN_MODULE, HANDLED_BY
+
+Semantic: "Where is this defined, and what role?"
+
+```cypher
+-- Endpoint handler
+(endpoint:Endpoint)-[r:LOCATION {role: 'HANDLED_BY'}]->(symbol:Symbol)
+
+-- Endpoint in file
+(endpoint:Endpoint)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
+
+-- Endpoint in module
+(endpoint:Endpoint)-[r:LOCATION {role: 'IN_MODULE'}]->(module:Module)
+
+-- TestCase in file
+(testCase:TestCase)-[r:LOCATION {role: 'IN_FILE'}]->(file:File)
+
+-- TestCase in module
+(testCase:TestCase)-[r:LOCATION {role: 'IN_MODULE'}]->(module:Module)
+```
+
+**Properties**:
+
+- `role`: 'HANDLED_BY' | 'IN_FILE' | 'IN_MODULE'
+
+**Cardinality**: many-to-many (for ownership queries)
+
+**Why separate from CONTAINS**: Role-based filtering for ownership queries (e.g., "which endpoint
+handles this?") vs. tree traversal for structure queries. Different query patterns, different
+indexes.
+
+**Query example**:
+
+```cypher
+-- Find handler for all payment endpoints
+MATCH (ep:Endpoint {path: '/api/payment/*'})-[r:LOCATION {role: 'HANDLED_BY'}]->(sym:Symbol)
+RETURN ep, sym
+```
+
+**Cite as:** §3.7
+
+---
+
+### 3.8 Evolution & Versioning
+
+#### [:TRACKS] – History & Change
+
+Consolidates: INTRODUCED_IN, MODIFIED_IN
+
+Semantic: "When did this appear or change?"
+
+```cypher
+-- Symbol first appeared in snapshot
+(symbol:Symbol)-[r:TRACKS {event: 'INTRODUCED'}]->(snapshot:Snapshot)
+
+-- Symbol was modified in later snapshot
+(symbol:Symbol)-[r:TRACKS {event: 'MODIFIED'}]->(snapshot:Snapshot)
+
+-- Feature tracking
+(feature:Feature)-[r:TRACKS {event: 'INTRODUCED'|'MODIFIED'}]->(snapshot:Snapshot)
+
+-- TestCase tracking
+(testCase:TestCase)-[r:TRACKS {event: 'INTRODUCED'|'MODIFIED'}]->(snapshot:Snapshot)
+```
+
+**Properties**:
+
+- `event`: 'INTRODUCED' | 'MODIFIED'
+
+**Cardinality**: many-to-many
+
+**Query example**:
+
+```cypher
+-- When was auth symbol introduced and how many times modified?
+MATCH (sym:Symbol {name: 'validateAuth'})-[r:TRACKS]->(snap:Snapshot)
+WITH sym, r.event, COUNT(*) as count
+RETURN sym, r.event, count
+```
+
+**Cite as:** §3.8
+
+---
+
+### 3.9 Incident Impact
+
+#### [:IMPACTS] – Root Cause & Effects
+
+Consolidates: CAUSED_BY, AFFECTS
+
+Semantic: "How does this incident relate to the codebase?"
+
+```cypher
+-- Incident caused by symbol
+(incident:Incident)-[r:IMPACTS {type: 'CAUSED_BY'}]->(symbol:Symbol)
+
+-- Incident affects feature
+(incident:Incident)-[r:IMPACTS {type: 'AFFECTS'}]->(feature:Feature)
+
+-- Incident affects endpoint
+(incident:Incident)-[r:IMPACTS {type: 'AFFECTS'}]->(endpoint:Endpoint)
+```
+
+**Properties**:
+
+- `type`: 'CAUSED_BY' (root cause) | 'AFFECTS' (impact)
+
+**Cardinality**: many-to-many
+
+**Query example**:
+
+```cypher
+-- Find all incidents affecting auth feature
+MATCH (i:Incident)-[r:IMPACTS {type: 'AFFECTS'}]->(f:Feature {id: 'auth'})
+RETURN i, i.severity
+ORDER BY i.createdAt DESC
+```
+
+**Cite as:** §3.9
+
+---
+
+## Summary: 10 Core Edge Types
+
+| Edge             | Consolidates                                        | Sub-Types     | Purpose                        |
+| ---------------- | --------------------------------------------------- | ------------- | ------------------------------ |
+| `[:CONTAINS]`    | —                                                   | —             | Hierarchy tree                 |
+| `[:IN_SNAPSHOT]` | —                                                   | —             | Version membership (invariant) |
+| `[:REFERENCES]`  | CALL, TYPE_REF, IMPORT, FOLLOWS_PATTERN, SIMILAR_TO | `kind`        | Code relations                 |
+| `[:REALIZES]`    | IMPLEMENTS, TESTS, VERIFIES                         | `role`        | Implementation                 |
+| `[:MUTATES]`     | READS_FROM, WRITES_TO                               | `operation`   | Data flow                      |
+| `[:DEPENDS_ON]`  | USES_CONFIG, CALLS, DEPENDS_ON, APPLIES_TO          | `kind`        | Dependencies                   |
+| `[:DOCUMENTS]`   | DOCUMENTS, part of APPLIES_TO                       | `target_role` | Knowledge                      |
+| `[:LOCATION]`    | IN_FILE, IN_MODULE, HANDLED_BY                      | `role`        | Position/Ownership             |
+| `[:TRACKS]`      | INTRODUCED_IN, MODIFIED_IN                          | `event`       | Evolution                      |
+| `[:IMPACTS]`     | CAUSED_BY, AFFECTS                                  | `type`        | Incident tracking              |
+
+**Benefits**:
+
+- ✓ Single-match queries for related edge types
+- ✓ Extensible via properties (no schema migration)
+- ✓ Better query cardinality optimization
+- ✓ Fewer index types to maintain
+- ✓ Aligns with Neo4j/Memgraph best practices
 
 ---
 
@@ -505,7 +851,47 @@ FOR (n:ExternalService) REQUIRE n.id IS UNIQUE;
 
 **Cite as:** §4.1
 
-### 4.2 Priority 2: Range/Lookup Indexes
+### 4.2 Priority 2: Edge Property Indexes (Consolidated Schema)
+
+Indexes on properties of the 10 core edge types for efficient filtering.
+
+```cypher
+-- [:REFERENCES] variants (call graph, pattern discovery)
+CREATE INDEX references_kind IF NOT EXISTS
+FOR ()-[r:REFERENCES]-() ON (r.kind);
+
+-- [:REALIZES] by role (feature implementation)
+CREATE INDEX realizes_role IF NOT EXISTS
+FOR ()-[r:REALIZES]-() ON (r.role);
+
+-- [:DEPENDS_ON] by kind (dependency analysis, security)
+CREATE INDEX depends_on_kind IF NOT EXISTS
+FOR ()-[r:DEPENDS_ON]-() ON (r.kind);
+
+-- [:DOCUMENTS] by target role (documentation lookup)
+CREATE INDEX documents_target_role IF NOT EXISTS
+FOR ()-[r:DOCUMENTS]-() ON (r.target_role);
+
+-- [:LOCATION] by role (position/ownership queries)
+CREATE INDEX location_role IF NOT EXISTS
+FOR ()-[r:LOCATION]-() ON (r.role);
+
+-- [:TRACKS] by event (evolution/history queries)
+CREATE INDEX tracks_event IF NOT EXISTS
+FOR ()-[r:TRACKS]-() ON (r.event);
+
+-- [:MUTATES] by operation (data flow analysis)
+CREATE INDEX mutates_operation IF NOT EXISTS
+FOR ()-[r:MUTATES]-() ON (r.operation);
+
+-- [:IMPACTS] by type (incident root cause vs. effect)
+CREATE INDEX impacts_type IF NOT EXISTS
+FOR ()-[r:IMPACTS]-() ON (r.type);
+```
+
+**Cite as:** §4.2
+
+### 4.3 Priority 3: Node Property Indexes
 
 For filtering and traversal optimization.
 
@@ -537,9 +923,9 @@ CREATE INDEX incident_severity IF NOT EXISTS
 FOR (n:Incident) ON (n.severity);
 ```
 
-**Cite as:** §4.2
+**Cite as:** §4.3
 
-### 4.3 Priority 3: Full-Text Indexes
+### 4.4 Priority 4: Full-Text Indexes
 
 For semantic search (requires `db.index.fulltext.*` procedures).
 
@@ -561,7 +947,7 @@ CALL db.index.fulltext.createNodeIndex(
 );
 ```
 
-**Cite as:** §4.3
+**Cite as:** §4.4
 
 ---
 
@@ -614,46 +1000,47 @@ RETURN sym
 
 ---
 
-## 6. Cypher Query Patterns
+## 6. Cypher Query Patterns (Consolidated Schema)
 
 ### 6.1 getFeatureContext Pattern
+
+Retrieves comprehensive context for a feature: implementation, tests, docs, dependencies.
 
 ```cypher
 MATCH (f:Feature {id: $featureId})
 
--- Implementing endpoints
-OPTIONAL MATCH (f)-[:IMPLEMENTS]->(ep:Endpoint)
-  WITH f, ep
+-- Implementing endpoints/symbols
+OPTIONAL MATCH (x)-[r1:REALIZES {role: 'IMPLEMENTS'}]->(f)
+WITH f, x WHERE x IS NOT NULL
 
--- Implementing symbols (call graph depth N)
-OPTIONAL MATCH (f)-[:IMPLEMENTS]->(sym:Symbol)
-OPTIONAL MATCH (sym)-[:REFERENCES* 0..2 {type: 'CALL'}]->()-[:REFERENCES {type: 'CALL'}]->(calleeSymbol:Symbol)
+-- Symbol call graph (depth 2)
+OPTIONAL MATCH (sym:Symbol) WHERE x IN [$x] OR r1.role = 'IMPLEMENTS'
+OPTIONAL MATCH (sym)-[r2:REFERENCES {kind: 'CALL'}* 0..2]->(calleeSymbol:Symbol)
 
--- Related schema entities
-OPTIONAL MATCH (calleeSymbol)-[r:READS_FROM|:WRITES_TO]->(entity:SchemaEntity)
+-- Data access patterns
+OPTIONAL MATCH (calleeSymbol)-[r3:MUTATES]->(entity:SchemaEntity)
 
--- Tests
-OPTIONAL MATCH (t:TestCase)-[:TESTS|:VERIFIES]->(f)
+-- Tests for feature
+OPTIONAL MATCH (t:TestCase)-[r4:REALIZES {role: 'VERIFIES'|'TESTS'}]->(f)
 
--- Specs
-OPTIONAL MATCH (doc:SpecDoc)-[:DOCUMENTS]->(f)
+-- Documentation
+OPTIONAL MATCH (doc:SpecDoc)-[r5:DOCUMENTS {target_role: 'FEATURE'}]->(f)
 
--- Style guides (via module)
+-- Dependencies & style guides
 OPTIONAL MATCH (sym)-[:IN_SNAPSHOT]->(snap:Snapshot)
-OPTIONAL MATCH sym-[:CONTAINS*0..2]->(m:Module)
-OPTIONAL MATCH (guide:StyleGuide)-[:APPLIES_TO]->(m)
+OPTIONAL MATCH (sym)-[:CONTAINS*0..1]->(m:Module)
+OPTIONAL MATCH (guide:StyleGuide)-[r6:DOCUMENTS {target_role: 'MODULE'}]->(m)
 
--- Patterns
-OPTIONAL MATCH (ep)-[:FOLLOWS_PATTERN|:FOLLOWS_PATTERN]-(pattern:Pattern)
+-- Pattern adherence
+OPTIONAL MATCH (x)-[r7:REFERENCES {kind: 'PATTERN'}]->(pattern:Pattern)
 
 RETURN {
   feature: f,
-  implementingEndpoints: collect(DISTINCT ep),
-  handlerSymbols: collect(DISTINCT sym),
+  implementers: collect(DISTINCT x),
   callGraph: collect(DISTINCT calleeSymbol),
-  relatedSchemaEntities: collect(DISTINCT entity),
-  testCases: collect(DISTINCT t),
-  specDocs: collect(DISTINCT doc),
+  dataAccess: collect(DISTINCT {entity: entity, operation: r3.operation}),
+  tests: collect(DISTINCT t),
+  docs: collect(DISTINCT doc),
   styleGuides: collect(DISTINCT guide),
   patterns: collect(DISTINCT pattern)
 } AS bundle
@@ -663,23 +1050,27 @@ RETURN {
 
 ### 6.2 getEndpointPatternExamples Pattern
 
+Retrieves endpoint examples with their implementation, tests, and patterns.
+
 ```cypher
 MATCH (ep:Endpoint)
-OPTIONAL MATCH (sym:Symbol {id: ep.handlerSymbolId})
-OPTIONAL MATCH (t:TestCase)-[:TESTS]->(sym)
-OPTIONAL MATCH (ep)-[:FOLLOWS_PATTERN]->(pat:Pattern)
-OPTIONAL MATCH (sym)-[:IN_SNAPSHOT]->(snap:Snapshot)
-OPTIONAL MATCH snap-[:CONTAINS*0..2]->(m:Module)
-OPTIONAL MATCH (guide:StyleGuide)-[:APPLIES_TO]->(m)
-OPTIONAL MATCH (sym)-[r:READS_FROM|:WRITES_TO]->(entity:SchemaEntity)
+OPTIONAL MATCH (ep)-[r1:LOCATION {role: 'HANDLED_BY'}]->(handler:Symbol)
+OPTIONAL MATCH (t:TestCase)-[r2:REALIZES {role: 'TESTS'}]->(handler)
+OPTIONAL MATCH (ep)-[r3:REFERENCES {kind: 'PATTERN'}]->(pattern:Pattern)
+OPTIONAL MATCH (handler)-[:IN_SNAPSHOT]->(snap:Snapshot)
+OPTIONAL MATCH (handler)-[:CONTAINS*0..1]->(m:Module)
+OPTIONAL MATCH (guide:StyleGuide)-[r4:DOCUMENTS {target_role: 'MODULE'}]->(m)
+OPTIONAL MATCH (handler)-[r5:MUTATES]->(entity:SchemaEntity)
+OPTIONAL MATCH (ep)-[r6:DEPENDS_ON {kind: 'SERVICE'}]->(service:ExternalService)
 
 RETURN {
   endpoint: ep,
-  handler: sym,
+  handler: handler,
   tests: collect(DISTINCT t),
-  patterns: collect(DISTINCT pat),
+  patterns: collect(DISTINCT pattern),
   styleGuides: collect(DISTINCT guide),
-  entities: collect(DISTINCT entity)
+  dataAccess: collect(DISTINCT {entity: entity, operation: r5.operation}),
+  externalDependencies: collect(DISTINCT service)
 } AS bundle
 
 ORDER BY ep.path
@@ -690,22 +1081,36 @@ LIMIT $limit
 
 ### 6.3 getIncidentSlice Pattern
 
+Retrieves all code artifacts related to an incident: root causes, affected features, tests.
+
 ```cypher
 MATCH (i:Incident {id: $incidentId})
-OPTIONAL MATCH (i)-[:CAUSED_BY|:AFFECTS]->(sym:Symbol)
-OPTIONAL MATCH (i)-[:AFFECTS]->(feat:Feature)
-OPTIONAL MATCH (sym)-[:INTRODUCED_IN|:MODIFIED_IN]->(snap:Snapshot)
-OPTIONAL MATCH (feat)-[:INTRODUCED_IN|:MODIFIED_IN]->(snap:Snapshot)
-OPTIONAL MATCH (t:TestCase)-[:TESTS]->(sym)
-OPTIONAL MATCH (doc:SpecDoc)-[:DOCUMENTS]->(sym)
+
+-- Root causes and impacts
+OPTIONAL MATCH (i)-[r1:IMPACTS {type: 'CAUSED_BY'}]->(causeSymbol:Symbol)
+OPTIONAL MATCH (i)-[r2:IMPACTS {type: 'AFFECTS'}]->(affectFeature:Feature)
+OPTIONAL MATCH (i)-[r3:IMPACTS {type: 'AFFECTS'}]->(affectEndpoint:Endpoint)
+
+-- Evolution tracking
+OPTIONAL MATCH (causeSymbol)-[r4:TRACKS]->(snap:Snapshot)
+OPTIONAL MATCH (affectFeature)-[r5:TRACKS]->(snap:Snapshot)
+
+-- Related tests
+OPTIONAL MATCH (t:TestCase)-[r6:REALIZES {role: 'TESTS'}]->(causeSymbol)
+OPTIONAL MATCH (t2:TestCase)-[r7:REALIZES {role: 'VERIFIES'}]->(affectFeature)
+
+-- Documentation
+OPTIONAL MATCH (doc:SpecDoc)-[r8:DOCUMENTS {target_role: 'SYMBOL'}]->(causeSymbol)
+OPTIONAL MATCH (doc2:SpecDoc)-[r9:DOCUMENTS {target_role: 'FEATURE'}]->(affectFeature)
 
 RETURN {
   incident: i,
-  relatedSymbols: collect(DISTINCT sym),
-  relatedFeatures: collect(DISTINCT feat),
-  snapshots: collect(DISTINCT snap),
-  tests: collect(DISTINCT t),
-  specDocs: collect(DISTINCT doc)
+  rootCauseSymbols: collect(DISTINCT causeSymbol),
+  affectedFeatures: collect(DISTINCT affectFeature),
+  affectedEndpoints: collect(DISTINCT affectEndpoint),
+  evolutionSnapshots: collect(DISTINCT snap),
+  relatedTests: collect(DISTINCT {test: t, type: 'cause'}) + collect(DISTINCT {test: t2, type: 'feature'}),
+  documentation: collect(DISTINCT doc) + collect(DISTINCT doc2)
 } AS bundle
 ```
 
