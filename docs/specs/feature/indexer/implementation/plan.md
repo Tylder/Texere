@@ -256,6 +256,19 @@ real indexing.
   [`prettier_formatting.md`](../../engineering/prettier_formatting.md), and testing specs
   [`testing_strategy.md`](../../engineering/testing_strategy.md),
   [`testing_specification.md`](../../engineering/testing_specification.md).
+- **Boundary & ownership matrix**: Tag every project with `domain:indexer` +
+  `layer:<types|core|ingest|query|workers|app>` and enforce via Nx module-boundary rules; keep a
+  small matrix (lib → allowed deps) in each new lib README and in this plan. CI should block
+  boundary violations.
+- **Risk & dependency register**: For each slice track a short table (Risk, Mitigation, Hard/Soft
+  dependency), covering DB availability, embedding quotas, config discovery, and queue backpressure;
+  review before starting.
+- **Testing layer targets**: Per slice, state required test types (unit/integration/golden) and
+  expected coverage bands per [`testing_strategy.md`](../../engineering/testing_strategy.md); ensure
+  CI runs lint, typecheck, tests, and module-boundary checks before merge.
+- **Documentation chores**: Each new or modified lib/app must ship a brief README or ADR snippet
+  with purpose, tags, allowed dependencies, how to run tests, and links to governing specs and this
+  plan.
 
 ---
 

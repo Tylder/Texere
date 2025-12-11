@@ -53,13 +53,19 @@ Create a spec containing:
 - Test plan
 - Constraints
 - Diff budget
+- Ownership & boundaries: intended Nx tags (domain/layer) + allowed dependency matrix for each new
+  lib/app.
+- Risks & dependencies: key risks with mitigations, and hard vs soft dependencies (e.g., DB,
+  external APIs, queues).
 
 ---
 
 ### Step B — Write Tests for Slice 1
 
 Only tests.  
-They must fail before implementation.
+They must fail before implementation.  
+Testing targets: define required test types (unit/integration/golden/e2e) and expected coverage band
+per repo testing strategy.
 
 ---
 
@@ -90,7 +96,9 @@ Add property-based, fuzz, and robustness tests.
 ### Step G — Update Spec, Document Behavior, Strengthen Guardrails
 
 Ensure FEATURE_SPEC.md reflects reality.  
-Require tests for all behavior changes.
+Require tests for all behavior changes.  
+Add/update README/ADR snippets per slice: purpose, tags, allowed deps, how to run tests, and links
+to governing specs.
 
 ---
 
