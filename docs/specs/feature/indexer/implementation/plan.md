@@ -37,7 +37,11 @@ real indexing.
   [`configuration_spec.md`](../configuration_spec.md) §1–2;
   [`configuration_and_server_setup.md`](../configuration_and_server_setup.md) §2–3;
   [`graph_schema_spec.md`](../graph_schema_spec.md) §6;
-  [`templates/nx/README.md`](../../../../templates/nx/README.md).  
+  [`templates/nx/README.md`](../../../../templates/nx/README.md);
+  [`typescript_configuration.md`](../../engineering/typescript_configuration.md);
+  [`eslint_code_quality.md`](../../engineering/eslint_code_quality.md);
+  [`prettier_formatting.md`](../../engineering/prettier_formatting.md);
+  [`prompt_template.md`](../../meta/prompt_template.md).  
   **Code areas**: scaffold libs under `packages/features/indexer/{types,core,ingest,query,workers}`
   via `templates/nx/node-lib`; set tags in `project.json` and `nx.json` (`domain:indexer`,
   `layer:*`).
@@ -246,6 +250,12 @@ real indexing.
   linking fallback; guard with denyPatterns.
 - **Data integrity**: Enforce `IN_SNAPSHOT` invariant and uniqueness constraints before merging
   writes (`graph_schema_spec.md` §4.1B).
+- **Engineering baselines**: Follow repo-wide standards in
+  [`typescript_configuration.md`](../../engineering/typescript_configuration.md),
+  [`eslint_code_quality.md`](../../engineering/eslint_code_quality.md),
+  [`prettier_formatting.md`](../../engineering/prettier_formatting.md), and testing specs
+  [`testing_strategy.md`](../../engineering/testing_strategy.md),
+  [`testing_specification.md`](../../engineering/testing_specification.md).
 
 ---
 
