@@ -1,46 +1,153 @@
-# indexer-types
+# @repo/indexer-types
 
-> Shared types for the Texere indexer (FileIndexResult, LanguageIndexer, graph/query bundles).
+> Shared type system for the Texere Indexer: graph nodes/edges, file extraction results, query
+> bundles, and configuration.
 
-Modern Node/ESM library template aligned with Nx + strict TypeScript.
+**Tags**: `domain:indexer`, `layer:types`
 
-## At a Glance
+## Purpose
 
-- Extends `@repo/typescript-config/node-library.json` (ES2023, NodeNext, declarations,
-  `sideEffects`: false)
-- Tsconfig split: `tsconfig.json` (references), `tsconfig.lib.json` (emit), `tsconfig.spec.json`
-  (tests)
-- Scripts: `build` (tsc lib), `check-types` (noEmit), `lint` (eslint), `test` / `test:coverage`
-  (vitest v8)
-- Coverage thresholds + include/exclude pre-set in `vitest.config.ts` (testing_strategy §2.2)
-- Exports map provided; `type: module`; treeshaking-friendly
-- Tags: replace `scope:indexer` with an allowed scope (see AGENTS/README)
+This library defines all **TypeScript types** used across the indexer system:
 
-## Quickstart
+- **File extraction** (`FileIndexResult`, `SymbolIndex`, `CallIndex`, etc.) — output from language
+  indexers
+- **Graph schema** (node types: `Codebase`, `Snapshot`, `Symbol`, `Feature`, etc.; edge types:
+  `ContainsEdge`, `RealizesEdge`, etc.)
+- **Query bundles** (`FeatureContextBundle`, `BoundaryPatternExample`, `IncidentSliceBundle`) —
+  return types for agent-facing queries
+- **Configuration** (`IndexerConfig`, `CodebaseConfig`, `GraphConfig`, etc.) — ingest and runtime
+  configuration
+- **Language indexer interface** (`LanguageIndexer`) — contract for per-language extraction plugins
 
-1. Copy to `packages/<name>/`; replace `indexer-types`,
-   `Shared types for the Texere indexer (FileIndexResult, LanguageIndexer, graph/query bundles).`,
-   `indexer`.
-2. Add the project to root `tsconfig.json` references.
-3. `pnpm install` if new deps → `pnpm nx graph` to verify pickup.
-4. `pnpm post:report:fast` during development.
+## Exports
 
-## Structure
+All types are exported from the main index:
 
-- `src/` – library source (colocate `*.test.ts` with spec references in describes).
-- `tsconfig.*` – lib/spec split; NodeNext; no bundler resolution.
-- `vitest.config.ts` – v8 coverage thresholds + include/exclude.
+```typescript
+import {
+  // File extraction
+  FileIndexResult,
+  SymbolIndex,
+  CallIndex,
+  BoundaryIndex,
+  TestCaseIndex,
+  LanguageIndexer,
 
-## Quality & Tooling
+  // Graph nodes
+  Codebase,
+  Snapshot,
+  Module,
+  File,
+  Symbol,
+  Boundary,
+  DataContract,
+  TestCase,
+  SpecDoc,
+  Feature,
+  Pattern,
+  Incident,
+  ExternalService,
+  StyleGuide,
 
-- Husky pre-commit runs `pnpm format:staged`; ensure new paths are formatted.
-- Lint: `pnpm nx run indexer-types:lint`; Typecheck: `pnpm nx run indexer-types:check-types`; Build
-  emits d.ts to `dist/`.
-- Lint target caches inputs (src + optional local eslint config) and uses the shared root ESLint
-  config by default.
+  // Graph edges
+  ContainsEdge,
+  ReferencesEdge,
+  RealizesEdge,
+  MutatesEdge,
+  DependsOnEdge,
+  DocumentsEdge,
+  TracksEdge,
+  ImpactsEdge,
 
-## Docs & Specs
+  // Query bundles
+  FeatureContextBundle,
+  BoundaryPatternExample,
+  IncidentSliceBundle,
+  CallGraphSlice,
 
-- TypeScript config: `docs/specs/engineering/typescript_configuration.md`
-- Testing strategy/specification: `docs/specs/engineering/testing_strategy.md`,
-  `docs/specs/engineering/testing_specification.md`
+  // Configuration
+  IndexerConfig,
+  CodebaseConfig,
+  GraphConfig,
+  VectorConfig,
+  EmbeddingConfig,
+  LLMConfig,
+  WorkerConfig,
+
+  // Runtime types
+  SnapshotRef,
+  ChangedFileSet,
+  Range,
+} from '@repo/indexer-types';
+```
+
+## Dependencies
+
+**No external runtime dependencies** (type-only package).
+
+- Extends: `@repo/typescript-config/node-library.json`
+- Used by: all indexer libraries and agent applications
+
+## Specification References
+
+- **File extraction types**: [ingest_spec.md §3–4](../../docs/specs/feature/indexer/ingest_spec.md)
+- **Graph node types**: [nodes/README.md](../../docs/specs/feature/indexer/nodes/README.md) and
+  individual node specs
+- **Graph edge types**: [edges/README.md](../../docs/specs/feature/indexer/edges/README.md)
+- **Query bundle types**:
+  [graph_schema_spec.md §6](../../docs/specs/feature/indexer/graph_schema_spec.md#6-cypher-query-patterns)
+- **Configuration types**:
+  [configuration_spec.md](../../docs/specs/feature/indexer/configuration_spec.md)
+- **Graph schema**:
+  [graph_schema_spec.md §2–3](../../docs/specs/feature/indexer/graph_schema_spec.md)
+
+## Development
+
+### Structure
+
+```
+src/
+  index.ts              # All type definitions (no runtime code)
+```
+
+### Testing
+
+Types are **validated at compile time**. Unit tests verify:
+
+- Type inference (Zod schemas, generic distributions)
+- Union type narrowing
+- Interface compatibility
+
+Run tests:
+
+```bash
+pnpm nx run indexer-types:test
+```
+
+### Maintaining Types
+
+When updating the indexer specification:
+
+1. **Read the governing spec** (e.g., `nodes/README.md` for node types)
+2. **Update types in this file**, citing spec section (e.g., `@reference nodes/Codebase.md`)
+3. **Keep naming aligned** with spec (e.g., `Snapshot.indexStatus` maps to `snapshot_index_status`
+   in Neo4j)
+4. **Document new fields** with inline JSDoc comments
+5. **Run `pnpm typecheck`** to ensure all consuming code compiles
+
+## Quality & Build
+
+- **Lint**: `pnpm nx run indexer-types:lint`
+- **Typecheck**: `pnpm nx run indexer-types:check-types`
+- **Build (emit d.ts)**: `pnpm nx run indexer-types:build`
+- **Test**: `pnpm nx run indexer-types:test`
+- **Fast validation**: `pnpm post:report:fast` (from repo root)
+
+## See Also
+
+- [layout_spec.md §2.1](../../docs/specs/feature/indexer/layout_spec.md#21-packagesfeaturesindexertypes)
+  — Library design rationale
+- [implementation/plan.md §Slice 0](../../docs/specs/feature/indexer/implementation/plan.md#slice-0--scaffolding--guards-walking-skeleton)
+  — Implementation plan
+- [testing_specification.md](../../docs/specs/engineering/testing_specification.md) — Test structure
+  and coverage targets
