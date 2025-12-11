@@ -24,6 +24,10 @@
     "noEmitOnError": true,
     "sourceMap": true,
     "skipLibCheck": true,
-    "customConditions": ["monorepo_template"]
+    "customConditions": ["monorepo_template"],
+    "baseUrl": ".",
+    "paths": {
+      "@repo/*": ["packages/*/src", "packages/*/*/src"]
+    }
   }
 }
