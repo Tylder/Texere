@@ -3,7 +3,7 @@
   "name": "indexer-workers",
   "projectType": "library",
   "sourceRoot": "packages/indexer/workers/src",
-  "tags": ["domain:indexer", "layer:workers"],
+  "tags": ["domain:indexer", "layer:workers", "runtime:server"],
   "targets": {
     "build": {
       "executor": "nx:run-script",

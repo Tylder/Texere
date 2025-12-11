@@ -3,7 +3,7 @@
   "name": "indexer-ingest",
   "projectType": "library",
   "sourceRoot": "packages/indexer/ingest/src",
-  "tags": ["domain:indexer", "layer:ingest"],
+  "tags": ["domain:indexer", "layer:ingest", "runtime:server"],
   "targets": {
     "build": {
       "executor": "nx:run-script",
