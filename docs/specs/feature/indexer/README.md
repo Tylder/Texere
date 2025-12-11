@@ -51,10 +51,11 @@ historical context.
 
 **High priority** (before implementation):
 
-| Document                                             | Purpose                                                               |
-| ---------------------------------------------------- | --------------------------------------------------------------------- |
-| [**configuration_spec.md**](./configuration_spec.md) | Environment variables, config files, tracked branches, security lists |
-| [**api_gateway_spec.md**](./api_gateway_spec.md)     | HTTP REST endpoints, request/response schemas, error contracts        |
+| Document                                                                     | Purpose                                                                                             |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [**configuration_and_server_setup.md**](./configuration_and_server_setup.md) | Server config hierarchy, per-repo config discovery, CLI/API interface, dynamic reloading            |
+| [**documentation_indexing_spec.md**](./documentation_indexing_spec.md)       | Doc sources (colocated/separate/hosted), processing pipeline, 14 linking strategies, generated docs |
+| [**api_gateway_spec.md**](./api_gateway_spec.md)                             | HTTP REST endpoints, request/response schemas, error contracts                                      |
 
 **Medium priority** (implementation details):
 
@@ -155,11 +156,12 @@ details).
 
 ## Changelog
 
-| Date       | Version | Summary                                                                                                                               |
-| ---------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 2025-12-09 | 1.2     | Added **test_repository_spec.md** for TypeScript test app; updated navigation & implementation order to prioritize testing foundation |
-| 2025-12-08 | 1.1     | Restructured as navigation hub; moved detailed schema to placeholder specs; added quick summary & role-based navigation               |
-| 2025-12-06 | 1.0     | Initial comprehensive spec (now split into focused documents)                                                                         |
+| Date       | Version | Summary                                                                                                                                                                                |
+| ---------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-12-11 | 1.3     | Added **configuration_and_server_setup.md** (server config, per-repo discovery, CLI/API) and **documentation_indexing_spec.md** (3 doc sources, 14 linking strategies, generated docs) |
+| 2025-12-09 | 1.2     | Added **test_repository_spec.md** for TypeScript test app; updated navigation & implementation order to prioritize testing foundation                                                  |
+| 2025-12-08 | 1.1     | Restructured as navigation hub; moved detailed schema to placeholder specs; added quick summary & role-based navigation                                                                |
+| 2025-12-06 | 1.0     | Initial comprehensive spec (now split into focused documents)                                                                                                                          |
 
 ---
 
