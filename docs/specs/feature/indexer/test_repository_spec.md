@@ -219,11 +219,12 @@ test-typescript-app/
 
 **Coverage by commit**:
 
-- Commit 1 (init): All node/module infrastructure
-- Commit 2 (feat: user-service): Introduce UserService, models, tests
-- Commit 3 (feat: api-routes): Introduce Boundary nodes
-- Commit 4 (refactor: rename-service): MODIFIED tracking (UserService → UserRepository)
-- Commit 5 (fix: email-validation): MODIFIED tracking (validators.validateEmail)
+- **Snapshot-1** (init + complete): All infrastructure, UserRepository, AuthService, PostService,
+  API routes, full test suite (50 tests)
+- **Snapshot-2** (feat: comment-service): Add CommentService with Comment model, integrate with
+  PostService and UserRepository, create new CALL/MUTATES edges
+- **Snapshot-3** (feat: public-posts-service): Add PublicPostListService (no auth required), new
+  Boundary nodes for public endpoints, READ-only access patterns
 
 ---
 
@@ -1081,6 +1082,331 @@ export class ExternalAPIService {
 
 - Verifies DEPENDS_ON edges for external services
 - Verifies library dependency extraction
+
+---
+
+### `src/models/comment.ts` (Snapshot-2: New Model)
+
+**Nodes extracted**:
+
+- Symbol: `IComment` (interface)
+- Symbol: `Comment` (class)
+- Symbol: `constructor` (method)
+- Symbol: `getAuthor` (method)
+- Symbol: `getContent` (method)
+
+**Edges**:
+
+- REFERENCES {type: 'TYPE_REF'} → IUser (author property)
+- REFERENCES {type: 'TYPE_REF'} → Post (post property)
+- IN_SNAPSHOT → Snapshot-2
+
+**Code**:
+
+```typescript
+import { IUser } from './user';
+import { Post } from './post';
+
+export interface IComment {
+  id: string;
+  content: string;
+  author: IUser;
+  post: Post;
+  createdAt: Date;
+}
+
+export class Comment {
+  constructor(
+    private id: string,
+    private content: string,
+    private author: IUser,
+    private post: Post,
+    private createdAt: Date = new Date(),
+  ) {}
+
+  getAuthor(): IUser {
+    return this.author;
+  }
+
+  getContent(): string {
+    return this.content;
+  }
+
+  getPost(): Post {
+    return this.post;
+  }
+}
+```
+
+**Tests**:
+
+- Verifies Comment class extraction
+- Verifies TYPE_REF edges to IUser and Post
+- Verifies method extraction
+
+---
+
+### `src/services/comment.service.ts` (Snapshot-2: New Service)
+
+**Nodes extracted**:
+
+- Symbol: `CommentService` (class)
+- Symbol: `constructor` (method)
+- Symbol: `createComment` (method)
+- Symbol: `getComment` (method)
+- Symbol: `deleteComment` (method)
+- Symbol: `getCommentsByPost` (method)
+
+**Edges**:
+
+- REFERENCES {type: 'IMPORT'} → PostService
+- REFERENCES {type: 'IMPORT'} → UserRepository
+- REFERENCES {type: 'CALL'} → PostService.getPost
+- REFERENCES {type: 'CALL'} → UserRepository.getUser
+- MUTATES {operation: 'READ'} → Comment entity
+- MUTATES {operation: 'WRITE'} → Comment entity
+- IN_SNAPSHOT → Snapshot-2
+
+**Code**:
+
+```typescript
+import { IComment, Comment } from '../models/comment';
+import { PostService } from './post.service';
+import { UserRepository } from './user.repository';
+import { NotFoundError, ValidationError } from '../errors/custom.errors';
+import type { PrismaClient } from '../prisma/generated/client/client';
+
+export class CommentService {
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly postService: PostService,
+    private readonly userRepository: UserRepository,
+  ) {}
+
+  async createComment(postId: string, userId: string, content: string): Promise<IComment> {
+    // Validate inputs
+    if (!content || content.trim().length === 0) {
+      throw new ValidationError('Comment content cannot be empty');
+    }
+
+    // Verify post and user exist
+    const post = await this.postService.getPost(postId);
+    if (!post) {
+      throw new NotFoundError(`Post with id ${postId} not found`);
+    }
+
+    const author = await this.userRepository.getUser(userId);
+    if (!author) {
+      throw new NotFoundError(`User with id ${userId} not found`);
+    }
+
+    // Create comment (MUTATES WRITE)
+    const comment = await this.prisma.comment.create({
+      data: {
+        content: content.trim(),
+        postId,
+        authorId: userId,
+      },
+    });
+
+    return {
+      id: comment.id,
+      content: comment.content,
+      author,
+      post: post as any,
+      createdAt: comment.createdAt,
+    };
+  }
+
+  async getComment(id: string): Promise<IComment | null> {
+    // MUTATES READ
+    const comment = await this.prisma.comment.findUnique({
+      where: { id },
+    });
+
+    if (!comment) {
+      return null;
+    }
+
+    const author = await this.userRepository.getUser(comment.authorId);
+    const post = await this.postService.getPost(comment.postId);
+
+    return {
+      id: comment.id,
+      content: comment.content,
+      author: author!,
+      post: post! as any,
+      createdAt: comment.createdAt,
+    };
+  }
+
+  async deleteComment(id: string): Promise<void> {
+    // MUTATES WRITE (delete)
+    try {
+      await this.prisma.comment.delete({
+        where: { id },
+      });
+    } catch (error: any) {
+      if (error.code === 'P2025') {
+        throw new NotFoundError(`Comment with id ${id} not found`);
+      }
+      throw error;
+    }
+  }
+
+  async getCommentsByPost(postId: string): Promise<IComment[]> {
+    // MUTATES READ (multiple records)
+    const comments = await this.prisma.comment.findMany({
+      where: { postId },
+    });
+
+    return Promise.all(
+      comments.map(async (c) => {
+        const author = await this.userRepository.getUser(c.authorId);
+        const post = await this.postService.getPost(c.postId);
+        return {
+          id: c.id,
+          content: c.content,
+          author: author!,
+          post: post! as any,
+          createdAt: c.createdAt,
+        };
+      }),
+    );
+  }
+}
+```
+
+**Tests**:
+
+- Verifies IMPORT edges (PostService, UserRepository)
+- Verifies CALL edges between services
+- Verifies MUTATES READ/WRITE edges
+- Tests error handling for missing posts/users
+
+---
+
+### `src/services/public-post-list.service.ts` (Snapshot-3: Public Service)
+
+**Nodes extracted**:
+
+- Symbol: `PublicPostListService` (class)
+- Symbol: `constructor` (method)
+- Symbol: `getPublicPosts` (method)
+- Symbol: `getPostsByUser` (method)
+- Symbol: `searchPosts` (method)
+
+**Edges**:
+
+- REFERENCES {type: 'IMPORT'} → PostService
+- REFERENCES {type: 'CALL'} → PostService.getPost
+- MUTATES {operation: 'READ'} → Post entity
+- IN_SNAPSHOT → Snapshot-3
+
+**Code**:
+
+```typescript
+import type { PrismaClient } from '../prisma/generated/client/client';
+
+export interface PublicPost {
+  id: string;
+  title: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: Date;
+  commentCount: number;
+}
+
+export class PublicPostListService {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async getPublicPosts(limit: number = 20, offset: number = 0): Promise<PublicPost[]> {
+    // MUTATES READ - No auth required
+    const posts = await this.prisma.post.findMany({
+      take: limit,
+      skip: offset,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: true,
+        _count: {
+          select: { comments: true },
+        },
+      },
+    });
+
+    return posts.map((p) => ({
+      id: p.id,
+      title: p.title,
+      content: p.content || '',
+      authorId: p.authorId,
+      authorName: p.author.name,
+      createdAt: p.createdAt,
+      commentCount: p._count.comments,
+    }));
+  }
+
+  async getPostsByUser(userId: string, limit: number = 20): Promise<PublicPost[]> {
+    // MUTATES READ - Public user posts only
+    const posts = await this.prisma.post.findMany({
+      where: { authorId: userId },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: true,
+        _count: {
+          select: { comments: true },
+        },
+      },
+    });
+
+    return posts.map((p) => ({
+      id: p.id,
+      title: p.title,
+      content: p.content || '',
+      authorId: p.authorId,
+      authorName: p.author.name,
+      createdAt: p.createdAt,
+      commentCount: p._count.comments,
+    }));
+  }
+
+  async searchPosts(query: string): Promise<PublicPost[]> {
+    // MUTATES READ - Full-text search
+    const posts = await this.prisma.post.findMany({
+      where: {
+        OR: [
+          { title: { contains: query, mode: 'insensitive' } },
+          { content: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      include: {
+        author: true,
+        _count: {
+          select: { comments: true },
+        },
+      },
+    });
+
+    return posts.map((p) => ({
+      id: p.id,
+      title: p.title,
+      content: p.content || '',
+      authorId: p.authorId,
+      authorName: p.author.name,
+      createdAt: p.createdAt,
+      commentCount: p._count.comments,
+    }));
+  }
+}
+```
+
+**Tests**:
+
+- Verifies public data access (no auth required)
+- Verifies READ-only MUTATES edges
+- Tests pagination with limit/offset
+- Tests search functionality
 
 ---
 
