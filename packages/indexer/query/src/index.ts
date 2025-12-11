@@ -10,13 +10,8 @@ import type {
   FeatureContextBundle,
   BoundaryPatternExample,
   IncidentSliceBundle,
-  Feature,
   Symbol,
-  Boundary,
-  TestCase,
   SpecDoc,
-  Pattern,
-  Incident,
   CallGraphSlice,
 } from '@repo/indexer-types';
 
@@ -71,8 +66,8 @@ export interface FeatureContextOptions {
  * Slice 6 implements with Neo4j + Qdrant
  */
 export async function getFeatureContext(
-  featureName: string,
-  options?: FeatureContextOptions,
+  _featureName: string,
+  _options?: FeatureContextOptions,
 ): Promise<FeatureContextBundle> {
   // TODO: Implement per graph_schema_spec.md §6
   // 1. Query Neo4j: MATCH (f:Feature {name: $featureName})
@@ -86,12 +81,33 @@ export async function getFeatureContext(
   // 9. Return FeatureContextBundle
 
   return await Promise.resolve({
-    feature: null as unknown as Feature,
+    feature: {
+      id: '',
+      label: 'Feature',
+      featureId: '',
+      name: '',
+      createdAt: Date.now(),
+    },
     symbols: [],
     boundaries: [],
     testCases: [],
     specDocs: [],
-    callGraphSlice: null as unknown as CallGraphSlice,
+    callGraphSlice: {
+      symbol: {
+        id: '',
+        label: 'Symbol',
+        snapshotId: '',
+        name: '',
+        filePath: '',
+        kind: 'function',
+        range: { startLine: 0, startCol: 0, endLine: 0, endCol: 0 },
+        createdAt: Date.now(),
+      },
+      callersCount: 0,
+      callers: [],
+      calleesCount: 0,
+      callees: [],
+    },
     relatedPatterns: [],
     confidence: 0,
   });
@@ -140,7 +156,7 @@ export interface BoundaryPatternOptions {
  * Slice 6 implements
  */
 export async function getBoundaryPatternExamples(
-  options?: BoundaryPatternOptions,
+  _options?: BoundaryPatternOptions,
 ): Promise<BoundaryPatternExample[]> {
   // TODO: Implement per graph_schema_spec.md §6.2
   // 1. Query Neo4j: MATCH (b:Boundary) [WHERE b.kind = $kind if specified]
@@ -197,8 +213,8 @@ export interface IncidentSliceOptions {
  * Slice 6 implements
  */
 export async function getIncidentSlice(
-  incidentId: string,
-  options?: IncidentSliceOptions,
+  _incidentId: string,
+  _options?: IncidentSliceOptions,
 ): Promise<IncidentSliceBundle> {
   // TODO: Implement per graph_schema_spec.md §6.4
   // 1. Query Neo4j: MATCH (inc:Incident {id: $incidentId})
@@ -210,7 +226,13 @@ export async function getIncidentSlice(
   // 6. Return IncidentSliceBundle
 
   return await Promise.resolve({
-    incident: null as unknown as Incident,
+    incident: {
+      id: '',
+      label: 'Incident',
+      incidentId: '',
+      title: '',
+      createdAt: Date.now(),
+    },
     rootCauseSymbols: [],
     rootCauseBoundaries: [],
     affectedFeatures: [],
@@ -232,8 +254,8 @@ export async function getIncidentSlice(
  * @reference ingest_spec.md §3 (CallIndex type)
  */
 export async function getCallGraphSlice(
-  symbolId: string,
-  depth: number = 2,
+  _symbolId: string,
+  _depth: number = 2,
 ): Promise<CallGraphSlice> {
   // TODO: Implement per graph_schema_spec.md §6.1
   // 1. Query Neo4j: MATCH (caller:Symbol)-[:REFERENCES {type:'CALL'}*0..depth]->(target:Symbol)
@@ -241,7 +263,16 @@ export async function getCallGraphSlice(
   // 3. Return CallGraphSlice { symbol, callersCount, callers[], calleesCount, callees[] }
 
   return await Promise.resolve({
-    symbol: null as unknown as Symbol,
+    symbol: {
+      id: '',
+      label: 'Symbol',
+      snapshotId: '',
+      name: '',
+      filePath: '',
+      kind: 'function',
+      range: { startLine: 0, startCol: 0, endLine: 0, endCol: 0 },
+      createdAt: Date.now(),
+    },
     callersCount: 0,
     callers: [],
     calleesCount: 0,
@@ -254,8 +285,8 @@ export async function getCallGraphSlice(
  * Used for data flow analysis and dependency understanding.
  */
 export async function getTransitiveCallees(
-  symbolId: string,
-  maxDepth: number = 3,
+  _symbolId: string,
+  _maxDepth: number = 3,
 ): Promise<Symbol[]> {
   // TODO: Implement transitive call closure
   // MATCH (source:Symbol {id: $symbolId})-[:REFERENCES {type:'CALL'}*1..maxDepth]->(target:Symbol)
@@ -268,8 +299,8 @@ export async function getTransitiveCallees(
  * Used for impact analysis.
  */
 export async function getTransitiveCallers(
-  symbolId: string,
-  maxDepth: number = 3,
+  _symbolId: string,
+  _maxDepth: number = 3,
 ): Promise<Symbol[]> {
   // TODO: Implement transitive caller closure
   // MATCH (source:Symbol)-[:REFERENCES {type:'CALL'}*1..maxDepth]->(target:Symbol {id: $symbolId})
@@ -281,7 +312,7 @@ export async function getTransitiveCallers(
  * Get symbols that read/write a given data contract.
  * Used for data flow analysis.
  */
-export async function getDataMutators(contractId: string): Promise<
+export async function getDataMutators(_contractId: string): Promise<
   Array<{
     symbol: Symbol;
     operation: 'READ' | 'WRITE';
@@ -297,7 +328,7 @@ export async function getDataMutators(contractId: string): Promise<
  * Search for symbols by name (fuzzy or exact).
  * Used by agents for symbol discovery.
  */
-export async function searchSymbols(query: string, limit: number = 20): Promise<Symbol[]> {
+export async function searchSymbols(_query: string, _limit: number = 20): Promise<Symbol[]> {
   // TODO: Implement text search via Qdrant vector similarity or Neo4j full-text index
   // Options:
   // 1. Vector similarity: embed(query) -> Qdrant search -> return symbols
@@ -308,7 +339,7 @@ export async function searchSymbols(query: string, limit: number = 20): Promise<
 /**
  * Get documentation for any node (symbol, boundary, feature, etc.).
  */
-export async function getDocumentation(nodeId: string): Promise<SpecDoc[]> {
+export async function getDocumentation(_nodeId: string): Promise<SpecDoc[]> {
   // TODO: Implement
   // MATCH (doc:SpecDoc)-[:DOCUMENTS]->(n {id: $nodeId})
   // RETURN doc

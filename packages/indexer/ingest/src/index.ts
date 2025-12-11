@@ -57,7 +57,7 @@ export async function indexSnapshot(_params: IndexSnapshotParams): Promise<FileI
  * Slice 1 implements.
  * @reference ingest_spec.md §6.1 (branch resolution)
  */
-export async function resolveSnapshot(args: {
+export function resolveSnapshot(_args: {
   codebaseRoot: string;
   codebaseId: string;
   branch: string;
@@ -77,7 +77,7 @@ export async function resolveSnapshot(args: {
  * @reference ingest_spec.md §6.2 (diff computation)
  * @reference ingest_spec.md §2.5 (rename handling)
  */
-export async function computeChangedFiles(args: {
+export function computeChangedFiles(_args: {
   codebaseRoot: string;
   commitHash: string;
   baseCommit?: string; // If omitted, use HEAD~1 or full tree on first index
@@ -100,7 +100,7 @@ export async function computeChangedFiles(args: {
  * @reference ingest_spec.md §2.2 (per-language responsibility)
  * @reference language_indexers_spec.md
  */
-export async function indexFiles(args: {
+export async function indexFiles(_args: {
   codebaseRoot: string;
   snapshotId: string;
   filePaths: string[];
@@ -131,6 +131,7 @@ export async function extractBoundaries(_results: FileIndexResult[]): Promise<vo
   // 2. Extract: verb (GET, POST, ...), path (string literal), handler (symbol ID)
   // 3. Link to Boundary node + LOCATION edges
   // 4. Persist via core layer
+  // Slice 2 will implement
 }
 
 /**
@@ -143,6 +144,7 @@ export async function extractDataContracts(_results: FileIndexResult[]): Promise
   // 1. Scan for: Prisma schema, Zod definitions, SQL migrations, GraphQL schemas
   // 2. Create DataContract nodes with definitions
   // 3. Link symbols to contracts via MUTATES edges (READ/WRITE)
+  // Slice 4 will implement
 }
 
 /**
@@ -156,6 +158,7 @@ export async function extractFeatures(_results: FileIndexResult[]): Promise<void
   // 1. Read features.yaml or similar from repo config
   // 2. For each feature: map symbols + boundaries via heuristics or LLM
   // 3. Create Feature nodes + REALIZES edges
+  // Future slice will implement
 }
 
 /**
@@ -169,6 +172,7 @@ export async function linkTestsToSymbols(_results: FileIndexResult[]): Promise<v
   // 1. For each TestCase: infer tested symbol (file scope, function name hints)
   // 2. Create REALIZES edges with role='TESTS'
   // 3. Link to features via LLM or heuristics
+  // Future slice will implement
 }
 
 // ============================================================================
@@ -200,6 +204,7 @@ export async function runFullIndexPipeline(_params: IndexSnapshotParams): Promis
   // 6. Persist all nodes/edges via core layer
   // 7. Generate embeddings via core layer
   // 8. Handle errors and partial failures (index status = 'partial')
+  // Slices 1–6 will implement
 }
 
 // ============================================================================

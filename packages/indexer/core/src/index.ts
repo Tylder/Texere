@@ -9,7 +9,6 @@
 
 import type {
   IndexerConfig,
-  SnapshotRef,
   GraphNode,
   AnyGraphEdge,
   Codebase,
@@ -21,9 +20,6 @@ import type {
   DataContract,
   TestCase,
   SpecDoc,
-  Feature,
-  Pattern,
-  Incident,
 } from '@repo/indexer-types';
 
 // ============================================================================
@@ -273,13 +269,13 @@ export interface GraphQueries {
  * @reference configuration_and_server_setup.md §8 (precedence)
  * @reference configuration_spec.md §1 (file format)
  *
- * @param path - Optional path to .indexer-config.json (default: INDEXER_CONFIG_PATH env var)
+ * @param _path - Optional path to .indexer-config.json (default: INDEXER_CONFIG_PATH env var)
  * @returns Parsed and validated IndexerConfig[]
  */
-export async function loadConfig(path?: string): Promise<IndexerConfig[]> {
+export async function loadConfig(_path?: string): Promise<IndexerConfig[]> {
   // Slice 1 will implement:
   // 1. Check INDEXER_CONFIG_PATH env var
-  // 2. Fall back to path argument
+  // 2. Fall back to _path argument
   // 3. Try per-repo .indexer-config.json discovery
   // 4. Parse and validate against schema
   // 5. Expand env var references in values
