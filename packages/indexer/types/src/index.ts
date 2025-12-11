@@ -132,19 +132,20 @@ export interface GraphNode {
 
 /**
  * Codebase root node: represents a repository or code project.
- * @reference nodes/Codebase.md
- * @reference nodes/README.md (cardinality: N per workspace)
+ * @reference docs/specs/feature/indexer/nodes/Codebase.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: N per workspace)
  */
 export interface Codebase extends GraphNode {
   label: 'Codebase';
   name: string;
   url?: string;
+  kind?: 'main' | 'vendored' | 'monorepo-sub' | 'external';
 }
 
 /**
  * Snapshot node: represents a specific commit being indexed.
- * @reference nodes/Snapshot.md
- * @reference nodes/README.md (cardinality: N per codebase)
+ * @reference docs/specs/feature/indexer/nodes/Snapshot.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: N per codebase)
  */
 export interface Snapshot extends GraphNode {
   label: 'Snapshot';
@@ -154,15 +155,15 @@ export interface Snapshot extends GraphNode {
   message?: string;
   timestamp: number;
   branch?: string;
-  snapshotType?: 'branch' | 'tag' | 'dependency';
+  snapshotType: 'branch' | 'commit' | 'tag';
   indexStatus: 'success' | 'failed' | 'partial';
   indexedAt: number;
 }
 
 /**
  * Module node: logical package, library, or app (e.g., Nx lib, Maven project).
- * @reference nodes/Module.md
- * @reference nodes/README.md (cardinality: N per snapshot)
+ * @reference docs/specs/feature/indexer/nodes/Module.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: N per snapshot)
  */
 export interface Module extends GraphNode {
   label: 'Module';
@@ -175,8 +176,8 @@ export interface Module extends GraphNode {
 
 /**
  * File node: source code file.
- * @reference nodes/File.md
- * @reference nodes/README.md (cardinality: N per module)
+ * @reference docs/specs/feature/indexer/nodes/File.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: N per module)
  */
 export interface File extends GraphNode {
   label: 'File';
@@ -189,10 +190,10 @@ export interface File extends GraphNode {
 }
 
 /**
- * Symbol node: function, class, type, interface, const, etc.
- * @reference nodes/Symbol.md
- * @reference nodes/README.md (cardinality: N per file)
- * @reference symbol_id_stability_spec.md (ID format: snapshotId:filePath:name:line:col)
+ * Symbol node: function, class, type, interface, const, etc. Most densely connected node.
+ * @reference docs/specs/feature/indexer/nodes/Symbol.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: N per file)
+ * @reference docs/specs/feature/indexer/symbol_id_stability_spec.md (ID format: snapshotId:filePath:name:line:col)
  */
 export interface Symbol extends GraphNode {
   label: 'Symbol';
@@ -200,129 +201,160 @@ export interface Symbol extends GraphNode {
   name: string;
   filePath: string;
   kind: 'function' | 'class' | 'method' | 'const' | 'type' | 'interface' | 'other';
+  startLine: number;
+  startCol: number;
+  endLine: number;
+  endCol: number;
   range: Range;
   isExported?: boolean;
   docstring?: string;
-  isDeleted?: boolean;
+  embeddingId?: string;
+  isDeleted: boolean;
 }
 
 /**
- * Boundary node: HTTP endpoint, gRPC service, CLI command, event consumer, etc.
- * @reference nodes/Boundary.md
- * @reference nodes/README.md (cardinality: N per snapshot)
- * @reference language_indexers_spec.md (extraction heuristics)
+ * Boundary node: any callable/invokable interface (HTTP, gRPC, CLI, event, export, webhook, job, handler, etc.).
+ * @reference docs/specs/feature/indexer/nodes/Boundary.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: N per snapshot)
+ * @reference docs/specs/feature/indexer/language_indexers_spec.md (extraction heuristics)
  */
 export interface Boundary extends GraphNode {
   label: 'Boundary';
   snapshotId: string;
-  verb: string; // 'GET', 'POST', etc.
-  path: string;
-  kind?: 'http' | 'grpc' | 'cli' | 'event';
-  isDeleted?: boolean;
+  kind:
+    | 'http'
+    | 'grpc'
+    | 'graphql'
+    | 'cli'
+    | 'export'
+    | 'event'
+    | 'webhook'
+    | 'job'
+    | 'handler'
+    | 'other';
+  identifier: string;
+  handlerSymbolId: string;
+  description?: string;
 }
 
 /**
- * DataContract node: data model (Prisma, SQL, GraphQL, Protobuf, Zod, etc.).
- * @reference nodes/DataContract.md
- * @reference nodes/README.md (cardinality: N per snapshot)
+ * DataContract node: data model (Prisma, SQL, GraphQL, Protobuf, Zod, ORM entities, etc.).
+ * @reference docs/specs/feature/indexer/nodes/DataContract.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: N per snapshot)
  */
 export interface DataContract extends GraphNode {
   label: 'DataContract';
   snapshotId: string;
-  entityName: string;
-  type?: 'prisma' | 'sql' | 'graphql' | 'protobuf' | 'zod';
-  definition?: string;
-  isDeleted?: boolean;
+  name: string;
+  kind: 'prisma-model' | 'sql-table' | 'orm-entity';
+  description?: string;
 }
 
 /**
  * TestCase node: unit, integration, or e2e test.
- * @reference nodes/TestCase.md
- * @reference nodes/README.md (cardinality: N per file)
+ * @reference docs/specs/feature/indexer/nodes/TestCase.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: N per file)
  */
 export interface TestCase extends GraphNode {
   label: 'TestCase';
   snapshotId: string;
   name: string;
   filePath: string;
+  kind: 'unit' | 'integration' | 'e2e';
+  startLine: number;
   range: Range;
-  isDeleted?: boolean;
 }
 
 /**
- * SpecDoc node: specification, ADR, design doc, or markdown file.
- * @reference nodes/SpecDoc.md
- * @reference nodes/README.md (cardinality: N per snapshot)
- * @reference documentation_indexing_spec.md (doc sources)
+ * SpecDoc node: specification, ADR, design doc, guide, or ticket documentation.
+ * @reference docs/specs/feature/indexer/nodes/SpecDoc.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: N per snapshot)
+ * @reference docs/specs/feature/indexer/documentation_indexing_spec.md (doc sources)
  */
 export interface SpecDoc extends GraphNode {
   label: 'SpecDoc';
   snapshotId: string;
-  docPath: string;
-  title?: string;
+  path: string;
+  name: string;
+  kind: 'spec' | 'adr' | 'design-doc' | 'guide' | 'ticket';
+  source: 'colocated' | 'separate' | 'hosted' | 'generated';
   content?: string;
-  isDeleted?: boolean;
+  embeddingId?: string;
+  generatedAt?: number;
+  generatedBy?: string;
+  generatedFor?: string;
 }
 
 // Cross-Snapshot Nodes
 
 /**
- * Feature node: user-facing feature (persistent across snapshots).
- * @reference nodes/Feature.md
- * @reference nodes/README.md (cardinality: 1 per feature ID)
+ * Feature node: user-facing feature (persistent across snapshots, cross-snapshot).
+ * @reference docs/specs/feature/indexer/nodes/Feature.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: 1 per feature ID)
  */
 export interface Feature extends GraphNode {
   label: 'Feature';
   featureId: string;
   name: string;
   description?: string;
-  isDeleted?: boolean;
+  embeddingId?: string;
+  isDeleted: boolean;
 }
 
 /**
- * Pattern node: code pattern (e.g., "express-middleware").
- * @reference nodes/Pattern.md
- * @reference nodes/README.md (cardinality: 1 per pattern name)
+ * Pattern node: code pattern (e.g., "express-middleware") (cross-snapshot).
+ * @reference docs/specs/feature/indexer/nodes/Pattern.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: 1 per pattern name)
  */
 export interface Pattern extends GraphNode {
   label: 'Pattern';
-  patternName: string;
+  name: string;
   description?: string;
+  source: 'manual' | 'heuristic';
 }
 
 /**
- * Incident node: bug, issue, or production incident.
- * @reference nodes/Incident.md
- * @reference nodes/README.md (cardinality: 1 per incident ID)
+ * Incident node: bug, issue, or production incident (cross-snapshot).
+ * @reference docs/specs/feature/indexer/nodes/Incident.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: 1 per incident ID)
  */
 export interface Incident extends GraphNode {
   label: 'Incident';
   incidentId: string;
   title: string;
   description?: string;
-  isDeleted?: boolean;
+  severity?: 'critical' | 'high' | 'medium' | 'low';
+  status: 'open' | 'resolved' | 'archived';
+  resolvedAt?: number;
 }
 
 /**
- * ExternalService node: third-party API (Stripe, Auth0, etc.).
- * @reference nodes/ExternalService.md
- * @reference nodes/README.md (cardinality: 1 per service name)
+ * ExternalService node: third-party API (Stripe, Auth0, etc.) (cross-snapshot).
+ * @reference docs/specs/feature/indexer/nodes/ExternalService.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: 1 per service name)
  */
 export interface ExternalService extends GraphNode {
   label: 'ExternalService';
-  serviceName: string;
+  name: string;
+  description?: string;
   url?: string;
+  category?: 'payment' | 'auth' | 'messaging' | 'analytics' | 'ai' | 'other';
+  isDeleted: boolean;
 }
 
 /**
- * StyleGuide node: coding convention or style guide.
- * @reference nodes/StyleGuide.md
- * @reference nodes/README.md (cardinality: 1 per guide path)
+ * StyleGuide node: coding convention, architecture guide, or style guide (cross-snapshot).
+ * @reference docs/specs/feature/indexer/nodes/StyleGuide.md
+ * @reference docs/specs/feature/indexer/nodes/README.md (cardinality: 1 per guide path)
  */
 export interface StyleGuide extends GraphNode {
   label: 'StyleGuide';
-  guidePath: string;
-  title?: string;
+  name: string;
+  description?: string;
+  path?: string;
+  kind?: 'lint-config' | 'architecture' | 'documentation' | 'convention' | 'principle';
+  content?: string;
+  isDeleted: boolean;
 }
 
 // Union type for all nodes
