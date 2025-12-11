@@ -156,6 +156,15 @@ export const config = tseslint.config(
       'security/detect-object-injection': 'off',
       'sonarjs/cognitive-complexity': ['warn', 20],
       'unicorn/prefer-node-protocol': 'error',
+      // Allow intentional “_” prefix for unused bindings
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
       'unicorn/filename-case': [
         'error',
         {
@@ -172,16 +181,15 @@ export const config = tseslint.config(
           ],
         },
       ],
-      // Enforce web_naming_spec §3–4 using filename-only patterns (no file content inspection)
+      // Enforce naming conventions: kebab-case base + optional rendering/test suffixes
       'check-file/filename-naming-convention': [
         'error',
         {
-          // .tsx components: kebab-case base + optional rendering suffix + optional test/spec suffix
-          '**/*.tsx': '+([a-z0-9])*(-+([a-z0-9]))?(.(server|client|isr|static))?(.(test|spec))?',
-          // Config files can be camelCase or have dots
-          '**/*.config.{ts,js}': '(camelCase|kebab-case)',
-          // Other source files stay kebab-case
-          '**/*.{ts,js,jsx}': 'KEBAB_CASE',
+          // Code files: kebab-case base + optional rendering/test suffixes
+          '**/*.{ts,js,jsx,tsx}':
+            '+([a-z0-9])*(-+([a-z0-9]))?(.(server|client|isr|static))?(.(test|spec))?',
+          // Config files: kebab-case base only (no rendering/test suffixes)
+          '**/*.config.{ts,js}': '+([a-z0-9])*(-+([a-z0-9]))?',
         },
       ],
       '@nx/dependency-checks': 'error',

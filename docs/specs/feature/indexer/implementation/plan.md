@@ -55,18 +55,23 @@ real indexing.
   (`configuration_and_server_setup.md` §3–9; `configuration_spec.md` §1–4).
 - Implement branch resolution + snapshot selection (`ingest_spec.md` §6.1, §6.2). Treat renames as
   delete+add (`ingest_spec.md` §2.5, §6.2).
-- Produce `ChangedFileSet` (added/modified/deleted/renamed) for downstream indexers.  
+- Produce `ChangedFileSet` (added/modified/deleted/renamed) for downstream indexers.
+- Add a debug runner (`scripts/dev-index.ts`) callable via
+  `pnpm dev:index --repo <path> --branch <branch>` using `tsx`, plus optional VS Code launch config
+  (“Debug indexSnapshot”) to set breakpoints in ingest/core config and git diff code.  
   **Acceptance**: Given repo + trackedBranches, returns commit hash + file sets; deleted files
-  flagged.  
+  flagged. Debug runner executes and prints snapshotRef + ChangedFileSet.  
   **Tests**: Unit tests over synthetic git fixture; cover branch precedence and rename handling per
-  `test_repository_spec.md` (Incremental Validation Table). **Docs to consult**:
-  [`configuration_and_server_setup.md`](../configuration_and_server_setup.md) §3–9;
-  [`configuration_spec.md`](../configuration_spec.md) §1–4; [`ingest_spec.md`](../ingest_spec.md)
-  §6.1–6.2; [`symbol_id_stability_spec.md`](../symbol_id_stability_spec.md);
+  `test_repository_spec.md` (Incremental Validation Table).  
+  **Docs to consult**: [`configuration_and_server_setup.md`](../configuration_and_server_setup.md)
+  §3–9; [`configuration_spec.md`](../configuration_spec.md) §1–4;
+  [`ingest_spec.md`](../ingest_spec.md) §6.1–6.2;
+  [`symbol_id_stability_spec.md`](../symbol_id_stability_spec.md);
   [`test_repository_spec.md`](../test_repository_spec.md) (Incremental Validation Table).  
   **Code areas**:
   `packages/features/indexer/ingest/src/git/{git-diff.ts,git-files.ts,index-snapshot.ts}`; config
-  loader in `packages/features/indexer/core/src/config/indexer-config.ts`.
+  loader in `packages/features/indexer/core/src/config/indexer-config.ts`; dev runner in
+  `scripts/dev-index.ts`; optional VS Code `launch.json` entry “Debug indexSnapshot”.
 
 ## Slice 2 — TypeScript Language Indexer (Symbols/Calls/Refs/Tests/Boundaries)
 
