@@ -32,7 +32,15 @@ real indexing.
   `getBoundaryPatternExamples`, `getIncidentSlice` from `graph_schema_spec.md` §6 and README.  
   **Acceptance**: Nx builds succeed; types compile; no runtime behavior.  
   **Tests** (unit stubs only; skipped/placeholder): colocate and mark todo with references to
-  `testing_strategy_spec.md` & `testing_specification.md`.
+  `testing_strategy_spec.md` & `testing_specification.md`. **Docs to consult**:
+  [`layout_spec.md`](../layout_spec.md) §2; [`ingest_spec.md`](../ingest_spec.md) §3–4;
+  [`configuration_spec.md`](../configuration_spec.md) §1–2;
+  [`configuration_and_server_setup.md`](../configuration_and_server_setup.md) §2–3;
+  [`graph_schema_spec.md`](../graph_schema_spec.md) §6;
+  [`templates/nx/README.md`](../../../../templates/nx/README.md).  
+  **Code areas**: scaffold libs under `packages/features/indexer/{types,core,ingest,query,workers}`
+  via `templates/nx/node-lib`; set tags in `project.json` and `nx.json` (`domain:indexer`,
+  `layer:*`).
 
 ## Slice 1 — Git Snapshot Resolution & Diff Plumbing
 
@@ -47,7 +55,14 @@ real indexing.
   **Acceptance**: Given repo + trackedBranches, returns commit hash + file sets; deleted files
   flagged.  
   **Tests**: Unit tests over synthetic git fixture; cover branch precedence and rename handling per
-  `test_repository_spec.md` (Incremental Validation Table).
+  `test_repository_spec.md` (Incremental Validation Table). **Docs to consult**:
+  [`configuration_and_server_setup.md`](../configuration_and_server_setup.md) §3–9;
+  [`configuration_spec.md`](../configuration_spec.md) §1–4; [`ingest_spec.md`](../ingest_spec.md)
+  §6.1–6.2; [`symbol_id_stability_spec.md`](../symbol_id_stability_spec.md);
+  [`test_repository_spec.md`](../test_repository_spec.md) (Incremental Validation Table).  
+  **Code areas**:
+  `packages/features/indexer/ingest/src/git/{git-diff.ts,git-files.ts,index-snapshot.ts}`; config
+  loader in `packages/features/indexer/core/src/config/indexer-config.ts`.
 
 ## Slice 2 — TypeScript Language Indexer (Symbols/Calls/Refs/Tests/Boundaries)
 
@@ -65,7 +80,18 @@ real indexing.
   **Acceptance**: For `test-typescript-app` snapshot-2 fixture, extracted counts meet
   `test_repository_spec.md` Node/Edge matrices.  
   **Tests**: Golden `FileIndexResult` for key files (user.service.ts, routes.ts, validators.ts) as
-  specified in `test_repository_spec.md` (Golden Snapshots).
+  specified in `test_repository_spec.md` (Golden Snapshots). **Docs to consult**:
+  [`ingest_spec.md`](../ingest_spec.md) §3–5;
+  [`language_indexers_spec.md`](../language_indexers_spec.md);
+  [`nodes/Boundary.md`](../nodes/Boundary.md);
+  [`test_repository_spec.md`](../test_repository_spec.md) (Node/Edge matrices, Edge Cases 1–9);
+  [`symbol_id_stability_spec.md`](../symbol_id_stability_spec.md);
+  [`edges/REFERENCES.md`](../edges/REFERENCES.md), [`edges/LOCATION.md`](../edges/LOCATION.md),
+  [`edges/REALIZES.md`](../edges/REALIZES.md).  
+  **Code areas**: `packages/features/indexer/ingest/src/languages/ts-indexer.ts`; shared types in
+  `packages/features/indexer/types/src`; extractors in
+  `packages/features/indexer/ingest/src/extractors/*`; goldens under
+  `packages/features/indexer/ingest/__tests__/fixtures`.
 
 ## Slice 3 — Graph Persistence (Neo4j) with Cardinality Constraints
 
@@ -83,7 +109,14 @@ real indexing.
   uniqueness; orphan check returns zero.  
   **Tests**: Integration test against ephemeral Neo4j container (or in-memory mock if container
   unavailable) asserting constraint enforcement and edge counts; references `graph_schema_spec.md`
-  §6 query patterns.
+  §6 query patterns. **Docs to consult**: [`graph_schema_spec.md`](../graph_schema_spec.md) §§4–6;
+  [`nodes/README.md`](../nodes/README.md); [`edges/README.md`](../edges/README.md);
+  [`ingest_spec.md`](../ingest_spec.md) §6.3;
+  [`SCHEMA_DOCUMENTATION_SUMMARY.md`](../SCHEMA_DOCUMENTATION_SUMMARY.md);
+  [`NODE_EDGE_MAPPING.md`](../research/NODE_EDGE_MAPPING.md).  
+  **Code areas**:
+  `packages/features/indexer/core/src/graph/{neo4j-client.ts,graph-writes.ts,graph-reads.ts,setup.ts}`;
+  transaction helpers in `packages/features/indexer/core/src/index.ts`; config in `core/src/config`.
 
 ## Slice 4 — Documentation & SpecDoc Ingestion
 
@@ -99,7 +132,13 @@ real indexing.
   **Acceptance**: For `test-typescript-app` docs, produces SpecDoc nodes and DOCUMENTS edges
   matching `test_repository_spec.md` Doc coverage.  
   **Tests**: Integration/golden for docs/API.md linking endpoints; uses confidence thresholds ≥0.7
-  default per `documentation_indexing_spec.md` Confidence table.
+  default per `documentation_indexing_spec.md` Confidence table. **Docs to consult**:
+  [`documentation_indexing_spec.md`](../documentation_indexing_spec.md) §§2–5;
+  [`nodes/SpecDoc.md`](../nodes/SpecDoc.md); [`edges/DOCUMENTS.md`](../edges/DOCUMENTS.md);
+  [`test_repository_spec.md`](../test_repository_spec.md) (Doc coverage);
+  [`graph_schema_spec.md`](../graph_schema_spec.md) §6.1–6.3.  
+  **Code areas**: `packages/features/indexer/ingest/src/docs/*` (acquisition + linking); reuse
+  `core` writers; add doc goldens under `packages/features/indexer/ingest/__tests__/fixtures/docs`.
 
 ## Slice 5 — Embeddings & Vector Store (Stub → Qdrant)
 
@@ -114,7 +153,15 @@ real indexing.
   **Acceptance**: Embedding generation invoked for Slice 2 entities; vectors stored with ids linked
   to graph nodes via `embeddingId` field.  
   **Tests**: Unit test using stub provider to ensure deterministic vectors; integration skips if
-  Qdrant unavailable (document in test).
+  Qdrant unavailable (document in test). **Docs to consult**:
+  [`vector_store_spec.md`](../vector_store_spec.md);
+  [`configuration_spec.md`](../configuration_spec.md) (embedding defaults);
+  [`ingest_spec.md`](../ingest_spec.md) §6.4; [`graph_schema_spec.md`](../graph_schema_spec.md)
+  (embeddingId fields).  
+  **Code areas**:
+  `packages/features/indexer/core/src/vector/{qdrant-client.ts,symbol-embeddings.ts,provider.ts}`;
+  config wiring in `core/src/config/indexer-config.ts`; optional stub provider in tests under
+  `core/__tests__/`.
 
 ## Slice 6 — Query API (Library + HTTP Surface)
 
@@ -132,7 +179,15 @@ real indexing.
   **Acceptance**: Queries return bundles matching schema types; integration over test graph returns
   non-empty contextual slices.  
   **Tests**: Integration tests using seeded graph from Slice 3 + stub embeddings; refer to
-  `graph_schema_spec.md` §6 patterns.
+  `graph_schema_spec.md` §6 patterns. **Docs to consult**:
+  [`graph_schema_spec.md`](../graph_schema_spec.md) §6;
+  [`api_gateway_spec.md`](../api_gateway_spec.md); [`layout_spec.md`](../layout_spec.md) §2.4;
+  [`README.md`](../README.md) (query API summary);
+  [`SCHEMA_DOCUMENTATION_SUMMARY.md`](../SCHEMA_DOCUMENTATION_SUMMARY.md).  
+  **Code areas**:
+  `packages/features/indexer/query/src/{get-feature-context.ts,get-boundary-pattern-examples.ts,get-incident-slice.ts}`;
+  optional HTTP handlers in `apps/indexer-admin` (Node app) or similar; response types in
+  `packages/features/indexer/types`.
 
 ## Slice 7 — Workers & Scheduling (Optional v1.0)
 
@@ -145,7 +200,14 @@ real indexing.
 - Wire worker app (`apps/indexer-worker`) to call ingest pipeline.  
   **Acceptance**: Job enqueues and runs indexing end-to-end using earlier slices; respects `force`
   flag.  
-  **Tests**: Integration with mocked queue; smoke test only (optional to ship in v1.0).
+  **Tests**: Integration with mocked queue; smoke test only (optional to ship in v1.0). **Docs to
+  consult**: [`layout_spec.md`](../layout_spec.md) §2.5;
+  [`configuration_and_server_setup.md`](../configuration_and_server_setup.md) §7;
+  [`ingest_spec.md`](../ingest_spec.md) §6 runtime notes.  
+  **Code areas**: Job definitions in
+  `packages/features/indexer/workers/src/jobs/index-snapshot.job.ts`; queue wiring in
+  `packages/features/indexer/workers/src/index.ts`; worker bootstrap in
+  `apps/indexer-worker/src/main.ts`.
 
 ## Slice 8 — Hardening & Edge Cases
 
@@ -159,7 +221,16 @@ real indexing.
 - Security deny/allow patterns for LLM input (`ingest_spec.md` §6.5; `configuration_spec.md` §4).  
   **Acceptance**: All validation checklist items in `test_repository_spec.md` pass.  
   **Tests**: Expand golden + integration coverage to include all Edge Cases & Validation Checklist;
-  align descriptions with `testing_strategy_spec.md` §2–4.
+  align descriptions with `testing_strategy_spec.md` §2–4. **Docs to consult**:
+  [`test_repository_spec.md`](../test_repository_spec.md) (Edge Cases & Validation Checklist);
+  [`ingest_spec.md`](../ingest_spec.md) §6.5; [`graph_schema_spec.md`](../graph_schema_spec.md)
+  §4.1B; [`documentation_indexing_spec.md`](../documentation_indexing_spec.md);
+  [`testing_strategy_spec.md`](../../engineering/testing_strategy.md);
+  [`testing_specification.md`](../../engineering/testing_specification.md).  
+  **Code areas**: Harden extraction in `packages/features/indexer/ingest/src` (languages,
+  extractors), persistence guards in `core/src/graph-writes.ts`; expand goldens in
+  `packages/features/indexer/ingest/__tests__/` and integration suites in
+  `packages/features/indexer/query/__tests__/`.
 
 ---
 
