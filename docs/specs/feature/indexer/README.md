@@ -51,11 +51,11 @@ historical context.
 
 **High priority** (before implementation):
 
-| Document                                                                     | Purpose                                                                                             |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| [**configuration_and_server_setup.md**](./configuration_and_server_setup.md) | Server config hierarchy, per-repo config discovery, CLI/API interface, dynamic reloading            |
-| [**documentation_indexing_spec.md**](./documentation_indexing_spec.md)       | Doc sources (colocated/separate/hosted), processing pipeline, 14 linking strategies, generated docs |
-| [**api_gateway_spec.md**](./api_gateway_spec.md)                             | HTTP REST endpoints, request/response schemas, error contracts                                      |
+| Document                                                                     | Purpose                                                                                                |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| [**configuration_and_server_setup.md**](./configuration_and_server_setup.md) | Work orchestrator config hierarchy, per-repo config discovery, CLI/daemon interface, dynamic reloading |
+| [**documentation_indexing_spec.md**](./documentation_indexing_spec.md)       | Doc sources (colocated/separate/hosted), processing pipeline, 14 linking strategies, generated docs    |
+| [**api_gateway_spec.md**](./api_gateway_spec.md)                             | HTTP REST endpoints, request/response schemas, error contracts                                         |
 
 **Medium priority** (implementation details):
 

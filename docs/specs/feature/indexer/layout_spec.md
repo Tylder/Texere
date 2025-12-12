@@ -16,7 +16,7 @@ root/
     agent-orchestrator/         # LangGraph/Mastra agents
     indexer-runner/ (optional)  # Nx alias to run-once/daemon script (non-server)
     indexer-worker/ (optional)  # Background worker process for indexing (post-v1)
-    indexer-server/ (optional)  # HTTP + queue shell (post-v1, not required)
+    indexer-orchestrator/ (optional)  # Work orchestrator (HTTP + queue) shell (post-v1, not required)
 
   scripts/
     indexer-run-once.ts         # Required run-once CLI (non-server, no queue)
@@ -355,10 +355,11 @@ import { registerIndexSnapshotWorker } from '@repo/features/indexer/workers';
 
 ---
 
-### 3.4 `apps/indexer-server` (post-v1 optional)
+### 3.4 `apps/indexer-orchestrator` (post-v1 optional)
 
-**Purpose**: HTTP façade plus queue integration around ingest/query; not required for v1. Only
-implemented if remote triggering is needed.
+**Purpose**: Work orchestrator façade that may expose HTTP and/or queue integration around
+ingest/query; not required for v1. Only implemented if remote triggering or multi-host scheduling is
+needed.
 
 **Responsibilities**:
 

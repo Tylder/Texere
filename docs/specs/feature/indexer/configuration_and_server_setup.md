@@ -1,9 +1,10 @@
-# Texere Indexer – Configuration & Server Setup Specification
+# Texere Indexer – Configuration & Work Orchestrator Specification
 
 **Document Version:** 1.0  
 **Status:** Active Specification  
 **Last Updated:** December 2025  
-**Purpose:** Define server configuration hierarchy, per-repo config discovery, and runtime behavior
+**Purpose:** Define work orchestrator configuration hierarchy, per-repo config discovery, and
+runtime behavior
 
 ---
 
@@ -12,10 +13,10 @@
 1. [Overview](#overview)
 2. [Configuration Architecture](#configuration-architecture)
 3. [Design Decisions](#design-decisions)
-4. [Server Config Specification](#server-config-specification)
+4. [Work Orchestrator Config Specification](#work-orchestrator-config-specification)
 5. [Per-Repo Config Specification](#per-repo-config-specification)
 6. [CLI Interface](#cli-interface)
-7. [Server Runtime Behavior](#server-runtime-behavior)
+7. [Work Orchestrator Runtime Behavior (optional, post-v1)](#work-orchestrator-runtime-behavior-optional-post-v1)
 8. [Config Loading & Precedence](#config-loading--precedence)
 9. [Implementation Checklist](#implementation-checklist)
 
@@ -23,31 +24,34 @@
 
 ## Overview
 
-The Texere Indexer supports two **first-class non-server runtimes** and an **optional server/queue
-extension**:
+Terminology: “work orchestrator” here means a thin coordination shell that schedules indexing work.
+It can run workers in-process or, post-v1, front an external queue + workers.
+
+The Texere Indexer supports two **first-class non-server runtimes** and an **optional
+work-orchestrator/queue extension**:
 
 - **Run-Once Mode (non-server, no queue)**: Programmatic + CLI entrypoint that runs ingest once and
   exits (cron/CI friendly) via `runSnapshot/runTrackedBranches` and `scripts/indexer-run-once.ts`.
 - **Daemon Mode (non-server, no queue)**: Long-lived loop that polls for updates and triggers ingest
   inline; still uses the same core API; no HTTP/BullMQ required.
-- **Server/Queue Mode (optional, post-v1)**: Persistent HTTP service plus BullMQ workers that
-  enqueue indexing jobs. Implemented later as `apps/indexer-server` + `apps/indexer-worker`; not
-  required for v1.
+- **Work Orchestrator + Queue (optional, post-v1)**: Optional orchestrator that may expose HTTP
+  and/or enqueue work to workers (in-process or external). Implemented later as
+  `apps/indexer-server` + `apps/indexer-worker`; not required for v1.
 
 All modes share a **three-layer hierarchical configuration system**:
 
-1. **Server Config** (default/fallback): Central configuration for server behavior
-2. **Per-Repo Config** (overrides server): Repository-specific indexing rules
+1. **Orchestrator Config** (default/fallback): Central configuration for orchestrator behavior
+2. **Per-Repo Config** (overrides orchestrator): Repository-specific indexing rules
 3. **Runtime Overrides** (CLI args, API params): Highest precedence
 
 ---
 
-## Configuration Architecture
+## Configuration Architecture (Work Orchestrator + optional per-repo)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Server Config (INDEXER_CONFIG_PATH env var)             │
-│ • Server port, logging, worker threads                  │
+│ Work Orchestrator Config (INDEXER_CONFIG_PATH env var)  │
+│ • Orchestrator port, logging, worker threads            │
 │ • Default indexing behavior (fallback)                  │
 │ • Repo registration/discovery rules                     │
 └─────────────────────────────────────────────────────────┘
@@ -104,7 +108,7 @@ config. Per-repo configs, when present, override app/global defaults for that re
 
 **Implementation**:
 
-- Server config includes `reposDirectory` or `repoPatterns` (glob)
+- Work orchestrator config includes `reposDirectory` or `repoPatterns` (glob)
 - On startup and periodically (configurable interval): scan for `.indexer-config.json` files
 - Each discovered repo becomes available for indexing
 - Repo config is re-read on every indexing operation (not cached)
@@ -128,10 +132,11 @@ In v1, the indexer focuses on **single-repo analysis** (own codebase only).
 
 **v1.1 plan** (explicit manual registration):
 
-Dependencies are registered explicitly in server config (shared across repos) or per-repo config
-(repo-specific). Each dependency is indexed independently and reused across consuming repos.
+Dependencies are registered explicitly in the work orchestrator config (shared across repos) or
+per-repo config (repo-specific). Each dependency is indexed independently and reused across
+consuming repos.
 
-**Server-level dependency registry** (shared):
+**Work-orchestrator-level dependency registry** (shared):
 
 ```json
 {
@@ -150,7 +155,7 @@ Dependencies are registered explicitly in server config (shared across repos) or
 }
 ```
 
-**Per-repo dependency references** (links to server registry or overrides):
+**Per-repo dependency references** (links to orchestrator registry or overrides):
 
 ```json
 {
@@ -286,7 +291,7 @@ Server does **not** just load configs at startup. Instead:
 
 ---
 
-## Server Config Specification
+## Work Orchestrator Config Specification
 
 ### File Location
 
@@ -456,11 +461,11 @@ pnpm tsx scripts/indexer-run-once.ts --repo /path/to/repo [--branch main] [--for
 3. Invoke `runSnapshot` inline (no queue) for work items.
 4. Graceful shutdown on SIGINT/SIGTERM: stop scheduling, wait for in-flight jobs, exit.
 
-## Server Runtime Behavior (optional, post-v1)
+## Work Orchestrator Runtime Behavior (optional, post-v1)
 
 ### Startup Sequence
 
-1. Load `INDEXER_CONFIG_PATH` → parse server config
+1. Load `INDEXER_CONFIG_PATH` → parse work orchestrator config
 2. Validate: DB connectivity (Neo4j, Qdrant), repos directory exists
 3. If validation fails: log errors, exit with code 1
 4. Start HTTP server on configured port
@@ -470,7 +475,7 @@ pnpm tsx scripts/indexer-run-once.ts --repo /path/to/repo [--branch main] [--for
 ### Indexing Request (API)
 
 1. Resolve repo (clone if missing using `cloneBasePath`).
-2. Load per-repo config (if present); merge with server config and request params.
+2. Load per-repo config (if present); merge with orchestrator config and request params.
 3. Resolve branch → commit hash.
 4. Check snapshot cache; if not `force`, skip when already indexed.
 5. Enqueue job (if queue enabled) or call `runSnapshot` inline.
@@ -486,6 +491,14 @@ On interval (default: 5 minutes):
 4. If repos deleted: log and remove from available list
 5. Do **not** trigger indexing (only discovery)
 
+### Concurrency & locking (to be solved before multi-worker rollout)
+
+- Concurrent indexing of the same snapshot/branch can cause graph write contention. A mutex/lease or
+  transaction-based strategy must be defined before enabling multiple workers per repo/branch.
+- Per-repo/branch clone/fetch should be serialized to avoid redundant clones and credential
+  thrashing.
+- This remains an open item for post-v1 orchestrator/queue deployments.
+
 ---
 
 ## Config Loading & Precedence
@@ -495,7 +508,7 @@ On interval (default: 5 minutes):
 ```
 1. Start with server defaults
      ↓
-2. Load server config from INDEXER_CONFIG_PATH (if set)
+2. Load work orchestrator config from INDEXER_CONFIG_PATH (if set)
      ↓
 3. For specific repo: load per-repo .indexer-config.json
      ↓
@@ -574,7 +587,7 @@ Final merged config
 - [ ] Scan `reposDirectory` for `.indexer-config.json` files
 - [ ] Parse and validate each config
 - [ ] Re-read on every indexing request (no caching)
-- [ ] Merge with server config per precedence rules
+- [ ] Merge with orchestrator config per precedence rules
 - [ ] Handle missing config gracefully (use server defaults)
 
 ### CLI
