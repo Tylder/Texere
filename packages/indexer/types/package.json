@@ -24,8 +24,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.lib.json --incremental",
     "check-types": "tsc --noEmit -p tsconfig.json",
+    "format:check": "prettier . --check --cache",
     "lint": "eslint . --max-warnings 0",
-    "test": "vitest",
+    "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch"
   },

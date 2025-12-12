@@ -9,8 +9,9 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
-    "test": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest --watch"
   },
   "dependencies": {
     "next": "^15.0.0",
