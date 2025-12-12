@@ -710,6 +710,7 @@ export interface SnapshotRef {
   commitHash: string;
   branch?: string;
   snapshotType?: 'branch' | 'tag' | 'dependency';
+  snapshotId?: string; // composite ID: ${codebaseId}:${commitHash}
 }
 
 /**
@@ -723,6 +724,126 @@ export interface ChangedFileSet {
   deleted: string[];
   renamed: Array<{ from: string; to: string }>;
 }
+
+/**
+ * Runtime dependencies for indexing operations.
+ * Passed to runSnapshot/runTrackedBranches for dependency injection.
+ * @reference configuration_and_server_setup.md §2 (runtime dependencies)
+ */
+export interface RunDeps {
+  git: GitClient;
+  graph?: Neo4jClient;
+  vectors?: QdrantClient;
+  embeddings?: EmbeddingProvider;
+  logger: Logger;
+  clock: Clock;
+  lockProvider?: LockProvider;
+}
+
+/**
+ * Git operations client interface.
+ * Slice 1 implements with simple-git or NodeGit.
+ */
+export interface GitClient {
+  /**
+   * Resolve branch name to commit hash.
+   * @reference ingest_spec.md §6.1
+   */
+  resolveCommitHash(args: { repoPath: string; ref: string }): Promise<string>;
+
+  /**
+   * Get commit metadata (author, message, timestamp).
+   */
+  getCommitMetadata(args: {
+    repoPath: string;
+    commitHash: string;
+  }): Promise<{ author?: string; message?: string; timestamp: number }>;
+
+  /**
+   * Clone repository if missing.
+   * @reference configuration_and_server_setup.md §2 (git clone)
+   */
+  clone(args: { gitUrl: string; targetPath: string; depth?: number }): Promise<void>;
+
+  /**
+   * Fetch latest commits from remote.
+   * @reference plan.md Slice 1 (--fetch flag)
+   */
+  fetch(args: { repoPath: string; ref?: string }): Promise<void>;
+
+  /**
+   * Compute changed files between two commits.
+   * Treats renames as delete+add per ingest_spec.md §2.5.
+   * @reference ingest_spec.md §6.2
+   */
+  computeChangedFiles(args: {
+    repoPath: string;
+    commitHash: string;
+    baseCommit?: string;
+  }): Promise<ChangedFileSet>;
+}
+
+/**
+ * Logging interface.
+ */
+export interface Logger {
+  debug(message: string, context?: Record<string, unknown>): void;
+  info(message: string, context?: Record<string, unknown>): void;
+  warn(message: string, context?: Record<string, unknown>): void;
+  error(message: string, error?: Error | Record<string, unknown>): void;
+}
+
+/**
+ * Clock interface for testable timestamps.
+ */
+export interface Clock {
+  now(): Date;
+}
+
+/**
+ * Optional lock provider for concurrent indexing.
+ * Post-v1 feature for queue orchestration.
+ */
+export interface LockProvider {
+  acquire(key: string, ttlMs: number): Promise<string>;
+  release(key: string, token: string): Promise<boolean>;
+}
+
+/**
+ * Dry-run plan output (JSON-serializable).
+ * Used in CLI --dry-run mode.
+ * @reference plan.md Slice 1 (dry-run mode)
+ */
+export interface DryRunPlan {
+  config: {
+    codebaseId: string;
+    neo4jUri?: string;
+    qdrantUrl?: string;
+    languages?: string[];
+  };
+  snapshots: Array<{
+    snapshotId: string;
+    commitHash: string;
+    branch?: string;
+    changedFiles: ChangedFileSet;
+    plannedOperations: string[];
+  }>;
+}
+
+/**
+ * Neo4j client type reference for circular dependency avoidance.
+ */
+export type Neo4jClient = unknown;
+
+/**
+ * Qdrant client type reference for circular dependency avoidance.
+ */
+export type QdrantClient = unknown;
+
+/**
+ * Embedding provider type reference for circular dependency avoidance.
+ */
+export type EmbeddingProvider = unknown;
 
 // ============================================================================
 // 8. Runtime markers for test coverage

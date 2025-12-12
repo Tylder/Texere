@@ -31,7 +31,8 @@
   },
   "dependencies": {
     "@repo/indexer-core": "workspace:*",
-    "@repo/indexer-types": "workspace:*"
+    "@repo/indexer-types": "workspace:*",
+    "simple-git": "^3.30.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -17,6 +17,14 @@ OLLAMA_MODEL=llama3.2:3b-instruct-q5_K_S
 LANGFUSE_PUBLIC_KEY=
 LANGFUSE_SECRET_KEY=
 LANGFUSE_BASE_URL=http://localhost:3030
+
+# Indexer Configuration (Optional - required for indexer CLI/daemon)
+INDEXER_CONFIG_PATH=
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=password
+QDRANT_URL=http://localhost:6333
+OPENAI_API_KEY=
 ```
 
 ## Variable Explanation
@@ -43,6 +51,31 @@ LANGFUSE_BASE_URL=http://localhost:3030
 - **`LANGFUSE_BASE_URL`**: Langfuse API endpoint
   - Default: `http://localhost:3030` (local docker compose)
   - Change if running Langfuse elsewhere
+
+### Indexer (Optional - required only for indexer CLI/daemon mode)
+
+- **`INDEXER_CONFIG_PATH`**: Path to system-wide indexer config file
+  - Default: `.indexer-config.json` in working directory
+  - Copy `.indexer-config.example.json` to `.indexer-config.json` and customize
+  - Can be overridden per-run with `--config` CLI flag
+
+- **`NEO4J_URI`**: Neo4j connection URI for graph database
+  - Default: `bolt://localhost:7687`
+  - Customize if Neo4j runs on different host/port
+
+- **`NEO4J_USER`**: Neo4j username
+  - Default: `neo4j`
+
+- **`NEO4J_PASSWORD`**: Neo4j password
+  - Default: `password`
+
+- **`QDRANT_URL`**: Qdrant vector store endpoint
+  - Default: `http://localhost:6333`
+  - Customize if Qdrant runs elsewhere
+
+- **`OPENAI_API_KEY`**: OpenAI API key for embeddings/LLM-assisted extraction
+  - Leave empty to use stub providers (deterministic for testing)
+  - Only needed if real embeddings are required
 
 ## Verification
 

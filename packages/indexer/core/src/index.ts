@@ -22,6 +22,16 @@ import type {
   SpecDoc,
 } from '@repo/indexer-types';
 
+// Re-export Slice 1 config implementation
+export {
+  loadIndexerConfig,
+  getDefaultConfig,
+  findCodebaseConfig,
+  mergeConfigs,
+  validateDbConnections,
+  sanitizeConfigForLogging,
+} from './config.js';
+
 // ============================================================================
 // 1. Database Client Interfaces (graph_schema_spec.md §4–6)
 // ============================================================================
