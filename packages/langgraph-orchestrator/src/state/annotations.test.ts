@@ -5,7 +5,7 @@
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { describe, expect, it } from 'vitest';
 
-import { TaskState } from './annotations';
+import { TaskState } from './annotations.js';
 
 describe('TaskState (langgraph_orchestrator_spec.md §5.1)', () => {
   it('should define state with messages, taskContext, result channels', () => {

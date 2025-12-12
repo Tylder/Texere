@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { buildToolRegistry, getToolByName } from './tool-adapter';
+import { buildToolRegistry, getToolByName } from './tool-adapter.js';
 
 describe('buildToolRegistry (langgraph_orchestrator_spec.md §9.2)', () => {
   it('should return an array of tools', () => {

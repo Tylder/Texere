@@ -4,7 +4,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { answerQuestion } from './api';
+import { answerQuestion } from './api.js';
 
 // Mock LLM to avoid real API calls
 vi.mock('./adapters/llm-adapter', () => ({
