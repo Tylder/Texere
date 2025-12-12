@@ -1,0 +1,53 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "__name__",
+  "projectType": "application",
+  "sourceRoot": "apps/__name__/src",
+  "tags": ["runtime:server", "scope:__scope__"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-script",
+      "options": { "script": "build" },
+      "outputs": ["{workspaceRoot}/dist/apps/__name__"],
+      "inputs": ["default", "{projectRoot}/tsconfig.lib.json", "{projectRoot}/src/**"]
+    },
+    "check-types": {
+      "executor": "nx:run-script",
+      "options": { "script": "check-types" },
+      "inputs": [
+        "default",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/tsconfig.lib.json",
+        "{projectRoot}/src/**"
+      ]
+    },
+    "dev": {
+      "executor": "nx:run-script",
+      "options": { "script": "dev" },
+      "cache": false
+    },
+    "lint": {
+      "executor": "nx:run-script",
+      "options": { "script": "lint" },
+      "inputs": ["default", "{projectRoot}/src/**", "{projectRoot}/eslint.config.*"]
+    },
+    "start": {
+      "executor": "nx:run-script",
+      "options": { "script": "start" }
+    },
+    "test": {
+      "executor": "nx:run-script",
+      "options": { "script": "test" },
+      "outputs": ["{projectRoot}/coverage"]
+    },
+    "test:coverage": {
+      "executor": "nx:run-script",
+      "options": { "script": "test:coverage" },
+      "outputs": ["{projectRoot}/coverage"]
+    },
+    "test:watch": {
+      "executor": "nx:run-script",
+      "options": { "script": "test:watch" }
+    }
+  }
+}
