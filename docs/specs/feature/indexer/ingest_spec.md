@@ -34,10 +34,11 @@ It is **incremental**, **language‑agnostic**, and uses a unified structure (`F
 
 ### Snapshot retention & selection (Branch-Based):
 
-- **Own repos**: Configuration file (`.indexer-config.json`) specifies `trackedBranches` array.
-  Ingest resolves each branch to its commit hash and indexes **only the latest commit** of each
-  configured branch (e.g. `main`, `develop`, `snapshot-1`). Each snapshot is immutable and tagged
-  with `snapshotType: "branch"` and `branch: "<branch-name>"`.
+- **Own repos**: Configuration file (`.indexer-config.json`) specifies `trackedBranches` array
+  (optional for third-party repos; app/global config may supply it instead). Ingest resolves each
+  branch to its commit hash and indexes **only the latest commit** of each configured branch (e.g.
+  `main`, `develop`, `snapshot-1`). Each snapshot is immutable and tagged with
+  `snapshotType: "branch"` and `branch: "<branch-name>"`.
 - **Dependencies**: Index **only the specific versions** referenced in lockfiles (e.g.
   `package-lock.json`, `poetry.lock`).
 

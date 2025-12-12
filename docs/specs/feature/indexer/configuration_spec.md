@@ -38,13 +38,14 @@ the Texere Indexer. Configuration is **branch-driven** for own repositories (per
 
 ---
 
-## 1. Configuration File (`.indexer-config.json`)
+## 1. Configuration File (`.indexer-config.json`) — optional for third-party repos
 
-The primary configuration is stored in `.indexer-config.json` at the repository root. This file is
-**not committed** to version control (add to `.gitignore`); use `.indexer-config.example.json` as a
-template.
+For self-owned repos, you may place `.indexer-config.json` at the repository root (not committed;
+ship an `.indexer-config.example.json`). For third-party repos, configuration can come entirely from
+app/global config (via `INDEXER_CONFIG_PATH` or passed objects) and runtime flags; the per-repo file
+is optional.
 
-### Schema
+### Schema (per-repo file, when used)
 
 ```json
 {
@@ -178,7 +179,7 @@ Environment variables can be used to override configuration file values using `$
 in JSON (e.g., `"neo4jUri": "${NEO4J_URI}"`). Create a `.env` file at the project root (not
 committed).
 
-### Required Variables
+### Required Variables (can come from env or config file)
 
 | Variable         | Default | Notes                                                   |
 | ---------------- | ------- | ------------------------------------------------------- |

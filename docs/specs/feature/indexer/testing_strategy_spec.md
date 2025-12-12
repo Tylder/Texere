@@ -7,7 +7,8 @@
 ## Overview
 
 This specification defines the testing strategy for the Texere Indexer, including unit tests,
-integration tests, and golden file validation.
+integration tests, golden file validation, and runtime contract tests for the non-server run-once
+CLI and programmatic API.
 
 ## Scope
 
@@ -29,8 +30,9 @@ integration tests, and golden file validation.
 1. [Unit Tests](#1-unit-tests)
 2. [Integration Tests](#2-integration-tests)
 3. [Golden Files](#3-golden-files)
-4. [Coverage Targets](#4-coverage-targets)
-5. [Changelog](#5-changelog)
+4. [Runtime Contract Tests](#4-runtime-contract-tests)
+5. [Coverage Targets](#5-coverage-targets)
+6. [Changelog](#6-changelog)
 
 ---
 
@@ -38,7 +40,9 @@ integration tests, and golden file validation.
 
 ### 1.1 Git Diff Logic
 
-_(To be detailed: test cases for Git diff computation)_
+- Table-driven cases for added/modified/deleted/renamed.
+- Branch resolution precedence (runtime > per-repo > app/global > defaults).
+- Clone-when-missing behavior controlled by `cloneBasePath` (simulate missing repo path).
 
 ### 1.2 Per-Language Indexers
 
@@ -50,7 +54,8 @@ _(To be detailed: endpoint, schema, testcase, feature extraction tests)_
 
 ### 1.4 Graph Write Adapters
 
-_(To be detailed: graph persistence tests)_
+- Enforce `IN_SNAPSHOT` invariant; ensure orphan checks.
+- Deterministic embedding stub support (DI) to keep tests stable.
 
 ---
 
@@ -58,7 +63,8 @@ _(To be detailed: graph persistence tests)_
 
 ### 2.1 Synthetic TS/JS Repository
 
-_(To be detailed: fixture structure, test cases)_
+Use synthetic repos and in-memory/fake deps where possible; optional Neo4j/Qdrant docker-compose for
+full end-to-end.
 
 ### 2.2 Synthetic Python Repository
 
@@ -78,11 +84,21 @@ _(To be detailed: golden FileIndexResult for selected test files)_
 
 ### 3.2 Graph State Snapshots
 
-_(To be detailed: optional golden graph slices for regression detection)_
+Include dry-run plan snapshots (JSON) for run-once CLI to detect config/diff regressions without
+writes.
+
+## 4. Runtime Contract Tests
+
+- CLI wrapper (`scripts/indexer-run-once.ts`): spawn with flags; assert exit codes (0/1/2/3/4),
+  dry-run JSON shape, and log format.
+- Programmatic API (`runSnapshot`, `runTrackedBranches`): exercise with injected fakes (`RunDeps`),
+  ensure deterministic results with stub embedder and in-memory graph.
+- Locking behavior: per-repo/branch lock (in-memory and file-based) prevents concurrent same-branch
+  runs.
 
 ---
 
-## 4. Coverage Targets
+## 5. Coverage Targets
 
 | Layer       | Target |
 | ----------- | ------ |
@@ -94,7 +110,7 @@ _(To be detailed per ingest_spec.md §10)_
 
 ---
 
-## 5. Changelog
+## 6. Changelog
 
 | Date       | Version | Editor | Summary                                                                |
 | ---------- | ------- | ------ | ---------------------------------------------------------------------- |

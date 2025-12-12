@@ -46,32 +46,44 @@ real indexing.
   via `templates/nx/node-lib`; set tags in `project.json` and `nx.json` (`domain:indexer`,
   `layer:*`).
 
-## Slice 1 — Git Snapshot Resolution & Diff Plumbing
+## Slice 1 — Git Snapshot Resolution, Diff Plumbing & Run-Once Entrypoint
 
-**Purpose**: Resolve tracked branches and compute changed files.  
+**Purpose**: Resolve tracked branches, compute changed files, and expose a programmatic + CLI
+run-once path for non-server usage.  
 **Scope**:
 
-- Implement config resolution: `INDEXER_CONFIG_PATH` + per-repo `.indexer-config.json` precedence
-  (`configuration_and_server_setup.md` §3–9; `configuration_spec.md` §1–4).
+- Implement config resolution: `INDEXER_CONFIG_PATH` + per-repo `.indexer-config.json` (optional)
+  precedence (`configuration_and_server_setup.md` §3–9; `configuration_spec.md` §1–4).
 - Implement branch resolution + snapshot selection (`ingest_spec.md` §6.1, §6.2). Treat renames as
   delete+add (`ingest_spec.md` §2.5, §6.2).
 - Produce `ChangedFileSet` (added/modified/deleted/renamed) for downstream indexers.
-- Add a debug runner (`scripts/dev-index.ts`) callable via
-  `pnpm dev:index --repo <path> --branch <branch>` using `tsx`, plus optional VS Code launch config
-  (“Debug indexSnapshot”) to set breakpoints in ingest/core config and git diff code.  
-  **Acceptance**: Given repo + trackedBranches, returns commit hash + file sets; deleted files
-  flagged. Debug runner executes and prints snapshotRef + ChangedFileSet.  
+- **Programmatic API**: export `runSnapshot` / `runTrackedBranches` from
+  `@repo/features/indexer/ingest` with dependency injection hooks (`RunDeps`) for git, graph,
+  vectors, embeddings, logger, clock, lock provider.
+- **Run-once CLI**: add `scripts/indexer-run-once.ts` (tsx) + Nx alias target; flags `--repo`,
+  `--branch?`, `--force`, `--fetch/--no-fetch`, `--dry-run`, `--log-format`, `--config <path>`
+  (config optional if in workdir). Uses programmatic API, exits with codes: 0 success; 1
+  config/validation; 2 git/IO; 3 DB; 4 external/LLM.
+- **Dry-run** mode: outputs JSON plan (merged config summary, commit hashes, changed files, planned
+  operations) without writing graph/vectors (must be snapshot-tested).
+- Git fetch/clone: default `fetch=true`; if repo path missing, clone into configured `cloneBasePath`
+  from config (see `configuration_spec.md`).
+- Optional VS Code launch config (“Debug indexSnapshot”) for breakpoints in ingest/core config and
+  git diff code. **Acceptance**: Given repo + trackedBranches, returns commit hash + file sets;
+  deleted files flagged. Run-once CLI executes and prints snapshotRef + ChangedFileSet (or JSON plan
+  in dry-run).  
   **Tests**: Unit tests over synthetic git fixture; cover branch precedence and rename handling per
-  `test_repository_spec.md` (Incremental Validation Table).  
+  `test_repository_spec.md` (Incremental Validation Table). CLI contract tests for exit codes and
+  dry-run JSON.  
   **Docs to consult**: [`configuration_and_server_setup.md`](../configuration_and_server_setup.md)
-  §3–9; [`configuration_spec.md`](../configuration_spec.md) §1–4;
+  §2–9; [`configuration_spec.md`](../configuration_spec.md) §1–4;
   [`ingest_spec.md`](../ingest_spec.md) §6.1–6.2;
   [`symbol_id_stability_spec.md`](../symbol_id_stability_spec.md);
   [`test_repository_spec.md`](../test_repository_spec.md) (Incremental Validation Table).  
   **Code areas**:
   `packages/features/indexer/ingest/src/git/{git-diff.ts,git-files.ts,index-snapshot.ts}`; config
-  loader in `packages/features/indexer/core/src/config/indexer-config.ts`; dev runner in
-  `scripts/dev-index.ts`; optional VS Code `launch.json` entry “Debug indexSnapshot”.
+  loader in `packages/features/indexer/core/src/config/indexer-config.ts`; run-once CLI in
+  `scripts/indexer-run-once.ts`.
 
 ## Slice 2 — TypeScript Language Indexer (Symbols/Calls/Refs/Tests/Boundaries)
 
@@ -198,15 +210,16 @@ real indexing.
   optional HTTP handlers in `apps/indexer-admin` (Node app) or similar; response types in
   `packages/features/indexer/types`.
 
-## Slice 7 — Workers & Scheduling (Optional v1.0)
+## Slice 7 — Server, Queues & Scheduling (Post-v1 optional)
 
-**Purpose**: Background job orchestration for indexing requests.  
+**Purpose**: Optional server + queue orchestration for indexing requests (deferred until after v1
+non-server path is stable).  
 **Scope**:
 
 - Implement BullMQ job definitions (`indexSnapshotJob`) per `layout_spec.md` §2.5 and
-  `configuration_and_server_setup.md` §7; host handlers in a `templates/nx/node-lib` library, and if
-  a worker app is created, scaffold with the Nx Node app generator (no custom template in repo).
-- Wire worker app (`apps/indexer-worker`) to call ingest pipeline.  
+  `configuration_and_server_setup.md` §7 **only after** run-once/programmatic path is complete.
+- If/when server is needed: add `apps/indexer-server` (HTTP) and `apps/indexer-worker` (BullMQ)
+  shelling out to the same `runSnapshot` API.  
   **Acceptance**: Job enqueues and runs indexing end-to-end using earlier slices; respects `force`
   flag.  
   **Tests**: Integration with mocked queue; smoke test only (optional to ship in v1.0). **Docs to
@@ -215,8 +228,8 @@ real indexing.
   [`ingest_spec.md`](../ingest_spec.md) §6 runtime notes.  
   **Code areas**: Job definitions in
   `packages/features/indexer/workers/src/jobs/index-snapshot.job.ts`; queue wiring in
-  `packages/features/indexer/workers/src/index.ts`; worker bootstrap in
-  `apps/indexer-worker/src/main.ts`.
+  `packages/features/indexer/workers/src/index.ts`; optional worker bootstrap in
+  `apps/indexer-worker/src/main.ts`; optional server in `apps/indexer-server`.
 
 ## Slice 8 — Hardening & Edge Cases
 

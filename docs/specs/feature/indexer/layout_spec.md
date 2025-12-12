@@ -14,8 +14,12 @@ The indexer lives in the **same Nx workspace** as the agent / code-writing syste
 root/
   apps/
     agent-orchestrator/         # LangGraph/Mastra agents
-    indexer-worker/             # Background worker process for indexing
-    indexer-admin/ (optional)   # CLI or HTTP app for admin/ops
+    indexer-runner/ (optional)  # Nx alias to run-once/daemon script (non-server)
+    indexer-worker/ (optional)  # Background worker process for indexing (post-v1)
+    indexer-server/ (optional)  # HTTP + queue shell (post-v1, not required)
+
+  scripts/
+    indexer-run-once.ts         # Required run-once CLI (non-server, no queue)
 
   packages/
     features/
@@ -304,11 +308,37 @@ packages/features/indexer/workers/
 
 ## 3. Apps and Their Dependencies
 
-### 3.1 `apps/indexer-worker`
+### 3.1 `scripts/indexer-run-once.ts` (required non-server entrypoint)
 
-**Purpose**: Long-running worker that processes indexing jobs.
+**Purpose**: Non-server, no-queue CLI wrapper around the programmatic ingest API. Runs once and
+exits with status codes for cron/CI.
 
-**Responsibility**:
+**Responsibilities**:
+
+- Parse flags (`--repo`, `--branch?`, `--force`, `--fetch/--no-fetch`, `--dry-run`, `--log-format`,
+  `--config <path>`), merge config (runtime > per-repo optional > app/global > defaults).
+- Call `runSnapshot` / `runTrackedBranches` from `@repo/features/indexer/ingest`.
+- Support dry-run (plan JSON, no writes) and exit codes: 0 success; 1 config/validation; 2 git/IO; 3
+  DB; 4 external/LLM.
+
+**Placement**: `scripts/indexer-run-once.ts` (tsx). Provide an Nx target alias
+`indexer-runner:run-once` for convenience.
+
+---
+
+### 3.2 `apps/indexer-runner` (optional Nx wrapper)
+
+**Purpose**: Optional Nx app that forwards to the same run-once/daemon script for teams that prefer
+Nx targets. Shares all behavior with the script; no additional runtime logic.
+
+---
+
+### 3.3 `apps/indexer-worker` (post-v1 optional)
+
+**Purpose**: Long-running worker that processes indexing jobs (only if queue/server is adopted after
+v1).
+
+**Responsibilities**:
 
 - Start BullMQ worker(s).
 - Bind job names to handlers from `indexer/workers`.
@@ -325,23 +355,24 @@ import { registerIndexSnapshotWorker } from '@repo/features/indexer/workers';
 
 ---
 
-### 3.2 `apps/indexer-admin` (optional)
+### 3.4 `apps/indexer-server` (post-v1 optional)
 
-**Purpose**: CLI or small HTTP server to trigger indexing and inspect status.
+**Purpose**: HTTP façade plus queue integration around ingest/query; not required for v1. Only
+implemented if remote triggering is needed.
 
 **Responsibilities**:
 
-- Endpoints/commands like:
-  - `POST /reindex` → enqueue `indexSnapshotJob`.
-  - `GET /snapshots/:codebaseId` → inspect recent Snapshots.
+- Expose API aligned with `configuration_and_server_setup.md` and `api_gateway_spec.md` when those
+  are activated.
+- Enqueue jobs to `indexer-worker` or call `runSnapshot` directly in-process when queue is absent.
 
 **Dependencies**:
 
-- Depends on: `indexer/workers` (for job enqueuing), `indexer/query` (for read-only inspection).
+- Depends on: `indexer/workers` (if queue), `indexer/query`, `indexer/ingest`.
 
 ---
 
-### 3.3 `apps/agent-orchestrator`
+### 3.5 `apps/agent-orchestrator`
 
 **Purpose**: Agent / LangGraph / Mastra orchestrator that uses the index.
 

@@ -23,12 +23,18 @@
 
 ## Overview
 
-The Texere Indexer operates in two modes:
+The Texere Indexer supports two **first-class non-server runtimes** and an **optional server/queue
+extension**:
 
-- **Server Mode**: Persistent HTTP service that indexes repos on-demand or scheduled
-- **CLI Mode**: Interactive or scripted command-line tool for manual indexing
+- **Run-Once Mode (non-server, no queue)**: Programmatic + CLI entrypoint that runs ingest once and
+  exits (cron/CI friendly) via `runSnapshot/runTrackedBranches` and `scripts/indexer-run-once.ts`.
+- **Daemon Mode (non-server, no queue)**: Long-lived loop that polls for updates and triggers ingest
+  inline; still uses the same core API; no HTTP/BullMQ required.
+- **Server/Queue Mode (optional, post-v1)**: Persistent HTTP service plus BullMQ workers that
+  enqueue indexing jobs. Implemented later as `apps/indexer-server` + `apps/indexer-worker`; not
+  required for v1.
 
-Both modes share a **three-layer hierarchical configuration system**:
+All modes share a **three-layer hierarchical configuration system**:
 
 1. **Server Config** (default/fallback): Central configuration for server behavior
 2. **Per-Repo Config** (overrides server): Repository-specific indexing rules
@@ -65,28 +71,30 @@ Both modes share a **three-layer hierarchical configuration system**:
 
 ## Design Decisions
 
-### Server Config Location (Env-Based)
+### Config Location (Env-Based, all modes)
 
-Server config location is determined by environment variable `INDEXER_CONFIG_PATH`.
+Config location is determined by `INDEXER_CONFIG_PATH` when set; otherwise:
 
-**Rationale**:
+- Use `--config <path>` (CLI) / option (programmatic) if provided.
+- Else, if `.indexer-config.json` exists in repo root, load it.
+- Else, fall back to app/global defaults plus required runtime options (`repoPath`, `codebaseId`,
+  `trackedBranches`).
 
-- Flexible: testable, works in Docker, CI/CD pipelines
-- Explicit: no hidden search paths
-- Standard: follows 12-factor app principles
+**Rationale**: Works for repos without local config (third-party), keeps 12-factor friendliness, and
+stays testable.
 
 **Implementation**:
 
-- If `INDEXER_CONFIG_PATH` is set: load from that path
-- If not set: server uses sensible defaults (warn in logs)
-- If file is unreadable: fail startup with clear error message
-- Config changes are detected and reloaded on next indexing request (not cached)
+- If file unreadable: fail run with exit code 1 (config/validation) and clear error.
+- Config is re-read on every run (run-once/daemon) and on every request (server); no caching.
 
 ---
 
-### Per-Repo Config Discovery (Automatic Scanning)
+### Per-Repo Config Discovery (Optional; mainly for self-owned repos)
 
-Server scans a configured repos directory automatically for `.indexer-config.json` files.
+Daemon/server may scan a configured repos directory automatically for `.indexer-config.json` files,
+but per-repo files are **optional**. Third-party repos can be fully configured via app/global
+config. Per-repo configs, when present, override app/global defaults for that repo.
 
 **Rationale**:
 
@@ -217,16 +225,17 @@ versa).
 
 ---
 
-### Runtime Precedence (CLI Override Config)
+### Runtime Precedence (all modes)
 
-Both config files and CLI arguments are supported; **CLI arguments override config**.
+Runtime/flags → per-repo (if present) → app/global config → defaults.
 
 **Precedence (highest to lowest)**:
 
-1. CLI flags (e.g., `--branch feature/x`, `--force`)
-2. API request parameters (for server mode)
-3. Per-repo config (`.indexer-config.json`)
-4. Server config (fallback defaults)
+1. Runtime flags/params (CLI `--branch`, `--force`, `--fetch/--no-fetch`, `--config`, `--dry-run`;
+   programmatic options)
+2. Per-repo config (`.indexer-config.json`, optional)
+3. App/global config (from `INDEXER_CONFIG_PATH` or passed object)
+4. Defaults
 
 **Implementation**:
 
@@ -403,40 +412,51 @@ All others override server defaults for this repo.
 
 ---
 
-## CLI Interface
+## CLI Interface (non-server run-once)
 
 ### Commands
 
 ```bash
-# Index with config (requires .indexer-config.json)
-pnpm indexer:index --repo /path/to/repo
-
-# Index specific branch (overrides config)
-pnpm indexer:index --repo /path/to/repo --branch feature/x
-
-# Force re-index (skip snapshot cache)
-pnpm indexer:index --repo /path/to/repo --branch main --force
-
-# Interactive mode (prompts if no config)
-pnpm indexer:index --repo /path/to/repo --interactive
-
-# List available repos (from server config)
-pnpm indexer:repos list
-
-# Validate configs
-pnpm indexer:config validate --repo /path/to/repo
+# Run once (non-server, no queue); config path optional if in workdir
+pnpm tsx scripts/indexer-run-once.ts --repo /path/to/repo [--branch main] [--force] [--fetch|--no-fetch] [--dry-run] [--log-format json|text] [--config /path/to/config.json]
 ```
 
-### Exit Codes
+### Exit Codes (run-once)
 
-- `0`: Success
+- `0`: Success (or dry-run plan emitted)
 - `1`: Config error or validation failure
-- `2`: Missing required config/args (interactive mode available)
+- `2`: Git/IO error
 - `3`: Database error
+- `4`: External/LLM/other
 
 ---
 
-## Server Runtime Behavior
+## Run-Once Runtime Behavior (non-server)
+
+**Input**: `{ repoPath, branch?, force?, fetch?, configPath?, dryRun? }`
+
+1. Resolve/clone repo: if `repoPath` is missing locally, clone into `cloneBasePath` from config and
+   checkout branch/commit.
+2. Load config per precedence.
+3. Resolve branch (or trackedBranches) → commit hash.
+4. Check snapshot cache; skip if already indexed unless `force`.
+5. Git diff → changed files.
+6. Run indexers + higher-level extractors.
+7. Persist graph/vectors (unless `dryRun`, which emits a plan JSON and exits).
+8. Exit with code (0/1/2/3/4). Dry-run returns 0 if plan succeeds.
+
+## Daemon Runtime Behavior (non-server)
+
+**Input**:
+`{ reposDirectory?, repoPatterns?, intervalMs, maxConcurrent, fetch=true, cloneBasePath, lockProvider }`
+
+1. Optional periodic discovery of repos + per-repo configs (if present).
+2. On each interval: fetch (if enabled), resolve branches, skip unchanged commits, respect
+   per-repo/branch lock and global concurrency.
+3. Invoke `runSnapshot` inline (no queue) for work items.
+4. Graceful shutdown on SIGINT/SIGTERM: stop scheduling, wait for in-flight jobs, exit.
+
+## Server Runtime Behavior (optional, post-v1)
 
 ### Startup Sequence
 
@@ -447,17 +467,14 @@ pnpm indexer:config validate --repo /path/to/repo
 5. Schedule periodic repo discovery (configurable interval)
 6. Log: "Indexer server ready on port X"
 
-### Indexing Request (CLI or API)
+### Indexing Request (API)
 
-**Input**: `{ repoPath, branch?, force? }`
-
-1. **Resolve repo**: Check if `repoPath` exists in reposDirectory
-2. **Load per-repo config**: Read `.indexer-config.json` (re-read every time)
-3. **Merge configs**: Server defaults + per-repo config + CLI/API overrides
-4. **Resolve branch**: `git rev-parse <branch>`
-5. **Check snapshot cache**: If snapshot exists and `!force`, skip to graph queries
-6. **Index**: Run language indexers, extractors, persist to graph
-7. **Return**: Snapshot ID, file count, symbol count, status
+1. Resolve repo (clone if missing using `cloneBasePath`).
+2. Load per-repo config (if present); merge with server config and request params.
+3. Resolve branch → commit hash.
+4. Check snapshot cache; if not `force`, skip when already indexed.
+5. Enqueue job (if queue enabled) or call `runSnapshot` inline.
+6. Return: Snapshot ID, file count, symbol count, status.
 
 ### Config Refresh (Periodic)
 
