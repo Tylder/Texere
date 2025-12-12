@@ -14,12 +14,10 @@ The indexer lives in the **same Nx workspace** as the agent / code-writing syste
 root/
   apps/
     agent-orchestrator/         # LangGraph/Mastra agents
-    indexer-runner/ (optional)  # Nx alias to run-once/daemon script (non-server)
+    indexer-cli/                # Required non-server CLI (commander) for run-once indexing
+    indexer-runner/ (optional)  # Nx alias wrapper that forwards to indexer-cli
     indexer-worker/ (optional)  # Background worker process for indexing (post-v1)
     indexer-orchestrator/ (optional)  # Work orchestrator (HTTP + queue) shell (post-v1, not required)
-
-  scripts/
-    indexer-run-once.ts         # Required run-once CLI (non-server, no queue)
 
   packages/
     features/
@@ -308,28 +306,30 @@ packages/features/indexer/workers/
 
 ## 3. Apps and Their Dependencies
 
-### 3.1 `scripts/indexer-run-once.ts` (required non-server entrypoint)
+### 3.1 `apps/indexer-cli` (required non-server entrypoint)
 
-**Purpose**: Non-server, no-queue CLI wrapper around the programmatic ingest API. Runs once and
-exits with status codes for cron/CI.
+**Purpose**: Required, non-server, no-queue CLI app (commander) that wraps the programmatic ingest
+API for snapshot/tracked-branch indexing. This is the canonical way to run the indexer locally or in
+CI; it replaces the legacy script.
 
 **Responsibilities**:
 
-- Parse flags (`--repo`, `--branch?`, `--force`, `--fetch/--no-fetch`, `--dry-run`, `--log-format`,
-  `--config <path>`), merge config (runtime > per-repo optional > app/global > defaults).
+- Parse flags (`--repo`, `--branch?`, `--force`, `--fetch/--no-fetch`, `--dry-run`,
+  `--log-format json|text`, `--config <path>`, `--verbose`, `--quiet`), merge config (runtime >
+  per-repo optional > app/global > defaults).
 - Call `runSnapshot` / `runTrackedBranches` from `@repo/features/indexer/ingest`.
-- Support dry-run (plan JSON, no writes) and exit codes: 0 success; 1 config/validation; 2 git/IO; 3
-  DB; 4 external/LLM.
+- Support dry-run (plan JSON, no writes) and exit codes: 0 success/dry-run; 1 config/validation; 2
+  git/IO; 3 DB; 4 external/LLM.
 
-**Placement**: `scripts/indexer-run-once.ts` (tsx). Provide an Nx target alias
-`indexer-runner:run-once` for convenience.
+**Placement**: `apps/indexer-cli` (Node/ESM). Provide an Nx target alias to run the bin `indexer`
+for convenience. The legacy `scripts/indexer-run-once.ts` script is obsolete and removed.
 
 ---
 
 ### 3.2 `apps/indexer-runner` (optional Nx wrapper)
 
-**Purpose**: Optional Nx app that forwards to the same run-once/daemon script for teams that prefer
-Nx targets. Shares all behavior with the script; no additional runtime logic.
+**Purpose**: Optional Nx app that forwards directly to `apps/indexer-cli` for teams that prefer Nx
+targets. Shares all behavior with the CLI; no additional runtime logic.
 
 ---
 

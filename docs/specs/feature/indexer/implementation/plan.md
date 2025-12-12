@@ -49,7 +49,7 @@ real indexing.
 ## Slice 1 — Git Snapshot Resolution, Diff Plumbing & Run-Once Entrypoint
 
 **Purpose**: Resolve tracked branches, compute changed files, and expose a programmatic + CLI
-run-once path for non-server usage.  
+run-once path for non-server usage via the new commander-based `apps/indexer-cli`.  
 **Scope**:
 
 - Implement config resolution: `INDEXER_CONFIG_PATH` + per-repo `.indexer-config.json` (optional)
@@ -60,10 +60,11 @@ run-once path for non-server usage.
 - **Programmatic API**: export `runSnapshot` / `runTrackedBranches` from
   `@repo/features/indexer/ingest` with dependency injection hooks (`RunDeps`) for git, graph,
   vectors, embeddings, logger, clock, lock provider.
-- **Run-once CLI**: add `scripts/indexer-run-once.ts` (tsx) + Nx alias target; flags `--repo`,
-  `--branch?`, `--force`, `--fetch/--no-fetch`, `--dry-run`, `--log-format`, `--config <path>`
-  (config optional if in workdir). Uses programmatic API, exits with codes: 0 success; 1
-  config/validation; 2 git/IO; 3 DB; 4 external/LLM.
+- **Run-once CLI app**: add `apps/indexer-cli` (Node/ESM, commander) with bin `indexer`; flags
+  `--repo`, `--branch?`, `--force`, `--fetch/--no-fetch`, `--dry-run`, `--log-format json|text`,
+  `--config <path>`, `--verbose`, `--quiet`. Uses the programmatic API and preserves exit codes: 0
+  success/dry-run; 1 config/validation; 2 git/IO; 3 DB; 4 external/LLM. The legacy
+  `scripts/indexer-run-once.ts` is removed/obsolete.
 - **Dry-run** mode: outputs JSON plan (merged config summary, commit hashes, changed files, planned
   operations) without writing graph/vectors (must be snapshot-tested).
 - Git fetch/clone: default `fetch=true`; if repo path missing, clone into configured `cloneBasePath`
@@ -82,8 +83,8 @@ run-once path for non-server usage.
   [`test_repository_spec.md`](../test_repository_spec.md) (Incremental Validation Table).  
   **Code areas**:
   `packages/features/indexer/ingest/src/git/{git-diff.ts,git-files.ts,index-snapshot.ts}`; config
-  loader in `packages/features/indexer/core/src/config/indexer-config.ts`; run-once CLI in
-  `scripts/indexer-run-once.ts`.
+  loader in `packages/features/indexer/core/src/config/indexer-config.ts`; run-once CLI app in
+  `apps/indexer-cli` (bin `indexer`).
 
 ## Slice 2 — TypeScript Language Indexer (Symbols/Calls/Refs/Tests/Boundaries)
 

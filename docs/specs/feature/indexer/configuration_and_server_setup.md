@@ -31,7 +31,8 @@ The Texere Indexer supports two **first-class non-server runtimes** and an **opt
 work-orchestrator/queue extension**:
 
 - **Run-Once Mode (non-server, no queue)**: Programmatic + CLI entrypoint that runs ingest once and
-  exits (cron/CI friendly) via `runSnapshot/runTrackedBranches` and `scripts/indexer-run-once.ts`.
+  exits (cron/CI friendly) via `runSnapshot/runTrackedBranches` and the commander-based
+  `apps/indexer-cli` (bin `indexer`).
 - **Daemon Mode (non-server, no queue)**: Long-lived loop that polls for updates and triggers ingest
   inline; still uses the same core API; no HTTP/BullMQ required.
 - **Work Orchestrator + Queue (optional, post-v1)**: Optional orchestrator that may expose HTTP
@@ -423,7 +424,7 @@ All others override server defaults for this repo.
 
 ```bash
 # Run once (non-server, no queue); config path optional if in workdir
-pnpm tsx scripts/indexer-run-once.ts --repo /path/to/repo [--branch main] [--force] [--fetch|--no-fetch] [--dry-run] [--log-format json|text] [--config /path/to/config.json]
+pnpm indexer --repo /path/to/repo [--branch main] [--force] [--fetch|--no-fetch] [--dry-run] [--log-format json|text] [--config /path/to/config.json] [--verbose|--quiet]
 ```
 
 ### Exit Codes (run-once)

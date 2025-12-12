@@ -23,11 +23,22 @@ graph:
 
 ```typescript
 import {
-  // Main orchestrator (Slice 1–5 assembly)
-  indexSnapshot,
-  runFullIndexPipeline,
+  // Slice 1: Programmatic API for snapshot resolution & orchestration
+  runSnapshot, // Index single branch with dependency injection
+  runTrackedBranches, // Index all tracked branches from config
+  generateDryRunPlan, // Generate JSON execution plan without writes
+  resolveSnapshotForBranch, // Resolve branch → commit hash
+  generateSnapshotId, // Generate composite snapshot ID
 
-  // Sub-components (called by orchestrator; internal)
+  // Git client (Slice 1)
+  createGitClient, // Factory for SimpleGitClient
+  SimpleGitClient, // Implementation
+
+  // Main orchestrator (Slice 1–5 assembly)
+  indexSnapshot, // Full pipeline (TODO: future slices)
+  runFullIndexPipeline, // Orchestrator assembly (TODO: future slices)
+
+  // Sub-components (called by orchestrator; future slices)
   resolveSnapshot,
   computeChangedFiles,
   indexFiles,
@@ -70,14 +81,60 @@ import {
 
 ## Implementation Plan
 
-| Slice | Task                                                            | Status              |
-| ----- | --------------------------------------------------------------- | ------------------- |
-| 0     | Scaffolding & interface definitions                             | ✓ (now)             |
-| 1     | Git snapshot resolution & diff plumbing                         | TODO                |
-| 2     | TypeScript language indexer (symbols, calls, boundaries, tests) | TODO                |
-| 3     | Graph persistence (via core layer)                              | TODO (core slice 3) |
-| 4     | Documentation & SpecDoc ingestion                               | TODO                |
-| 5     | Embeddings & vector generation                                  | TODO (core slice 5) |
+| Slice | Task                                                            | Status                  |
+| ----- | --------------------------------------------------------------- | ----------------------- |
+| 0     | Scaffolding & interface definitions                             | ✓ Completed             |
+| 1     | Git snapshot resolution & diff plumbing                         | ✓ Completed (see below) |
+| 2     | TypeScript language indexer (symbols, calls, boundaries, tests) | TODO                    |
+| 3     | Graph persistence (via core layer)                              | TODO (core slice 3)     |
+| 4     | Documentation & SpecDoc ingestion                               | TODO                    |
+| 5     | Embeddings & vector generation                                  | TODO (core slice 5)     |
+
+### Slice 1 Implementation Details
+
+**✓ Completed**:
+
+1. **Git operations** (`src/git.ts`):
+   - Branch → commit hash resolution via `git rev-parse`
+   - Commit metadata extraction (author, message, timestamp)
+   - File diff computation: added/modified/deleted/renamed
+   - Repository cloning and fetching support
+   - Implementation: `SimpleGitClient` using `simple-git` library
+
+2. **Snapshot resolution** (`src/orchestrator.ts`):
+   - `resolveSnapshotForBranch()`: Resolves branch to `SnapshotRef` with composite ID
+   - `generateSnapshotId()`: Format: `${codebaseId}:${commitHash}`
+   - Snapshot metadata population (author, message, timestamp)
+
+3. **Orchestration APIs** (`src/orchestrator.ts`):
+   - `runSnapshot()`: Single branch indexing with full DI support
+   - `runTrackedBranches()`: Multi-branch orchestration from config
+   - `generateDryRunPlan()`: JSON execution plan without writes (dry-run mode)
+   - Optional fetch from remote (--fetch flag support)
+   - Error handling with graceful degradation
+
+4. **CLI Interface** (`scripts/indexer-run-once.ts`):
+   - Single-branch mode: `--repo <id> --branch <name> [--dry-run]`
+   - Multi-branch mode: `--repo <id> --tracked-branches [--dry-run]`
+   - Config discovery: `--config <path>` with env var fallback
+   - Output formats: JSON (dry-run) or text logging
+   - Exit codes: 0 (success), 1 (config), 2 (git/IO), 3 (db), 4 (external)
+   - Added npm script: `pnpm indexer:run-once`
+
+**Test Coverage** (19 tests, 80%+ line coverage):
+
+- Snapshot ID generation (3 tests)
+- Branch resolution (3 tests)
+- Single snapshot indexing (5 tests)
+- Tracked branches orchestration (3 tests)
+- Dry-run plan generation (3 tests)
+- Rename handling as delete+add (2 tests)
+
+**Configuration Integration** (via @repo/indexer-core):
+
+- Per-repo `.indexer-config.json` discovery
+- `INDEXER_CONFIG_PATH` environment variable support
+- Config precedence: CLI args > ENV > file > defaults
 
 ## Development
 

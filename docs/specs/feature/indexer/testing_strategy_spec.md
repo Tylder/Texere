@@ -89,8 +89,8 @@ writes.
 
 ## 4. Runtime Contract Tests
 
-- CLI wrapper (`scripts/indexer-run-once.ts`): spawn with flags; assert exit codes (0/1/2/3/4),
-  dry-run JSON shape, and log format.
+- CLI app (`apps/indexer-cli`, bin `indexer`, commander): spawn with flags; assert exit codes
+  (0/1/2/3/4), dry-run plan JSON shape, `--log-format json|text`, and `--verbose/--quiet` behavior.
 - Programmatic API (`runSnapshot`, `runTrackedBranches`): exercise with injected fakes (`RunDeps`),
   ensure deterministic results with stub embedder and in-memory graph.
 - Locking behavior: per-repo/branch lock (in-memory and file-based) prevents concurrent same-branch
