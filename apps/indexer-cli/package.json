@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json --incremental",
-    "check-types": "tsc --noEmit -p tsconfig.json",
+    "check-types": "tsc --build tsconfig.json --noEmit",
     "dev": "node --watch dist/main.js",
     "lint": "eslint . --max-warnings 0",
     "start": "node dist/main.js",

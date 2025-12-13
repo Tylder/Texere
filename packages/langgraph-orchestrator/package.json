@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.lib.json --incremental",
-    "check-types": "tsc --noEmit -p tsconfig.json",
+    "check-types": "tsc --build tsconfig.json --noEmit",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

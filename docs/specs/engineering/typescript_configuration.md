@@ -105,8 +105,8 @@ is deprecated and should not be created for new packages.*
 
 ### 3.1 `/tsconfig.json` (Workspace Type-Checking)
 
-Used by `pnpm typecheck` (Nx orchestrated). **References-only** for fast graph + IDE perf; no glob
-includes.
+Used by `pnpm check-types` / `pnpm typecheck` (Nx orchestrated). **References-only** for fast
+graph + IDE perf; no glob includes.
 
 ```json
 {
@@ -124,7 +124,49 @@ includes.
 }
 ```
 
-**Key rules:** Use `references`; keep file minimal; `noEmit: true`. Ref: Nx TypeScript project
+**Key rules:** Use `references`; keep file minimal; `noEmit: true`.
+
+### 3.1a Package.json `check-types` Script (Per-Package)
+
+Each package must use **`tsc --build`** to validate all project references (lib + spec configs):
+
+```json
+{
+  "scripts": {
+    "check-types": "tsc --build tsconfig.json --noEmit"
+  }
+}
+```
+
+**Why `--build` instead of `--noEmit -p tsconfig.json`:**
+
+- ✅ Respects project references (validates `tsconfig.lib.json` AND `tsconfig.spec.json`)
+- ✅ TypeScript official pattern (see
+  [Project References handbook](https://www.typescriptlang.org/docs/handbook/project-references.html))
+- ✅ Incremental builds with `.tsbuildinfo` caching
+- ✅ Catches type errors in test files that plain `--noEmit` would miss
+- ✅ `--noEmit` is compatible with `--build` since TypeScript 4.0+
+
+**Incorrect (old pattern—validates only primary config, ignores spec files):**
+
+```json
+{ "check-types": "tsc --noEmit -p tsconfig.json" } // ❌ Misses .spec.json
+```
+
+**Example:** The old command silently passes while `--build` catches test file errors:
+
+```bash
+# Old (incorrect): passes silently, misses test file type errors
+tsc --noEmit -p tsconfig.json  # ✗ no errors reported
+
+# New (correct): validates all references, catches test file errors
+tsc --build tsconfig.json --noEmit
+# error TS2532: Object is possibly 'undefined' in .spec.json
+# error TS4111: Property must be accessed with ['key'] in .spec.json
+```
+
+Ref: TypeScript Project References
+(<https://www.typescriptlang.org/docs/handbook/project-references.html>), Nx TypeScript project
 linking (<https://nx.dev/docs/concepts/typescript-project-linking>).
 
 **After adding a project:** run `nx sync` (or update references manually) so project references stay
