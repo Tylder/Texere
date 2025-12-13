@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import { SimpleGitClient } from '../src/git';
+import { SimpleGitClient } from './git.js';
 
 describe('SimpleGitClient (ingest_spec.md §6 – git operations)', () => {
   let gitClient: SimpleGitClient;
@@ -89,20 +89,6 @@ describe('SimpleGitClient (ingest_spec.md §6 – git operations)', () => {
           repoPath: '/nonexistent/path',
         }),
       ).rejects.toThrow('Repository path not found');
-    });
-
-    it('returns (may fail if no remote configured or network unavailable)', async () => {
-      // Fetch behavior depends on network/remote setup
-      // So we just test that it doesn't throw immediately with path error
-      try {
-        await gitClient.fetch({
-          repoPath: process.cwd(),
-        });
-        // Success or network error both acceptable
-      } catch (error) {
-        // Network errors are expected in some environments
-        expect(error).toBeTruthy();
-      }
     });
   });
 

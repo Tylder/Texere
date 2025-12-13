@@ -16,7 +16,7 @@ import {
   runSnapshot,
   runTrackedBranches,
   generateDryRunPlan,
-} from '../src/orchestrator';
+} from '../src/orchestrator.js';
 
 // ============================================================================
 // 1. Mock GitClient for Testing
@@ -34,12 +34,17 @@ class MockGitClient implements GitClient {
     hash: string,
     metadata?: { author?: string; message?: string; timestamp?: number },
   ): void {
-    this.commits.set(ref, {
+    const commit: { hash: string; author?: string; message?: string; timestamp: number } = {
       hash,
-      author: metadata?.author,
-      message: metadata?.message,
       timestamp: metadata?.timestamp ?? Date.now(),
-    });
+    };
+    if (metadata?.author !== undefined) {
+      commit.author = metadata.author;
+    }
+    if (metadata?.message !== undefined) {
+      commit.message = metadata.message;
+    }
+    this.commits.set(ref, commit);
   }
 
   setDiff(commitHash: string, diff: ChangedFileSet): void {
@@ -61,14 +66,16 @@ class MockGitClient implements GitClient {
     timestamp: number;
   }> {
     const commit = Array.from(this.commits.values()).find((c) => c.hash === args.commitHash);
-    if (!commit) {
-      return Promise.resolve({ timestamp: Date.now() });
+    const result: { author?: string; message?: string; timestamp: number } = {
+      timestamp: commit?.timestamp ?? Date.now(),
+    };
+    if (commit?.author !== undefined) {
+      result.author = commit.author;
     }
-    return Promise.resolve({
-      author: commit.author,
-      message: commit.message,
-      timestamp: commit.timestamp,
-    });
+    if (commit?.message !== undefined) {
+      result.message = commit.message;
+    }
+    return Promise.resolve(result);
   }
 
   clone(): Promise<void> {
@@ -323,8 +330,8 @@ describe('runTrackedBranches (ingest_spec.md §6.1)', () => {
     });
 
     expect(results).toHaveLength(2);
-    expect(results[0].snapshotRef.commitHash).toBe('abc123');
-    expect(results[1].snapshotRef.commitHash).toBe('def456');
+    expect(results[0]?.snapshotRef.commitHash).toBe('abc123');
+    expect(results[1]?.snapshotRef.commitHash).toBe('def456');
   });
 
   it('throws if codebase not found in config', async () => {
@@ -394,7 +401,6 @@ describe('generateDryRunPlan (plan.md Slice 1 – dry-run mode)', () => {
           id: 'my-repo',
           root: '/repo',
           trackedBranches: ['main', 'develop'],
-          languages: ['ts', 'tsx'],
         },
       ],
       graph: { neo4jUri: 'bolt://localhost:7687', neo4jUser: 'neo4j', neo4jPassword: 'password' },
@@ -464,7 +470,8 @@ describe('generateDryRunPlan (plan.md Slice 1 – dry-run mode)', () => {
     });
 
     const snapshot = plan.snapshots[0];
-    expect(snapshot.plannedOperations).toEqual([
+    expect(snapshot).toBeDefined();
+    expect(snapshot?.plannedOperations).toEqual([
       'index-files',
       'extract-symbols',
       'write-graph',

@@ -125,7 +125,7 @@ describe('loadIndexerConfig', () => {
     });
 
     expect(loaded.codebases).toHaveLength(1);
-    expect(loaded.codebases[0].id).toBe('test-repo');
+    expect(loaded.codebases[0]?.id).toBe('test-repo');
   });
 
   it('throws error for invalid JSON', () => {
@@ -333,7 +333,7 @@ describe('mergeConfigs (configuration_and_server_setup.md §8 – precedence)', 
     const merged = mergeConfigs(base, override);
 
     expect(merged.codebases).toHaveLength(1);
-    expect(merged.codebases[0].id).toBe('c');
+    expect(merged.codebases[0]?.id).toBe('c');
   });
 
   it('merges denyPatterns arrays', () => {
@@ -436,7 +436,7 @@ describe('sanitizeConfigForLogging', () => {
     const sanitized = sanitizeConfigForLogging(config);
 
     expect(sanitized).not.toHaveProperty('neo4jPassword');
-    expect(sanitized.neo4jUri).toBe('bolt://localhost:7687');
+    expect(sanitized['neo4jUri']).toBe('bolt://localhost:7687');
   });
 
   it('includes non-sensitive fields', () => {
@@ -456,7 +456,7 @@ describe('sanitizeConfigForLogging', () => {
 
     const sanitized = sanitizeConfigForLogging(config);
 
-    expect(sanitized.codebaseCount).toBe(2);
-    expect(sanitized.codebaseIds).toEqual(['repo-a', 'repo-b']);
+    expect(sanitized['codebaseCount']).toBe(2);
+    expect(sanitized['codebaseIds']).toEqual(['repo-a', 'repo-b']);
   });
 });
