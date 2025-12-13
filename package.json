@@ -17,7 +17,7 @@
     "post:report": "(pnpm run format && pnpm run lint:fix) && nx run-many --targets=check-types,test:coverage,build --all --parallel && node scripts/aggregate-coverage.mjs",
     "post:report:fast": "nx run-many --targets=check-types,test:coverage,lint:fix:fast --all --parallel --outputStyle=static && node scripts/aggregate-coverage.mjs",
     "prepare": "husky",
-    "quality": "nx run-many --targets=format:check,lint,check-types,test,build --all --parallel",
+    "quality": "pnpm run format:check && nx run-many --targets=lint,check-types,test,build --all --parallel",
     "studio:dev": "npx @langchain/langgraph-cli dev",
     "test": "nx run-many --target=test --all --parallel",
     "test:coverage": "nx run-many --target=test:coverage --all --parallel && node scripts/aggregate-coverage.mjs",

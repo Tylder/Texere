@@ -587,10 +587,12 @@ export interface IncidentSliceBundle {
  * Codebase configuration: tracked branches, languages, etc.
  * @reference configuration_spec.md §1 (codebase config)
  * @reference ingest_spec.md §6.1 (branch resolution)
+ * @reference configuration_and_server_setup.md §2 (git clone)
  */
 export interface CodebaseConfig {
   id: string;
   root: string;
+  gitUrl?: string; // Optional: git clone URL if root doesn't exist
   trackedBranches: string[];
   languages?: SupportedLanguage[];
   defaultBranch?: string;
@@ -690,6 +692,7 @@ export interface IndexerConfig {
   codebases: CodebaseConfig[];
   graph: GraphConfig;
   vectors: VectorConfig;
+  cloneBasePath?: string; // Base directory for git clones if codebase root missing
   security?: SecurityConfig;
   embedding?: EmbeddingConfig;
   llm?: LLMConfig;

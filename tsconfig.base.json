@@ -27,7 +27,7 @@
     "customConditions": ["monorepo_template"],
     "baseUrl": ".",
     "paths": {
-      "@repo/*": ["packages/*/src"]
+      "@repo/*": ["packages/*/src", "apps/*/src"]
     }
   }
 }

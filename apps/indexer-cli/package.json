@@ -1,38 +1,27 @@
 {
-  "name": "@repo/indexer-ingest",
+  "name": "@repo/indexer-cli",
   "version": "0.0.0",
   "private": true,
-  "description": "Indexer ingest pipeline: git snapshot orchestration, language indexers, extractors.",
-  "sideEffects": false,
+  "description": "Texere Indexer – CLI for snapshot indexing and configuration management",
   "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*.js"
-    }
+  "bin": {
+    "indexer": "./dist/main.js"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist",
-    "src"
-  ],
   "scripts": {
     "build": "tsc -p tsconfig.lib.json --incremental",
     "check-types": "tsc --noEmit -p tsconfig.json",
+    "dev": "node --watch dist/main.js",
     "lint": "eslint . --max-warnings 0",
+    "start": "node dist/main.js",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch"
   },
   "dependencies": {
     "@repo/indexer-core": "workspace:*",
+    "@repo/indexer-ingest": "workspace:*",
     "@repo/indexer-types": "workspace:*",
-    "simple-git": "^3.30.0"
+    "commander": "^14.0.2"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

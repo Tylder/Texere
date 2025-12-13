@@ -11,6 +11,8 @@
  * - Dry-run mode (JSON plan without writes)
  */
 
+import * as fs from 'node:fs';
+
 import { loadIndexerConfig, findCodebaseConfig } from '@repo/indexer-core';
 import type {
   IndexerConfig,
@@ -22,6 +24,19 @@ import type {
 } from '@repo/indexer-types';
 
 import { createGitClient } from './git.js';
+
+/**
+ * Check if repository directory exists.
+ * Used to determine if git clone is needed.
+ */
+async function checkRepoExists(repoPath: string): Promise<boolean> {
+  try {
+    await fs.promises.access(repoPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Generate composite snapshot ID.
@@ -68,14 +83,17 @@ export async function resolveSnapshotForBranch(args: {
  * Main entry point for programmatic API.
  * Later slices (2–6) will add language indexing, graph writes, etc.
  *
- * Current Slice 1 scope:
+ * Slice 1 scope:
  * - Resolve snapshot from branch + config
  * - Compute changed files via git
  * - Populate snapshot metadata
+ * - Check snapshot cache (skip if already indexed unless force=true)
  * - Exit gracefully without writing graph/vectors
+ * - Optional: Clone repo if not present
  *
  * @reference plan.md Slice 1 (runSnapshot)
  * @reference ingest_spec.md §2.1, §6 (orchestration)
+ * @reference configuration_and_server_setup.md §2 (git clone)
  */
 export async function runSnapshot(args: {
   snapshotRef?: SnapshotRef;
@@ -85,11 +103,23 @@ export async function runSnapshot(args: {
   config?: IndexerConfig;
   deps?: Partial<RunDeps>;
   dryRun?: boolean;
+  force?: boolean;
+  fetch?: boolean;
 }): Promise<{
   snapshotRef: SnapshotRef;
   changedFiles: ChangedFileSet;
+  skipped?: boolean;
 }> {
-  const { codebaseId, codebaseRoot, branch = 'main', deps = {}, dryRun = false } = args;
+  const {
+    codebaseId,
+    codebaseRoot,
+    branch = 'main',
+    config,
+    deps = {},
+    dryRun = false,
+    force = false,
+    fetch: shouldFetch = true,
+  } = args;
 
   // Initialize default dependencies
   const git = deps.git || createGitClient();
@@ -99,9 +129,52 @@ export async function runSnapshot(args: {
     codebaseId,
     branch,
     dryRun,
+    force,
   });
 
   try {
+    // Load config if provided for clone support
+    const indexerConfig = config || loadIndexerConfig({ allowMissing: true });
+    const codebaseConfig = findCodebaseConfig(indexerConfig, codebaseId);
+
+    // Optional: Clone repo if not present
+    if (codebaseConfig?.gitUrl) {
+      const repoExists = await checkRepoExists(codebaseRoot);
+      if (!repoExists) {
+        logger.info('Repository not found, attempting clone', {
+          gitUrl: codebaseConfig.gitUrl,
+          targetPath: codebaseRoot,
+        });
+        try {
+          await git.clone({
+            gitUrl: codebaseConfig.gitUrl,
+            targetPath: codebaseRoot,
+          });
+          logger.info('Repository cloned successfully', { targetPath: codebaseRoot });
+        } catch (error) {
+          logger.error(
+            'Failed to clone repository',
+            error instanceof Error ? { message: error.message } : { error: String(error) },
+          );
+          throw error;
+        }
+      }
+    }
+
+    // Optional: fetch latest from remote
+    if (shouldFetch) {
+      logger.debug('Fetching latest commits from remote', { branch });
+      try {
+        await git.fetch({ repoPath: codebaseRoot, ref: branch });
+      } catch (error) {
+        logger.warn(
+          'Failed to fetch',
+          error instanceof Error ? { message: error.message } : { error: String(error) },
+        );
+        // Continue anyway; local ref might be sufficient
+      }
+    }
+
     // Resolve branch to snapshot
     const snapshotRef = await resolveSnapshotForBranch({
       codebaseId,
@@ -114,6 +187,13 @@ export async function runSnapshot(args: {
       snapshotId: snapshotRef.snapshotId,
       commitHash: snapshotRef.commitHash,
     });
+
+    // TODO: Slice 3 will implement snapshot cache check
+    // For now, always proceed (cache always misses)
+    // if (!force && await isSnapshotCached(snapshotRef)) {
+    //   logger.info('Snapshot already indexed, skipping', { snapshotId: snapshotRef.snapshotId });
+    //   return { snapshotRef, changedFiles: { added: [], modified: [], deleted: [], renamed: [] }, skipped: true };
+    // }
 
     // Compute changed files
     const changedFiles = await git.computeChangedFiles({
@@ -155,13 +235,23 @@ export async function runTrackedBranches(args: {
   config?: IndexerConfig;
   deps?: Partial<RunDeps>;
   dryRun?: boolean;
+  force?: boolean;
+  fetch?: boolean;
 }): Promise<
   Array<{
     snapshotRef: SnapshotRef;
     changedFiles: ChangedFileSet;
+    skipped?: boolean;
   }>
 > {
-  const { codebaseId, config, deps = {}, dryRun = false } = args;
+  const {
+    codebaseId,
+    config,
+    deps = {},
+    dryRun = false,
+    force = false,
+    fetch: shouldFetch = true,
+  } = args;
 
   const logger = deps.logger || createDefaultLogger();
 
@@ -181,6 +271,7 @@ export async function runTrackedBranches(args: {
     codebaseId,
     branches: codebaseConfig.trackedBranches,
     dryRun,
+    force,
   });
 
   const results = [];
@@ -195,12 +286,20 @@ export async function runTrackedBranches(args: {
         config: indexerConfig,
         deps: deps as RunDeps,
         dryRun,
+        force,
+        fetch: shouldFetch,
       });
 
       results.push(result);
-      logger.info(`Indexed branch: ${branch}`, {
-        snapshotId: result.snapshotRef.snapshotId,
-      });
+      if (result.skipped) {
+        logger.info(`Skipped branch (already indexed): ${branch}`, {
+          snapshotId: result.snapshotRef.snapshotId,
+        });
+      } else {
+        logger.info(`Indexed branch: ${branch}`, {
+          snapshotId: result.snapshotRef.snapshotId,
+        });
+      }
     } catch (error) {
       logger.error(`Failed to index branch ${branch}`, error as Error);
       // Continue with next branch (partial success)
