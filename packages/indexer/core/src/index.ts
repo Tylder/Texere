@@ -42,6 +42,32 @@ export {
   type ValidationIssueSource,
 } from './config.js';
 
+// Re-export configuration schemas (Zod + JSON Schema generation)
+// @reference configuration_spec.md §1–5 (config validation)
+export {
+  indexerConfigSchema,
+  codebaseConfigSchema,
+  graphConfigSchema,
+  vectorsConfigSchema,
+  securityConfigSchema,
+  embeddingConfigSchema,
+  llmConfigSchema,
+  workerConfigSchema,
+  type IndexerConfigType,
+  type CodebaseConfigType,
+  type GraphConfigType,
+  type VectorsConfigType,
+  type SecurityConfigType,
+  type EmbeddingConfigType,
+  type LLMConfigType,
+  type WorkerConfigType,
+} from './config-schema.js';
+export {
+  generateIndexerConfigJsonSchema,
+  ideConfigSchemaLocation,
+  vscodeJsonSchemasSnippet,
+} from './schema-generator.js';
+
 // ============================================================================
 // 1. Database Client Interfaces (graph_schema_spec.md §4–6)
 // ============================================================================
