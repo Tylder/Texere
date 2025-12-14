@@ -133,6 +133,12 @@ export const config = tseslint.config(
               position: 'before',
             },
             {
+              // Scoped external packages come after generic externals (spec step #3)
+              pattern: '@*/*',
+              group: 'external',
+              position: 'after',
+            },
+            {
               pattern: '@repo/**',
               group: 'internal',
               position: 'before',
