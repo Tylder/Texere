@@ -46,10 +46,10 @@ real indexing.
   via `templates/nx/node-lib`; set tags in `project.json` and `nx.json` (`domain:indexer`,
   `layer:*`).
 
-## Slice 1 — Git Snapshot Resolution, Diff Plumbing & Run-Once Entrypoint
+## Slice 1 — Git Snapshot Resolution, Diff Plumbing & Full CLI Implementation
 
 **Purpose**: Resolve tracked branches, compute changed files, and expose a programmatic + CLI
-run-once path for non-server usage via the new commander-based `apps/indexer-cli`.  
+interface (run-once, daemon, status, discovery) via commander-based `apps/indexer-cli`.  
 **Scope**:
 
 - Implement config resolution: `INDEXER_CONFIG_PATH` + per-repo `.indexer-config.json` (optional)
@@ -60,38 +60,53 @@ run-once path for non-server usage via the new commander-based `apps/indexer-cli
 - **Programmatic API**: export `runSnapshot` / `runTrackedBranches` from
   `@repo/features/indexer/ingest` with dependency injection hooks (`RunDeps`) for git, graph,
   vectors, embeddings, logger, clock, lock provider.
-- **Run-once CLI app**: add `apps/indexer-cli` (Node/ESM, commander) with bin `indexer`. Commands:
-  - `list`: List all codebases from config that will be indexed
-  - `snapshot [--repo <id>] [--branch <name>]`: Index single snapshot (default: all codebases,
-    single branch)
-  - `branches [--repo <id>]`: Index all tracked branches (default: all codebases)
+- **Full CLI app**: `apps/indexer-cli` (Node/ESM, commander) with bin `indexer`. Per
+  **`cli_spec.md`** (authoritative). Commands:
+  - `validate [--config <path>]`: Validate config files without running
+  - `list [--log-format json|text] [--verbose]`: Discover codebases, tracked branches, index status
+  - `status [--log-format json|text]`: Check daemon status and prerequisites
+  - `run [OPTIONS]`: Execute indexing (modes: `--once` default, `--daemon`, `--detached`)
+    - Options: `--dry-run`, `--force`, `--no-fetch`, `--log-format json|text`, `--verbose`,
+      `--quiet`, `--config <path>`
+  - `stop [--force] [--timeout <seconds>]`: Gracefully shutdown daemon
 
-  Flags: `--repo <id>` (optional; if omitted indexes all codebases), `--branch <name>` (default:
-  main), `--force`, `--fetch/--no-fetch` (default: fetch), `--dry-run`, `--log-format json|text`,
-  `--config <path>`, `--verbose`, `--quiet`. Uses the programmatic API and preserves exit codes: 0
-  success/dry-run; 1 config/validation; 2 git/IO; 3 DB; 4 external/LLM. The legacy
-  `scripts/indexer-run-once.ts` is removed/obsolete.
+  All behavior per [`cli_spec.md`](./cli_spec.md). Exit codes: 0 success; 1 config/validation; 2
+  git/IO; 3 DB; 4 external/LLM. Legacy `scripts/indexer-run-once.ts` removed.
 
-- **Dry-run** mode: outputs JSON plan (merged config summary, commit hashes, changed files, planned
-  operations) without writing graph/vectors (must be snapshot-tested).
+- **Daemon lifecycle**: Lock file at `~/.texere-indexer/daemon.lock` (XDG fallback). Auto-recovery
+  for stale locks. Reject duplicate daemons. Graceful shutdown with configurable timeout (default:
+  30s).
+- **Dry-run** mode: outputs JSON plan without writing graph/vectors (snapshot-tested).
+- **Default behavior**: Fetch from remotes before indexing; `--no-fetch` to skip.
 - Git fetch/clone: default `fetch=true`; if repo path missing, clone into configured `cloneBasePath`
   from config (see `configuration_spec.md`).
-- Optional VS Code launch config (“Debug indexSnapshot”) for breakpoints in ingest/core config and
-  git diff code. **Acceptance**: Given repo + trackedBranches, returns commit hash + file sets;
-  deleted files flagged. Run-once CLI executes and prints snapshotRef + ChangedFileSet (or JSON plan
-  in dry-run).  
-  **Tests**: Unit tests over synthetic git fixture; cover branch precedence and rename handling per
-  `test_repository_spec.md` (Incremental Validation Table). CLI contract tests for exit codes and
-  dry-run JSON.  
-  **Docs to consult**: [`configuration_and_server_setup.md`](../configuration_and_server_setup.md)
-  §2–9; [`configuration_spec.md`](../configuration_spec.md) §1–4;
-  [`ingest_spec.md`](../ingest_spec.md) §6.1–6.2;
-  [`symbol_id_stability_spec.md`](../symbol_id_stability_spec.md);
-  [`test_repository_spec.md`](../test_repository_spec.md) (Incremental Validation Table).  
-  **Code areas**:
-  `packages/features/indexer/ingest/src/git/{git-diff.ts,git-files.ts,index-snapshot.ts}`; config
-  loader in `packages/features/indexer/core/src/config/indexer-config.ts`; run-once CLI app in
-  `apps/indexer-cli` (bin `indexer`).
+- Optional VS Code launch config ("Debug indexSnapshot").
+
+**Acceptance**: All CLI commands work per [`cli_spec.md`](./cli_spec.md); validation catches config
+errors; daemon lifecycle functions correctly (start/stop/status); all typical workflows succeed
+(Workflows 1–4 in spec).
+
+**Tests**: Unit tests over synthetic git fixture (branch precedence, rename handling per
+`test_repository_spec.md`). CLI contract tests for: all commands, modes, flags, exit codes, JSON
+output schemas, daemon lock handling, stale lock recovery, signal handling. Reference
+[`cli_spec.md`](./cli_spec.md) implementation checklist sections (validate, list, status, run,
+stop).
+
+**Docs to consult**: **[`cli_spec.md`](./cli_spec.md)** (authoritative);
+[`configuration_and_server_setup.md`](../configuration_and_server_setup.md) §2–9;
+[`configuration_spec.md`](../configuration_spec.md) §1–4; [`ingest_spec.md`](../ingest_spec.md)
+§6.1–6.2; [`symbol_id_stability_spec.md`](../symbol_id_stability_spec.md);
+[`test_repository_spec.md`](../test_repository_spec.md) (Incremental Validation Table);
+[`testing_strategy.md`](../../engineering/testing_strategy.md),
+[`testing_specification.md`](../../engineering/testing_specification.md).
+
+**Code areas**:
+
+- Git & snapshot:
+  `packages/features/indexer/ingest/src/git/{git-diff.ts,git-files.ts,index-snapshot.ts}`
+- Config loading: `packages/features/indexer/core/src/config/indexer-config.ts`
+- Daemon lock utilities: `packages/features/indexer/core/src/daemon/lock.ts` (new)
+- CLI commands: `apps/indexer-cli/src/{commands,daemon,lock,validate}/*` (modular per command)
 
 ## Slice 2 — TypeScript Language Indexer (Symbols/Calls/Refs/Tests/Boundaries)
 
