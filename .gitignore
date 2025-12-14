@@ -23,9 +23,7 @@ test-results/
 .prettier-cache
 
 # Nx
-.nx/cache
-.nx/workspace-data
-.nx/installation
+.nx
 
 # Vercel
 .vercel
