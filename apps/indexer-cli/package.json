@@ -15,7 +15,7 @@
     "dev:help": "pnpm build && node dist/main.js --help",
     "dev:snapshot": "pnpm build && node dist/main.js --repo texere --dry-run",
     "dev:verbose": "pnpm build && node dist/main.js --repo texere --verbose",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --cache --cache-location \"$NX_WORKSPACE_ROOT/.cache/eslint/\"",
     "start": "node dist/main.js",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

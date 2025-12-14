@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.lib.json --incremental",
     "check-types": "tsc --build tsconfig.json --noEmit",
     "dev": "node --watch dist/index.js",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --cache --cache-location \"$NX_WORKSPACE_ROOT/.cache/eslint/\"",
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

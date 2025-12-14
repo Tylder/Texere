@@ -77,3 +77,5 @@ vitest.config.*.timestamp*
 
 post-report.log
 post-report-output.txt
+
+.cache
