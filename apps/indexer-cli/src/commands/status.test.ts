@@ -28,28 +28,28 @@ describe('status command (cli_spec.md §5)', () => {
     const exitCode = await handleStatus({
       logFormat: 'text',
     });
-    expect([0, 1]).toContain(exitCode);
+    expect(exitCode).toBe(0);
   });
 
   it('should check status with json format', async () => {
     const exitCode = await handleStatus({
       logFormat: 'json',
     });
-    expect([0, 1]).toContain(exitCode);
+    expect(exitCode).toBe(0);
   });
 
   it('should return 0 or 1 (not blocker means ready)', async () => {
     const exitCode = await handleStatus({
       logFormat: 'text',
     });
-    expect([0, 1]).toContain(exitCode);
+    expect(exitCode).toBe(0);
   });
 
   it('should handle empty logFormat', async () => {
     const exitCode = await handleStatus({
       logFormat: '',
     });
-    expect([0, 1]).toContain(exitCode);
+    expect(exitCode).toBe(0);
   });
 
   it('should return numeric exit code', async () => {
@@ -108,8 +108,8 @@ describe('status command (cli_spec.md §5)', () => {
         logFormat: 'text',
       });
 
-      // Should succeed (exit code 0 or 1 depending on DB status)
-      expect([0, 1]).toContain(exitCode);
+      // Should succeed (status is informational even if databases unavailable)
+      expect(exitCode).toBe(0);
 
       // Most importantly: should show the codebase count
       expect(capturedOutput).toMatch(/Codebases: 2/);

@@ -584,7 +584,7 @@ export interface IncidentSliceBundle {
 // ============================================================================
 
 /**
- * Codebase configuration: tracked branches, languages, etc.
+ * Codebase configuration: tracked branches and repository metadata.
  * @reference configuration_spec.md §1 (codebase config)
  * @reference ingest_spec.md §6.1 (branch resolution)
  * @reference configuration_and_server_setup.md §2 (git clone)
@@ -594,8 +594,6 @@ export interface CodebaseConfig {
   root: string;
   gitUrl?: string; // Optional: git clone URL if root doesn't exist
   trackedBranches: string[];
-  languages?: SupportedLanguage[];
-  defaultBranch?: string;
 }
 
 /**
@@ -856,7 +854,6 @@ export interface DryRunPlan {
     codebaseId: string;
     neo4jUri?: string;
     qdrantUrl?: string;
-    languages?: string[];
   };
   snapshots: Array<{
     snapshotId: string;

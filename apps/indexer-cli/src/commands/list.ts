@@ -1,6 +1,5 @@
 import {
   discoverConfigs,
-  getDefaultConfig,
   type EnvironmentProvider,
   type DiscoveredConfigs,
   type ValidationIssue,
@@ -33,7 +32,6 @@ export function handleList(options: ListOptions): Promise<number> {
     const outputFormat = (options.logFormat as 'json' | 'text') || 'text';
     const output = new OutputHandler(outputFormat);
 
-    const fallbackConfig = getDefaultConfig();
     const envProvider: EnvironmentProvider = createFallbackEnvProvider();
 
     try {
@@ -41,13 +39,16 @@ export function handleList(options: ListOptions): Promise<number> {
 
       let discovered: DiscoveredConfigs;
       try {
-        discovered = discoverConfigs({ recursive, envProvider });
+        discovered = discoverConfigs({
+          recursive,
+          envProvider,
+          allowMissingOrchestrator: true,
+        });
       } catch {
         // If no config found, use empty discovery result (graceful for testing)
         discovered = {
           orchestrator: {
             path: '.indexer-config.json (not found)',
-            config: fallbackConfig,
           },
           perRepo: [],
           errors: [],
@@ -66,9 +67,10 @@ export function handleList(options: ListOptions): Promise<number> {
       }
 
       // Get orchestrator config
-      const config = discovered.orchestrator.config ?? fallbackConfig;
+      const config = discovered.orchestrator.config;
+      const codebases = config?.codebases ?? [];
 
-      if (config.codebases.length === 0) {
+      if (codebases.length === 0) {
         const textOutput = 'No codebases found in configuration.\n';
         const json: ListOutput = {
           command: 'list',
@@ -83,7 +85,7 @@ export function handleList(options: ListOptions): Promise<number> {
       // Format output
       let textOutput = TextFormatter.section('Texere Indexer – Discovered Codebases');
 
-      const codebases = config.codebases.map(
+      const formattedCodebases = codebases.map(
         (codebaseConfig: IndexerConfig['codebases'][number]): ListOutput['codebases'][number] => ({
           id: codebaseConfig.id,
           root: codebaseConfig.root,
@@ -107,7 +109,7 @@ export function handleList(options: ListOptions): Promise<number> {
       let indexedCount = 0;
       let pendingCount = 0;
 
-      for (const codebase of codebases) {
+      for (const codebase of formattedCodebases) {
         textOutput += `Codebase: ${codebase.id}\n`;
         textOutput += `  Root: ${codebase.root}\n`;
         textOutput += `  Branches:\n`;
@@ -126,12 +128,12 @@ export function handleList(options: ListOptions): Promise<number> {
       }
 
       const summary = {
-        total: config.codebases.length,
+        total: codebases.length,
         indexed: indexedCount,
         pending: pendingCount,
       };
 
-      textOutput += `Total: ${summary.total} codebases, ${config.codebases.reduce(
+      textOutput += `Total: ${summary.total} codebases, ${codebases.reduce(
         (sum: number, c: IndexerConfig['codebases'][number]) => sum + c.trackedBranches.length,
         0,
       )} branches (${summary.indexed} indexed, ${summary.pending} pending)\n`;
@@ -139,7 +141,7 @@ export function handleList(options: ListOptions): Promise<number> {
       const json: ListOutput = {
         command: 'list',
         timestamp: new Date().toISOString(),
-        codebases,
+        codebases: formattedCodebases,
         summary,
       };
 

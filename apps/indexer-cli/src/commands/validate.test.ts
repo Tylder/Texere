@@ -22,23 +22,30 @@ describe('validate command (cli_spec.md §3)', () => {
     const exitCode = await handleValidate({
       logFormat: 'text',
     });
-    expect([0, 1]).toContain(exitCode);
+    expect(exitCode).toBe(0);
   });
 
   it('should validate json output format', async () => {
     const exitCode = await handleValidate({
       logFormat: 'json',
     });
-    expect([0, 1]).toContain(exitCode);
+    expect(exitCode).toBe(0);
   });
 
   it('should handle missing config gracefully', async () => {
     const exitCode = await handleValidate({
+      logFormat: 'text',
+    });
+    // Auto-discovery with no config should be informational (exit 0)
+    expect(exitCode).toBe(0);
+  });
+
+  it('should exit with 1 when explicit config path is missing', async () => {
+    const exitCode = await handleValidate({
       config: '/nonexistent/config.json',
       logFormat: 'text',
     });
-    // Missing config is treated as empty/default config (graceful fallback for testing)
-    expect([0, 1]).toContain(exitCode);
+    expect(exitCode).toBe(1);
   });
 
   it('should exit with 1 on validation error', async () => {
@@ -46,8 +53,7 @@ describe('validate command (cli_spec.md §3)', () => {
       config: '/invalid/.indexer-config.json',
       logFormat: 'text',
     });
-    // Invalid config path is treated as empty/default config (graceful fallback for testing)
-    expect([0, 1]).toContain(exitCode);
+    expect(exitCode).toBe(1);
   });
 
   it('should return exit code 0 or 1 based on config validity', async () => {
@@ -62,6 +68,6 @@ describe('validate command (cli_spec.md §3)', () => {
     const exitCode = await handleValidate({
       logFormat: '',
     });
-    expect([0, 1]).toContain(exitCode);
+    expect(exitCode).toBe(0);
   });
 });

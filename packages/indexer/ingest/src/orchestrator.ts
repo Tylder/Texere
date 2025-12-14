@@ -382,7 +382,6 @@ export async function generateDryRunPlan(args: {
       codebaseId,
       neo4jUri: indexerConfig.graph.neo4jUri,
       qdrantUrl: indexerConfig.vectors.qdrantUrl,
-      languages: codebaseConfig.languages || ['ts', 'tsx', 'js'],
     },
     snapshots,
   };

@@ -24,6 +24,7 @@ import {
   sanitizeConfigForLogging,
   expandEnvVars,
   parseConfigFile,
+  discoverConfigs,
   type EnvironmentProvider,
   type FileSystemProvider,
 } from './config.js';
@@ -198,6 +199,25 @@ describe('loadIndexerConfig', () => {
         allowMissing: false,
       });
     }).toThrow('Missing required field');
+  });
+});
+
+describe('discoverConfigs (cli_spec.md §3–5)', () => {
+  it('returns empty discovery when allowMissingOrchestrator=true', () => {
+    const discovered = discoverConfigs({
+      allowMissingOrchestrator: true,
+      envProvider: { get: () => undefined },
+      fsProvider: {
+        exists: () => false,
+        dirname: (dirPath: string) => path.dirname(dirPath),
+        readdirSync: () => [],
+      },
+    });
+
+    expect(discovered.errors).toHaveLength(0);
+    expect(discovered.orchestrator.config).toBeUndefined();
+    expect(discovered.orchestrator.path).toBe('(not found)');
+    expect(discovered.perRepo).toHaveLength(0);
   });
 });
 

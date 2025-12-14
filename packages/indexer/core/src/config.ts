@@ -368,6 +368,7 @@ export function discoverConfigs(options?: {
   orchestratorConfig?: IndexerConfig;
   envProvider?: EnvironmentProvider;
   fsProvider?: FileSystemProvider;
+  allowMissingOrchestrator?: boolean;
 }): DiscoveredConfigs {
   const recursive = options?.recursive !== false; // default: true
   const fsProvider = options?.fsProvider || defaultFileSystem;
@@ -391,13 +392,16 @@ export function discoverConfigs(options?: {
     );
 
     if (!resolvedPath) {
-      errors.push({
-        source: 'discovery',
-        configPath: '(not found)',
-        code: 'CONFIG_NOT_FOUND',
-        message:
-          'No orchestrator configuration found. Set INDEXER_CONFIG_PATH env var, pass --config <path>, or place .indexer-config.json in working directory or repo root.',
-      });
+      orchestratorPath = options?.configPath || '(not found)';
+      if (!options?.allowMissingOrchestrator) {
+        errors.push({
+          source: 'discovery',
+          configPath: orchestratorPath,
+          code: 'CONFIG_NOT_FOUND',
+          message:
+            'No orchestrator configuration found. Set INDEXER_CONFIG_PATH env var, pass --config <path>, or place .indexer-config.json in working directory or repo root.',
+        });
+      }
     } else {
       orchestratorPath = resolvedPath;
       const parsed = parseConfigFile(resolvedPath, envProvider, 'orchestrator');

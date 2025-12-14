@@ -4,7 +4,6 @@ import {
   type ValidationIssue,
   type EnvironmentProvider,
 } from '@repo/indexer-core';
-import type { IndexerConfig } from '@repo/indexer-types';
 
 import { getDaemonStatus } from '../daemon-lock.js';
 import { createFallbackEnvProvider } from '../env/fallback-env-provider.js';
@@ -53,32 +52,25 @@ export async function handleStatus(options: StatusOptions): Promise<number> {
     const recursive = options.noRecursive !== true; // default: true
     const envProvider: EnvironmentProvider = createFallbackEnvProvider();
 
-    const fallbackConfig: IndexerConfig = {
-      version: '1.0',
-      codebases: [],
-      graph: {
-        neo4jUri: 'bolt://localhost:7687',
-        neo4jUser: 'neo4j',
-        neo4jPassword: 'password',
-      },
-      vectors: { qdrantUrl: 'http://localhost:6333', collectionName: 'texere-embeddings' },
-    };
-
     // Discover configs using unified pattern
     // @reference RECURSIVE_CONFIG_DISCOVERY.md §1 (discovery pattern)
     let discovered: DiscoveredConfigs;
     try {
-      discovered = discoverConfigs({ recursive, envProvider });
-    } catch {
+      discovered = discoverConfigs({
+        recursive,
+        envProvider,
+        allowMissingOrchestrator: true,
+      });
+    } catch (err) {
       // If no config found, use empty discovery result (graceful for testing)
       discovered = {
         orchestrator: {
           path: '.indexer-config.json (not found)',
-          config: fallbackConfig,
         },
         perRepo: [],
         errors: [],
       };
+      console.warn('[WARN] Falling back to empty discovery', { error: String(err) });
     }
 
     const discoveryErrors: ValidationIssue[] = (discovered.errors ?? []).filter((err) => {
@@ -90,14 +82,19 @@ export async function handleStatus(options: StatusOptions): Promise<number> {
       discoveryErrors.forEach((err) => console.error(`[ERROR] ${err.message}`));
     }
 
-    const config = discovered.orchestrator.config ?? fallbackConfig;
+    const config = discovered.orchestrator.config;
+    const codebases = config?.codebases ?? [];
 
     // Check daemon status
     const daemonStatus = getDaemonStatus();
 
     // Check database connectivity
-    const neo4jStatus = await checkNeo4j(config.graph.neo4jUri);
-    const qdrantStatus = await checkQdrant(config.vectors.qdrantUrl);
+    const neo4jStatus = config?.graph?.neo4jUri
+      ? await checkNeo4j(config.graph.neo4jUri)
+      : { connected: false, error: 'config not provided' };
+    const qdrantStatus = config?.vectors?.qdrantUrl
+      ? await checkQdrant(config.vectors.qdrantUrl)
+      : { connected: false, error: 'config not provided' };
 
     // Format text output
     let textOutput = TextFormatter.section('Texere Indexer – System Status');
@@ -119,24 +116,28 @@ export async function handleStatus(options: StatusOptions): Promise<number> {
 
     textOutput += 'Databases\n';
     textOutput += `  Neo4j:     ${neo4jStatus.connected ? '✓' : '✗'} ${
-      neo4jStatus.connected
+      neo4jStatus.connected && config?.graph?.neo4jUri
         ? `connected (${config.graph.neo4jUri})`
         : `connection failed (${neo4jStatus.error})`
     }\n`;
     textOutput += `  Qdrant:    ${qdrantStatus.connected ? '✓' : '✗'} ${
-      qdrantStatus.connected
+      qdrantStatus.connected && config?.vectors?.qdrantUrl
         ? `connected (${config.vectors.qdrantUrl})`
         : `connection failed (${qdrantStatus.error})`
     }\n\n`;
 
     textOutput += 'Configuration\n';
-    textOutput += `  Config Path: ${process.env['INDEXER_CONFIG_PATH'] || '.indexer-config.json'}\n`;
-    textOutput += `  Codebases: ${config.codebases.length}\n`;
+    textOutput += `  Config Path: ${discovered.orchestrator.path}\n`;
+    textOutput += `  Codebases: ${codebases.length}\n`;
     textOutput += '\n';
 
     // Determine readiness
-    const hasBlockers = !neo4jStatus.connected || !qdrantStatus.connected;
-    const summaryText = hasBlockers ? 'NOT ready ✗' : 'Ready to index ✓';
+    const hasBlockers = Boolean(config) && (!neo4jStatus.connected || !qdrantStatus.connected);
+    const summaryText = !config
+      ? 'Config not found (informational)'
+      : hasBlockers
+        ? 'NOT ready ✗'
+        : 'Ready to index ✓';
     textOutput += `Summary: ${summaryText}\n`;
 
     if (hasBlockers) {
@@ -161,17 +162,17 @@ export async function handleStatus(options: StatusOptions): Promise<number> {
       databases: {
         neo4j: {
           connected: neo4jStatus.connected,
-          uri: neo4jStatus.connected ? config.graph.neo4jUri : undefined,
+          uri: neo4jStatus.connected ? config?.graph?.neo4jUri : undefined,
           error: neo4jStatus.error || undefined,
         },
         qdrant: {
           connected: qdrantStatus.connected,
-          url: qdrantStatus.connected ? config.vectors.qdrantUrl : undefined,
+          url: qdrantStatus.connected ? config?.vectors?.qdrantUrl : undefined,
           error: qdrantStatus.error || undefined,
         },
       },
       configuration: {
-        configPath: process.env['INDEXER_CONFIG_PATH'] || '.indexer-config.json',
+        configPath: discovered.orchestrator.path,
       },
       summary: summaryText,
     };

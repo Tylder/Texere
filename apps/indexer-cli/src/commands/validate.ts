@@ -5,7 +5,7 @@
  * @reference RECURSIVE_CONFIG_DISCOVERY.md §1–2 (recursive discovery pattern)
  */
 
-import { discoverConfigs, getDefaultConfig, type DiscoveredConfigs } from '@repo/indexer-core';
+import { discoverConfigs, type DiscoveredConfigs } from '@repo/indexer-core';
 
 import { createFallbackEnvProvider } from '../env/fallback-env-provider.js';
 import { OutputHandler, TextFormatter, type ValidateOutput } from '../output-formatter.js';
@@ -119,30 +119,10 @@ export function handleValidate(options: ValidateOptions): Promise<number> {
         recursive,
         envProvider,
         ...(options.config ? { configPath: options.config } : {}),
+        allowMissingOrchestrator: !options.config,
       };
 
-      let discovered: DiscoveredConfigs;
-      try {
-        discovered = discoverConfigs(discoveryOptions);
-      } catch {
-        // If no config found, use empty discovery result (graceful for testing/validation)
-        discovered = {
-          orchestrator: {
-            path: '.indexer-config.json (not found)',
-            config: getDefaultConfig(envProvider),
-          },
-          perRepo: [],
-          errors: [],
-        };
-        if (options.config) {
-          errors.push({
-            message:
-              'No orchestrator configuration found. Set INDEXER_CONFIG_PATH or provide --config.',
-            configPath: '.indexer-config.json (not found)',
-            source: 'orchestrator',
-          });
-        }
-      }
+      const discovered: DiscoveredConfigs = discoverConfigs(discoveryOptions);
 
       const discoveredErrors = filterDiscoveredErrors(discovered.errors ?? [], options);
       errors.push(...discoveredErrors);
