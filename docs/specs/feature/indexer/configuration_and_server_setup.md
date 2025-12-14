@@ -237,29 +237,44 @@ Runtime/flags → per-repo (if present) → app/global config → defaults.
 
 **Precedence (highest to lowest)**:
 
-1. Runtime flags/params (CLI `--branch`, `--force`, `--fetch/--no-fetch`, `--config`, `--dry-run`;
-   programmatic options)
+1. Runtime flags/params (CLI `--repo`, `--branch`, `--force`, `--fetch/--no-fetch`, `--config`,
+   `--dry-run`; programmatic options)
 2. Per-repo config (`.indexer-config.json`, optional)
 3. App/global config (from `INDEXER_CONFIG_PATH` or passed object)
 4. Defaults
 
 **Implementation**:
 
-- If neither config nor CLI args provided: CLI prompts interactively
-- If config exists but no CLI args: use config (no prompt)
-- If CLI args provided: ignore config, use CLI (explicit override)
+- If no config provided: Use app/global defaults + CLI args (non-interactive)
+- If config exists but no CLI args: use config values from `codebases` array (all or filtered by
+  `--repo`)
+- If CLI args provided: merge with config, CLI overrides config
+- If `--repo <id>` specified: filter `codebases` array to that entry only
+- If `--repo` omitted: process all entries in `codebases` array
 
 **Example**:
 
 ```bash
-# Use repo's .indexer-config.json
-pnpm indexer:index --repo /path/to/repo
+# List all codebases from config
+indexer list
 
-# Override repo config, index specific branch
-pnpm indexer:index --repo /path/to/repo --branch feature/x
+# Index main branch for all codebases
+indexer snapshot --branch main
+
+# Index main branch for specific codebase
+indexer snapshot --repo my-repo --branch main
+
+# Index all tracked branches for specific codebase
+indexer branches --repo my-repo
 
 # Force re-index even if snapshot exists
-pnpm indexer:index --repo /path/to/repo --branch main --force
+indexer snapshot --repo my-repo --branch main --force
+
+# Dry-run (output plan without writing)
+indexer snapshot --repo my-repo --dry-run
+
+# JSON output for automated processing
+indexer snapshot --repo my-repo --log-format json
 ```
 
 ---
@@ -423,9 +438,25 @@ All others override server defaults for this repo.
 ### Commands
 
 ```bash
-# Run once (non-server, no queue); config path optional if in workdir
-pnpm indexer --repo /path/to/repo [--branch main] [--force] [--fetch|--no-fetch] [--dry-run] [--log-format json|text] [--config /path/to/config.json] [--verbose|--quiet]
+# List all codebases from config
+indexer list [--config /path/to/config.json] [--log-format json|text]
+
+# Index single snapshot (optional --repo filters to single codebase; default: all)
+indexer snapshot [--repo <id>] [--branch main] [--force] [--fetch|--no-fetch] [--dry-run] [--log-format json|text] [--config /path/to/config.json] [--verbose|--quiet]
+
+# Index all tracked branches (optional --repo filters to single codebase; default: all)
+indexer branches [--repo <id>] [--force] [--fetch|--no-fetch] [--dry-run] [--log-format json|text] [--config /path/to/config.json] [--verbose|--quiet]
 ```
+
+### Behavior
+
+- **Default (no `--repo`)**: Processes all codebases defined in config
+  - `snapshot`: Indexes given branch for all codebases
+  - `branches`: Indexes all tracked branches for all codebases
+- **With `--repo <id>`**: Filters to that codebase only
+  - `snapshot`: Indexes single branch for that codebase
+  - `branches`: Indexes all tracked branches for that codebase
+- **`list`**: Shows all available codebases (helpful for discovering IDs)
 
 ### Exit Codes (run-once)
 

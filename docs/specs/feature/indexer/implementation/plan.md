@@ -60,11 +60,18 @@ run-once path for non-server usage via the new commander-based `apps/indexer-cli
 - **Programmatic API**: export `runSnapshot` / `runTrackedBranches` from
   `@repo/features/indexer/ingest` with dependency injection hooks (`RunDeps`) for git, graph,
   vectors, embeddings, logger, clock, lock provider.
-- **Run-once CLI app**: add `apps/indexer-cli` (Node/ESM, commander) with bin `indexer`; flags
-  `--repo`, `--branch?`, `--force`, `--fetch/--no-fetch`, `--dry-run`, `--log-format json|text`,
+- **Run-once CLI app**: add `apps/indexer-cli` (Node/ESM, commander) with bin `indexer`. Commands:
+  - `list`: List all codebases from config that will be indexed
+  - `snapshot [--repo <id>] [--branch <name>]`: Index single snapshot (default: all codebases,
+    single branch)
+  - `branches [--repo <id>]`: Index all tracked branches (default: all codebases)
+
+  Flags: `--repo <id>` (optional; if omitted indexes all codebases), `--branch <name>` (default:
+  main), `--force`, `--fetch/--no-fetch` (default: fetch), `--dry-run`, `--log-format json|text`,
   `--config <path>`, `--verbose`, `--quiet`. Uses the programmatic API and preserves exit codes: 0
   success/dry-run; 1 config/validation; 2 git/IO; 3 DB; 4 external/LLM. The legacy
   `scripts/indexer-run-once.ts` is removed/obsolete.
+
 - **Dry-run** mode: outputs JSON plan (merged config summary, commit hashes, changed files, planned
   operations) without writing graph/vectors (must be snapshot-tested).
 - Git fetch/clone: default `fetch=true`; if repo path missing, clone into configured `cloneBasePath`

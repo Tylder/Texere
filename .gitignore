@@ -73,3 +73,5 @@ yarn-error.log*
 vitest.config.*.timestamp*
 # LangGraph API
 .langgraph_api
+
+.indexer-config.json
