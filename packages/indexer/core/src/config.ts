@@ -15,6 +15,23 @@ import * as path from 'node:path';
 
 import type { IndexerConfig, CodebaseConfig } from '@repo/indexer-types';
 
+export type ValidationIssueSource = 'orchestrator' | 'per-repo' | 'discovery';
+export type ValidationIssueCode =
+  | 'CONFIG_NOT_FOUND'
+  | 'ENV_VAR_MISSING'
+  | 'MISSING_FIELD'
+  | 'AMBIGUOUS_CONFIG'
+  | 'JSON_PARSE_ERROR';
+
+export interface ValidationIssue {
+  source: ValidationIssueSource;
+  configPath: string;
+  code?: ValidationIssueCode;
+  message: string;
+  fieldPath?: string;
+  codebaseId?: string;
+}
+
 /**
  * Environment variable provider interface for testability.
  * @reference testing_specification.md §3.6–3.7 (dependency injection)
@@ -43,13 +60,22 @@ const defaultEnvProvider: EnvironmentProvider = {
 export function expandEnvVars(
   text: string,
   envProvider: EnvironmentProvider = defaultEnvProvider,
+  issues?: ValidationIssue[],
+  configPath?: string,
+  source: ValidationIssueSource = 'orchestrator',
+  fieldPath?: string,
 ): string {
   return text.replace(/\$\{([^}]+)\}/g, (match: string, varName: string) => {
     const value = envProvider.get(varName);
     if (!value) {
-      throw new Error(
-        `Environment variable not found: ${varName} (referenced in config: ${match})`,
-      );
+      issues?.push({
+        source,
+        configPath: configPath || 'unknown',
+        code: 'ENV_VAR_MISSING',
+        ...(fieldPath ? { fieldPath } : {}),
+        message: `Environment variable ${varName} is not set (referenced as ${match}).`,
+      });
+      return match; // leave placeholder intact for downstream parsing
     }
     return value;
   });
@@ -61,69 +87,170 @@ export function expandEnvVars(
  * @reference configuration_spec.md §1 (file format)
  * @reference testing_specification.md §3.6–3.7 (injectable dependencies)
  */
+export interface ParsedConfigFile {
+  path: string;
+  config?: IndexerConfig;
+  errors: ValidationIssue[];
+}
+
 export function parseConfigFile(
   filePath: string,
   envProvider: EnvironmentProvider = defaultEnvProvider,
-): IndexerConfig {
+  source: ValidationIssueSource = 'orchestrator',
+): ParsedConfigFile {
+  const errors: ValidationIssue[] = [];
+
   if (!fs.existsSync(filePath)) {
-    throw new Error(`Configuration file not found: ${filePath}`);
+    errors.push({
+      source: 'discovery',
+      configPath: filePath,
+      code: 'CONFIG_NOT_FOUND',
+      message: `Configuration file not found: ${filePath}`,
+    });
+    return { errors, path: filePath };
   }
 
   const fileContents = fs.readFileSync(filePath, 'utf-8');
-  const expandedContents = expandEnvVars(fileContents, envProvider);
+  const expandedContents = expandEnvVars(fileContents, envProvider, errors, filePath, source);
 
+  let parsed: IndexerConfig | undefined;
   try {
-    const config = JSON.parse(expandedContents) as IndexerConfig;
-    validateIndexerConfig(config);
-    return config;
+    parsed = JSON.parse(expandedContents) as IndexerConfig;
   } catch (error) {
-    throw new Error(
-      `Failed to parse configuration file ${filePath}: ${
+    errors.push({
+      source: 'discovery',
+      configPath: filePath,
+      code: 'JSON_PARSE_ERROR',
+      message: `Failed to parse configuration file ${filePath}: ${
         error instanceof Error ? error.message : String(error)
       }`,
-    );
+    });
+    return { errors, path: filePath };
   }
+
+  const validationIssues = validateIndexerConfig(parsed, filePath, source);
+  errors.push(...validationIssues);
+
+  return { config: parsed, errors, path: filePath };
+}
+
+function formatIssuesForMessage(issues: ValidationIssue[]): string {
+  return issues
+    .map((issue) => {
+      const location = issue.fieldPath ? `${issue.fieldPath} – ` : '';
+      return `${issue.configPath}: ${location}${issue.message}`;
+    })
+    .join('; ');
+}
+
+export function assertValidConfig(parsed: ParsedConfigFile): IndexerConfig {
+  if (!parsed.config || parsed.errors.length > 0) {
+    const detail =
+      parsed.errors.length > 0 ? ` Issues: ${formatIssuesForMessage(parsed.errors)}` : '';
+    throw new Error(`Invalid configuration at ${parsed.path}.${detail}`);
+  }
+  return parsed.config;
 }
 
 /**
  * Validate IndexerConfig schema.
- * Throws if required fields are missing.
+ * Returns validation issues if required fields are missing.
  * @reference configuration_spec.md §1 (required fields)
  */
-function validateIndexerConfig(config: IndexerConfig): void {
+function validateIndexerConfig(
+  config: IndexerConfig,
+  configPath: string,
+  source: ValidationIssueSource,
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
   if (!config.version) {
-    throw new Error('Missing required field: config.version');
+    issues.push({
+      source,
+      configPath,
+      code: 'MISSING_FIELD',
+      fieldPath: 'version',
+      message: 'Missing required field: config.version',
+    });
   }
 
   if (!config.codebases || !Array.isArray(config.codebases)) {
-    throw new Error('Missing required field: config.codebases (array)');
-  }
-
-  for (const codebase of config.codebases) {
-    if (!codebase.id) {
-      throw new Error('Missing required field in codebase: id');
-    }
-    if (!codebase.root) {
-      throw new Error(`Codebase ${codebase.id}: missing required field: root`);
-    }
-    if (!codebase.trackedBranches || !Array.isArray(codebase.trackedBranches)) {
-      throw new Error(`Codebase ${codebase.id}: missing required field: trackedBranches (array)`);
+    issues.push({
+      source,
+      configPath,
+      code: 'MISSING_FIELD',
+      fieldPath: 'codebases',
+      message: 'Missing required field: config.codebases (array)',
+    });
+  } else {
+    for (const codebase of config.codebases) {
+      if (!codebase.id) {
+        issues.push({
+          source,
+          configPath,
+          code: 'MISSING_FIELD',
+          fieldPath: 'codebases[].id',
+          message: 'Missing required field in codebase: id',
+        });
+      }
+      if (!codebase.root) {
+        issues.push({
+          source,
+          configPath,
+          code: 'MISSING_FIELD',
+          fieldPath: `codebases[${codebase.id || '?'}].root`,
+          message: `Codebase ${codebase.id || '<unknown>'}: missing required field: root`,
+        });
+      }
+      if (!codebase.trackedBranches || !Array.isArray(codebase.trackedBranches)) {
+        issues.push({
+          source,
+          configPath,
+          code: 'MISSING_FIELD',
+          fieldPath: `codebases[${codebase.id || '?'}].trackedBranches`,
+          message: `Codebase ${codebase.id || '<unknown>'}: missing required field: trackedBranches (array)`,
+        });
+      }
     }
   }
 
   if (!config.graph) {
-    throw new Error('Missing required field: config.graph');
-  }
-  if (!config.graph.neo4jUri) {
-    throw new Error('Missing required field: config.graph.neo4jUri');
+    issues.push({
+      source,
+      configPath,
+      code: 'MISSING_FIELD',
+      fieldPath: 'graph',
+      message: 'Missing required field: config.graph',
+    });
+  } else if (!config.graph.neo4jUri) {
+    issues.push({
+      source,
+      configPath,
+      code: 'MISSING_FIELD',
+      fieldPath: 'graph.neo4jUri',
+      message: 'Missing required field: config.graph.neo4jUri',
+    });
   }
 
   if (!config.vectors) {
-    throw new Error('Missing required field: config.vectors');
+    issues.push({
+      source,
+      configPath,
+      code: 'MISSING_FIELD',
+      fieldPath: 'vectors',
+      message: 'Missing required field: config.vectors',
+    });
+  } else if (!config.vectors.qdrantUrl) {
+    issues.push({
+      source,
+      configPath,
+      code: 'MISSING_FIELD',
+      fieldPath: 'vectors.qdrantUrl',
+      message: 'Missing required field: config.vectors.qdrantUrl',
+    });
   }
-  if (!config.vectors.qdrantUrl) {
-    throw new Error('Missing required field: config.vectors.qdrantUrl');
-  }
+
+  return issues;
 }
 
 /**
@@ -133,6 +260,24 @@ function validateIndexerConfig(config: IndexerConfig): void {
 export interface FileSystemProvider {
   exists(filePath: string): boolean;
   dirname(filePath: string): string;
+  readdirSync(dirPath: string): string[];
+}
+
+/**
+ * Discovered config result from recursive discovery.
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §1 (discovery pattern)
+ */
+export interface DiscoveredConfigs {
+  orchestrator: {
+    path: string;
+    config?: IndexerConfig;
+  };
+  perRepo: Array<{
+    path: string;
+    config?: IndexerConfig;
+    codebaseId: string;
+  }>;
+  errors: ValidationIssue[];
 }
 
 /**
@@ -141,7 +286,200 @@ export interface FileSystemProvider {
 const defaultFileSystem: FileSystemProvider = {
   exists: (filePath: string) => fs.existsSync(filePath),
   dirname: (filePath: string) => path.dirname(filePath),
+  readdirSync: (dirPath: string) => fs.readdirSync(dirPath),
 };
+
+/**
+ * Detect multiple .indexer-config.json files in a directory (shallow, not recursive).
+ * Used to safeguard against ambiguous configurations.
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §2 (ambiguity safeguard)
+ * @reference testing_specification.md §3.6 (injectable file system provider)
+ *
+ * @param dirPath - Directory to scan
+ * @param fsProvider - File system provider (default: Node.js fs)
+ * @returns Array of full paths to .indexer-config.json files found in directory
+ */
+export function detectAmbiguousConfigs(
+  dirPath: string,
+  fsProvider: FileSystemProvider = defaultFileSystem,
+): string[] {
+  if (!fsProvider.exists(dirPath)) {
+    return [];
+  }
+
+  try {
+    const entries = fsProvider.readdirSync(dirPath);
+    const configFiles: string[] = [];
+
+    for (const entry of entries) {
+      if (entry === '.indexer-config.json') {
+        const fullPath = path.join(dirPath, entry);
+        if (fsProvider.exists(fullPath)) {
+          configFiles.push(fullPath);
+        }
+      }
+    }
+
+    return configFiles;
+  } catch {
+    // Directory not readable or doesn't exist
+    return [];
+  }
+}
+
+/**
+ * Find .indexer-config.json at codebase root (not recursively).
+ * Returns path if exists, null if not.
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §1 (per-repo config discovery)
+ * @reference testing_specification.md §3.6 (injectable file system provider)
+ *
+ * @param codebaseRoot - Root path of codebase
+ * @param fsProvider - File system provider (default: Node.js fs)
+ * @returns Full path to config file or null if not found
+ */
+export function findConfigAtCodebaseRoot(
+  codebaseRoot: string,
+  fsProvider: FileSystemProvider = defaultFileSystem,
+): string | null {
+  const configPath = path.join(codebaseRoot, '.indexer-config.json');
+  if (fsProvider.exists(configPath)) {
+    return configPath;
+  }
+  return null;
+}
+
+/**
+ * Discover and validate configuration files recursively across codebases.
+ * Implements unified discovery pattern used by all CLI commands.
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §1–2 (discovery pattern and safeguards)
+ * @reference cli_spec.md §3–7 (command specifications)
+ *
+ * @param options.configPath - Explicit path to orchestrator config
+ * @param options.recursive - Enable per-repo config discovery (default: true)
+ * @param options.orchestratorConfig - Pre-loaded orchestrator config (optional)
+ * @param options.envProvider - Environment provider (default: process.env)
+ * @param options.fsProvider - File system provider (default: Node.js fs)
+ * @returns Discovered configs with orchestrator and per-repo paths
+ * @throws Error if multiple configs found in same codebase directory or config invalid
+ */
+export function discoverConfigs(options?: {
+  configPath?: string;
+  recursive?: boolean;
+  orchestratorConfig?: IndexerConfig;
+  envProvider?: EnvironmentProvider;
+  fsProvider?: FileSystemProvider;
+}): DiscoveredConfigs {
+  const recursive = options?.recursive !== false; // default: true
+  const fsProvider = options?.fsProvider || defaultFileSystem;
+  const envProvider = options?.envProvider || defaultEnvProvider;
+  const errors: ValidationIssue[] = [];
+
+  // 1. Load or use provided orchestrator config
+  let orchestratorConfig: IndexerConfig | undefined;
+  let orchestratorPath = options?.configPath || 'auto-discover';
+
+  if (options?.orchestratorConfig) {
+    orchestratorConfig = options.orchestratorConfig;
+    orchestratorPath = options.configPath || 'in-memory';
+  } else {
+    const resolvedPath = resolveConfigPath(
+      options?.configPath,
+      undefined,
+      undefined,
+      fsProvider,
+      envProvider,
+    );
+
+    if (!resolvedPath) {
+      errors.push({
+        source: 'discovery',
+        configPath: '(not found)',
+        code: 'CONFIG_NOT_FOUND',
+        message:
+          'No orchestrator configuration found. Set INDEXER_CONFIG_PATH env var, pass --config <path>, or place .indexer-config.json in working directory or repo root.',
+      });
+    } else {
+      orchestratorPath = resolvedPath;
+      const parsed = parseConfigFile(resolvedPath, envProvider, 'orchestrator');
+      orchestratorConfig = parsed.config;
+      errors.push(...parsed.errors);
+    }
+  }
+
+  // 2. Recursive discovery (if enabled)
+  const perRepoConfigs: Array<{
+    path: string;
+    config?: IndexerConfig;
+    codebaseId: string;
+  }> = [];
+
+  if (recursive && orchestratorConfig?.codebases) {
+    for (const codebase of orchestratorConfig.codebases) {
+      const perRepoResult = processPerRepoConfig(codebase, fsProvider, envProvider);
+      errors.push(...perRepoResult.errors);
+      if (perRepoResult.config) {
+        perRepoConfigs.push(perRepoResult.config);
+      }
+    }
+  }
+
+  return {
+    orchestrator: {
+      path: orchestratorPath,
+      ...(orchestratorConfig ? { config: orchestratorConfig } : {}),
+    },
+    perRepo: perRepoConfigs,
+    errors,
+  };
+}
+
+function processPerRepoConfig(
+  codebase: IndexerConfig['codebases'][number],
+  fsProvider: FileSystemProvider,
+  envProvider: EnvironmentProvider,
+): {
+  config?: { path: string; config?: IndexerConfig; codebaseId: string };
+  errors: ValidationIssue[];
+} {
+  const errors: ValidationIssue[] = [];
+  const foundConfig = findConfigAtCodebaseRoot(codebase.root, fsProvider);
+
+  if (!foundConfig) {
+    return { errors };
+  }
+
+  const ambiguous = detectAmbiguousConfigs(codebase.root, fsProvider);
+  if (ambiguous.length > 1) {
+    errors.push({
+      source: 'discovery',
+      configPath: codebase.root,
+      code: 'AMBIGUOUS_CONFIG',
+      message: `Ambiguous configuration: Multiple .indexer-config.json files found in ${codebase.root}: ${ambiguous.join(
+        ', ',
+      )}. Please keep only one .indexer-config.json per codebase root.`,
+      codebaseId: codebase.id,
+    });
+  }
+
+  const parsed = parseConfigFile(foundConfig, envProvider, 'per-repo');
+  errors.push(
+    ...parsed.errors.map((issue) => ({
+      ...issue,
+      source: 'per-repo' as const,
+      codebaseId: codebase.id,
+      configPath: parsed.path,
+    })),
+  );
+
+  return {
+    errors,
+    config: {
+      path: foundConfig,
+      ...(parsed.config ? { config: parsed.config } : {}),
+      codebaseId: codebase.id,
+    },
+  };
+}
 
 /**
  * Resolve config file path with fallback precedence.
@@ -250,14 +588,14 @@ export function loadIndexerConfig(options?: {
     );
   }
 
-  const baseConfig = parseConfigFile(configPath, options?.envProvider);
+  const parsedConfig = parseConfigFile(configPath, options?.envProvider);
 
   // Repo discovery (v1 stub — implemented in later slices)
   if (options?.discoverRepos) {
     // return mergeWithDiscoveredRepos(baseConfig);
   }
 
-  return baseConfig;
+  return assertValidConfig(parsedConfig);
 }
 
 /**

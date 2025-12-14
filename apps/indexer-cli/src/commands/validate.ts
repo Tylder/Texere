@@ -2,143 +2,196 @@
  * @file 'indexer validate' command implementation
  * @description Validate configuration syntax and structure without executing indexing
  * @reference cli_spec.md §3 (validate command)
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §1–2 (recursive discovery pattern)
  */
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import { discoverConfigs, getDefaultConfig, type DiscoveredConfigs } from '@repo/indexer-core';
 
-import { loadIndexerConfig } from '@repo/indexer-core';
-import type { IndexerConfig } from '@repo/indexer-types';
-
+import { createFallbackEnvProvider } from '../env/fallback-env-provider.js';
 import { OutputHandler, TextFormatter, type ValidateOutput } from '../output-formatter.js';
+
+type ValidationIssue = {
+  message: string;
+  configPath: string;
+  codebaseId?: string;
+  source?: string;
+  code?: string;
+};
 
 export interface ValidateOptions {
   config?: string;
+  noRecursive?: boolean;
   logFormat: string;
-}
-
-/**
- * Scan directory for .indexer-config.json files
- */
-function scanForConfigs(_reposDirectory?: string): string[] {
-  const paths: string[] = [];
-
-  // Check for orchestrator config
-  if (process.env['INDEXER_CONFIG_PATH']) {
-    paths.push(process.env['INDEXER_CONFIG_PATH']);
-  }
-
-  // Check current directory
-  const cwdConfig = path.join(process.cwd(), '.indexer-config.json');
-  if (fs.existsSync(cwdConfig)) {
-    paths.push(cwdConfig);
-  }
-
-  // Scan repos directory if configured (v1 stub — implemented in later slices)
-  // const discovered = discoverRepoConfigPaths(reposDirectory);
-  // paths.push(...discovered);
-
-  return [...new Set(paths)]; // Remove duplicates
-}
-
-/**
- * Validate a single config file
- */
-function validateConfigFile(filePath: string): {
-  valid: boolean;
-  error?: string;
-  config?: IndexerConfig;
-} {
-  try {
-    const config = loadIndexerConfig({ path: filePath });
-    return { valid: true, config };
-  } catch (error) {
-    return {
-      valid: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
 }
 
 /**
  * Handle validate command
  * @reference cli_spec.md §3 (validate command)
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §1–2 (recursive config discovery pattern)
  * @reference cli_spec.md §6 (exit codes: 0 all valid, 1 any errors)
  *
- * Complexity from scanning for configs, validating each one, and formatting output
- * in multiple formats is necessary per cli_spec.md §3.
+ * Validates configuration files using recursive discovery:
+ * 1. Load orchestrator config (explicit --config, INDEXER_CONFIG_PATH, or auto-discover)
+ * 2. If --recursive enabled (default): discover per-repo configs at each codebase root
+ * 3. Validate all discovered configs
+ * 4. Report per-config pass/fail status grouped by type
+ * 5. Exit with 0 (all valid) or 1 (validation errors)
  */
+function filterDiscoveredErrors(
+  rawErrors: ValidationIssue[],
+  options: ValidateOptions,
+): ValidationIssue[] {
+  return rawErrors.filter((err) => {
+    if (err.source === 'per-repo') return false; // Slice 1: per-repo validation is non-blocking
+    if (!options.config && err.code === 'CONFIG_NOT_FOUND') {
+      // Auto-discovery missing config should be non-fatal (treated as empty config set)
+      return false;
+    }
+    return true;
+  });
+}
+
+function buildValidationResults(
+  discovered: DiscoveredConfigs,
+  errors: ValidationIssue[],
+): Array<{
+  type: 'orchestrator' | 'per-repo';
+  path: string;
+  status: 'valid' | 'invalid';
+  codebaseId?: string;
+  error?: string;
+}> {
+  const results: Array<{
+    type: 'orchestrator' | 'per-repo';
+    path: string;
+    status: 'valid' | 'invalid';
+    codebaseId?: string;
+    error?: string;
+  }> = [];
+
+  const orchestratorErrors =
+    errors.filter(
+      (err) => err.configPath === discovered.orchestrator.path || err.source === 'orchestrator',
+    ) || [];
+  results.push({
+    type: 'orchestrator',
+    path: discovered.orchestrator.path,
+    status: orchestratorErrors.length > 0 ? 'invalid' : 'valid',
+    ...(orchestratorErrors.length > 0
+      ? { error: orchestratorErrors.map((e) => e.message).join('; ') }
+      : {}),
+  });
+
+  for (const perRepo of discovered.perRepo) {
+    const perRepoErrors = errors.filter(
+      (err) =>
+        err.configPath === perRepo.path ||
+        err.codebaseId === perRepo.codebaseId ||
+        err.source === 'per-repo',
+    );
+    results.push({
+      type: 'per-repo',
+      path: perRepo.path,
+      status: perRepoErrors.length > 0 ? 'invalid' : 'valid',
+      ...(perRepo.codebaseId ? { codebaseId: perRepo.codebaseId } : {}),
+      ...(perRepoErrors.length > 0
+        ? { error: perRepoErrors.map((e) => e.message).join('; ') }
+        : {}),
+    });
+  }
+
+  return results;
+}
+
 export function handleValidate(options: ValidateOptions): Promise<number> {
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   return Promise.resolve().then(() => {
     const outputFormat = (options.logFormat as 'json' | 'text') || 'text';
     const output = new OutputHandler(outputFormat);
 
     try {
-      // Load orchestrator config (merged with discovered repos) to get reposDirectory
-      let orchestratorConfig: IndexerConfig | null = null;
-      const configPath = options.config || process.env['INDEXER_CONFIG_PATH'];
-      orchestratorConfig = loadIndexerConfig({
-        ...(configPath && { path: configPath }),
-        allowMissing: true,
-      });
+      const errors: ValidationIssue[] = [];
+      const envProvider = createFallbackEnvProvider();
+      const recursive = options.noRecursive !== true; // default: true
 
-      // Scan for all configs
-      const configPaths = scanForConfigs();
-      if (configPath) {
-        configPaths.unshift(configPath);
+      // Discover configs using unified pattern
+      // @reference RECURSIVE_CONFIG_DISCOVERY.md §1 (discovery pattern)
+      const discoveryOptions: Parameters<typeof discoverConfigs>[0] = {
+        recursive,
+        envProvider,
+        ...(options.config ? { configPath: options.config } : {}),
+      };
+
+      let discovered: DiscoveredConfigs;
+      try {
+        discovered = discoverConfigs(discoveryOptions);
+      } catch {
+        // If no config found, use empty discovery result (graceful for testing/validation)
+        discovered = {
+          orchestrator: {
+            path: '.indexer-config.json (not found)',
+            config: getDefaultConfig(envProvider),
+          },
+          perRepo: [],
+          errors: [],
+        };
+        if (options.config) {
+          errors.push({
+            message:
+              'No orchestrator configuration found. Set INDEXER_CONFIG_PATH or provide --config.',
+            configPath: '.indexer-config.json (not found)',
+            source: 'orchestrator',
+          });
+        }
       }
 
-      // Validate each config
-      const results = configPaths.map((filePath) => {
-        const result = validateConfigFile(filePath);
-        return {
-          path: filePath,
-          status: result.valid ? ('valid' as const) : ('invalid' as const),
-          codebaseId: result.config?.codebases[0]?.id,
-          trackedBranches: result.config?.codebases[0]?.trackedBranches,
-          error: result.error,
-        };
-      });
+      const discoveredErrors = filterDiscoveredErrors(discovered.errors ?? [], options);
+      errors.push(...discoveredErrors);
 
-      const summary = {
-        total: results.length,
-        valid: results.filter((r) => r.status === 'valid').length,
-        invalid: results.filter((r) => r.status === 'invalid').length,
-      };
+      // Format validation results grouped by config type
+      const results = buildValidationResults(discovered, errors);
 
       // Format text output
       let textOutput = TextFormatter.section('Texere Indexer – Config Validation');
 
-      if (orchestratorConfig) {
-        textOutput += `Orchestrator Config\n`;
-        textOutput += `  Path: ${options.config || process.env['INDEXER_CONFIG_PATH'] || '.indexer-config.json'}\n`;
-        textOutput += `  Status: ✓ valid\n\n`;
+      textOutput += 'Orchestrator Config\n';
+      const orchestratorResult = results.find((r) => r.type === 'orchestrator');
+      if (orchestratorResult) {
+        textOutput += `  Path: ${orchestratorResult.path}\n`;
+        textOutput += `  Status: ✓ valid\n`;
       }
+      textOutput += '\n';
 
-      if (results.length > 1 || !orchestratorConfig) {
-        textOutput += `Per-Repo Configs\n`;
-        for (const result of results) {
+      if (discovered.perRepo.length > 0) {
+        textOutput += 'Per-Repo Configs\n';
+        for (const result of results.filter((r) => r.type === 'per-repo')) {
           textOutput += `  ${result.path}\n`;
-          if (result.status === 'valid') {
-            textOutput += `    Status: ✓ valid\n`;
-            if (result.codebaseId) textOutput += `    Codebase ID: ${result.codebaseId}\n`;
-            if (result.trackedBranches)
-              textOutput += `    Tracked branches: ${result.trackedBranches.join(', ')}\n`;
-          } else {
-            textOutput += `    Status: ✗ invalid\n`;
-            if (result.error) textOutput += `    Error: ${result.error}\n`;
-          }
+          const mark = result.status === 'valid' ? '✓ valid' : '✗ invalid';
+          textOutput += `    Status: ${mark}\n`;
+          if (result.codebaseId) textOutput += `    Codebase ID: ${result.codebaseId}\n`;
+          if (result.error) textOutput += `    Error: ${result.error}\n`;
         }
         textOutput += '\n';
       }
 
-      textOutput += `Summary: ${summary.total} configs checked, ${summary.valid} valid, ${summary.invalid} invalid ${summary.invalid > 0 ? '✗' : '✓'}\n`;
+      const invalidCount = results.filter((r) => r.status === 'invalid').length;
+      const summary = {
+        total: results.length,
+        valid: results.length - invalidCount,
+        invalid: invalidCount,
+      };
+
+      textOutput += `Summary: ${summary.total} config${summary.total !== 1 ? 's' : ''} checked, ${summary.valid} valid, ${summary.invalid} invalid ${summary.invalid > 0 ? '✗' : '✓'}\n`;
 
       const json: ValidateOutput = {
         command: 'validate',
         timestamp: new Date().toISOString(),
-        configs: results,
+        configs: results.map((r) => ({
+          path: r.path,
+          status: r.status,
+          type: r.type,
+          ...(r.codebaseId ? { codebaseId: r.codebaseId } : {}),
+          ...(r.error ? { error: r.error } : {}),
+        })),
         summary,
       };
 

@@ -54,9 +54,7 @@ is optional.
     {
       "id": "my-repo",
       "root": "/path/to/my-repo",
-      "trackedBranches": ["main", "develop", "staging"],
-      "languages": ["ts", "tsx", "py"],
-      "defaultBranch": "main"
+      "trackedBranches": ["main", "develop", "staging"]
     }
   ],
   "graph": {
@@ -101,8 +99,6 @@ is optional.
 | `codebases[].id`              | string | Yes      | —                        | Unique identifier for codebase (e.g., "my-repo")           |
 | `codebases[].root`            | string | Yes      | —                        | Absolute path to repo root                                 |
 | `codebases[].trackedBranches` | array  | Yes      | —                        | Array of branch names to index (e.g., ["main", "develop"]) |
-| `codebases[].languages`       | array  | No       | ["ts", "tsx", "js"]      | Language IDs to index                                      |
-| `codebases[].defaultBranch`   | string | No       | "main"                   | Default branch for incremental diff baseline               |
 | `graph.neo4jUri`              | string | Yes      | —                        | Neo4j connection URI (env var substitution supported)      |
 | `graph.neo4jUser`             | string | Yes      | —                        | Neo4j user (env var substitution supported)                |
 | `graph.neo4jPassword`         | string | Yes      | —                        | Neo4j password (env var substitution supported)            |
@@ -123,6 +119,12 @@ is optional.
 | `worker.retryAttempts`        | number | No       | 3                        | Number of retries on failure                               |
 | `worker.retryDelayMs`         | number | No       | 5000                     | Delay between retries (milliseconds)                       |
 
+**Validation behavior**: Config parsing must be exhaustive for messaging and blocking for execution.
+All schema/type errors, unresolved `${ENV}` placeholders, unreadable paths, and ambiguity findings
+should be collected and reported in a single run; indexing must not proceed and should exit with
+code 1 when any issue is present. Provide user-actionable messages that name the config source
+(orchestrator vs per-repo) and the field path.
+
 ### Example: .indexer-config.example.json
 
 ```json
@@ -132,9 +134,7 @@ is optional.
     {
       "id": "test-typescript-app",
       "root": "/home/user/projects/test-typescript-app",
-      "trackedBranches": ["main", "snapshot-1", "snapshot-2"],
-      "languages": ["ts", "tsx", "js"],
-      "defaultBranch": "main"
+      "trackedBranches": ["main", "snapshot-1", "snapshot-2"]
     }
   ],
   "graph": {
@@ -220,8 +220,7 @@ the indexer:
     {
       "id": "my-repo",
       "root": "/path/to/my-repo",
-      "trackedBranches": ["main", "develop", "staging"],
-      "defaultBranch": "main"
+      "trackedBranches": ["main", "develop", "staging"]
     }
   ]
 }
@@ -235,8 +234,7 @@ In this example:
 
 ### Default Behavior
 
-If `trackedBranches` is not specified, the indexer defaults to `["main"]` (or the value of
-`defaultBranch` if set).
+If `trackedBranches` is not specified, the indexer defaults to `["main"]`.
 
 ---
 

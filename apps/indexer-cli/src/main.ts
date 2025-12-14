@@ -39,6 +39,11 @@ async function main(): Promise<number> {
     .command('validate')
     .description('Validate configuration syntax and structure without executing indexing')
     .option('--config <path>', 'Explicit config file path')
+    .option(
+      '--no-recursive',
+      'Disable per-repo config discovery (validate only orchestrator)',
+      false,
+    )
     .option('--log-format <format>', 'Output format: json|text', 'text')
     .action(async (options: unknown) => {
       const exitCode = await handleValidate(options as ValidateOptions);
@@ -51,6 +56,7 @@ async function main(): Promise<number> {
   program
     .command('list')
     .description('Discover all configured codebases, their tracked branches, and index status')
+    .option('--no-recursive', 'Disable per-repo config discovery', false)
     .option('--log-format <format>', 'Output format: json|text', 'text')
     .option('--verbose', 'Show discovery details (config paths scanned, etc.)', false)
     .action(async (options: unknown) => {
@@ -64,6 +70,7 @@ async function main(): Promise<number> {
   program
     .command('status')
     .description('Check daemon status and database connectivity')
+    .option('--no-recursive', 'Disable per-repo config discovery', false)
     .option('--log-format <format>', 'Output format: json|text', 'text')
     .action(async (options: unknown) => {
       const exitCode = await handleStatus(options as StatusOptions);
@@ -82,6 +89,7 @@ async function main(): Promise<number> {
     .option('--dry-run', 'Generate plan without writing to graph/vectors', false)
     .option('--force', 'Reindex even if snapshot already exists', false)
     .option('--no-fetch', 'Skip fetching; use only local git state', false)
+    .option('--no-recursive', 'Disable per-repo config discovery', false)
     .option('--log-format <format>', 'Output format: json|text', 'text')
     .option('--verbose', 'Enable debug logging', false)
     .option('--quiet', 'Suppress non-error output', false)
@@ -99,6 +107,7 @@ async function main(): Promise<number> {
     .description('Gracefully shutdown a running daemon')
     .option('--force', 'Force kill immediately (SIGKILL)', false)
     .option('--timeout <seconds>', 'Seconds to wait for graceful shutdown', '30')
+    .option('--no-recursive', 'Disable per-repo config discovery', false)
     .option('--log-format <format>', 'Output format: json|text', 'text')
     .action(async (options: unknown) => {
       const exitCode = await handleStop(options as StopOptions);

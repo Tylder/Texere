@@ -64,10 +64,34 @@ monitoring).
 
 ## Command Reference
 
+### Recursive Config Discovery (All Commands)
+
+**Core Pattern**: All CLI commands automatically discover and use per-repo configuration files in
+addition to the orchestrator config, **unless disabled with `--no-recursive` flag**.
+
+**What this means**:
+
+- Default behavior: `indexer list`, `indexer status`, `indexer run`, `indexer stop`, and
+  `indexer validate` all recursively discover `.indexer-config.json` files at each codebase's root
+  path
+- Recursion can be disabled: Add `--no-recursive` flag to validate against orchestrator config only
+- Config merging: Per-repo configs override orchestrator settings (e.g., per-repo `trackedBranches`
+  override global list)
+- Ambiguity safeguard: Error if multiple configs found in same codebase directory (prevents
+  misconfiguration)
+
+**Full details**: See
+[`RECURSIVE_CONFIG_DISCOVERY.md`](./implementation/RECURSIVE_CONFIG_DISCOVERY.md) (implementation
+guide and unified discovery pattern).
+
+---
+
 ### `indexer validate`
 
 **Purpose**: Validate configuration syntax and structure without executing indexing. Useful for
-CI/setup scripts to catch config errors early.
+CI/setup scripts to catch config errors early. Validation must be **exhaustive for messaging but
+blocking for execution**: collect all errors across orchestrator + per-repo configs, report them in
+one run, and still exit 1 to prevent indexing.
 
 **Usage**:
 
@@ -77,13 +101,17 @@ indexer validate [OPTIONS]
 
 **Behavior**:
 
-1. Load work orchestrator config from `INDEXER_CONFIG_PATH` (or defaults)
-2. Scan configured `reposDirectory` for `.indexer-config.json` files (if configured)
-3. Parse all config files
-4. Validate required fields, types, and URI formats
-5. Check git paths are accessible (if configured)
-6. Print validation results (pass/fail per config file)
-7. Exit with code 0 (all valid) or 1 (any errors)
+1. Load orchestrator config from `INDEXER_CONFIG_PATH` (or discover in working directory/parents)
+2. **[Recursive Discovery]** If `--recursive` enabled (default):
+   - For each codebase in orchestrator config
+   - Check for `.indexer-config.json` at codebase `root` path
+   - Collect all discovered per-repo config files
+   - Error if multiple config files found in same codebase directory
+3. Parse all config files (orchestrator + per-repo)
+4. Validate required fields, types, URI formats, path accessibility, and environment substitution
+   (flag any unresolved `${VAR}` placeholders)
+5. Print validation results grouped by config type (Orchestrator vs Per-Repo)
+6. Exit with code 0 (all valid) or 1 (any errors)
 
 **Output**:
 
@@ -93,7 +121,10 @@ Texere Indexer – Config Validation
 
 Orchestrator Config
   Path: /path/to/.indexer-config.json
-  Status: ✓ valid
+  Status: ✗ invalid
+  Errors:
+    - database.neo4jUri: "${NEO4J_URI}" → NEO4J_URI not set
+    - repos.reposDirectory: "/not/found" is not readable
 
 Per-Repo Configs
   texere/.indexer-config.json
@@ -103,20 +134,29 @@ Per-Repo Configs
 
   my-lib/.indexer-config.json
     Status: ✗ invalid
-    Error: Field "trackedBranches" is required
+    Errors:
+      - codebases[0].trackedBranches: required (per-repo overrides do not fallback)
+      - Ambiguous configs in /home/anon/my-lib: /home/anon/my-lib/.indexer-config.json,
+        /home/anon/my-lib/config/.indexer-config.json
 
-Summary: 2 configs checked, 1 valid, 1 invalid ✗
+Summary: 3 configs checked, 1 valid, 2 invalid ✗
 Exit code: 1
 ```
 
 **Options**:
 
-| Flag           | Type         | Default       | Purpose                   |
-| -------------- | ------------ | ------------- | ------------------------- |
-| `--config`     | string       | auto-discover | Explicit config file path |
-| `--log-format` | `json\|text` | `text`        | Output format             |
+| Flag             | Type         | Default       | Purpose                                                        |
+| ---------------- | ------------ | ------------- | -------------------------------------------------------------- |
+| `--config`       | string       | auto-discover | Explicit orchestrator config file path                         |
+| `--no-recursive` | boolean      | false         | Disable per-repo config discovery (validate only orchestrator) |
+| `--log-format`   | `json\|text` | `text`        | Output format (JSON must return structured error array)        |
 
-**Exit Codes**: `0` (all valid), `1` (validation errors)
+**Exit Codes**:
+
+- `0`: All configs valid
+- `1`: Validation errors (syntax, missing fields, unresolved env vars, ambiguous/multiple configs in
+  same directory). Collect and report all errors; still exit 1 even when multiple are present.
+- (Future: `2` for IO errors, `3` for DB connectivity issues)
 
 ---
 
@@ -132,15 +172,16 @@ indexer list [OPTIONS]
 
 **Behavior**:
 
-1. Load work orchestrator config from `INDEXER_CONFIG_PATH` (or defaults)
-2. Scan configured `reposDirectory` for `.indexer-config.json` files (if configured)
-3. Merge with explicit `codebases` array from config
-4. For each discovered repo:
+1. **[Recursive Discovery]** Load orchestrator config and discover per-repo configs
+   - See `RECURSIVE_CONFIG_DISCOVERY.md` for unified pattern
+   - Slice 1 behavior: if no orchestrator config is found via auto-discovery, return an empty list
+     with exit code 0 (informational). Per-repo configs are detected but not merged into the
+     displayed list yet (override merge deferred to Slice 2).
+2. For each discovered codebase:
    - Display codebase ID, root path, tracked branches
-   - If databases are available: show latest snapshot per branch (timestamp, commit hash, symbol
-     count)
-   - If databases unavailable: show "(DB unavailable)" gracefully without failing
-5. Exit with code 0
+   - Database status lookups for branch snapshots are deferred; in Slice 1 every branch is reported
+     as `not indexed`.
+3. Exit with code 0 (success) or 1 (config error)
 
 **Output**:
 
@@ -193,16 +234,18 @@ indexer status [OPTIONS]
 
 **Behavior**:
 
-1. Load config
+1. **[Recursive Discovery]** Load orchestrator and per-repo configs
+   - See `RECURSIVE_CONFIG_DISCOVERY.md` for unified pattern
+   - Merge configs for complete connectivity picture
 2. Check if daemon is running (query lock/PID file, or via HTTP if daemon has status endpoint)
-3. Test database connectivity:
+3. Test database connectivity (from merged config):
    - Neo4j: ping connection
    - Qdrant: ping connection
 4. If daemon is running:
    - Query worker pool size
    - Query queue depth (if using BullMQ, post-v1)
    - Query in-flight job count
-5. Display readiness summary
+5. Display readiness summary grouped by config source
 6. Exit with code 0 if all prerequisites met, 1 if any blocker found
 
 **Output**:
@@ -300,12 +343,14 @@ indexer run [OPTIONS]
 
 **Behavior** (common to all modes):
 
-1. Load config (orchestrator + per-repo + runtime overrides)
+1. **[Recursive Discovery]** Load orchestrator and per-repo configs
+   - See `RECURSIVE_CONFIG_DISCOVERY.md` for unified pattern
+   - Merge configs (per-repo overrides orchestrator)
 2. **Fetch latest from all remotes** (always enabled by default; use `--no-fetch` to disable)
-3. Resolve all repos and tracked branches
+3. Resolve all repos and tracked branches using merged config
 4. Check prerequisites (DB connectivity, git access)
 5. If `--dry-run`: generate plan, print JSON, exit 0
-6. Otherwise: begin indexing
+6. Otherwise: begin indexing using merged config
 
 **Validation Rules** (enforced before execution):
 
@@ -851,38 +896,98 @@ anyway.
 
 ### Command: `indexer validate`
 
-- [ ] Load orchestrator config
-- [ ] Scan for per-repo `.indexer-config.json` files
-- [ ] Validate each config (required fields, types, URI formats)
-- [ ] Check git paths accessibility (optional, can skip if inaccessible)
-- [ ] Report per-config pass/fail status
-- [ ] Format output as text or JSON
-- [ ] Exit with code 0 (all valid) or 1 (any errors)
-- [ ] Tests: valid config, missing fields, malformed JSON, git path errors
+**Discovery & Validation**:
+
+- [ ] Load orchestrator config (discover in cwd/parents or use `--config`)
+- [ ] If `--recursive` enabled (default):
+  - [ ] For each codebase in orchestrator config
+  - [ ] Check for `.indexer-config.json` at codebase `root` path
+  - [ ] Collect per-repo config files
+  - [ ] Error if multiple configs found in same codebase directory
+- [ ] Validate each config file (required fields, types, URI formats)
+- [ ] Validate environment variable substitution (all required vars present)
+- [ ] Check git paths accessibility (warn if inaccessible but don't fail)
+
+**Output & Exit**:
+
+- [ ] Report per-config pass/fail status (grouped: Orchestrator vs Per-Repo)
+- [ ] Format output as text or JSON per `--log-format`
+- [ ] Exit with code 0 (all valid) or 1 (validation errors)
+
+**Tests** (cite `testing_specification.md §3–7`):
+
+- [ ] Orchestrator config discovery (cwd, parents, explicit --config)
+- [ ] Recursive per-repo discovery with multiple codebases
+- [ ] `--no-recursive` flag disables per-repo discovery
+- [ ] Error on multiple configs in same codebase
+- [ ] Valid/invalid syntax in orchestrator and per-repo configs
+- [ ] Missing required fields, env var substitution errors
+- [ ] Inaccessible git paths (warning, not fail)
+- [ ] Text and JSON output formats
+- [ ] Exit codes (0 success, 1 validation error)
 
 ### Command: `indexer list`
 
-- [ ] Load config (env var → file → defaults)
-- [ ] Scan `reposDirectory` for `.indexer-config.json` files
+**Discovery & Loading** (see `RECURSIVE_CONFIG_DISCOVERY.md`):
+
+- [ ] Load orchestrator config (discover in cwd/parents or use `--config`)
+- [ ] If `--recursive` enabled (default): discover per-repo configs at each codebase root
+- [ ] Error if multiple configs in same directory
+- [ ] Merge configs (per-repo overrides orchestrator)
+
+**Listing**:
+
+- [ ] For each discovered codebase: display ID, root path, tracked branches
 - [ ] Query graph for latest snapshots per branch (graceful if DB unavailable)
-- [ ] Format output as text or JSON
+- [ ] Format output as text or JSON per `--log-format`
 - [ ] Exit with code 0 (success) or 1 (config error)
-- [ ] Tests: text/JSON output, missing DB, missing config
+
+**Tests** (cite `testing_specification.md §3–7`):
+
+- [ ] Recursive discovery with multiple codebases
+- [ ] `--no-recursive` flag disables per-repo discovery
+- [ ] Error on multiple configs in same directory
+- [ ] Text/JSON output, missing DB, missing config
 
 ### Command: `indexer status`
 
-- [ ] Load config
+**Discovery & Loading** (see `RECURSIVE_CONFIG_DISCOVERY.md`):
+
+- [ ] Load orchestrator config (discover in cwd/parents or use `--config`)
+- [ ] If `--recursive` enabled (default): discover per-repo configs at each codebase root
+- [ ] Error if multiple configs in same directory
+- [ ] Merge configs for complete connectivity picture
+
+**Status Checks**:
+
 - [ ] Check daemon process (via lock file, read PID, check if alive)
   - [ ] If lock exists and PID is dead: report "Last daemon crashed (PID 12345)" (do not auto-clean)
   - [ ] If PID is alive: report running status and stats
-- [ ] Test Neo4j connection
-- [ ] Test Qdrant connection
+- [ ] Test Neo4j connection (from merged config)
+- [ ] Test Qdrant connection (from merged config)
 - [ ] Query daemon stats if running (worker count, queue depth, in-flight jobs)
-- [ ] Format output as text or JSON
+
+**Output & Exit**:
+
+- [ ] Format output as text or JSON per `--log-format`
+- [ ] Group results by config source (Orchestrator vs Per-Repo)
 - [ ] Exit with code 0 (all OK) or 1 (blocker)
-- [ ] Tests: daemon running/not running, stale lock detected, DB up/down, various blockages
+
+**Tests** (cite `testing_specification.md §3–7`):
+
+- [ ] Recursive discovery with multiple codebases
+- [ ] `--no-recursive` flag disables per-repo discovery
+- [ ] Error on multiple configs in same directory
+- [ ] Daemon running/not running, stale lock detected, DB up/down, various blockages
 
 ### Command: `indexer run`
+
+**Discovery & Loading** (see `RECURSIVE_CONFIG_DISCOVERY.md`):
+
+- [ ] Load orchestrator config (discover in cwd/parents or use `--config`)
+- [ ] If `--recursive` enabled (default): discover per-repo configs at each codebase root
+- [ ] Error if multiple configs in same directory
+- [ ] Merge configs (per-repo overrides orchestrator)
 
 **Validation & Pre-flight Checks**:
 
@@ -895,9 +1000,9 @@ anyway.
 
 **Execution**:
 
-- [ ] Validate config
+- [ ] Validate merged config
 - [ ] Fetch latest from remotes (default; skip if `--no-fetch`)
-- [ ] Resolve all repos and tracked branches
+- [ ] Resolve all repos and tracked branches using merged config
 - [ ] If `--dry-run`: generate and output plan, exit 0
 - [ ] Otherwise: call `runSnapshot` / `runTrackedBranches` from ingest layer
 - [ ] Handle `--once` mode: block, collect results, exit
@@ -906,8 +1011,11 @@ anyway.
 - [ ] Format output per `--log-format`
 - [ ] Exit with appropriate code (0/1/2/3/4)
 
-**Tests**:
+**Tests** (cite `testing_specification.md §3–7`):
 
+- [ ] Recursive discovery with multiple codebases and merged configs
+- [ ] `--no-recursive` flag disables per-repo discovery
+- [ ] Error on multiple configs in same directory
 - [ ] Validation: dry-run + daemon rejection, existing daemon detection, stale lock cleanup
 - [ ] All modes (once, daemon, detached)
 - [ ] All flag combinations and edge cases
@@ -916,6 +1024,13 @@ anyway.
 
 ### Command: `indexer stop`
 
+**Discovery & Loading** (see `RECURSIVE_CONFIG_DISCOVERY.md`):
+
+- [ ] Load orchestrator config (for daemon lock location, though configs not strictly needed)
+- [ ] Consistent with other commands (recursive enabled by default)
+
+**Shutdown**:
+
 - [ ] Find daemon process (lock file location, read PID)
 - [ ] If PID not found: exit with error 2 ("Daemon not found")
 - [ ] Send SIGTERM to daemon
@@ -923,7 +1038,11 @@ anyway.
 - [ ] If still running after timeout: send SIGKILL (unless `--force` used)
 - [ ] Remove lock file after daemon exits
 - [ ] Exit with code 0 (stopped), 2 (not found), or 1 (other error)
-- [ ] Tests: daemon running, not running, timeout scenarios, `--force` flag, stale lock cleanup
+
+**Tests** (cite `testing_specification.md §3–7`):
+
+- [ ] Daemon running, not running, timeout scenarios, `--force` flag, stale lock cleanup
+- [ ] Config discovery consistent with other commands
 
 ### Logging & Output
 

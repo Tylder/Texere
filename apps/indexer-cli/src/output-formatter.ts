@@ -133,9 +133,10 @@ export interface ValidateOutput extends JsonOutput {
   configs: Array<{
     path: string;
     status: 'valid' | 'invalid';
-    codebaseId: string | undefined;
-    trackedBranches: string[] | undefined;
-    error: string | undefined;
+    type?: 'orchestrator' | 'per-repo';
+    codebaseId?: string;
+    trackedBranches?: string[];
+    error?: string;
   }>;
   summary: {
     total: number;

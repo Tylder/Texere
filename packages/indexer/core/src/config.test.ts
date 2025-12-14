@@ -13,7 +13,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import type { IndexerConfig } from '@repo/indexer-types';
 
+import type { ValidationIssue } from './config.js';
 import {
+  assertValidConfig,
   loadIndexerConfig,
   getDefaultConfig,
   findCodebaseConfig,
@@ -277,7 +279,7 @@ describe('environment variable expansion', () => {
         path: configFile,
         allowMissing: false,
       });
-    }).toThrow('Environment variable not found');
+    }).toThrow(/Environment variable .*NONEXISTENT_VAR .*not set/);
   });
 });
 
@@ -514,6 +516,7 @@ describe('resolveConfigPath (configuration_and_server_setup.md §3, §8)', () =>
   const createMockFileSystem = (configLocations: Set<string>): FileSystemProvider => ({
     exists: (filePath: string) => configLocations.has(filePath),
     dirname: (filePath: string) => path.dirname(filePath),
+    readdirSync: () => [],
   });
 
   /**
@@ -710,14 +713,17 @@ describe('expandEnvVars (pure function – testing_specification.md §4.2)', () 
     expect(result).toBe('localhost:5432');
   });
 
-  it('throws error for missing env var', () => {
+  it('collects issue for missing env var', () => {
     const mockEnv: EnvironmentProvider = {
       get: () => undefined,
     };
+    const issues: ValidationIssue[] = [];
 
-    expect(() => {
-      expandEnvVars('${MISSING_VAR}', mockEnv);
-    }).toThrow('Environment variable not found: MISSING_VAR');
+    const result = expandEnvVars('${MISSING_VAR}', mockEnv, issues, 'test-path', 'orchestrator');
+
+    expect(result).toBe('${MISSING_VAR}');
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.code).toBe('ENV_VAR_MISSING');
   });
 
   it('returns text unchanged when no env vars present', () => {
@@ -759,6 +765,7 @@ describe('parseConfigFile (testing_specification.md §4.3 – integration with m
     const _mockFS: FileSystemProvider = {
       exists: () => true,
       dirname: (p: string) => path.dirname(p),
+      readdirSync: () => [],
     };
 
     // Create a temporary config file
@@ -780,7 +787,7 @@ describe('parseConfigFile (testing_specification.md §4.3 – integration with m
 
       fs.writeFileSync(configPath, JSON.stringify(testConfig));
 
-      const result = parseConfigFile(configPath, mockEnv);
+      const result = assertValidConfig(parseConfigFile(configPath, mockEnv));
       expect(result.graph.neo4jUri).toBe('bolt://custom-db:7687');
     } finally {
       if (fs.existsSync(tmpDir)) {
@@ -802,7 +809,7 @@ describe('parseConfigFile (testing_specification.md §4.3 – integration with m
       fs.writeFileSync(configPath, 'invalid json {');
 
       expect(() => {
-        parseConfigFile(configPath, mockEnv);
+        assertValidConfig(parseConfigFile(configPath, mockEnv));
       }).toThrow('Failed to parse configuration file');
     } finally {
       if (fs.existsSync(tmpDir)) {
@@ -831,7 +838,7 @@ describe('parseConfigFile (testing_specification.md §4.3 – integration with m
       fs.writeFileSync(configPath, JSON.stringify(invalidConfig));
 
       expect(() => {
-        parseConfigFile(configPath, mockEnv);
+        assertValidConfig(parseConfigFile(configPath, mockEnv));
       }).toThrow('Missing required field');
     } finally {
       if (fs.existsSync(tmpDir)) {

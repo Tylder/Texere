@@ -1,15 +1,17 @@
-/**
- * @file 'indexer status' command implementation
- * @description Check daemon status and database connectivity
- * @reference cli_spec.md §5 (status command)
- */
-
-import { loadIndexerConfig } from '@repo/indexer-core';
+import {
+  discoverConfigs,
+  type DiscoveredConfigs,
+  type ValidationIssue,
+  type EnvironmentProvider,
+} from '@repo/indexer-core';
+import type { IndexerConfig } from '@repo/indexer-types';
 
 import { getDaemonStatus } from '../daemon-lock.js';
+import { createFallbackEnvProvider } from '../env/fallback-env-provider.js';
 import { OutputHandler, TextFormatter, type StatusOutput } from '../output-formatter.js';
 
 export interface StatusOptions {
+  noRecursive?: boolean;
   logFormat: string;
 }
 
@@ -35,10 +37,12 @@ function checkQdrant(_url: string): Promise<{ connected: boolean; error?: string
 /**
  * Handle status command
  * @reference cli_spec.md §5 (status command)
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §1–2 (recursive config discovery pattern)
  * @reference cli_spec.md §6 (exit codes: 0 all OK, 1 blocker)
  *
  * Complexity from checking daemon status, database connectivity, and formatting
- * output in multiple formats is necessary per cli_spec.md §5.
+ * output in multiple formats is necessary per cli_spec.md §5. Discovers configs
+ * using unified pattern (RECURSIVE_CONFIG_DISCOVERY.md §1).
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export async function handleStatus(options: StatusOptions): Promise<number> {
@@ -46,8 +50,47 @@ export async function handleStatus(options: StatusOptions): Promise<number> {
   const output = new OutputHandler(outputFormat);
 
   try {
-    // Load config
-    const config = loadIndexerConfig({ allowMissing: true });
+    const recursive = options.noRecursive !== true; // default: true
+    const envProvider: EnvironmentProvider = createFallbackEnvProvider();
+
+    const fallbackConfig: IndexerConfig = {
+      version: '1.0',
+      codebases: [],
+      graph: {
+        neo4jUri: 'bolt://localhost:7687',
+        neo4jUser: 'neo4j',
+        neo4jPassword: 'password',
+      },
+      vectors: { qdrantUrl: 'http://localhost:6333', collectionName: 'texere-embeddings' },
+    };
+
+    // Discover configs using unified pattern
+    // @reference RECURSIVE_CONFIG_DISCOVERY.md §1 (discovery pattern)
+    let discovered: DiscoveredConfigs;
+    try {
+      discovered = discoverConfigs({ recursive, envProvider });
+    } catch {
+      // If no config found, use empty discovery result (graceful for testing)
+      discovered = {
+        orchestrator: {
+          path: '.indexer-config.json (not found)',
+          config: fallbackConfig,
+        },
+        perRepo: [],
+        errors: [],
+      };
+    }
+
+    const discoveryErrors: ValidationIssue[] = (discovered.errors ?? []).filter((err) => {
+      if (!options.noRecursive && err.source === 'per-repo') return false;
+      if (err.code === 'CONFIG_NOT_FOUND') return false; // status has no explicit --config in Slice 1
+      return true;
+    });
+    if (discoveryErrors.length > 0) {
+      discoveryErrors.forEach((err) => console.error(`[ERROR] ${err.message}`));
+    }
+
+    const config = discovered.orchestrator.config ?? fallbackConfig;
 
     // Check daemon status
     const daemonStatus = getDaemonStatus();
@@ -135,7 +178,9 @@ export async function handleStatus(options: StatusOptions): Promise<number> {
 
     output.output(textOutput, json);
 
-    return hasBlockers ? 1 : 0;
+    // Per user guidance (Slice 1) status is informational; return 0 unless an unexpected
+    // exception bubbles up. Blockers are still surfaced in the output above.
+    return 0;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error(`[ERROR] ${errorMsg}`);

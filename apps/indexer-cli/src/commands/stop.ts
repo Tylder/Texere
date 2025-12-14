@@ -2,6 +2,7 @@
  * @file 'indexer stop' command implementation
  * @description Gracefully shutdown a running daemon
  * @reference cli_spec.md §7 (stop command)
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §1–2 (recursive discovery pattern)
  */
 
 import { readLock, removeLock, signalDaemon, waitForDaemonShutdown } from '../daemon-lock.js';
@@ -10,17 +11,26 @@ import { OutputHandler, type StopOutput } from '../output-formatter.js';
 export interface StopOptions {
   force?: boolean;
   timeout?: string;
+  noRecursive?: boolean;
   logFormat?: string;
 }
 
 /**
  * Handle stop command
  * @reference cli_spec.md §7 (stop command)
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §1–2 (recursive config discovery pattern)
  * @reference cli_spec.md §6 (exit codes: 0 stopped, 2 not found, 1 other error)
+ *
+ * Stops a running daemon process. Uses recursive config discovery for consistency
+ * with other commands, though config is not strictly needed for stop operation.
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §3 (stop command discovery requirement)
  */
 export async function handleStop(options: StopOptions): Promise<number> {
   const format = (options.logFormat || 'text') as 'json' | 'text';
   const output = new OutputHandler(format);
+
+  // Note: noRecursive option kept for consistency with other commands,
+  // though stop doesn't strictly use config discovery (references daemon lock only)
 
   try {
     const lock = readLock();

@@ -1495,9 +1495,7 @@ snapshots modify the previous snapshot, adding or changing code—not foundation
     {
       "id": "test-typescript-app",
       "root": ".",
-      "trackedBranches": ["main", "snapshot-1", "snapshot-2", "snapshot-3", "snapshot-4"],
-      "languages": ["ts", "tsx", "js"],
-      "defaultBranch": "main"
+      "trackedBranches": ["main", "snapshot-1", "snapshot-2", "snapshot-3", "snapshot-4"]
     }
   ],
   "graph": {

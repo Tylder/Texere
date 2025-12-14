@@ -31,6 +31,15 @@ export {
   validateDbConnections,
   sanitizeConfigForLogging,
   discoverRepoConfigPaths,
+  detectAmbiguousConfigs,
+  findConfigAtCodebaseRoot,
+  discoverConfigs,
+  type EnvironmentProvider,
+  type FileSystemProvider,
+  type DiscoveredConfigs,
+  type ValidationIssue,
+  type ValidationIssueCode,
+  type ValidationIssueSource,
 } from './config.js';
 
 // ============================================================================

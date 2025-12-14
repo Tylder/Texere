@@ -60,7 +60,7 @@ All modes share a **three-layer hierarchical configuration system**:
 ┌─────────────────────────────────────────────────────────┐
 │ Per-Repo Config (.indexer-config.json in repo root)     │
 │ • Tracked branches to index                             │
-│ • Language-specific rules                               │
+│ • Per-repo overrides (include/exclude, security)        │
 │ • Security/privacy settings                             │
 │ • Custom extractors or patterns                         │
 └─────────────────────────────────────────────────────────┘
@@ -88,9 +88,16 @@ Config location is determined by `INDEXER_CONFIG_PATH` when set; otherwise:
 **Rationale**: Works for repos without local config (third-party), keeps 12-factor friendliness, and
 stays testable.
 
+**Read-only commands** (`list`, `status`, `validate` without `--config`): if auto-discovery finds no
+orchestrator config, they must return an empty discovery result (no codebases) and exit 0, rather
+than fabricating defaults. Real validation errors (parse, missing required fields, ambiguity) still
+exit 1.
+
 **Implementation**:
 
-- If file unreadable: fail run with exit code 1 (config/validation) and clear error.
+- If file unreadable: fail run with exit code 1 (config/validation) and emit a user-actionable
+  message. Collect all validation issues (including unresolved env vars) before exiting so users get
+  a complete fix list in one run.
 - Config is re-read on every run (run-once/daemon) and on every request (server); no caching.
 
 ---
@@ -337,13 +344,11 @@ Determined by environment variable: `INDEXER_CONFIG_PATH`
     "discoveryPatterns": ["**/"]
   },
   "indexing": {
-    "defaultBranches": ["main"],
     "maxFilesPerSnapshot": 1000,
     "enableLlmFeatureMapping": true
   },
   "security": {
-    "denyPatterns": [".env*", "*.key", "secrets/"],
-    "allowedLanguages": ["ts", "tsx", "js", "py"]
+    "denyPatterns": [".env*", "*.key", "secrets/"]
   },
   "logging": {
     "format": "json",
@@ -381,7 +386,6 @@ All others have sensible defaults. See defaults below.
     "discoveryPatterns": ["**/"]
   },
   "indexing": {
-    "defaultBranches": ["main"],
     "maxFilesPerSnapshot": 5000,
     "enableLlmFeatureMapping": true
   },
@@ -411,7 +415,6 @@ Must be named `.indexer-config.json` in the repository root.
   "codebaseId": "texere",
   "trackedBranches": ["main", "develop", "snapshot-1"],
   "indexing": {
-    "languages": ["ts", "tsx"],
     "excludePatterns": ["node_modules/", "dist/", ".next/"],
     "includePatterns": ["src/**", "docs/**"],
     "enableLlmFeatureMapping": true
@@ -575,9 +578,7 @@ Final merged config
 
 ```json
 {
-  "indexing": {
-    "languages": ["ts", "tsx"]
-  },
+  "indexing": {},
   "security": {
     "denyPatterns": ["private/"]
   }
@@ -591,8 +592,7 @@ Final merged config
 ```json
 {
   "indexing": {
-    "enableLlmFeatureMapping": true,
-    "languages": ["ts", "tsx"]
+    "enableLlmFeatureMapping": true
   },
   "security": {
     "denyPatterns": [".env*", "*.key", "private/"]

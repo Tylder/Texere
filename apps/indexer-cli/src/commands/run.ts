@@ -2,14 +2,17 @@
  * @file 'indexer run' command implementation
  * @description Execute indexing across all configured codebases and branches
  * @reference cli_spec.md §6 (run command)
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §1–2 (recursive discovery pattern)
  */
 
-import { loadIndexerConfig } from '@repo/indexer-core';
+import { discoverConfigs } from '@repo/indexer-core';
 import { runTrackedBranches, generateDryRunPlan } from '@repo/indexer-ingest';
 import type { Logger } from '@repo/indexer-types';
 
 import { createLock, removeLock, getDaemonStatus } from '../daemon-lock.js';
 import { OutputHandler, type RunOutput } from '../output-formatter.js';
+
+type ValidationIssue = { message: string };
 
 export interface RunOptions {
   once?: boolean;
@@ -18,6 +21,7 @@ export interface RunOptions {
   dryRun?: boolean;
   force?: boolean;
   noFetch?: boolean;
+  noRecursive?: boolean;
   logFormat?: string;
   verbose?: boolean;
   quiet?: boolean;
@@ -106,11 +110,13 @@ function createLogger(format: string, verbose: boolean, quiet: boolean): Logger 
 /**
  * Handle run command
  * @reference cli_spec.md §6 (run command)
+ * @reference RECURSIVE_CONFIG_DISCOVERY.md §1–2 (recursive config discovery pattern)
  * @reference cli_spec.md §6.1–6.3 (validation rules, modes)
  *
  * Complex function handles multiple modes (once/daemon/detached) with validation rules,
- * daemon lifecycle, dry-run, logging, and error handling per cli_spec.md §6. Complexity
- * is intentional and necessary to orchestrate these concerns.
+ * daemon lifecycle, dry-run, logging, and error handling per cli_spec.md §6. Implements
+ * recursive config discovery (RECURSIVE_CONFIG_DISCOVERY.md §1). Complexity is intentional
+ * and necessary to orchestrate these concerns.
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export async function handleRun(options: RunOptions): Promise<number> {
@@ -149,17 +155,35 @@ export async function handleRun(options: RunOptions): Promise<number> {
       }
     }
 
-    // Load config
+    // Load config using recursive discovery
     let indexerConfig;
     try {
-      indexerConfig = loadIndexerConfig({
-        ...(options.config && { path: options.config }),
-        allowMissing: false,
-      });
+      const recursive = options.noRecursive !== true; // default: true
+      // Discover configs using unified pattern
+      // @reference RECURSIVE_CONFIG_DISCOVERY.md §1 (discovery pattern)
+      const discoveryOptions: Parameters<typeof discoverConfigs>[0] = {
+        recursive,
+        ...(options.config ? { configPath: options.config } : {}),
+      };
+      const discovered = discoverConfigs(discoveryOptions);
+      const discoveryErrors: ValidationIssue[] =
+        (discovered as unknown as { errors?: ValidationIssue[] }).errors ?? [];
+      if (discoveryErrors.length > 0) {
+        discoveryErrors.forEach((err) => logger.error(`Config error: ${err.message}`));
+        return 1;
+      }
+      indexerConfig = discovered.orchestrator.config;
     } catch (error) {
       logger.error(
         'Failed to load configuration',
         error instanceof Error ? { message: error.message } : { error: String(error) },
+      );
+      return 1;
+    }
+
+    if (!indexerConfig) {
+      logger.error(
+        'No orchestrator configuration found. Set INDEXER_CONFIG_PATH or pass --config.',
       );
       return 1;
     }
