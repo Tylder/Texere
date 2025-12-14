@@ -49,7 +49,7 @@ This is a code/test change task.
 - Note: These log files are automatically deleted when their respective scripts are closed.
 - Console shows full output; filtered logs remove noisy warnings/ANSI for agent use only.
 - While watchers run:
-  1. Read relevant specs first (especially `docs/specs/engineering/testing_strategy.md` and `docs/specs/engineering/testing_specification.md` if writing/editing tests); if unclear, ask numbered questions with lettered options (A recommended).
+  1. Read relevant specs first: linting (`docs/specs/engineering/eslint_code_quality.md`) and TypeScript (`docs/specs/engineering/typescript_configuration.md`); add testing specs (`docs/specs/engineering/testing_strategy.md`, `docs/specs/engineering/testing_specification.md`) if writing/editing tests. If unclear, ask numbered questions with lettered options (A recommended).
   2. Plan (with approval) before edits citing spec sections.
   3. Implement in small, deterministic units; fix issues surfaced in `logs/*.log` after each change.
   4. Add tests that reference the governing spec section in their descriptions (cite testing strategy §2.2–§4.4 and testing specification §3–§7 for test structure/patterns).
