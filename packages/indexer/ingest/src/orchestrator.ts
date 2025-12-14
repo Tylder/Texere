@@ -12,6 +12,7 @@
  */
 
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 import { loadIndexerConfig, findCodebaseConfig } from '@repo/indexer-core';
 import type {
@@ -124,6 +125,7 @@ export async function runSnapshot(args: {
   // Initialize default dependencies
   const git = deps.git || createGitClient();
   const logger = deps.logger || createDefaultLogger();
+  let repoRoot = codebaseRoot;
 
   logger.info('Starting snapshot indexing', {
     codebaseId,
@@ -137,20 +139,29 @@ export async function runSnapshot(args: {
     const indexerConfig = config || loadIndexerConfig({ allowMissing: true });
     const codebaseConfig = findCodebaseConfig(indexerConfig, codebaseId);
 
+    // Resolve repo root with cloneBasePath fallback
+    if (
+      !(await checkRepoExists(repoRoot)) &&
+      indexerConfig.cloneBasePath &&
+      codebaseConfig?.gitUrl
+    ) {
+      repoRoot = path.join(indexerConfig.cloneBasePath, codebaseId);
+    }
+
     // Optional: Clone repo if not present
     if (codebaseConfig?.gitUrl) {
-      const repoExists = await checkRepoExists(codebaseRoot);
+      const repoExists = await checkRepoExists(repoRoot);
       if (!repoExists) {
         logger.info('Repository not found, attempting clone', {
           gitUrl: codebaseConfig.gitUrl,
-          targetPath: codebaseRoot,
+          targetPath: repoRoot,
         });
         try {
           await git.clone({
             gitUrl: codebaseConfig.gitUrl,
-            targetPath: codebaseRoot,
+            targetPath: repoRoot,
           });
-          logger.info('Repository cloned successfully', { targetPath: codebaseRoot });
+          logger.info('Repository cloned successfully', { targetPath: repoRoot });
         } catch (error) {
           logger.error(
             'Failed to clone repository',
@@ -165,7 +176,7 @@ export async function runSnapshot(args: {
     if (shouldFetch) {
       logger.debug('Fetching latest commits from remote', { branch });
       try {
-        await git.fetch({ repoPath: codebaseRoot, ref: branch });
+        await git.fetch({ repoPath: repoRoot, ref: branch });
       } catch (error) {
         logger.warn(
           'Failed to fetch',
@@ -178,7 +189,7 @@ export async function runSnapshot(args: {
     // Resolve branch to snapshot
     const snapshotRef = await resolveSnapshotForBranch({
       codebaseId,
-      codebaseRoot,
+      codebaseRoot: repoRoot,
       branch,
       deps: { git },
     });
@@ -197,7 +208,7 @@ export async function runSnapshot(args: {
 
     // Compute changed files
     const changedFiles = await git.computeChangedFiles({
-      repoPath: codebaseRoot,
+      repoPath: repoRoot,
       commitHash: snapshotRef.commitHash,
       // First index uses full tree; later incremental
     });

@@ -143,6 +143,10 @@ export async function handleRun(options: RunOptions): Promise<number> {
         );
         return 2;
       }
+      if (!daemonStatus.running && daemonStatus.stalePid) {
+        console.warn(`Found stale daemon lock (PID ${daemonStatus.stalePid}); cleaning up.`);
+        removeLock();
+      }
     }
 
     // Load config
@@ -221,7 +225,7 @@ export async function handleRun(options: RunOptions): Promise<number> {
       }
     }
 
-    // Create lock for daemon modes
+    // Create lock for daemon modes (auto-cleans stale locks)
     if (mode === 'daemon' || mode === 'detached') {
       try {
         createLock(mode, options.config || process.env['INDEXER_CONFIG_PATH'] || '');

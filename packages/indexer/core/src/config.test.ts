@@ -52,6 +52,21 @@ describe('getDefaultConfig', () => {
 });
 
 // ============================================================================
+// 4. Config merging + discovery tests
+// ============================================================================
+
+describe('mergeConfigs (configuration_and_server_setup.md §8)', () => {
+  it('merges denyPatterns by union', () => {
+    const base = getDefaultConfig();
+    const merged = mergeConfigs(base, {
+      security: { denyPatterns: ['.env'] },
+    });
+
+    expect(merged.security?.denyPatterns).toContain('.env');
+  });
+});
+
+// ============================================================================
 // 2. Configuration File Loading Tests
 // ============================================================================
 

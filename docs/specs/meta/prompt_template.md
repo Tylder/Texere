@@ -48,12 +48,16 @@ This is a code/test change task.
 - **If `logs/typecheck.log` exists, the `typecheck:watch:log` watcher is running.** If missing, ask the user to run `pnpm typecheck:watch:log`.
 - Note: These log files are automatically deleted when their respective scripts are closed.
 - Console shows full output; filtered logs remove noisy warnings/ANSI for agent use only.
+- **Per-Edit Checklist (no exceptions unless the user explicitly says to skip):**
+  - After every file you modify (even within a multi-file batch), run `pnpm post:report:fast`.
+  - If `logs/dev.log` or `logs/typecheck.log` exist, read them and fix surfaced issues before the next edit.
+  - Confirm the fast gate is green before proceeding to further edits.
+- **Full Gate:** Run `pnpm post:report` once the change set is stable or before handoff/review; also run it early for cross-cutting or tooling changes (tsconfig/Nx/config/deps) where full lint/type/build coverage is needed.
 - While watchers run:
-  1. Read relevant specs first: linting (`docs/specs/engineering/eslint_code_quality.md`) and TypeScript (`docs/specs/engineering/typescript_configuration.md`); add testing specs (`docs/specs/engineering/testing_strategy.md`, `docs/specs/engineering/testing_specification.md`) if writing/editing tests. If unclear, ask numbered questions with lettered options (A recommended).
+  1. Read relevant specs first: linting (`docs/specs/engineering/eslint_code_quality.md`) and TypeScript (`docs/specs/engineering/typescript_configuration.md`); add testing specs (`docs/specs/engineering/testing_strategy.md`, `docs/specs/engineering/testing_specification.md`) if writing/editing tests. read `docs/specs/engineering/documentation_spec.md`. If unclear, ask numbered questions with lettered options (A recommended).
   2. Plan (with approval) before edits citing spec sections.
   3. Implement in small, deterministic units; fix issues surfaced in `logs/*.log` after each change.
   4. Add tests that reference the governing spec section in their descriptions (cite testing strategy §2.2–§4.4 and testing specification §3–§7 for test structure/patterns).
-- Run `pnpm post:report:fast` after your edits (fast gate: format + oxlint fix + typecheck + test:coverage). If time allows or before handoff, run full `pnpm post:report`. Do not request review until `post:report:fast` is clean or its failures are reported and addressed.
 - Summary with files touched and spec references.
 
 **Stop if:** Watchers not running, any test fails, spec is unclear, or design needs approval. Report immediately and ask user for next step.

@@ -48,4 +48,21 @@ describe('daemon lock management (cli_spec.md §12)', () => {
       daemonLock.removeLock();
     }).not.toThrow();
   });
+
+  it('should verify daemon lock interface types', () => {
+    // Test that getDaemonStatus returns the correct shape
+    const status = daemonLock.getDaemonStatus();
+
+    // Must have running property
+    expect(typeof status.running).toBe('boolean');
+
+    // May have optional pid and stalePid
+    if (status.pid !== undefined) {
+      expect(typeof status.pid).toBe('number');
+    }
+
+    if (status.stalePid !== undefined) {
+      expect(typeof status.stalePid).toBe('number');
+    }
+  });
 });

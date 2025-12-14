@@ -42,6 +42,12 @@ describe('Indexer CLI (cli_spec.md + plan.md Slice 1)', () => {
 
   describe('validate command (cli_spec.md §3)', () => {
     it('should return 0 when all configs are valid', async () => {
+      // Set required env vars for config loading
+      vi.stubEnv('NEO4J_URI', 'bolt://localhost:7687');
+      vi.stubEnv('NEO4J_USER', 'neo4j');
+      vi.stubEnv('NEO4J_PASSWORD', 'password');
+      vi.stubEnv('QDRANT_URL', 'http://localhost:6333');
+
       const exitCode = await handleValidate({
         logFormat: 'text',
       });
@@ -57,6 +63,12 @@ describe('Indexer CLI (cli_spec.md + plan.md Slice 1)', () => {
     });
 
     it('should support --log-format json', async () => {
+      // Set required env vars for config loading
+      vi.stubEnv('NEO4J_URI', 'bolt://localhost:7687');
+      vi.stubEnv('NEO4J_USER', 'neo4j');
+      vi.stubEnv('NEO4J_PASSWORD', 'password');
+      vi.stubEnv('QDRANT_URL', 'http://localhost:6333');
+
       const exitCode = await handleValidate({
         logFormat: 'json',
       });
@@ -64,6 +76,12 @@ describe('Indexer CLI (cli_spec.md + plan.md Slice 1)', () => {
     });
 
     it('should support --log-format text', async () => {
+      // Set required env vars for config loading
+      vi.stubEnv('NEO4J_URI', 'bolt://localhost:7687');
+      vi.stubEnv('NEO4J_USER', 'neo4j');
+      vi.stubEnv('NEO4J_PASSWORD', 'password');
+      vi.stubEnv('QDRANT_URL', 'http://localhost:6333');
+
       const exitCode = await handleValidate({
         logFormat: 'text',
       });
@@ -310,6 +328,12 @@ describe('Indexer CLI (cli_spec.md + plan.md Slice 1)', () => {
 
   describe('exit codes (cli_spec.md §6)', () => {
     it('should return 0 for success', async () => {
+      // Set required env vars for config loading
+      vi.stubEnv('NEO4J_URI', 'bolt://localhost:7687');
+      vi.stubEnv('NEO4J_USER', 'neo4j');
+      vi.stubEnv('NEO4J_PASSWORD', 'password');
+      vi.stubEnv('QDRANT_URL', 'http://localhost:6333');
+
       // validate should return 0 when configs are valid
       const exitCode = await handleValidate({ logFormat: 'text' });
       expect(exitCode).toBe(0);

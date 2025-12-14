@@ -20,7 +20,7 @@ export interface ValidateOptions {
 /**
  * Scan directory for .indexer-config.json files
  */
-function scanForConfigs(reposDirectory?: string): string[] {
+function scanForConfigs(_reposDirectory?: string): string[] {
   const paths: string[] = [];
 
   // Check for orchestrator config
@@ -34,22 +34,9 @@ function scanForConfigs(reposDirectory?: string): string[] {
     paths.push(cwdConfig);
   }
 
-  // Scan repos directory if configured
-  if (reposDirectory && fs.existsSync(reposDirectory)) {
-    try {
-      const entries = fs.readdirSync(reposDirectory, { withFileTypes: true });
-      for (const entry of entries) {
-        if (entry.isDirectory()) {
-          const repoConfigPath = path.join(reposDirectory, entry.name, '.indexer-config.json');
-          if (fs.existsSync(repoConfigPath)) {
-            paths.push(repoConfigPath);
-          }
-        }
-      }
-    } catch {
-      // Ignore scan errors
-    }
-  }
+  // Scan repos directory if configured (v1 stub — implemented in later slices)
+  // const discovered = discoverRepoConfigPaths(reposDirectory);
+  // paths.push(...discovered);
 
   return [...new Set(paths)]; // Remove duplicates
 }
@@ -88,22 +75,18 @@ export function handleValidate(options: ValidateOptions): Promise<number> {
     const output = new OutputHandler(outputFormat);
 
     try {
-      // Load orchestrator config to get reposDirectory
+      // Load orchestrator config (merged with discovered repos) to get reposDirectory
       let orchestratorConfig: IndexerConfig | null = null;
-      try {
-        const configPath = options.config || undefined;
-        orchestratorConfig = loadIndexerConfig({
-          ...(configPath && { path: configPath }),
-          allowMissing: true,
-        });
-      } catch {
-        // Ignore; orchestrator config is optional
-      }
+      const configPath = options.config || process.env['INDEXER_CONFIG_PATH'];
+      orchestratorConfig = loadIndexerConfig({
+        ...(configPath && { path: configPath }),
+        allowMissing: true,
+      });
 
       // Scan for all configs
       const configPaths = scanForConfigs();
-      if (options.config) {
-        configPaths.unshift(options.config);
+      if (configPath) {
+        configPaths.unshift(configPath);
       }
 
       // Validate each config

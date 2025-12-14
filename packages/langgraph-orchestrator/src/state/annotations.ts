@@ -3,6 +3,7 @@
  * Spec reference: langgraph_orchestrator_spec.md §5.1
  */
 import type { BaseMessage } from '@langchain/core/messages';
+
 import { Annotation } from '@langchain/langgraph';
 
 import type { ClassificationResult } from './classifier-types.js';

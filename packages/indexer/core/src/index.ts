@@ -30,6 +30,7 @@ export {
   mergeConfigs,
   validateDbConnections,
   sanitizeConfigForLogging,
+  discoverRepoConfigPaths,
 } from './config.js';
 
 // ============================================================================

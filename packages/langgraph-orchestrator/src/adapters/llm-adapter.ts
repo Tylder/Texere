@@ -3,6 +3,7 @@
  * Spec reference: langgraph_orchestrator_spec.md §10.1
  */
 import type { Runnable } from '@langchain/core/runnables';
+
 import { ChatOllama } from '@langchain/ollama';
 
 import { buildToolRegistry } from './tool-adapter.js';

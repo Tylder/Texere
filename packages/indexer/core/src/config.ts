@@ -68,8 +68,8 @@ function validateIndexerConfig(config: IndexerConfig): void {
     throw new Error('Missing required field: config.version');
   }
 
-  if (!config.codebases || !Array.isArray(config.codebases) || config.codebases.length === 0) {
-    throw new Error('Missing required field: config.codebases (non-empty array)');
+  if (!config.codebases || !Array.isArray(config.codebases)) {
+    throw new Error('Missing required field: config.codebases (array)');
   }
 
   for (const codebase of config.codebases) {
@@ -154,6 +154,7 @@ export function loadIndexerConfig(options?: {
   path?: string;
   repoRoot?: string;
   allowMissing?: boolean;
+  discoverRepos?: boolean;
 }): IndexerConfig {
   const configPath = resolveConfigPath(options?.path, options?.repoRoot);
 
@@ -169,7 +170,14 @@ export function loadIndexerConfig(options?: {
     );
   }
 
-  return parseConfigFile(configPath);
+  const baseConfig = parseConfigFile(configPath);
+
+  // Repo discovery (v1 stub — implemented in later slices)
+  if (options?.discoverRepos) {
+    // return mergeWithDiscoveredRepos(baseConfig);
+  }
+
+  return baseConfig;
 }
 
 /**
@@ -232,13 +240,27 @@ export function findCodebaseConfig(
  * @reference configuration_and_server_setup.md §8 (precedence merging)
  */
 export function mergeConfigs(base: IndexerConfig, override: Partial<IndexerConfig>): IndexerConfig {
+  const mergedDenyPatterns =
+    base.security?.denyPatterns || override.security?.denyPatterns
+      ? Array.from(
+          new Set([
+            ...(base.security?.denyPatterns || []),
+            ...(override.security?.denyPatterns || []),
+          ]),
+        )
+      : undefined;
+
   return {
     ...base,
     ...override,
     // Deep merge for nested objects
     graph: { ...base.graph, ...override.graph },
     vectors: { ...base.vectors, ...override.vectors },
-    security: { ...base.security, ...override.security },
+    security: {
+      ...base.security,
+      ...override.security,
+      ...(mergedDenyPatterns ? { denyPatterns: mergedDenyPatterns } : {}),
+    },
     embedding: { ...base.embedding, ...override.embedding },
     llm: { ...base.llm, ...override.llm },
     worker: { ...base.worker, ...override.worker },
@@ -285,4 +307,25 @@ export function sanitizeConfigForLogging(config: IndexerConfig): Record<string, 
     llmProvider: config.llm?.provider,
     workerType: config.worker?.type,
   };
+}
+
+/**
+ * Discover per-repo configs under a reposDirectory.
+ * Each .indexer-config.json contributes its codebases, overriding existing by ID.
+ * @reference configuration_and_server_setup.md §8 (per-repo discovery)
+ * @deprecated Implemented in later slices; stub for v1.
+ */
+export function discoverRepoConfigPaths(_reposDirectory?: string): string[] {
+  // Per-repo discovery v1 stub; to be implemented
+  return [];
+}
+
+/**
+ * Merge base config with any discovered per-repo configs.
+ * @deprecated Implemented in later slices; stub for v1.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function mergeWithDiscoveredRepos(baseConfig: IndexerConfig): IndexerConfig {
+  // Per-repo discovery v1 stub; to be implemented
+  return baseConfig;
 }

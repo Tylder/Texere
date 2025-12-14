@@ -88,7 +88,8 @@ export async function handleStatus(options: StatusOptions): Promise<number> {
 
     textOutput += 'Configuration\n';
     textOutput += `  Config Path: ${process.env['INDEXER_CONFIG_PATH'] || '.indexer-config.json'}\n`;
-    textOutput += `  Codebases: ${config.codebases.length}\n\n`;
+    textOutput += `  Codebases: ${config.codebases.length}\n`;
+    textOutput += '\n';
 
     // Determine readiness
     const hasBlockers = !neo4jStatus.connected || !qdrantStatus.connected;

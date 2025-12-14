@@ -693,6 +693,8 @@ export interface IndexerConfig {
   graph: GraphConfig;
   vectors: VectorConfig;
   cloneBasePath?: string; // Base directory for git clones if codebase root missing
+  reposDirectory?: string; // Base directory to auto-discover per-repo configs
+  repoPatterns?: string[]; // Glob patterns for discovery (v1 stub)
   security?: SecurityConfig;
   embedding?: EmbeddingConfig;
   llm?: LLMConfig;
