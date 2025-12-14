@@ -23,35 +23,66 @@ Provides a command-line interface for:
 
 ## Usage
 
+### Commands
+
 ```bash
-# Index a single branch
-indexer --repo my-repo --branch main --dry-run
+# Discover configured codebases and branches
+pnpm --filter @repo/indexer-cli dev:list
+pnpm --filter @repo/indexer-cli dev:list:verbose
 
-# Index all tracked branches
-indexer --repo my-repo --tracked-branches --dry-run
+# Check system status (daemon, database connectivity, readiness)
+pnpm --filter @repo/indexer-cli dev:status
 
-# Full index (writes to graph/vectors once slices 2–6 are complete)
-indexer --repo my-repo --branch main --force --fetch
+# Validate configuration files without running
+pnpm --filter @repo/indexer-cli dev:validate
 
-# Development mode
-pnpm --filter @repo/indexer-cli dev -- --repo my-repo --dry-run
+# Run indexing once (dry-run by default)
+pnpm --filter @repo/indexer-cli dev:run:once
+pnpm --filter @repo/indexer-cli dev:run:once:force  # Force reindex
+
+# Run as foreground daemon (for development/monitoring)
+pnpm --filter @repo/indexer-cli dev:run:daemon
+
+# Start background daemon
+pnpm --filter @repo/indexer-cli dev:run:detached
+
+# Stop daemon gracefully
+pnpm --filter @repo/indexer-cli dev:stop
 ```
 
-### Flags
+### Root-Level Convenience Commands
 
-| Flag                 | Description                                  | Default |
-| -------------------- | -------------------------------------------- | ------- |
-| `--repo <id>`        | Codebase ID from config (required)           | —       |
-| `--branch <name>`    | Branch to index                              | main    |
-| `--tracked-branches` | Index all tracked branches                   | false   |
-| `--dry-run`          | Output JSON plan without graph/vector writes | false   |
-| `--force`            | Reindex even if snapshot already cached      | false   |
-| `--fetch`            | Fetch latest from remote                     | true    |
-| `--no-fetch`         | Skip remote fetch                            | false   |
-| `--config <path>`    | Explicit config file path                    | —       |
-| `--log-format`       | Output format: `json` or `text`              | text    |
-| `--verbose`          | Enable debug logging                         | false   |
-| `--quiet`            | Suppress non-error output                    | false   |
+From the workspace root:
+
+```bash
+pnpm indexer:list         # Discover codebases
+pnpm indexer:status       # Check system readiness
+pnpm indexer:validate     # Validate configuration
+pnpm indexer:run          # Run once (dry-run mode)
+pnpm indexer:daemon       # Run as foreground daemon
+```
+
+### CLI Flags
+
+For all commands, use `--help` to see available flags:
+
+```bash
+pnpm --filter @repo/indexer-cli dev:help
+```
+
+| Flag                  | Description                                      | Default |
+| --------------------- | ------------------------------------------------ | ------- |
+| `--config <path>`     | Explicit config file path                        | auto    |
+| `--log-format`        | Output format: `json` or `text`                  | text    |
+| `--verbose`           | Enable debug logging                             | false   |
+| `--quiet`             | Suppress non-error output                        | false   |
+| `--dry-run`           | Generate plan without writing (run command only) | false   |
+| `--force`             | Reindex even if snapshot exists (run only)       | false   |
+| `--no-fetch`          | Skip fetching from remote (run only)             | false   |
+| `--once`              | Run once and exit (default run mode)             | true    |
+| `--daemon`            | Run as foreground daemon with streaming logs     | false   |
+| `--detached`          | Start background daemon (non-blocking)           | false   |
+| `--timeout <seconds>` | Graceful shutdown timeout (stop command only)    | 30      |
 
 ### Exit Codes
 
