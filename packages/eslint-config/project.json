@@ -4,6 +4,13 @@
   "sourceRoot": "packages/eslint-config",
   "projectType": "library",
   "targets": {
+    "check-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"skip type checking for eslint-config package (config-only)\""
+      },
+      "cache": false
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {
