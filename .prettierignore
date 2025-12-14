@@ -31,3 +31,4 @@ component-sources
 
 /.nx/cache
 /.nx/workspace-data
+**/.log
