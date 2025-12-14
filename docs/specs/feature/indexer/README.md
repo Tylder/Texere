@@ -23,6 +23,21 @@ historical context.
 
 ## Quick Navigation
 
+### Implementation Status – Phase 1 Complete ✓
+
+**Phase 1 (Config Schema Export)** is complete with:
+
+- ✓ Zod schemas for all configuration types
+- ✓ JSON Schema generation for IDE integration (IDE autocomplete/validation in VSCode)
+- ✓ Configuration reference guide with field documentation & examples
+- ✓ Comprehensive test coverage (49 tests, 100% schema coverage)
+
+**See:** [config-schema-cli-refactoring.md](./implementation/config-schema-cli-refactoring.md) for
+details.  
+**Next:** Phase 2 (CLI Code Audit) for reusable code extraction decisions.
+
+---
+
 ### Core Specifications (Active – Authoritative)
 
 | Document                                     | Purpose                                                                                                       |
@@ -156,12 +171,13 @@ details).
 
 ## Changelog
 
-| Date       | Version | Summary                                                                                                                                                                                |
-| ---------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2025-12-11 | 1.3     | Added **configuration_and_server_setup.md** (server config, per-repo discovery, CLI/API) and **documentation_indexing_spec.md** (3 doc sources, 14 linking strategies, generated docs) |
-| 2025-12-09 | 1.2     | Added **test_repository_spec.md** for TypeScript test app; updated navigation & implementation order to prioritize testing foundation                                                  |
-| 2025-12-08 | 1.1     | Restructured as navigation hub; moved detailed schema to placeholder specs; added quick summary & role-based navigation                                                                |
-| 2025-12-06 | 1.0     | Initial comprehensive spec (now split into focused documents)                                                                                                                          |
+| Date       | Version | Summary                                                                                                                                                                                                                                                      |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2025-12-14 | 1.4     | **Phase 1 Complete (Config Schema Export)**: Zod schemas, JSON Schema generation, IDE integration, configuration reference guide, and comprehensive test coverage. See [config-schema-cli-refactoring.md](./implementation/config-schema-cli-refactoring.md) |
+| 2025-12-11 | 1.3     | Added **configuration_and_server_setup.md** (server config, per-repo discovery, CLI/API) and **documentation_indexing_spec.md** (3 doc sources, 14 linking strategies, generated docs)                                                                       |
+| 2025-12-09 | 1.2     | Added **test_repository_spec.md** for TypeScript test app; updated navigation & implementation order to prioritize testing foundation                                                                                                                        |
+| 2025-12-08 | 1.1     | Restructured as navigation hub; moved detailed schema to placeholder specs; added quick summary & role-based navigation                                                                                                                                      |
+| 2025-12-06 | 1.0     | Initial comprehensive spec (now split into focused documents)                                                                                                                                                                                                |
 
 ---
 

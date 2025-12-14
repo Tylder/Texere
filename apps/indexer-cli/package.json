@@ -30,6 +30,7 @@
     "@repo/indexer-core": "workspace:*",
     "@repo/indexer-ingest": "workspace:*",
     "@repo/indexer-types": "workspace:*",
+    "@repo/indexer-utils": "workspace:*",
     "commander": "^14.0.2"
   },
   "devDependencies": {

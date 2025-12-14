@@ -5,8 +5,9 @@
  * @reference RECURSIVE_CONFIG_DISCOVERY.md §1–2 (recursive discovery pattern)
  */
 
+import { OutputHandler, type StopOutput } from '@repo/indexer-utils';
+
 import { readLock, removeLock, signalDaemon, waitForDaemonShutdown } from '../daemon-lock.js';
-import { OutputHandler, type StopOutput } from '../output-formatter.js';
 
 export interface StopOptions {
   force?: boolean;

@@ -4,10 +4,10 @@ import {
   type ValidationIssue,
   type EnvironmentProvider,
 } from '@repo/indexer-core';
+import { OutputHandler, TextFormatter, type StatusOutput } from '@repo/indexer-utils';
 
 import { getDaemonStatus } from '../daemon-lock.js';
 import { createFallbackEnvProvider } from '../env/fallback-env-provider.js';
-import { OutputHandler, TextFormatter, type StatusOutput } from '../output-formatter.js';
 
 export interface StatusOptions {
   noRecursive?: boolean;

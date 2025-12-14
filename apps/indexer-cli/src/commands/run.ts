@@ -8,9 +8,9 @@
 import { discoverConfigs } from '@repo/indexer-core';
 import { runTrackedBranches, generateDryRunPlan } from '@repo/indexer-ingest';
 import type { Logger } from '@repo/indexer-types';
+import { OutputHandler, type RunOutput } from '@repo/indexer-utils';
 
 import { createLock, removeLock, getDaemonStatus } from '../daemon-lock.js';
-import { OutputHandler, type RunOutput } from '../output-formatter.js';
 
 type ValidationIssue = { message: string };
 

@@ -2,6 +2,7 @@
  * @file Output Formatting for Text and JSON
  * @description Consistent output formatting across all CLI commands
  * @reference cli_spec.md §8 (output formats)
+ * @reference config-schema-cli-refactoring.md §4 (Phase 3: extracted to utils)
  */
 
 export type OutputFormat = 'json' | 'text';

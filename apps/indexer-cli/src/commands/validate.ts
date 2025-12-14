@@ -6,9 +6,9 @@
  */
 
 import { discoverConfigs, type DiscoveredConfigs } from '@repo/indexer-core';
+import { OutputHandler, TextFormatter, type ValidateOutput } from '@repo/indexer-utils';
 
 import { createFallbackEnvProvider } from '../env/fallback-env-provider.js';
-import { OutputHandler, TextFormatter, type ValidateOutput } from '../output-formatter.js';
 
 type ValidationIssue = {
   message: string;

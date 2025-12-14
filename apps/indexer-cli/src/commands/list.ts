@@ -5,9 +5,9 @@ import {
   type ValidationIssue,
 } from '@repo/indexer-core';
 import type { IndexerConfig } from '@repo/indexer-types';
+import { OutputHandler, TextFormatter, type ListOutput } from '@repo/indexer-utils';
 
 import { createFallbackEnvProvider } from '../env/fallback-env-provider.js';
-import { OutputHandler, TextFormatter, type ListOutput } from '../output-formatter.js';
 
 export interface ListOptions {
   noRecursive?: boolean;
