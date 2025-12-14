@@ -148,10 +148,6 @@ src/
     git-diff.ts             # Compute changed files (slice 1)
     git-files.ts            # Get file lists, metadata (slice 1)
     resolve-snapshot.ts     # Branch → commit (slice 1)
-  languages/
-    language-indexer.ts     # Interface definition
-    ts-indexer.ts           # TS/JS AST extraction (slice 2)
-    py-indexer.ts           # Python sidecar integration (slice 2+)
   extractors/
     boundaries.ts           # Express/FastAPI endpoint detection (slice 2)
     data-contracts.ts       # Prisma/SQL/Zod schema extraction (slice 4)

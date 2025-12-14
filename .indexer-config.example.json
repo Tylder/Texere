@@ -4,9 +4,7 @@
     {
       "id": "texere-indexer-test-repo",
       "root": "/home/anon/TexereIndexerRestRepo",
-      "trackedBranches": ["main"],
-      "languages": ["ts", "tsx", "js"],
-      "defaultBranch": "main"
+      "trackedBranches": ["main"]
     }
   ],
   "graph": {
