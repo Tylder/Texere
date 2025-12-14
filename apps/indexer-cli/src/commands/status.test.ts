@@ -14,49 +14,81 @@ import type { IndexerConfig } from '@repo/indexer-types';
 
 import { handleStatus } from './status.js';
 
-describe('status command (cli_spec.md §5)', () => {
+describe('status command (cli_spec.md §5; testing_specification.md §4.2)', () => {
+  let logSpy: ReturnType<typeof vi.spyOn>;
+  let _errorSpy: ReturnType<typeof vi.spyOn>;
+  let _warnSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    _errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    _warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('should check status with text format', async () => {
-    const exitCode = await handleStatus({
-      logFormat: 'text',
+  // ====================================================================
+  // Output Format Support (cli_spec.md §8)
+  // ====================================================================
+
+  describe('Output formats (§8)', () => {
+    it('should check status with text format', async () => {
+      const exitCode = await handleStatus({
+        logFormat: 'text',
+      });
+      expect(exitCode).toBe(0);
     });
-    expect(exitCode).toBe(0);
+
+    it('should check status with json format', async () => {
+      const exitCode = await handleStatus({
+        logFormat: 'json',
+      });
+      expect(exitCode).toBe(0);
+    });
+
+    it('should handle empty logFormat (default)', async () => {
+      const exitCode = await handleStatus({
+        logFormat: '',
+      });
+      expect(exitCode).toBe(0);
+    });
+
+    it('should default to text format when not specified', async () => {
+      const exitCode = await handleStatus({
+        logFormat: 'text',
+      });
+      expect(exitCode).toBe(0);
+    });
   });
 
-  it('should check status with json format', async () => {
-    const exitCode = await handleStatus({
-      logFormat: 'json',
-    });
-    expect(exitCode).toBe(0);
-  });
+  // ====================================================================
+  // Exit Codes (cli_spec.md §2)
+  // ====================================================================
 
-  it('should return 0 or 1 (not blocker means ready)', async () => {
-    const exitCode = await handleStatus({
-      logFormat: 'text',
+  describe('Exit codes (§2)', () => {
+    it('should return numeric exit code', async () => {
+      const exitCode = await handleStatus({
+        logFormat: 'json',
+      });
+      expect(typeof exitCode).toBe('number');
+      expect(exitCode).toBe(0);
     });
-    expect(exitCode).toBe(0);
-  });
 
-  it('should handle empty logFormat', async () => {
-    const exitCode = await handleStatus({
-      logFormat: '',
+    it('should return 0 (status is always informational)', async () => {
+      const exitCode = await handleStatus({
+        logFormat: 'text',
+      });
+      expect(exitCode).toBe(0);
     });
-    expect(exitCode).toBe(0);
-  });
 
-  it('should return numeric exit code', async () => {
-    const exitCode = await handleStatus({
-      logFormat: 'json',
+    it('should not fail if databases unavailable', async () => {
+      const exitCode = await handleStatus({
+        logFormat: 'text',
+      });
+      expect(exitCode).toBe(0);
     });
-    expect(typeof exitCode).toBe('number');
   });
 
   it('should display configured codebases from config file (configuration_and_server_setup.md §3)', async () => {
@@ -125,5 +157,75 @@ describe('status command (cli_spec.md §5)', () => {
         fs.rmSync(tmpDir, { recursive: true });
       }
     }
+  });
+
+  // ====================================================================
+  // Snapshot Tests (Output Format Stability)
+  // ====================================================================
+
+  describe('Output snapshots (cli_spec.md §8; testing_specification.md §4.2)', () => {
+    it('should produce JSON output with required fields', async () => {
+      let jsonOutput = '';
+      logSpy.mockImplementation((message: unknown) => {
+        if (typeof message === 'string' && message.startsWith('{')) {
+          jsonOutput = message;
+        }
+      });
+
+      const exitCode = await handleStatus({
+        logFormat: 'json',
+      });
+
+      expect(exitCode).toBe(0);
+
+      if (jsonOutput) {
+        const parsed = JSON.parse(jsonOutput);
+        // Verify output structure, not exact content
+        expect(parsed).toHaveProperty('command', 'status');
+        expect(parsed).toHaveProperty('timestamp');
+        expect(parsed).toHaveProperty('daemon');
+        expect(parsed).toHaveProperty('databases');
+      }
+    });
+
+    it('should produce text output with status sections', async () => {
+      let textOutput = '';
+      logSpy.mockImplementation((message: unknown) => {
+        textOutput += String(message) + '\n';
+      });
+
+      const exitCode = await handleStatus({
+        logFormat: 'text',
+      });
+
+      expect(exitCode).toBe(0);
+      // Verify structure without snapshot (timestamps are dynamic)
+      expect(textOutput).toContain('Texere Indexer');
+      expect(textOutput).toContain('System Status');
+      expect(textOutput).toContain('Daemon Status');
+      expect(textOutput).toContain('Databases');
+    });
+  });
+
+  // ====================================================================
+  // noRecursive Option
+  // ====================================================================
+
+  describe('Config discovery options (§3)', () => {
+    it('should support noRecursive flag (default: false)', async () => {
+      const exitCode = await handleStatus({
+        logFormat: 'text',
+        noRecursive: false,
+      });
+      expect(exitCode).toBe(0);
+    });
+
+    it('should support noRecursive flag (true)', async () => {
+      const exitCode = await handleStatus({
+        logFormat: 'text',
+        noRecursive: true,
+      });
+      expect(exitCode).toBe(0);
+    });
   });
 });

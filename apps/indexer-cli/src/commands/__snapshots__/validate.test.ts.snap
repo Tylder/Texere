@@ -1,0 +1,26 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`validate command (cli_spec.md §3) > Output format snapshots (§4.2) > should produce consistent JSON output structure > validate-json-output 1`] = `
+{
+  "command": "validate",
+  "configs": [
+    {
+      "path": "/home/anon/Texere/.indexer-config.json",
+      "status": "valid",
+      "type": "orchestrator",
+    },
+    {
+      "codebaseId": "texere-indexer-test-repo",
+      "path": "/home/anon/TexereIndexerRestRepo/.indexer-config.json",
+      "status": "valid",
+      "type": "per-repo",
+    },
+  ],
+  "summary": {
+    "invalid": 0,
+    "total": 2,
+    "valid": 2,
+  },
+  "timestamp": "[timestamp]",
+}
+`;

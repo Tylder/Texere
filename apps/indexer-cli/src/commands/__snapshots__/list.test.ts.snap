@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`list command (cli_spec.md §4; testing_specification.md §4.2) > Output format snapshots (§4.2) > should produce consistent JSON output structure > list-json-output 1`] = `
+{
+  "codebases": [
+    {
+      "branches": [
+        {
+          "name": "main",
+          "status": "not indexed",
+        },
+      ],
+      "id": "texere-indexer-test-repo",
+      "root": "/home/anon/TexereIndexerRestRepo",
+    },
+  ],
+  "command": "list",
+  "summary": {
+    "indexed": 0,
+    "pending": 1,
+    "total": 1,
+  },
+  "timestamp": "[timestamp]",
+}
+`;

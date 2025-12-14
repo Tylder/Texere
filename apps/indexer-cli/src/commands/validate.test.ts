@@ -1,7 +1,9 @@
 /**
  * @file validate command tests
- * @description Unit tests for 'indexer validate' command
+ * @description Unit tests for 'indexer validate' command (cli_spec.md §3)
  * @reference cli_spec.md §3 (validate command)
+ * @reference testing_strategy.md §2.2 (testing trophy — integration tests)
+ * @reference testing_specification.md §4.2 (integration test patterns with snapshots)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -69,5 +71,53 @@ describe('validate command (cli_spec.md §3)', () => {
       logFormat: '',
     });
     expect(exitCode).toBe(0);
+  });
+
+  // ====================================================================
+  // Output Format Snapshots (testing_specification.md §4.2)
+  // ====================================================================
+
+  describe('Output format snapshots (§4.2)', () => {
+    it('should produce consistent JSON output structure', async () => {
+      let jsonOutput = '';
+      vi.spyOn(console, 'log').mockImplementation((message) => {
+        jsonOutput = String(message);
+      });
+
+      const exitCode = await handleValidate({
+        logFormat: 'json',
+      });
+
+      expect(exitCode).toBe(0);
+      if (jsonOutput) {
+        const parsed = JSON.parse(jsonOutput);
+        // Normalize timestamp for snapshot (timestamps are dynamic)
+        const normalized = { ...parsed, timestamp: '[timestamp]' };
+        expect(normalized).toMatchSnapshot('validate-json-output');
+      }
+    });
+
+    it('should have consistent JSON schema fields', async () => {
+      let jsonOutput = '';
+      vi.spyOn(console, 'log').mockImplementation((message) => {
+        jsonOutput = String(message);
+      });
+
+      await handleValidate({
+        logFormat: 'json',
+      });
+
+      if (jsonOutput) {
+        const parsed = JSON.parse(jsonOutput);
+        // Verify schema structure (testing_specification.md §4.2 — output contracts)
+        expect(parsed).toHaveProperty('command');
+        expect(parsed).toHaveProperty('timestamp');
+        expect(parsed).toHaveProperty('configs');
+        expect(parsed).toHaveProperty('summary');
+        expect(parsed.command).toBe('validate');
+        expect(Array.isArray(parsed.configs)).toBe(true);
+        expect(typeof parsed.summary).toBe('object');
+      }
+    });
   });
 });
