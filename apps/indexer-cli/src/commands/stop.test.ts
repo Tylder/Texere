@@ -104,10 +104,12 @@ describe('stop command (cli_spec.md §7)', () => {
     });
 
     it('should use custom timeout value', async () => {
-      vi.spyOn(daemonLock, 'waitForDaemonShutdown').mockImplementation((pid, timeoutMs) => {
-        expect(timeoutMs).toBe(10000); // 10 seconds
-        return Promise.resolve(false);
-      });
+      vi.spyOn(daemonLock, 'waitForDaemonShutdown').mockImplementation(
+        (pid: number, timeoutMs: number) => {
+          expect(timeoutMs).toBe(10000); // 10 seconds
+          return Promise.resolve(false);
+        },
+      );
       await handleStop({ timeout: '10', logFormat: 'text' });
     });
 

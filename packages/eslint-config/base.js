@@ -53,6 +53,17 @@ export const config = tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
   {
+    // Test files use separate tsconfig.spec.json (not in project references per Nx guidance)
+    // ESLint's projectService cannot resolve them automatically, so disable type checking
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+      },
+    },
+    ...tseslint.configs.disableTypeChecked,
+  },
+  {
     // Test files: relax unsafe type rules as per spec (eslint_code_quality.md §3.2)
     files: ['**/*.{test,spec}.{ts,tsx}'],
     rules: {

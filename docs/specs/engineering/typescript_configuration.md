@@ -128,7 +128,7 @@ graph + IDE perf; no glob includes.
 
 ### 3.1a Package.json `check-types` Script (Per-Package)
 
-Each package must use **`tsc --build`** to validate all project references (lib + spec configs):
+Each package must use **`tsc --build`** to validate the project graph (lib + spec configs):
 
 ```json
 {
@@ -140,7 +140,8 @@ Each package must use **`tsc --build`** to validate all project references (lib 
 
 **Why `--build` instead of `--noEmit -p tsconfig.json`:**
 
-- ✅ Respects project references (validates `tsconfig.lib.json` AND `tsconfig.spec.json`)
+- ✅ Validates both `tsconfig.lib.json` (composite, in references) and `tsconfig.spec.json`
+  (type-checked alongside lib)
 - ✅ TypeScript official pattern (see
   [Project References handbook](https://www.typescriptlang.org/docs/handbook/project-references.html))
 - ✅ Incremental builds with `.tsbuildinfo` caching
@@ -240,7 +241,8 @@ libraries). (Refs: TypeScript moduleResolution docs
 - Extend `@repo/typescript-config/node-library.json`.
 - File layout per package:
   - `tsconfig.base.json`: extends the shared preset (Node/React/Next); holds compiler options.
-  - `tsconfig.json`: references only (`./tsconfig.lib.json`, `./tsconfig.spec.json`).
+  - `tsconfig.json`: references only (`./tsconfig.lib.json`); spec is not referenced as a project
+    (Nx guidance: spec configs are "leaves" and don't need to be in the project graph).
   - `tsconfig.lib.json`: src build + typecheck (`rootDir: src`, `outDir: dist`,
     `noEmitOnError: true`), extends `tsconfig.base.json`.
   - `tsconfig.spec.json`: tests (`types: ["vitest/globals", "node"]`, includes test globs), extends
@@ -258,16 +260,20 @@ libraries). (Refs: TypeScript moduleResolution docs
 - `tsconfig.json` stays tiny → faster Nx project graph hashing/parsing and cleaner IDE startup.
 - `tsconfig.base.json` holds compiler options (extends shared preset) so other configs don’t inherit
   references.
-- `tsconfig.lib.json` isolates emit settings (`rootDir`, `outDir`, `noEmitOnError`, NodeNext
-  resolution) so declaration output matches runtime without test-only globals; extends
-  `tsconfig.base.json`.
-- `tsconfig.spec.json` carries test-only types (e.g., `vitest/globals`, DOM) without leaking into
-  the published surface, reducing false positives and keeping d.ts clean; extends
-  `tsconfig.base.json`.
+- `tsconfig.lib.json` is **composite** and included in `tsconfig.json` references, allowing
+  `tsc --build` to incrementally track library outputs via `.tsbuildinfo`. Isolates emit settings
+  (`rootDir`, `outDir`, `noEmitOnError`, NodeNext resolution) so declaration output matches runtime
+  without test-only globals; extends `tsconfig.base.json`.
+- `tsconfig.spec.json` is a **leaf config** (not referenced as a project, not composite). Carries
+  test-only types (e.g., `vitest/globals`) without leaking into the published surface, reducing
+  false positives and keeping d.ts clean; extends `tsconfig.base.json`. Per Nx project linking
+  guidance: "The project's `tsconfig.spec.json` does not need to reference project dependencies."
+  (Ref:
+  [Nx TypeScript Project Linking](https://nx.dev/concepts/typescript-project-linking#individual-project-typescript-configuration))
 - Aligns with Nx generators/migrations (`@nx/js` + Vitest) which expect a lib/spec split; avoids
   future migration churn.
-- Clear separation of concerns: build ≠ tests; editors load both via references, so test files are
-  typed correctly while builds remain strict and lean.
+- Clear separation of concerns: build ≠ tests; only lib emits; spec files are type-checked by
+  `tsc --build` but remain part of the development-only lifecycle.
 
 **Test placement & examples:** tests must be colocated (`*.test.ts[x]`) and include spec references
 in describe blocks (e.g., `describe('Button (testing_specification §3.6.1)', ...)`). Ensure new
