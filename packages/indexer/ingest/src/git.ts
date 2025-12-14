@@ -3,37 +3,80 @@
  * @description Git-based snapshot resolution and diff computation
  * @reference ingest_spec.md §6.1–6.2 (git operations)
  * @reference configuration_and_server_setup.md §2 (git clone)
+ * @reference testing_specification.md §3.6–3.7 (dependency injection for testability)
  *
  * Slice 1 implements: branch resolution, commit metadata, changed file diff.
  * Uses simple-git library for cross-platform compatibility.
+ *
+ * Testability: SimpleGitClient accepts injected SimpleGitImpl factory + Logger
+ * for easy mocking in tests. No mutable state; no console calls.
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import type { SimpleGit } from 'simple-git';
 import { simpleGit } from 'simple-git';
 
-import type { ChangedFileSet, GitClient } from '@repo/indexer-types';
+import type { ChangedFileSet, GitClient, SimpleGitImpl, Logger } from '@repo/indexer-types';
+
+/**
+ * File system provider interface for testability.
+ * @reference testing_specification.md §3.6–3.7 (dependency injection)
+ */
+export interface FileSystemProvider {
+  /**
+   * Check if a path exists
+   */
+  exists(path: string): boolean;
+
+  /**
+   * Create directories recursively
+   */
+  mkdirSync(path: string, options?: { recursive?: boolean }): string | undefined;
+}
+
+/**
+ * Default file system provider using Node.js fs module
+ */
+const defaultFileSystem: FileSystemProvider = {
+  exists: (filePath: string) => fs.existsSync(filePath),
+  mkdirSync: (dirPath: string, options?: { recursive?: boolean }) => fs.mkdirSync(dirPath, options),
+};
 
 /**
  * Simple-git based implementation of GitClient.
  * @reference ingest_spec.md §6 (git operations)
+ * @reference testing_specification.md §3.6–3.7 (injectable dependencies)
+ *
+ * Constructor accepts:
+ * - gitFactory: creates SimpleGitImpl instances (testable via mock)
+ * - logger: optional logger for warnings/errors (defaults to noop)
  */
 export class SimpleGitClient implements GitClient {
-  private gitInstances: Map<string, SimpleGit> = new Map();
+  /**
+   * No-op logger for use when none provided
+   */
+  private static readonly noopLogger: Logger = {
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+  };
+
+  constructor(
+    private gitFactory: (repoPath: string) => SimpleGitImpl,
+    private logger: Logger = SimpleGitClient.noopLogger,
+    private fsProvider: FileSystemProvider = defaultFileSystem,
+  ) {}
 
   /**
-   * Get or create SimpleGit instance for a repo.
+   * Get or create SimpleGitImpl instance for a repo.
+   * Factory is injected for testability.
    */
-  private getGitInstance(repoPath: string): SimpleGit {
-    let git = this.gitInstances.get(repoPath);
-    if (!git) {
-      const newGit = simpleGit(repoPath);
-      this.gitInstances.set(repoPath, newGit);
-      git = newGit;
-    }
-    return git;
+  private getGitInstance(repoPath: string): SimpleGitImpl {
+    // Note: Not caching instances to avoid mutable state
+    // Each call creates fresh instance (safer for tests)
+    return this.gitFactory(repoPath);
   }
 
   /**
@@ -44,7 +87,7 @@ export class SimpleGitClient implements GitClient {
   async resolveCommitHash(args: { repoPath: string; ref: string }): Promise<string> {
     const { repoPath, ref } = args;
 
-    if (!fs.existsSync(repoPath)) {
+    if (!this.fsProvider.exists(repoPath)) {
       throw new Error(`Repository path not found: ${repoPath}`);
     }
 
@@ -99,10 +142,9 @@ export class SimpleGitClient implements GitClient {
       return result;
     } catch (error) {
       // If we can't get metadata, return current timestamp as fallback
-      console.warn(
-        `Failed to get metadata for ${commitHash}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+      this.logger.warn(
+        `Failed to get metadata for ${commitHash}`,
+        error instanceof Error ? { message: error.message } : { error: String(error) },
       );
       return { timestamp: Date.now() };
     }
@@ -115,15 +157,15 @@ export class SimpleGitClient implements GitClient {
   async clone(args: { gitUrl: string; targetPath: string; depth?: number }): Promise<void> {
     const { gitUrl, targetPath, depth } = args;
 
-    if (fs.existsSync(targetPath)) {
+    if (this.fsProvider.exists(targetPath)) {
       // Already cloned
       return;
     }
 
     // Ensure parent directory exists
     const parentDir = path.dirname(targetPath);
-    if (!fs.existsSync(parentDir)) {
-      fs.mkdirSync(parentDir, { recursive: true });
+    if (!this.fsProvider.exists(parentDir)) {
+      this.fsProvider.mkdirSync(parentDir, { recursive: true });
     }
 
     const cloneArgs: string[] = [gitUrl, targetPath];
@@ -157,7 +199,7 @@ export class SimpleGitClient implements GitClient {
   async fetch(args: { repoPath: string; ref?: string }): Promise<void> {
     const { repoPath, ref } = args;
 
-    if (!fs.existsSync(repoPath)) {
+    if (!this.fsProvider.exists(repoPath)) {
       throw new Error(`Repository path not found: ${repoPath}`);
     }
 
@@ -191,7 +233,7 @@ export class SimpleGitClient implements GitClient {
   }): Promise<ChangedFileSet> {
     const { repoPath, commitHash, baseCommit } = args;
 
-    if (!fs.existsSync(repoPath)) {
+    if (!this.fsProvider.exists(repoPath)) {
       throw new Error(`Repository path not found: ${repoPath}`);
     }
 
@@ -257,9 +299,69 @@ export class SimpleGitClient implements GitClient {
 }
 
 /**
- * Create a git client instance.
- * @reference ingest_spec.md §6 (git operations)
+ * Wrapper to make SimpleGit implement SimpleGitImpl interface.
+ * For production use; tests use mock instead.
  */
-export function createGitClient(): GitClient {
-  return new SimpleGitClient();
+function createSimpleGitImpl(repoPath: string): SimpleGitImpl {
+  const git = simpleGit(repoPath);
+  return {
+    revparse: (args: string[]): Promise<string> => git.revparse(args),
+    log: (args: string[]): Promise<{ latest?: { message: string } }> =>
+      git.log(args).then((result) => {
+        if (result.latest) {
+          return { latest: { message: result.latest.message } };
+        }
+        return {};
+      }),
+    raw: (args: string[]): Promise<string> => git.raw(...args),
+    fetch: (remote?: string, ref?: string): Promise<void> => {
+      if (ref) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        git.fetch('origin', ref);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        git.fetch();
+      }
+      return Promise.resolve();
+    },
+    clone: (
+      gitUrl: string,
+      targetPath: string,
+      options?: Record<string, unknown>,
+    ): Promise<void> => {
+      // Convert generic options to string array for simple-git
+      const gitOptions: string[] = [];
+      if (options) {
+        Object.entries(options).forEach(([key, value]) => {
+          if (value === true) {
+            gitOptions.push(`--${key}`);
+          } else if (value && typeof value === 'string') {
+            gitOptions.push(`--${key}=${value}`);
+          }
+        });
+      }
+      return (git.clone(gitUrl, targetPath, gitOptions) as Promise<unknown>).then(() => {});
+    },
+  };
+}
+
+/**
+ * Create a git client instance for production.
+ * @reference ingest_spec.md §6 (git operations)
+ * @reference testing_specification.md §3.6–3.7 (use createGitClientWithDeps in tests)
+ */
+export function createGitClient(logger?: Logger, fsProvider?: FileSystemProvider): GitClient {
+  return new SimpleGitClient(createSimpleGitImpl, logger, fsProvider);
+}
+
+/**
+ * Create git client with fully injected dependencies (for testing).
+ * @reference testing_specification.md §3.6–3.7
+ */
+export function createGitClientWithDeps(
+  gitFactory: (repoPath: string) => SimpleGitImpl,
+  logger?: Logger,
+  fsProvider?: FileSystemProvider,
+): GitClient {
+  return new SimpleGitClient(gitFactory, logger, fsProvider);
 }

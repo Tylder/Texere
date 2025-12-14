@@ -16,13 +16,36 @@ import * as path from 'node:path';
 import type { IndexerConfig, CodebaseConfig } from '@repo/indexer-types';
 
 /**
+ * Environment variable provider interface for testability.
+ * @reference testing_specification.md §3.6–3.7 (dependency injection)
+ */
+export interface EnvironmentProvider {
+  /**
+   * Get an environment variable value.
+   * @returns The value or undefined if not found
+   */
+  get(varName: string): string | undefined;
+}
+
+/**
+ * Default environment provider using process.env.
+ */
+const defaultEnvProvider: EnvironmentProvider = {
+  get: (varName: string): string | undefined => process.env[varName],
+};
+
+/**
  * Environment variable substitution patterns.
  * Supports ${VAR_NAME} syntax in config JSON.
  * @reference configuration_spec.md §2 (env var substitution)
+ * @reference testing_specification.md §3.6–3.7 (injectable env provider)
  */
-function expandEnvVars(text: string): string {
+export function expandEnvVars(
+  text: string,
+  envProvider: EnvironmentProvider = defaultEnvProvider,
+): string {
   return text.replace(/\$\{([^}]+)\}/g, (match: string, varName: string) => {
-    const value = process.env[varName];
+    const value = envProvider.get(varName);
     if (!value) {
       throw new Error(
         `Environment variable not found: ${varName} (referenced in config: ${match})`,
@@ -36,14 +59,18 @@ function expandEnvVars(text: string): string {
  * Parse and validate JSON config file.
  * Performs env var substitution before parsing.
  * @reference configuration_spec.md §1 (file format)
+ * @reference testing_specification.md §3.6–3.7 (injectable dependencies)
  */
-function parseConfigFile(filePath: string): IndexerConfig {
+export function parseConfigFile(
+  filePath: string,
+  envProvider: EnvironmentProvider = defaultEnvProvider,
+): IndexerConfig {
   if (!fs.existsSync(filePath)) {
     throw new Error(`Configuration file not found: ${filePath}`);
   }
 
   const fileContents = fs.readFileSync(filePath, 'utf-8');
-  const expandedContents = expandEnvVars(fileContents);
+  const expandedContents = expandEnvVars(fileContents, envProvider);
 
   try {
     const config = JSON.parse(expandedContents) as IndexerConfig;
@@ -100,37 +127,79 @@ function validateIndexerConfig(config: IndexerConfig): void {
 }
 
 /**
+ * File system interface for dependency injection in tests.
+ * @reference testing_specification.md §3 (dependency injection for testability)
+ */
+export interface FileSystemProvider {
+  exists(filePath: string): boolean;
+  dirname(filePath: string): string;
+}
+
+/**
+ * Default file system provider using Node.js fs module.
+ */
+const defaultFileSystem: FileSystemProvider = {
+  exists: (filePath: string) => fs.existsSync(filePath),
+  dirname: (filePath: string) => path.dirname(filePath),
+};
+
+/**
  * Resolve config file path with fallback precedence.
  * @reference configuration_and_server_setup.md §8 (precedence)
+ * @reference testing_specification.md §3 (dependency injection for testability)
  *
  * Precedence:
  * 1. Explicit path argument
  * 2. INDEXER_CONFIG_PATH env var
- * 3. .indexer-config.json in current working dir
+ * 3. Walk up directory tree from cwd looking for .indexer-config.json
  * 4. .indexer-config.json in specified repo root (for per-repo discovery)
+ *
+ * @param explicitPath - Explicit config file path (highest priority)
+ * @param repoRoot - Repository root for per-repo config discovery
+ * @param currentDir - Current working directory (defaults to process.cwd(); can be overridden in tests)
+ * @param fsProvider - File system provider (defaults to Node.js fs; can be mocked in tests)
+ * @param envProvider - Environment provider (defaults to process.env; can be mocked in tests)
  */
-function resolveConfigPath(explicitPath?: string, repoRoot?: string): string | null {
+function resolveConfigPath(
+  explicitPath?: string,
+  repoRoot?: string,
+  currentDir?: string,
+  fsProvider: FileSystemProvider = defaultFileSystem,
+  envProvider: EnvironmentProvider = defaultEnvProvider,
+): string | null {
   // 1. Explicit path takes highest priority
   if (explicitPath) {
     return explicitPath;
   }
 
   // 2. Check INDEXER_CONFIG_PATH env var
-  const envConfigPath = process.env['INDEXER_CONFIG_PATH'];
+  const envConfigPath = envProvider.get('INDEXER_CONFIG_PATH');
   if (envConfigPath) {
     return envConfigPath;
   }
 
-  // 3. Check cwd for .indexer-config.json
-  const cwdConfigPath = path.join(process.cwd(), '.indexer-config.json');
-  if (fs.existsSync(cwdConfigPath)) {
-    return cwdConfigPath;
+  // 3. Walk up directory tree from current directory
+  // This handles the case where CLI is run from a subdirectory (e.g., apps/indexer-cli)
+  let dir = currentDir || process.cwd();
+
+  while (true) {
+    const configPath = path.join(dir, '.indexer-config.json');
+    if (fsProvider.exists(configPath)) {
+      return configPath;
+    }
+
+    const parent = fsProvider.dirname(dir);
+    if (parent === dir) {
+      // Reached filesystem root
+      break;
+    }
+    dir = parent;
   }
 
-  // 4. Check repo root for per-repo config
-  if (repoRoot && fs.existsSync(repoRoot)) {
+  // 4. Check repo root for per-repo config (fallback)
+  if (repoRoot && fsProvider.exists(repoRoot)) {
     const repoConfigPath = path.join(repoRoot, '.indexer-config.json');
-    if (fs.existsSync(repoConfigPath)) {
+    if (fsProvider.exists(repoConfigPath)) {
       return repoConfigPath;
     }
   }
@@ -143,10 +212,13 @@ function resolveConfigPath(explicitPath?: string, repoRoot?: string): string | n
  * Load indexer configuration from file.
  * Implements full precedence hierarchy with fallback to defaults.
  * @reference configuration_and_server_setup.md §8 (config loading)
+ * @reference testing_specification.md §3.6–3.7 (injectable dependencies)
  *
  * @param options.path - Explicit config file path (highest priority)
  * @param options.repoRoot - Repository root for per-repo config discovery
  * @param options.allowMissing - If true, return defaults when no file found (default: false)
+ * @param options.envProvider - Environment variable provider (for testing; default: process.env)
+ * @param options.fsProvider - File system provider (for testing; default: Node.js fs)
  * @returns Parsed and validated IndexerConfig
  * @throws Error if config file not found or validation fails
  */
@@ -155,12 +227,20 @@ export function loadIndexerConfig(options?: {
   repoRoot?: string;
   allowMissing?: boolean;
   discoverRepos?: boolean;
+  envProvider?: EnvironmentProvider;
+  fsProvider?: FileSystemProvider;
 }): IndexerConfig {
-  const configPath = resolveConfigPath(options?.path, options?.repoRoot);
+  const configPath = resolveConfigPath(
+    options?.path,
+    options?.repoRoot,
+    undefined,
+    options?.fsProvider,
+    options?.envProvider,
+  );
 
   if (!configPath) {
     if (options?.allowMissing) {
-      return getDefaultConfig();
+      return getDefaultConfig(options?.envProvider);
     }
     throw new Error(
       'No configuration file found. ' +
@@ -170,7 +250,7 @@ export function loadIndexerConfig(options?: {
     );
   }
 
-  const baseConfig = parseConfigFile(configPath);
+  const baseConfig = parseConfigFile(configPath, options?.envProvider);
 
   // Repo discovery (v1 stub — implemented in later slices)
   if (options?.discoverRepos) {
@@ -184,18 +264,23 @@ export function loadIndexerConfig(options?: {
  * Get default configuration (hardcoded fallback).
  * Used when no config file is found and allowMissing=true.
  * @reference configuration_spec.md §1 (schema defaults)
+ * @reference testing_specification.md §3.6–3.7 (injectable environment provider)
+ *
+ * @param envProvider - Environment variable provider (for testing; default: process.env)
  */
-export function getDefaultConfig(): IndexerConfig {
+export function getDefaultConfig(
+  envProvider: EnvironmentProvider = defaultEnvProvider,
+): IndexerConfig {
   return {
     version: '1.0',
     codebases: [],
     graph: {
-      neo4jUri: process.env['NEO4J_URI'] || 'bolt://localhost:7687',
-      neo4jUser: process.env['NEO4J_USER'] || 'neo4j',
-      neo4jPassword: process.env['NEO4J_PASSWORD'] || 'password',
+      neo4jUri: envProvider.get('NEO4J_URI') || 'bolt://localhost:7687',
+      neo4jUser: envProvider.get('NEO4J_USER') || 'neo4j',
+      neo4jPassword: envProvider.get('NEO4J_PASSWORD') || 'password',
     },
     vectors: {
-      qdrantUrl: process.env['QDRANT_URL'] || 'http://localhost:6333',
+      qdrantUrl: envProvider.get('QDRANT_URL') || 'http://localhost:6333',
       collectionName: 'texere-embeddings',
     },
     security: {

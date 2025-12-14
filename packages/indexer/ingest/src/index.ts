@@ -9,7 +9,7 @@ import type { FileIndexResult, SnapshotRef, ChangedFileSet } from '@repo/indexer
 
 // Re-export Slice 1 implementations
 export { runSnapshot, runTrackedBranches, generateDryRunPlan } from './orchestrator.js';
-export { createGitClient, SimpleGitClient } from './git.js';
+export { createGitClient, createGitClientWithDeps, SimpleGitClient } from './git.js';
 
 // ============================================================================
 // 1. Snapshot Indexing Interface (ingest_spec.md §2.1)

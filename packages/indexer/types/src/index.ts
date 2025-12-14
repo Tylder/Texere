@@ -746,6 +746,38 @@ export interface RunDeps {
 }
 
 /**
+ * Low-level git library interface (simple-git wrapper).
+ * Injected into GitClient for testability.
+ * @reference testing_specification.md §3.6–3.7 (dependency injection)
+ */
+export interface SimpleGitImpl {
+  /**
+   * Resolve ref to commit hash (git rev-parse)
+   */
+  revparse(args: string[]): Promise<string>;
+
+  /**
+   * Get commit log (git log)
+   */
+  log(args: string[]): Promise<{ latest?: { message: string } }>;
+
+  /**
+   * Run raw git command (git <args>)
+   */
+  raw(args: string[]): Promise<string>;
+
+  /**
+   * Fetch from remote (git fetch)
+   */
+  fetch(remote?: string, ref?: string): Promise<void>;
+
+  /**
+   * Clone repository (git clone)
+   */
+  clone(gitUrl: string, targetPath: string, options?: Record<string, unknown>): Promise<void>;
+}
+
+/**
  * Git operations client interface.
  * Slice 1 implements with simple-git or NodeGit.
  */
