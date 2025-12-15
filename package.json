@@ -19,14 +19,14 @@
     "lint:fix": "oxlint --fix && nx run-many --target=lint --fix --all --parallel --outputStyle=static --skip-nx-cache",
     "lint:fix-suggestions": "oxlint --fix --fix-suggestions && nx run-many --target=lint --fix --fix-suggestions --all --parallel --skip-nx-cache",
     "lint:fix:fast": "oxlint --fix",
-    "post:report": "(pnpm run format && pnpm run lint:fix) && nx run-many --targets=check-types,test:coverage,build --all --parallel && node scripts/aggregate-coverage.mjs",
-    "post:report:fast": "nx run-many --targets=check-types,test:coverage,lint:fix:fast --all --parallel && node scripts/aggregate-coverage.mjs",
+    "post:report": "(pnpm run format && pnpm run lint:fix) && nx run-many --targets=check-types,test:coverage,build --all --parallel && node scripts/aggregate-coverage.mjs && tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
+    "post:report:fast": "nx run-many --targets=check-types,test:coverage,lint:fix:fast --all --parallel && node scripts/aggregate-coverage.mjs && tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
     "prepare": "husky",
     "quality": "pnpm run format:check && nx run-many --targets=lint,check-types,test,build --all --parallel",
     "studio:dev": "npx @langchain/langgraph-cli dev",
     "test": "nx run-many --target=test --all --parallel",
     "test:coverage": "nx run-many --target=test:coverage --all --parallel && node scripts/aggregate-coverage.mjs",
-    "typecheck": "nx run-many --target=check-types --all --parallel",
+    "typecheck": "nx run-many --target=check-types --all --parallel && tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
     "typecheck:watch:log": "bash scripts/typecheck-watch-log.sh"
   },
   "lint-staged": {

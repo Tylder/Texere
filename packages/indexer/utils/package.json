@@ -24,7 +24,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.lib.json --incremental",
-    "check-types": "tsc --build tsconfig.json --noEmit",
+    "check-types": "tsc -b tsconfig.json",
     "lint": "eslint . --cache --cache-location \"$NX_WORKSPACE_ROOT/.cache/eslint/\"",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
