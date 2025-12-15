@@ -73,6 +73,8 @@ Follow the fast-feedback pattern documented in `AGENTS.md`:
    - Feature specs: `docs/specs/feature/langgraph_orchestrator_spec.md`,
      `docs/specs/feature/texere-tool-spec.md`
    - Engineering specs: `docs/specs/engineering/` (testing, linting, TypeScript setup)
+   - After adding/moving a project, run `nx sync` to refresh the Nx + TypeScript project graph
+     (keeps root `tsconfig.json` references in sync with the workspace).
 
 3. **Implement in small units**: Make changes, watch logs for feedback
    - Tests reference spec sections in descriptions

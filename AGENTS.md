@@ -18,6 +18,8 @@
 - **If `logs/typecheck.log` exists, the `typecheck:watch:log` watcher is running.** If missing, ask
   the user to run `pnpm typecheck:watch:log`.
 - Note: These log files are automatically deleted when their respective scripts are closed.
+- After adding, moving, or renaming a project, run `nx sync` to refresh Nx + TypeScript references
+  (keeps root `tsconfig.json` and IDE graph accurate).
 - Console shows full output; filtered logs remove noisy warnings/ANSI for agent use only.
 - While watchers run:
   1. Read relevant specs first; if unclear, ask numbered questions with lettered options (A
