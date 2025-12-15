@@ -9,6 +9,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import type { EnvironmentProvider } from '@repo/indexer-types';
+
 type BufferEncoding =
   | 'utf-8'
   | 'ascii'
@@ -29,13 +31,8 @@ export interface DaemonLock {
   configPath: string;
 }
 
-/**
- * Environment variable provider interface for testability.
- * @reference testing_specification.md §3.6–3.7
- */
-export interface EnvironmentProvider {
-  get(varName: string): string | undefined;
-}
+// Re-export EnvironmentProvider from types for convenience
+export type { EnvironmentProvider };
 
 /**
  * File system provider interface for testability.

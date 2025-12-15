@@ -13,7 +13,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import type { IndexerConfig, CodebaseConfig } from '@repo/indexer-types';
+import type { IndexerConfig, CodebaseConfig, EnvironmentProvider } from '@repo/indexer-types';
 
 export type ValidationIssueSource = 'orchestrator' | 'per-repo' | 'discovery';
 export type ValidationIssueCode =
@@ -32,24 +32,19 @@ export interface ValidationIssue {
   codebaseId?: string;
 }
 
-/**
- * Environment variable provider interface for testability.
- * @reference testing_specification.md §3.6–3.7 (dependency injection)
- */
-export interface EnvironmentProvider {
-  /**
-   * Get an environment variable value.
-   * @returns The value or undefined if not found
-   */
-  get(varName: string): string | undefined;
-}
+// Re-export EnvironmentProvider from types for convenience
+export type { EnvironmentProvider };
 
 /**
  * Default environment provider using process.env.
  */
-const defaultEnvProvider: EnvironmentProvider = {
-  get: (varName: string): string | undefined => process.env[varName],
-};
+ 
+const defaultEnvProvider = {
+  get: (varName: string): string | undefined => {
+    const val = process.env[varName];
+    return val;
+  },
+} as EnvironmentProvider;
 
 /**
  * Environment variable substitution patterns.
@@ -65,9 +60,10 @@ export function expandEnvVars(
   source: ValidationIssueSource = 'orchestrator',
   fieldPath?: string,
 ): string {
-  return text.replace(/\$\{([^}]+)\}/g, (match: string, varName: string) => {
-    const value = envProvider.get(varName);
-    if (!value) {
+  return text.replace(/\$\{([^}]+)\}/g, (match: string, varName: string): string => {
+     
+    const value: string | undefined = envProvider.get(varName);
+    if (value === undefined) {
       issues?.push({
         source,
         configPath: configPath || 'unknown',
@@ -372,6 +368,7 @@ export function discoverConfigs(options?: {
 }): DiscoveredConfigs {
   const recursive = options?.recursive !== false; // default: true
   const fsProvider = options?.fsProvider || defaultFileSystem;
+   
   const envProvider = options?.envProvider || defaultEnvProvider;
   const errors: ValidationIssue[] = [];
 
@@ -502,6 +499,7 @@ function processPerRepoConfig(
  * @param fsProvider - File system provider (defaults to Node.js fs; can be mocked in tests)
  * @param envProvider - Environment provider (defaults to process.env; can be mocked in tests)
  */
+
 function resolveConfigPath(
   explicitPath?: string,
   repoRoot?: string,
@@ -515,8 +513,9 @@ function resolveConfigPath(
   }
 
   // 2. Check INDEXER_CONFIG_PATH env var
+   
   const envConfigPath = envProvider.get('INDEXER_CONFIG_PATH');
-  if (envConfigPath) {
+  if (envConfigPath !== undefined) {
     return envConfigPath;
   }
 
@@ -610,19 +609,26 @@ export function loadIndexerConfig(options?: {
  *
  * @param envProvider - Environment variable provider (for testing; default: process.env)
  */
+
 export function getDefaultConfig(
   envProvider: EnvironmentProvider = defaultEnvProvider,
 ): IndexerConfig {
+  const getEnv = (key: string, defaultValue: string): string => {
+     
+    const value = envProvider.get(key);
+    return value !== undefined ? value : defaultValue;
+  };
+
   return {
     version: '1.0',
     codebases: [],
     graph: {
-      neo4jUri: envProvider.get('NEO4J_URI') || 'bolt://localhost:7687',
-      neo4jUser: envProvider.get('NEO4J_USER') || 'neo4j',
-      neo4jPassword: envProvider.get('NEO4J_PASSWORD') || 'password',
+      neo4jUri: getEnv('NEO4J_URI', 'bolt://localhost:7687'),
+      neo4jUser: getEnv('NEO4J_USER', 'neo4j'),
+      neo4jPassword: getEnv('NEO4J_PASSWORD', 'password'),
     },
     vectors: {
-      qdrantUrl: envProvider.get('QDRANT_URL') || 'http://localhost:6333',
+      qdrantUrl: getEnv('QDRANT_URL', 'http://localhost:6333'),
       collectionName: 'texere-embeddings',
     },
     security: {

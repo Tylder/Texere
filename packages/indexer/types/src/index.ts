@@ -880,7 +880,26 @@ export type QdrantClient = unknown;
 export type EmbeddingProvider = unknown;
 
 // ============================================================================
-// 8. Runtime markers for test coverage
+// 8. Environment & Infrastructure (configuration_spec.md §3, improvements-roadmap.md §4C.2)
+// ============================================================================
+
+/**
+ * Environment variable provider interface.
+ * Enables testable environment variable resolution and dependency injection.
+ * @reference configuration_spec.md §3 (environment substitution)
+ * @reference improvements-roadmap.md §4C.2 (centralized provider)
+ */
+export interface EnvironmentProvider {
+  /**
+   * Get environment variable value
+   * @param key Environment variable name
+   * @returns Variable value or undefined if not set
+   */
+  get(key: string): string | undefined;
+}
+
+// ============================================================================
+// 9. Runtime markers for test coverage
 // ============================================================================
 
 export const typesVersion = '0.0.0';

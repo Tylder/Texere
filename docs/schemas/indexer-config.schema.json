@@ -38,7 +38,11 @@
                 "description": "Array of branch names to index (e.g., [\"main\", \"develop\"])"
               }
             },
-            "required": ["id", "root", "trackedBranches"],
+            "required": [
+              "id",
+              "root",
+              "trackedBranches"
+            ],
             "additionalProperties": false,
             "description": "Per-codebase configuration (tracked branches, repository metadata)"
           },
@@ -61,7 +65,11 @@
               "description": "Neo4j password (env var substitution supported)"
             }
           },
-          "required": ["neo4jUri", "neo4jUser", "neo4jPassword"],
+          "required": [
+            "neo4jUri",
+            "neo4jUser",
+            "neo4jPassword"
+          ],
           "additionalProperties": false,
           "description": "Neo4j graph database configuration (required)"
         },
@@ -77,7 +85,9 @@
               "description": "Qdrant collection name for embeddings. Default: \"texere-embeddings\""
             }
           },
-          "required": ["qdrantUrl"],
+          "required": [
+            "qdrantUrl"
+          ],
           "additionalProperties": false,
           "description": "Qdrant vector store configuration (required)"
         },
@@ -129,7 +139,10 @@
           "properties": {
             "model": {
               "type": "string",
-              "enum": ["openai", "local"],
+              "enum": [
+                "openai",
+                "local"
+              ],
               "description": "Embedding provider (\"openai\", \"local\", etc.). Default: \"openai\""
             },
             "modelName": {
@@ -155,7 +168,10 @@
           "properties": {
             "provider": {
               "type": "string",
-              "enum": ["openai", "anthropic"],
+              "enum": [
+                "openai",
+                "anthropic"
+              ],
               "description": "LLM provider (\"openai\", \"anthropic\", etc.). Default: \"openai\""
             },
             "model": {
@@ -182,7 +198,10 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["local", "bullmq"],
+              "enum": [
+                "local",
+                "bullmq"
+              ],
               "description": "Executor type (\"local\" or \"bullmq\"). Default: \"local\""
             },
             "concurrency": {
@@ -205,7 +224,12 @@
           "description": "Worker/executor configuration"
         }
       },
-      "required": ["version", "codebases", "graph", "vectors"],
+      "required": [
+        "version",
+        "codebases",
+        "graph",
+        "vectors"
+      ],
       "additionalProperties": false,
       "description": "Texere Indexer configuration. See configuration_spec.md §1–5 for complete reference."
     }
