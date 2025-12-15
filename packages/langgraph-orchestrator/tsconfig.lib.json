@@ -4,7 +4,11 @@
     "outDir": "dist",
     "rootDir": "src",
     "types": ["node"],
-    "noEmitOnError": true
+    "noEmitOnError": true,
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"]

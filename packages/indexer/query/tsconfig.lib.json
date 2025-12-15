@@ -11,5 +11,13 @@
     "sourceMap": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"]
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"],
+  "references": [
+    {
+      "path": "../types/tsconfig.lib.json"
+    },
+    {
+      "path": "../core/tsconfig.lib.json"
+    }
+  ]
 }

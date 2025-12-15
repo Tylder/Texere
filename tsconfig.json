@@ -1,16 +1,35 @@
 {
   "extends": "./tsconfig.base.json",
-  "compileOnSave": false,
   "compilerOptions": {
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "moduleDetection": "force"
   },
-  "include": [
-    "packages/*/src/**/*",
-    "packages/*/tests/**/*",
-    "packages/*/*/src/**/*",
-    "packages/*/*/tests/**/*",
-    "apps/**/*"
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/langgraph-orchestrator"
+    },
+    {
+      "path": "./packages/indexer/workers"
+    },
+    {
+      "path": "./packages/indexer/ingest"
+    },
+    {
+      "path": "./packages/indexer/query"
+    },
+    {
+      "path": "./packages/indexer/types"
+    },
+    {
+      "path": "./packages/indexer/utils"
+    },
+    {
+      "path": "./packages/indexer/core"
+    },
+    {
+      "path": "./apps/indexer-cli"
+    }
   ]
 }
