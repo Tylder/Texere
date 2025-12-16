@@ -1,7 +1,15 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "composite": true,
+    "tsBuildInfoFile": ".cache/tsconfig.spec.tsbuildinfo",
+    "outDir": ".cache"
   },
-  "include": ["tests/**/*", "**/*.test.ts", "**/*.test.tsx", "vitest.config.ts", "vitest.setup.ts"]
+  "include": ["tests/**/*", "**/*.test.ts", "**/*.test.tsx", "vitest.config.ts", "vitest.setup.ts"],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ]
 }

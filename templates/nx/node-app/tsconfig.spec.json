@@ -13,5 +13,10 @@
     "src/**/__tests__/**/*.tsx",
     "vitest.config.ts",
     "vitest.setup.ts"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    }
   ]
 }
