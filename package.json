@@ -1,5 +1,5 @@
 {
-  "name": "monorepo_template",
+  "name": "Texere",
   "private": true,
   "scripts": {
     "build": "nx run-many --target=build --all --parallel",
@@ -18,7 +18,7 @@
     "lint": "oxlint & nx run-many --target=lint --all --parallel",
     "lint:fast": "oxlint",
     "lint:fix": "oxlint --fix && nx run-many --target=lint --fix --all --parallel --outputStyle=static --skip-nx-cache",
-    "lint:fix-suggestions": "oxlint --fix --fix-suggestions && nx run-many --target=lint --fix --fix-suggestions --all --parallel --skip-nx-cache",
+    "lint:fix-suggestions": "oxlint --fix --fix-suggestions && nx run-many --target=lint --fix --all --parallel --skip-nx-cache",
     "lint:fix:fast": "oxlint --fix",
     "post:report": "(pnpm run format && pnpm run lint:fix) && nx run-many --targets=check-types,test:coverage,build --all --parallel && node scripts/aggregate-coverage.mjs && tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
     "post:report:fast": "nx run-many --targets=check-types,test:coverage,lint:fix:fast --all --parallel && node scripts/aggregate-coverage.mjs && tsc -b tsconfig.json && tsc -b tsconfig.json --clean",

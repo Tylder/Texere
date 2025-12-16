@@ -213,6 +213,20 @@ export default defineConfig({
 });
 ```
 
+#### 3.2.3 Source-first resolution for Vitest (Nx “testing without building dependencies”)
+
+- **Problem:** Vitest runs in SSR mode and will prefer `import`/`module` conditions, so packages
+  with `exports` that only emit `dist` will fail in a clean repo if tests run before `pnpm build`.
+- **Decision:** Add `resolve.conditions` **and** `ssr.resolve.conditions` to include the workspace
+  custom condition first, then keep Node/Vite defaults:
+  - `resolve.conditions: ['@repo/source', 'import', 'module', 'default']`
+  - `ssr.resolve.conditions: ['@repo/source', 'node', 'import', 'module', 'default']`
+- **Exports map:** Each package should expose a source condition
+  (`\"@repo/source\": \"./src/index.ts\"`) and keep the compiled target for `import/default`.
+- **References:** Nx guide “Testing Without Building Dependencies”
+  (nx.dev/docs/technologies/test-tools/vitest/guides/testing-without-building-dependencies) and Vite
+  SSR resolution docs (vite.dev/config/ssr-options#ssr-resolve-conditions).
+
 ### 3.3 vitest.setup.ts (Per-Project)
 
 #### 3.3.1 Generic Package (packages/ui)

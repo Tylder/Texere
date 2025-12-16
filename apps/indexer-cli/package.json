@@ -4,6 +4,14 @@
   "private": true,
   "description": "Texere Indexer – CLI for snapshot indexing and configuration management",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "@repo/source": "./src/main.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "main": "dist/main.js",
   "bin": {
     "indexer": "./dist/main.js"

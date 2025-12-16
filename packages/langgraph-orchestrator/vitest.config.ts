@@ -2,7 +2,12 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: {
-    conditions: ['@repo/source'],
+    conditions: ['@repo/source', 'import', 'module', 'default'],
+  },
+  ssr: {
+    resolve: {
+      conditions: ['@repo/source', 'node', 'import', 'module', 'default'],
+    },
   },
   test: {
     environment: 'node',

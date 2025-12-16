@@ -2,7 +2,13 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: {
-    conditions: ['@repo/source'],
+    conditions: ['@repo/source', 'import', 'module', 'default'],
+  },
+  ssr: {
+    resolve: {
+      // Ensure Vitest (SSR) prefers source before dist; keep node/import defaults for fallbacks
+      conditions: ['@repo/source', 'node', 'import', 'module', 'default'],
+    },
   },
   test: {
     environment: 'node',

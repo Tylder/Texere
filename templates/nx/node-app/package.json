@@ -4,6 +4,14 @@
   "private": true,
   "description": "__description__",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "@repo/source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -b tsconfig.lib.json",
     "check-types": "tsc --build tsconfig.json --noEmit",
