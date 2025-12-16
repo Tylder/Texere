@@ -23,14 +23,16 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json --incremental",
+    "build": "tsc -b tsconfig.lib.json",
     "check-types": "tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
     "lint": "eslint . --cache --cache-location \"$NX_WORKSPACE_ROOT/.cache/eslint/\"",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@repo/indexer-types": "workspace:*"
+  },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",

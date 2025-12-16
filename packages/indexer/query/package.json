@@ -22,7 +22,7 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json --incremental",
+    "build": "tsc -b tsconfig.lib.json",
     "check-types": "tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
     "lint": "eslint . --cache --cache-location \"$NX_WORKSPACE_ROOT/.cache/eslint/\"",
     "test": "vitest run",

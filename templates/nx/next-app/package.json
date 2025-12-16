@@ -4,7 +4,7 @@
   "private": true,
   "description": "__description__",
   "scripts": {
-    "build": "next build",
+    "build": "tsc -b tsconfig.app.json",
     "check-types": "tsc --build tsconfig.json --noEmit",
     "dev": "next dev",
     "lint": "next lint",

@@ -5,7 +5,7 @@
   "description": "__description__",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json --incremental",
+    "build": "tsc -b tsconfig.lib.json",
     "check-types": "tsc --build tsconfig.json --noEmit",
     "dev": "node --watch dist/index.js",
     "lint": "eslint . --cache --cache-location \"$NX_WORKSPACE_ROOT/.cache/eslint/\"",

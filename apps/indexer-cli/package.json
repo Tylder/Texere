@@ -8,7 +8,7 @@
     "indexer": "./dist/main.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json --incremental",
+    "build": "tsc -b tsconfig.lib.json",
     "check-types": "tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
     "dev:help": "pnpm build && node dist/main.js --help",
     "dev:list": "pnpm build && node dist/main.js list",
