@@ -2,7 +2,9 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "types": ["vitest/globals", "node"],
-    "composite": true
+    "composite": true,
+    "tsBuildInfoFile": ".cache/tsconfig.spec.tsbuildinfo",
+    "outDir": ".cache"
   },
   "include": [
     "src/**/*.test.ts",

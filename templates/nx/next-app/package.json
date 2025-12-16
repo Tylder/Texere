@@ -13,7 +13,7 @@
   },
   "scripts": {
     "build": "tsc -b tsconfig.app.json",
-    "check-types": "tsc --build tsconfig.json --noEmit",
+    "check-types": "tsc -b tsconfig.check.json",
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",

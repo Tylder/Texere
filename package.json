@@ -1,9 +1,9 @@
 {
-  "name": "Texere",
+  "name": "texere",
   "private": true,
   "scripts": {
     "build": "nx run-many --target=build --all --parallel",
-    "clean": "rm -rf dist .nx .cache node_modules/.vite node_modules/.esbuild tmp && find . -type f -name 'tsconfig*.tsbuildinfo' ! -path '*/node_modules/*' -delete && find . -type d -name 'dist' ! -path '*/node_modules/*' -exec rm -rf {} + 2>/dev/null && find . -type d -name 'coverage' ! -path '*/node_modules/*' -exec rm -rf {} + 2>/dev/null; echo 'Cleaned artifacts, caches, and build outputs'",
+    "clean": "rm -rf dist .nx .cache node_modules/.vite node_modules/.esbuild tmp && find . -path '*/node_modules' -prune -o -type d -name '.cache' -exec rm -rf {} + 2>/dev/null && find . -type f -name 'tsconfig*.tsbuildinfo' ! -path '*/node_modules/*' -delete && find . -type d -name 'dist' ! -path '*/node_modules/*' -exec rm -rf {} + 2>/dev/null && find . -type d -name 'coverage' ! -path '*/node_modules/*' -exec rm -rf {} + 2>/dev/null; echo 'Cleaned artifacts, caches, and build outputs'",
     "dev": "nx run-many --target=dev --all --parallel",
     "dev:log": "bash scripts/dev-log.sh",
     "e2e": "nx run-many --target=e2e --all --parallel",
@@ -20,14 +20,14 @@
     "lint:fix": "oxlint --fix && nx run-many --target=lint --fix --all --parallel --outputStyle=static --skip-nx-cache",
     "lint:fix-suggestions": "oxlint --fix --fix-suggestions && nx run-many --target=lint --fix --all --parallel --skip-nx-cache",
     "lint:fix:fast": "oxlint --fix",
-    "post:report": "(pnpm run format && pnpm run lint:fix) && nx run-many --targets=check-types,test:coverage,build --all --parallel && node scripts/aggregate-coverage.mjs && tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
-    "post:report:fast": "nx run-many --targets=check-types,test:coverage,lint:fix:fast --all --parallel && node scripts/aggregate-coverage.mjs && tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
+    "post:report": "(pnpm run format && pnpm run lint:fix) && nx run-many --targets=check-types,test:coverage,build --all --parallel && node scripts/aggregate-coverage.mjs",
+    "post:report:fast": "nx run-many --targets=check-types,test:coverage,lint:fix:fast --all --parallel && node scripts/aggregate-coverage.mjs",
     "prepare": "husky",
     "quality": "pnpm run format:check && nx run-many --targets=lint,check-types,test,build --all --parallel",
     "studio:dev": "npx @langchain/langgraph-cli dev",
     "test": "nx run-many --target=test --all --parallel",
     "test:coverage": "nx run-many --target=test:coverage --all --parallel && node scripts/aggregate-coverage.mjs",
-    "typecheck": "nx run-many --target=check-types --all --parallel && tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
+    "typecheck": "nx run-many --target=check-types --all --parallel",
     "typecheck:watch:log": "bash scripts/typecheck-watch-log.sh"
   },
   "lint-staged": {
