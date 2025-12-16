@@ -90,7 +90,7 @@
       "cache": true
     },
     "test:coverage": {
-      "dependsOn": ["^test:coverage", "^build"],
+      "dependsOn": ["^test:coverage"],
       "inputs": [
         "{projectRoot}/src/**",
         "{projectRoot}/tests/**",

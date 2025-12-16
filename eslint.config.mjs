@@ -14,6 +14,7 @@ export default [
       'out/**',
       'coverage/**',
       '.test/**',
+      '**/.cache/**',
       '**/vitest.config.*.timestamp*',
       '**/scripts/**',
     ],

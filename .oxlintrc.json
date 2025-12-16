@@ -28,6 +28,7 @@
     ".mastra/",
     "out/",
     ".test/",
+    "**/.cache/",
     "**/*.d.ts"
   ]
 }
