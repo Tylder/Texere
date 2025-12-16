@@ -14,7 +14,7 @@ export default defineConfig({
     globals: true,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov'],
+      reporter: ['text', 'lcov', 'json'],
       thresholds: {
         // CLI package has thin wrapper design; core logic tested in indexer-core/ingest
         // Commands delegate to orchestrator and config modules (tested elsewhere)

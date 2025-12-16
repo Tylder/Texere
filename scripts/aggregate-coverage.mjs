@@ -148,19 +148,33 @@ function aggregateCoverage() {
     return acc;
   }, {});
 
-  // Print summary header
-  console.log('\n╔═══════════════════════════════════════════════════════════════════════════╗');
-  console.log('║                    MONOREPO COVERAGE SUMMARY                              ║');
-  console.log('╚═══════════════════════════════════════════════════════════════════════════╝');
+  // Dynamic column width to handle long package names (e.g., langgraph-orchestrator)
+  const packageNames = coverages.map(({ pkg }) => pkg.replace(/^(packages|apps)\//, ''));
+  const nameWidth = Math.max(19, 'Package'.length, ...packageNames.map((n) => n.length));
 
-  // Print per-package breakdown
-  console.log('\nPer-Package Coverage:');
-  console.log('┌─────────────────────┬──────────┬──────────┬───────────┬──────────┐');
-  console.log('│ Package             │ Lines    │ Branches │ Functions │ Stmts    │');
-  console.log('├─────────────────────┼──────────┼──────────┼───────────┼──────────┤');
+  // Helpers to build table borders with dynamic width
+  const line = (left, fill, center, right) =>
+    `${left}${fill.repeat(nameWidth + 2)}${center}${fill.repeat(10)}${center}${fill.repeat(
+      10,
+    )}${center}${fill.repeat(11)}${center}${fill.repeat(10)}${right}`;
+
+  // Summary header
+  const topBorder = line('┌', '─', '┬', '┐');
+  const tableWidth = topBorder.length;
+  const headerLine = `║${' MONOREPO COVERAGE SUMMARY '.padEnd(tableWidth - 2)}║`;
+  console.log('\n' + '╔' + '═'.repeat(tableWidth - 2) + '╗');
+  console.log(headerLine);
+  console.log('╚' + '═'.repeat(tableWidth - 2) + '╝');
+  console.log(topBorder);
+  console.log(
+    `│ ${'Package'.padEnd(nameWidth)} │ ${'Lines'.padStart(8)} │ ${'Branches'.padStart(
+      8,
+    )} │ ${'Functions'.padStart(9)} │ ${'Stmts'.padStart(8)} │`,
+  );
+  console.log(line('├', '─', '┼', '┤'));
 
   coverages.forEach(({ pkg, coverage }) => {
-    const name = pkg.replace(/^(packages|apps)\//, '').padEnd(19);
+    const name = pkg.replace(/^(packages|apps)\//, '').padEnd(nameWidth);
     const lines = `${coverage.lines.pct}%`.padStart(8);
     const branches = `${coverage.branches.pct}%`.padStart(8);
     const functions = `${coverage.functions.pct}%`.padStart(9);
@@ -168,9 +182,9 @@ function aggregateCoverage() {
     console.log(`│ ${name} │ ${lines} │ ${branches} │ ${functions} │ ${stmts} │`);
   });
 
-  // Print aggregate totals
-  console.log('├─────────────────────┼──────────┼──────────┼───────────┼──────────┤');
-  const totalName = 'TOTAL'.padEnd(19);
+  // Aggregate totals row
+  console.log(line('├', '─', '┼', '┤'));
+  const totalName = 'TOTAL'.padEnd(nameWidth);
   const totalLines = `${pcts.lines}%`.padStart(8);
   const totalBranches = `${pcts.branches}%`.padStart(8);
   const totalFunctions = `${pcts.functions}%`.padStart(9);
@@ -178,14 +192,16 @@ function aggregateCoverage() {
   console.log(
     `│ ${totalName} │ ${totalLines} │ ${totalBranches} │ ${totalFunctions} │ ${totalStmts} │`,
   );
-  console.log('└─────────────────────┴──────────┴──────────┴───────────┴──────────┘');
 
-  // Print absolute numbers
-  console.log(`\nAbsolute Coverage:
-  Lines:      ${totals.lines.covered}/${totals.lines.total} covered
-  Statements: ${totals.statements.covered}/${totals.statements.total} covered
-  Functions:  ${totals.functions.covered}/${totals.functions.total} covered
-  Branches:   ${totals.branches.covered}/${totals.branches.total} covered\n`);
+  const absLines = `${totals.lines.covered}/${totals.lines.total}`.padStart(8);
+  const absBranches = `${totals.branches.covered}/${totals.branches.total}`.padStart(8);
+  const absFunctions = `${totals.functions.covered}/${totals.functions.total}`.padStart(9);
+  const absStmts = `${totals.statements.covered}/${totals.statements.total}`.padStart(8);
+  console.log(
+    `│ ${'ABS'.padEnd(nameWidth)} │ ${absLines} │ ${absBranches} │ ${absFunctions} │ ${absStmts} │`,
+  );
+
+  console.log(line('└', '─', '┴', '┘'));
 }
 
 aggregateCoverage();
