@@ -3,7 +3,7 @@
   "name": "indexer-types",
   "projectType": "library",
   "sourceRoot": "packages/indexer/types/src",
-  "tags": ["domain:indexer", "layer:types", "runtime:server"],
+  "tags": ["domain:indexer", "layer:types", "runtime:shared"],
   "targets": {
     "build": {
       "executor": "nx:run-script",
