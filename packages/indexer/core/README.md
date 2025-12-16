@@ -157,6 +157,49 @@ pnpm nx run indexer-core:test
 - **Test**: `pnpm nx run indexer-core:test`
 - **Fast validation**: `pnpm post:report:fast`
 
+## Schema Generation for IDE Support
+
+The indexer config schema is exported as a JSON Schema file for IDE integration (VSCode, JetBrains,
+etc.). When editing `.indexer-config.json` files, IDEs use this schema for validation and
+auto-completion.
+
+### Regenerating the Schema
+
+After modifying config types in `config-schema.ts`, regenerate the schema artifact:
+
+```bash
+pnpm --filter indexer-core build
+pnpm --filter indexer-core generate:schema
+```
+
+This updates `docs/schemas/indexer-config.schema.json`, which should be committed to git.
+
+### Schema Generation Process
+
+- **Tests** (runtime): Validate schema structure in-memory via `generate-schema-file.test.ts`. Tests
+  use temporary directories (`os.tmpdir()`) for isolation and cleanup.
+- **Artifact generation** (manual): The `generate:schema` script (`scripts/generate-schema.mjs`)
+  produces the IDE integration artifact. Developers must run this explicitly after config changes.
+
+This separation follows industry standards:
+
+- JSON Schema generation is a **build artifact**, not a test side effect
+- Tests validate correctness; scripts generate files
+- Prevents uncommitted schema files in working directory
+- Maintains clean separation of concerns per
+  [testing_specification.md §3.1](../../docs/specs/engineering/testing_specification.md#31-test-file-organization-colocated-pattern)
+
+### Exporting the Schema Function
+
+Other packages can generate or inspect the schema via:
+
+```typescript
+import { generateIndexerConfigJsonSchema } from '@repo/indexer-core';
+
+const schema = generateIndexerConfigJsonSchema();
+// Use schema for validation, documentation, or tooling
+```
+
 ## See Also
 
 - [layout_spec.md §2.2](../../docs/specs/feature/indexer/layout_spec.md#22-packagesfeaturesindexercore)

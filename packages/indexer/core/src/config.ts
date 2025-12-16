@@ -38,7 +38,7 @@ export type { EnvironmentProvider };
 /**
  * Default environment provider using process.env.
  */
- 
+
 const defaultEnvProvider = {
   get: (varName: string): string | undefined => {
     const val = process.env[varName];
@@ -61,7 +61,6 @@ export function expandEnvVars(
   fieldPath?: string,
 ): string {
   return text.replace(/\$\{([^}]+)\}/g, (match: string, varName: string): string => {
-     
     const value: string | undefined = envProvider.get(varName);
     if (value === undefined) {
       issues?.push({
@@ -368,7 +367,7 @@ export function discoverConfigs(options?: {
 }): DiscoveredConfigs {
   const recursive = options?.recursive !== false; // default: true
   const fsProvider = options?.fsProvider || defaultFileSystem;
-   
+
   const envProvider = options?.envProvider || defaultEnvProvider;
   const errors: ValidationIssue[] = [];
 
@@ -513,7 +512,7 @@ function resolveConfigPath(
   }
 
   // 2. Check INDEXER_CONFIG_PATH env var
-   
+
   const envConfigPath = envProvider.get('INDEXER_CONFIG_PATH');
   if (envConfigPath !== undefined) {
     return envConfigPath;
@@ -614,7 +613,6 @@ export function getDefaultConfig(
   envProvider: EnvironmentProvider = defaultEnvProvider,
 ): IndexerConfig {
   const getEnv = (key: string, defaultValue: string): string => {
-     
     const value = envProvider.get(key);
     return value !== undefined ? value : defaultValue;
   };
