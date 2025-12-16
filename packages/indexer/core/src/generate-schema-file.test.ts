@@ -44,7 +44,7 @@ describe('Generate Schema File (testing_specification.md §3.1 – test isolatio
     const hasRef = '$ref' in schema;
     const hasProperties = 'properties' in schema;
     const hasDefinitions =
-      'definitions' in schema && Object.keys(schema.definitions || {}).length > 0;
+      'definitions' in schema && Object.keys(schema['definitions'] || {}).length > 0;
 
     expect(hasRef || hasProperties || hasDefinitions).toBe(true);
   });

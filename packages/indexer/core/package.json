@@ -7,10 +7,12 @@
   "type": "module",
   "exports": {
     ".": {
+      "@repo/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
     "./*": {
+      "@repo/source": "./src/*.ts",
       "types": "./dist/*.d.ts",
       "import": "./dist/*.js"
     }

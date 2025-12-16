@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    conditions: ['@repo/source'],
+  },
   test: {
     environment: 'node',
     globals: true,

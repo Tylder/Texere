@@ -24,6 +24,6 @@
     "noEmitOnError": true,
     "sourceMap": true,
     "skipLibCheck": true,
-    "customConditions": ["monorepo_template"]
+    "customConditions": ["@repo/source"]
   }
 }

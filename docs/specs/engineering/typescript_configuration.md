@@ -51,7 +51,7 @@ configs, package.json requirements, and contributor workflow for adding or movin
 - Strict mode + safety flags (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, etc.).
 - **Do not** set `baseUrl` or `paths`; removal is enforced.
 - `moduleDetection: "force"`, `verbatimModuleSyntax: true`,
-  `resolvePackageJsonExports/Imports: true`, `customConditions: ["monorepo_template"]`.
+   `resolvePackageJsonExports/Imports: true`, `customConditions: ["@repo/source"]`.
 - `incremental: true`, `noEmitOnError: true`, `sourceMap: true`, `skipLibCheck: true`.
 
 ### 3.2 `/tsconfig.json` (workspace type-check entrypoint)

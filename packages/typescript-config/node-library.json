@@ -19,6 +19,6 @@
     "noPropertyAccessFromIndexSignature": true,
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
-    "customConditions": ["monorepo_template"]
+    "customConditions": ["@repo/source"]
   }
 }

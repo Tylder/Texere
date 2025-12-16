@@ -17,6 +17,6 @@
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
     "skipLibCheck": true,
-    "customConditions": ["monorepo_template"]
+    "customConditions": ["@repo/source"]
   }
 }
