@@ -198,7 +198,9 @@ These commands validate code quality:
 - **`pnpm typecheck`** – TypeScript type checking. Catches type errors without running code.
 - **`pnpm test`** – Run all tests with Vitest.
 - **`pnpm test:coverage`** – Run tests with coverage reports aggregated across monorepo.
-- **`pnpm build`** – Build all packages (creates dist/ outputs).
+- **`pnpm build`** – Build all packages in parallel (creates dist/ outputs). Uses Nx task
+  orchestration with TypeScript composite projects for proper dependency ordering. See
+  `docs/specs/engineering/build_system.md` for architecture and troubleshooting.
 
 ### Validation Workflows
 

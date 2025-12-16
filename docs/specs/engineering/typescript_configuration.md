@@ -3,7 +3,7 @@
 **Status:** Active  
 **Last Updated:** 2025-12-15  
 **Audience:** Backend, Frontend, Tooling  
-**Related:** eslint_code_quality.md, testing_strategy.md, testing_specification.md,
+**Related:** build_system.md, eslint_code_quality.md, testing_strategy.md, testing_specification.md,
 documentation_spec.md
 
 ---
@@ -51,7 +51,7 @@ configs, package.json requirements, and contributor workflow for adding or movin
 - Strict mode + safety flags (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, etc.).
 - **Do not** set `baseUrl` or `paths`; removal is enforced.
 - `moduleDetection: "force"`, `verbatimModuleSyntax: true`,
-   `resolvePackageJsonExports/Imports: true`, `customConditions: ["@repo/source"]`.
+  `resolvePackageJsonExports/Imports: true`, `customConditions: ["@repo/source"]`.
 - `incremental: true`, `noEmitOnError: true`, `sourceMap: true`, `skipLibCheck: true`.
 
 ### 3.2 `/tsconfig.json` (workspace type-check entrypoint)

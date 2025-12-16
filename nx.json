@@ -79,7 +79,7 @@
       "cache": true
     },
     "test": {
-      "dependsOn": ["^test", "^build"],
+      "dependsOn": ["^test"],
       "inputs": [
         "{projectRoot}/src/**",
         "{projectRoot}/tests/**",
@@ -90,7 +90,7 @@
       "cache": true
     },
     "test:coverage": {
-      "dependsOn": ["^test:coverage"],
+      "dependsOn": ["^test:coverage", "^build"],
       "inputs": [
         "{projectRoot}/src/**",
         "{projectRoot}/tests/**",

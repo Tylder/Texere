@@ -12,7 +12,7 @@
       },
       "outputs": ["{workspaceRoot}/dist/packages/indexer/query"],
       "inputs": ["default", "{projectRoot}/tsconfig.lib.json", "{projectRoot}/src/**"],
-      "dependsOn": ["indexer-core:build", "indexer-types:build"]
+      "dependsOn": ["^build"]
     },
     "check-types": {
       "executor": "nx:run-script",

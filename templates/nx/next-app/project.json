@@ -15,7 +15,8 @@
         "{projectRoot}/app/**",
         "{projectRoot}/pages/**",
         "{projectRoot}/components/**"
-      ]
+      ],
+      "dependsOn": ["^build"]
     },
     "dev": {
       "executor": "nx:run-script",

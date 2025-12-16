@@ -4,6 +4,7 @@
   "private": true,
   "description": "Texere Indexer – CLI for snapshot indexing and configuration management",
   "type": "module",
+  "main": "dist/main.js",
   "bin": {
     "indexer": "./dist/main.js"
   },
