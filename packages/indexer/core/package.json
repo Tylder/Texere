@@ -26,7 +26,7 @@
   ],
   "scripts": {
     "build": "tsc -b tsconfig.lib.json",
-    "check-types": "tsc -b tsconfig.json",
+    "check-types": "tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
     "generate:schema": "node scripts/generate-schema.mjs",
     "lint": "eslint . --cache --cache-location \"$NX_WORKSPACE_ROOT/.cache/eslint/\"",
     "test": "vitest run",
