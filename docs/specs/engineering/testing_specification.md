@@ -1,7 +1,7 @@
 # Testing Specification
 
 **Document Version:** 1.2  
-**Last Updated:** December 2, 2025  
+**Last Updated:** December 17, 2025  
 **Status:** Active  
 **Relationship:** Implementation spec; pairs with [testing_strategy.md](./testing_strategy.md)
 (philosophy)
@@ -604,6 +604,19 @@ apps/cart-e2e/
 | `pnpm e2e:headed`    | Run E2E tests with visible browser window   | §6.1.6  |
 | `pnpm e2e:debug`     | Run E2E with step-by-step debugger          | §6.1.7  |
 
+### 6.2 Quality Loops (Fast vs Full)
+
+| Command                          | Purpose / Notes                                                                                             | Cite As |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------- |
+| `pnpm post:report:fast`          | Format fix (fast), oxlint fix, typecheck, test:coverage in parallel; uses incremental `tsc -b` artifacts    | §6.2.1  |
+| `pnpm post:report`               | Format fix + full lint + check-types + test:coverage + build, then `pnpm clean` to remove emitted artifacts | §6.2.2  |
+| `pnpm typecheck`                 | Nx `check-types` across all projects (incremental `tsc -b tsconfig.json`)                                   | §6.2.3  |
+| `pnpm typecheck --filter <proj>` | Project-scoped typecheck (uses project’s `check-types` script)                                              | §6.2.4  |
+
+**Note (§6.2.5):** Each project exposes `check-types` (incremental) and `check-types:clean`
+(build+clean) scripts. Use the clean variant only when you need a zero-artifact pass; otherwise keep
+artifacts for incremental speed and Nx cache hits.
+
 ---
 
 ## 7. Coverage & Quality Gates
@@ -626,7 +639,7 @@ apps/cart-e2e/
 | ---------------- | -------------------- | ------------------------ | ------- |
 | **Format Check** | `pnpm format:check`  | 0 format violations      | §7.2.1  |
 | **Lint**         | `nx lint`            | 0 errors (warnings ok)   | §7.2.2  |
-| **Typecheck**    | `nx typecheck`       | 0 errors                 | §7.2.3  |
+| **Typecheck**    | `pnpm typecheck`     | 0 errors                 | §7.2.3  |
 | **Unit Tests**   | `nx test --coverage` | ≥65% lines, ≥70% overall | §7.2.4  |
 | **E2E Tests**    | `nx affected -t e2e` | 0 failures               | §7.2.5  |
 | **Build**        | `nx build`           | 0 errors                 | §7.2.6  |

@@ -1,7 +1,7 @@
 # TypeScript Configuration & Project Linking (Nx + pnpm)
 
 **Status:** Active  
-**Last Updated:** 2025-12-16  
+**Last Updated:** 2025-12-17  
 **Audience:** Backend, Frontend, Tooling  
 **Related:** build_system.md, eslint_code_quality.md, testing_strategy.md, testing_specification.md,
 documentation_spec.md
@@ -97,11 +97,13 @@ pulling test-only types into the published surface. **Tests must be type-checked
 - `"exports"` map at least `{ ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } }`;
   add subpaths as needed.
 - Internal deps use `"workspace:^"` (or `"workspace:*"` for dev-only).
-- Script: `"check-types": "tsc -b tsconfig.json && tsc -b tsconfig.json --clean"` to validate lib +
-  spec configs. TypeScript build mode requires emit (cannot combine `--build` with `--noEmit` or
-  `--outDir` overrides), so we immediately run `--clean` to remove emitted artifacts/tsbuildinfo and
-  keep packages clean. (Refs: TypeScript project references handbook;
-  https://www.typescriptlang.org/docs/handbook/project-references.html, Nx TS workspace guide;
+- Script: `"check-types": "tsc -b tsconfig.json"` to validate lib + spec configs using incremental
+  build artifacts for speed. Optional
+  `"check-types:clean": "tsc -b tsconfig.json && tsc -b tsconfig.json --clean"` is provided when a
+  zero-artifact pass is required (e.g., before publishing). TypeScript build mode requires emit
+  (cannot combine `--build` with `--noEmit` or `--outDir` overrides). (Refs: TypeScript project
+  references handbook; https://www.typescriptlang.org/docs/handbook/project-references.html, Nx TS
+  workspace guide;
   https://nx.dev/technologies/typescript/recipes/switch-to-workspaces-project-references)
 - Script: `"build": "tsc -b tsconfig.lib.json"` to build runtime output using project references so
   dependencies are built in topo order. Using `-p tsconfig.lib.json --incremental` can miss
@@ -154,7 +156,8 @@ pulling test-only types into the published surface. **Tests must be type-checked
 - For each package/app, ensure `tsconfig.json` is references-only; create/normalize
   `tsconfig.lib.json` (composite) and `tsconfig.spec.json` (leaf).
 - Add/clean `exports` fields and switch internal deps to `workspace:*`/`workspace:^`.
-- Replace any `tsc --noEmit -p tsconfig.json` scripts with `tsc --build tsconfig.json --noEmit`.
+- Replace any `tsc --noEmit -p tsconfig.json` scripts with `tsc --build tsconfig.json` (optionally
+  follow with `tsc -b tsconfig.json --clean` or `pnpm clean` when artifacts must be removed).
 - Delete legacy `tsconfig.build.json` stubs once Nx plugins no longer hash them.
 
 ## 9. Validation Commands
@@ -167,6 +170,8 @@ pulling test-only types into the published surface. **Tests must be type-checked
 
 ## 10. Changelog
 
+- **2025-12-17:** `check-types` defaults to incremental `tsc -b tsconfig.json`; added optional
+  `check-types:clean`; clarified build-mode emit vs cleanup and migration guidance.
 - **2025-12-16:** Added explicit REQUIRED language for spec config references in §4.1 & §4.2;
   clarified that all tests must be type-checked via `tsc --build` (§9).
 - **2025-12-15:** Full rewrite to align with Nx project linking, NodeNext-only libraries,

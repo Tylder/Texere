@@ -12,6 +12,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    exclude: ['**/.cache/**', 'dist', '**/node_modules/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'json'],
@@ -22,7 +23,7 @@ export default defineConfig({
         branches: 50,
       },
       include: ['src/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
-      exclude: ['.next', 'dist', '**/*.d.ts'],
+      exclude: ['**/.cache/**', '.next', 'dist', '**/*.d.ts', '**/node_modules/**'],
     },
     setupFiles: './vitest.setup.ts',
   },

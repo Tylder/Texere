@@ -18,7 +18,8 @@
   },
   "scripts": {
     "build": "tsc -b tsconfig.lib.json",
-    "check-types": "tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
+    "check-types": "tsc -b tsconfig.json",
+    "check-types:clean": "tsc -b tsconfig.json && tsc -b tsconfig.json --clean",
     "dev:help": "pnpm build && node dist/main.js --help",
     "dev:list": "pnpm build && node dist/main.js list",
     "dev:list:verbose": "pnpm build && node dist/main.js list --verbose",

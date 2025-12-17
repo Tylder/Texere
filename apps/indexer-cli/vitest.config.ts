@@ -12,6 +12,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    exclude: ['**/.cache/**', 'dist', '**/node_modules/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'json'],
@@ -25,7 +26,7 @@ export default defineConfig({
         branches: 30,
       },
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['dist', '**/*.d.ts', 'src/main.ts'],
+      exclude: ['**/.cache/**', 'dist', '**/*.d.ts', 'src/main.ts', '**/node_modules/**'],
     },
     setupFiles: './vitest.setup.ts',
   },

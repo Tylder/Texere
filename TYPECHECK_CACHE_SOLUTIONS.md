@@ -7,11 +7,12 @@ alongside source files, cluttering package directories.
 
 **Current Implementation**:
 
-- 7 packages use `check-types: "tsc -b tsconfig.check.json"` (indexer/\*, langgraph-orchestrator)
-- TypeScript incremental cache files (`tsconfig.lib.tsbuildinfo`) appear in package roots
-- No centralized `.cache` directory for build artifacts
-- Per spec (typescript_configuration.md §5), the script runs:
-  `tsc -b tsconfig.json && tsc -b tsconfig.json --clean` to validate and remove emitted artifacts
+- Packages use `check-types: "tsc -b tsconfig.json"` (incremental; artifacts kept for speed) and an
+  optional `check-types:clean` (`tsc -b tsconfig.json && tsc -b tsconfig.json --clean`) when a
+  zero-artifact pass is needed.
+- TypeScript incremental cache files (`tsconfig.lib.tsbuildinfo`) appear in package roots or
+  `.cache/` depending on `tsBuildInfoFile`.
+- No centralized `.cache` directory for build artifacts by default.
 
 **Root Cause**: TypeScript's `--build` mode requires the `tsBuildInfoFile` to be writable and is
 stored where `tsconfig.json` directs it. When using project references without explicit output

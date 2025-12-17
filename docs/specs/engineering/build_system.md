@@ -1,7 +1,7 @@
 # Build System: Nx + TypeScript Composite Projects
 
 **Status:** Active  
-**Last Updated:** 2025-12-16  
+**Last Updated:** 2025-12-17  
 **Audience:** Backend, Frontend, DevOps, Tooling  
 **Related:** typescript_configuration.md, nx_lang_graph_feature_layout_spec.md
 
@@ -54,7 +54,9 @@ Covers:
    projects and dependents rebuild.
 
 6. **Development and CI workflows are identical:** Both use `pnpm build` (or `pnpm post:report:fast`
-   during development), ensuring no "works on my machine" surprises.
+   during development), ensuring no "works on my machine" surprises. Full `pnpm post:report` now
+   ends with `pnpm clean` to remove emitted artifacts after validation, while `check-types` tasks
+   themselves run incremental `tsc -b` to keep feedback fast.
 
 ---
 
