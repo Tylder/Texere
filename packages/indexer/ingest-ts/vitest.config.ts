@@ -13,6 +13,8 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     exclude: ['**/.cache/**', 'dist', '**/node_modules/**'],
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'json'],

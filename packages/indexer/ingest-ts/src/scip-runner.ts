@@ -118,54 +118,216 @@ function convertByteOffsetToLineCol(
 }
 
 /**
- * Invoke SCIP CLI for a set of files.
+ * Invoke SCIP CLI and parse binary output.
+ * Outputs to binary SCIP format (.scip file), then converts to JSON via `scip-typescript print`.
+ * Falls back gracefully to AST if SCIP invocation fails.
  * Cite: ts_ingest_spec.md §3.7 (batching, timeouts)
+ * Cite: ts_ingest_spec.md §3.1 (SCIP-first principle)
+ * Cite: ts_ingest_spec.md §3.3 (AST fallback triggers)
  *
  * @param codebaseRoot – Root directory of codebase
  * @param tsconfigPath – Path to tsconfig.json
  * @param timeoutMs – Timeout in milliseconds (default: 120000 = 120s)
- * @returns Parsed SCIP index, or null if invocation failed/timed out
- * @throws On exec error (non-timeout)
+ * @returns Parsed SCIP JSON output, or null if invocation failed/timed out (triggers AST fallback)
  */
-function invokeScipCli(
+function invokeScipCliAndParse(
   codebaseRoot: string,
   tsconfigPath: string,
   timeoutMs: number = 120_000,
 ): ScipIndex | null {
+  const tmpDir = path.join(codebaseRoot, '.scip-tmp');
+  const outputFile = path.join(tmpDir, `index-${Date.now()}.scip`);
+
   try {
-    const command = `scip-typescript index --project "${tsconfigPath}" --output json`;
+    // Create temporary directory for SCIP output
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true });
+    }
 
-    // Run SCIP with timeout
-    const output = execSync(command, {
-      cwd: codebaseRoot,
-      timeout: timeoutMs,
-      encoding: 'utf-8',
-      maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large outputs
-    });
+    // Step 1: Invoke `scip-typescript index` to generate binary SCIP file
+    // Use absolute path for tsconfig to ensure correct project resolution
+    // Cite: ts_ingest_spec.md §3.1 (SCIP CLI invocation)
+    // Cite: https://github.com/sourcegraph/scip-typescript (CLI documentation)
+    const absoluteTsconfigPath = path.isAbsolute(tsconfigPath)
+      ? tsconfigPath
+      : path.join(codebaseRoot, tsconfigPath);
 
-    // Parse JSON output
-    const scipIndex = JSON.parse(output) as ScipIndex;
-    return scipIndex;
-  } catch (error) {
-    // Timeout or command failure
-    if (error instanceof Error && error.message.includes('ETIMEDOUT')) {
-      // Timeout – return null to trigger AST fallback
+    const scipCommand = [
+      'npx',
+      '@sourcegraph/scip-typescript',
+      'index',
+      `--project=${absoluteTsconfigPath}`,
+      `--output=${outputFile}`,
+    ].join(' ');
+
+    try {
+      execSync(scipCommand, {
+        cwd: codebaseRoot,
+        timeout: timeoutMs,
+        stdio: ['pipe', 'pipe', 'pipe'], // Capture stdout/stderr to prevent noise
+      });
+    } catch (error) {
+      // Handle invocation errors gracefully – fall back to AST
+      // Cite: ts_ingest_spec.md §3.3 (AST fallback on SCIP failure)
+      if (error instanceof Error) {
+        const errorStr = error.toString();
+        if (errorStr.includes('ETIMEDOUT')) {
+          console.debug(`[SCIP] Timeout after ${timeoutMs}ms. Using AST fallback.`);
+          return null;
+        }
+        if (errorStr.includes('ENOENT') || errorStr.includes('not found')) {
+          console.debug(
+            '[SCIP] scip-typescript command not found or tsconfig not found. Using AST fallback.',
+          );
+          return null;
+        }
+      }
+      // Any SCIP error triggers AST fallback
+      console.debug('[SCIP] Invocation failed. Using AST fallback.');
       return null;
     }
 
-    // Re-throw actual errors
-    throw error;
+    // Verify output file was created
+    if (!fs.existsSync(outputFile)) {
+      console.debug('[SCIP] Output file not created. Using AST fallback.');
+      return null;
+    }
+
+    // Step 2: Parse binary SCIP file using `scip-typescript print` command
+    // Convert binary SCIP protobuf to JSON format for easier parsing
+    let jsonOutput: string;
+    try {
+      jsonOutput = execSync(`npx @sourcegraph/scip-typescript print "${outputFile}"`, {
+        cwd: codebaseRoot,
+        timeout: timeoutMs,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'], // Suppress stderr
+      });
+    } catch {
+      console.debug('[SCIP] Print command failed. Using AST fallback.');
+      return null;
+    }
+
+    // Step 3: Parse JSON output
+    let scipIndex: ScipIndex;
+    try {
+      scipIndex = JSON.parse(jsonOutput) as ScipIndex;
+    } catch {
+      console.debug('[SCIP] Failed to parse JSON output. Using AST fallback.');
+      return null;
+    }
+
+    return scipIndex;
+  } catch {
+    console.debug('[SCIP] Unexpected error. Using AST fallback.');
+    return null;
+  } finally {
+    // Clean up temporary file (best effort)
+    try {
+      if (fs.existsSync(outputFile)) {
+        fs.unlinkSync(outputFile);
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
   }
 }
 
 /**
+ * Infer symbol kind from display name.
+ * Cite: ts_ingest_spec.md §3.1 (symbol kind inference)
+ */
+function inferSymbolKind(displayName: string): ScipSymbol['kind'] {
+  const lower = displayName.toLowerCase();
+  if (lower.includes('function')) return 'function';
+  if (lower.includes('class')) return 'class';
+  if (lower.includes('interface')) return 'interface';
+  if (lower.includes('enum')) return 'enum';
+  if (lower.includes('type') || lower.includes('alias')) return 'type';
+  if (lower.includes('const')) return 'const';
+  if (lower.includes('method')) return 'method';
+  return 'other';
+}
+
+/**
+ * Extract relative file path from SCIP URI.
+ * URI examples: "file:///home/user/repo/src/main.ts"
+ */
+function extractFilePathFromUri(uri: string, codebaseRoot: string): string {
+  const filePath = uri
+    .replace(/^file:\/\/\/?/, '') // Remove file:// or file:/// prefix
+    .replace(new RegExp(`^${codebaseRoot}/?`), '') // Remove codebase root to get relative path
+    .replace(/\\/g, '/'); // Normalize backslashes to forward slashes (Windows)
+  return filePath === uri ? '' : filePath;
+}
+
+/**
+ * Process a single occurrence and add symbol to collection if valid.
+ * Cite: ts_ingest_spec.md §3.1 (occurrence-based symbol extraction)
+ */
+function processOccurrence(
+  occurrence: {
+    range: [number, number, number, number, number, number];
+    symbol: string;
+    symbolRoles?: number[];
+  },
+  filePath: string,
+  fileContent: string,
+  scipIndex: ScipIndex,
+  snapshotId: string,
+  seenSymbolIds: Set<string>,
+  symbols: ScipSymbol[],
+): void {
+  const [startByte, endByte] = occurrence.range;
+  const symbolPath = occurrence.symbol || '';
+
+  if (!symbolPath) {
+    return;
+  }
+
+  const range = convertByteOffsetToLineCol(fileContent, startByte, endByte);
+  const symbolName = symbolPath.split(/[.:#]/).pop() || 'unknown';
+  const symbolId = generateSymbolId(
+    snapshotId,
+    filePath,
+    symbolName,
+    range.startLine,
+    range.startCol,
+  );
+
+  if (seenSymbolIds.has(symbolId)) {
+    return;
+  }
+
+  const symbolMeta = scipIndex.symbols?.[symbolPath];
+  const kind = inferSymbolKind(symbolMeta?.displayName || '');
+  const docstring = symbolMeta?.documentation?.[0];
+  const isExported = !symbolPath.startsWith('local/');
+
+  const symbol: ScipSymbol = {
+    id: symbolId,
+    name: symbolName,
+    kind,
+    range,
+    filePath,
+    isExported,
+    docstring,
+    confidence: 'scip',
+  };
+
+  symbols.push(symbol);
+  seenSymbolIds.add(symbolId);
+}
+
+/**
  * Extract symbols from parsed SCIP JSON output.
+ * Processes occurrences (symbol references) and builds symbol definitions.
  * Cite: ts_ingest_spec.md §3.1, §3.7
  *
- * @param scipIndex – Parsed SCIP JSON output
+ * @param scipIndex – Parsed SCIP JSON output from `scip-typescript print`
  * @param codebaseRoot – Root directory of codebase
  * @param snapshotId – Snapshot identifier
- * @returns Array of extracted symbols
+ * @returns Array of extracted symbols with stable IDs and metadata
  */
 export function parseScipOutput(
   scipIndex: ScipIndex,
@@ -173,17 +335,20 @@ export function parseScipOutput(
   snapshotId: string,
 ): ScipSymbol[] {
   const symbols: ScipSymbol[] = [];
-  const processedSymbols = new Set<string>();
+  const seenSymbolIds = new Set<string>();
 
   if (!scipIndex.documents) {
     return symbols;
   }
 
+  // Process each document (file) in the SCIP index
   for (const doc of scipIndex.documents) {
-    // Extract file path from SCIP URI (format: file:///<path>)
-    const filePath = doc.uri
-      .replace(/^file:\/\/\/?/, '') // Remove file:// prefix
-      .replace(new RegExp(`^${codebaseRoot}/?`), ''); // Remove codebase root
+    const uri = doc.uri || '';
+    const filePath = extractFilePathFromUri(uri, codebaseRoot);
+
+    if (!filePath) {
+      continue;
+    }
 
     // Load file content for byte→line/col conversion
     const fullPath = path.join(codebaseRoot, filePath);
@@ -191,63 +356,26 @@ export function parseScipOutput(
     try {
       fileContent = fs.readFileSync(fullPath, 'utf-8');
     } catch {
-      // File not readable – skip
+      // File not readable – skip this document
       continue;
     }
 
-    if (!doc.occurrences) {
+    if (!doc.occurrences || doc.occurrences.length === 0) {
       continue;
     }
 
-    // Process occurrences
+    // Process occurrences (symbol references and definitions in the file)
+    // Cite: ts_ingest_spec.md §3.1 (occurrence-based symbol extraction)
     for (const occurrence of doc.occurrences) {
-      const [startByte, endByte] = occurrence.range;
-      const symbolPath = occurrence.symbol;
-
-      // Skip if already processed (dedupe)
-      if (processedSymbols.has(symbolPath)) {
-        continue;
-      }
-
-      // Extract symbol name (last component of scoped name, e.g., "foo.Bar::method" → "method")
-      const symbolName = symbolPath.split(/[.:#]/).pop() || 'unknown';
-
-      // Look up symbol metadata from SCIP index
-      const symbolMeta = scipIndex.symbols?.[symbolPath];
-
-      // Infer kind from symbol documentation/name heuristics
-      // (SCIP doesn't always provide explicit kind, so we use basic heuristics)
-      let kind: ScipSymbol['kind'] = 'other';
-      const displayName = symbolMeta?.displayName?.toLowerCase() || '';
-      if (displayName.includes('function')) kind = 'function';
-      else if (displayName.includes('class')) kind = 'class';
-      else if (displayName.includes('interface')) kind = 'interface';
-      else if (displayName.includes('enum')) kind = 'enum';
-      else if (displayName.includes('type')) kind = 'type';
-      else if (displayName.includes('const')) kind = 'const';
-
-      // Extract docstring (first line of documentation if present)
-      const docstring = symbolMeta?.documentation?.[0];
-
-      // Convert byte range to line/col
-      const range = convertByteOffsetToLineCol(fileContent, startByte, endByte);
-
-      // Determine if exported (basic heuristic: assume symbol path indicates export)
-      const isExported = !symbolPath.startsWith('local/');
-
-      const symbol: ScipSymbol = {
-        id: generateSymbolId(snapshotId, filePath, symbolName, range.startLine, range.startCol),
-        name: symbolName,
-        kind,
-        range,
+      processOccurrence(
+        occurrence,
         filePath,
-        isExported,
-        docstring,
-        confidence: 'scip',
-      };
-
-      symbols.push(symbol);
-      processedSymbols.add(symbolPath);
+        fileContent,
+        scipIndex,
+        snapshotId,
+        seenSymbolIds,
+        symbols,
+      );
     }
   }
 
@@ -275,12 +403,14 @@ export function runScipExtraction(
     tsconfigPath = path.join(codebaseRoot, '..', 'tsconfig.json');
     if (!fs.existsSync(tsconfigPath)) {
       // Not found – return empty (will trigger AST fallback)
+      console.debug('tsconfig.json not found; SCIP cannot run');
       return [];
     }
   }
 
   // Invoke SCIP CLI with timeout (120s per batch, cite: ts_ingest_spec §3.7)
-  const scipIndex = invokeScipCli(codebaseRoot, tsconfigPath, 120_000);
+  // Cite: ts_ingest_spec.md §3.1 (SCIP-first principle)
+  const scipIndex = invokeScipCliAndParse(codebaseRoot, tsconfigPath, 120_000);
 
   if (!scipIndex) {
     // Timeout or invocation failed – return empty to trigger AST fallback

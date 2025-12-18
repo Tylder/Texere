@@ -184,7 +184,7 @@ Input (TS/JS files)
 [Symbol Extractor Orchestrator]
     ├─→ File filtering (denylist/allowlist per ts_ingest_spec §2)
     ├─→ SCIP Runner (primary path)
-    │   └─→ Parse SCIP JSON output → symbols + metadata
+    │   └─→ Parse `index.scip` via SCIP bindings → symbols + metadata
     ├─→ AST Fallback (on SCIP failure or gaps)
     │   └─→ TypeScript compiler API → symbols + metadata
     ├─→ Merge & Dedupe (SCIP > AST by confidence)
@@ -194,6 +194,20 @@ Input (TS/JS files)
 ```
 
 ### 4.3 Key Concepts
+
+### 4.4 SCIP Runner Notes (Implementation Detail)
+
+- **Invocation**: run the `scip-typescript` **CLI** (child process), not a programmatic API.  
+  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- **Output**: expect `index.scip` (binary SCIP). Parse using SCIP bindings from the SCIP repo.  
+  Docs: [SCIP protocol + bindings](https://github.com/sourcegraph/scip)
+- **Flags**: use `--infer-tsconfig` for JS-only repos; `--yarn-workspaces` / `--pnpm-workspaces` for
+  workspaces; `--progress-bar` for diagnosing stalls.  
+  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- **OOM mitigation**: prefer `--no-global-caches` or increase Node heap size when the CLI OOMs.  
+  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- **Golden tests**: use `scip snapshot` when debugging SCIP output or pinning `index.scip`.  
+  Docs: [Writing an indexer](https://sourcegraph.com/docs/code-search/code-navigation/writing_an_indexer)
 
 **Symbol ID Formula** (cite: symbol_id_stability_spec.md §2.1):
 
@@ -644,6 +658,7 @@ Cite: `testing_strategy.md` §2.2–4, `testing_specification.md` §3–7
    ```
 
 6. **Edge Cases** (3+ tests):
+
    ```typescript
    describe('Edge cases (test_repository_spec.md §7)', () => {
      it('should handle circular imports', () => {

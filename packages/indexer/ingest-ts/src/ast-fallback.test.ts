@@ -51,7 +51,7 @@ describe('AST Fallback (ts_ingest_spec.md §3.3, §4)', () => {
       fs.writeFileSync(filePath, code);
 
       const symbols = runAstFallback(tempDir, ['test-func.ts'], 'test-snap:main');
-      const funcSymbols = symbols.filter((s) => s.name === 'myFunc');
+      const funcSymbols = symbols.filter((s: { name: string }) => s.name === 'myFunc');
 
       expect(funcSymbols.length).toBeGreaterThan(0);
       if (funcSymbols[0]) {
@@ -76,8 +76,8 @@ describe('AST Fallback (ts_ingest_spec.md §3.3, §4)', () => {
       fs.writeFileSync(filePath, code);
 
       const symbols = runAstFallback(tempDir, ['test-class.ts'], 'test-snap:main');
-      const classSymbols = symbols.filter((s) => s.name === 'MyClass');
-      const methodSymbols = symbols.filter((s) => s.name === 'myMethod');
+      const classSymbols = symbols.filter((s: { name: string }) => s.name === 'MyClass');
+      const methodSymbols = symbols.filter((s: { name: string }) => s.name === 'myMethod');
 
       expect(classSymbols.length).toBeGreaterThan(0);
       if (classSymbols[0]) {
@@ -104,8 +104,8 @@ describe('AST Fallback (ts_ingest_spec.md §3.3, §4)', () => {
       fs.writeFileSync(filePath, code);
 
       const symbols = runAstFallback(tempDir, ['test-types.ts'], 'test-snap:main');
-      const interfaceSymbols = symbols.filter((s) => s.name === 'IUser');
-      const typeSymbols = symbols.filter((s) => s.name === 'UserRole');
+      const interfaceSymbols = symbols.filter((s: { name: string }) => s.name === 'IUser');
+      const typeSymbols = symbols.filter((s: { name: string }) => s.name === 'UserRole');
 
       expect(interfaceSymbols.length).toBeGreaterThan(0);
       if (interfaceSymbols[0]) {
@@ -133,8 +133,8 @@ describe('AST Fallback (ts_ingest_spec.md §3.3, §4)', () => {
       fs.writeFileSync(filePath, code);
 
       const symbols = runAstFallback(tempDir, ['test-const.ts'], 'test-snap:main');
-      const enumSymbols = symbols.filter((s) => s.name === 'Status');
-      const constSymbols = symbols.filter((s) => s.name === 'DEFAULT_TIMEOUT');
+      const enumSymbols = symbols.filter((s: { name: string }) => s.name === 'Status');
+      const constSymbols = symbols.filter((s: { name: string }) => s.name === 'DEFAULT_TIMEOUT');
 
       expect(enumSymbols.length).toBeGreaterThan(0);
       if (enumSymbols[0]) {
@@ -178,7 +178,7 @@ describe('AST Fallback (ts_ingest_spec.md §3.3, §4)', () => {
       fs.writeFileSync(filePath, code);
 
       const symbols = runAstFallback(tempDir, ['test-doc.ts'], 'test-snap:main');
-      const funcSymbols = symbols.filter((s) => s.name === 'documentedFunc');
+      const funcSymbols = symbols.filter((s: { name: string }) => s.name === 'documentedFunc');
 
       expect(funcSymbols.length).toBeGreaterThan(0);
       if (funcSymbols[0]) {
@@ -200,8 +200,8 @@ describe('AST Fallback (ts_ingest_spec.md §3.3, §4)', () => {
       fs.writeFileSync(filePath, code);
 
       const symbols = runAstFallback(tempDir, ['test-export.ts'], 'test-snap:main');
-      const publicFuncs = symbols.filter((s) => s.name === 'publicFunc');
-      const internalFuncs = symbols.filter((s) => s.name === 'internalFunc');
+      const publicFuncs = symbols.filter((s: { name: string }) => s.name === 'publicFunc');
+      const internalFuncs = symbols.filter((s: { name: string }) => s.name === 'internalFunc');
 
       if (publicFuncs[0]) {
         expect(publicFuncs[0].isExported).toBe(true);

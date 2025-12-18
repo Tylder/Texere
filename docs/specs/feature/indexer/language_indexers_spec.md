@@ -30,14 +30,23 @@ Audience: indexer engineers, agents implementing ingest, reviewers validating co
 
 1. **SCIP-first**: use a maintained SCIP indexer when available; fall back to deterministic AST
    extraction only when SCIP output is unavailable or invalid (ingest_spec §1.1).
-2. **LLM last resort**: LLMs are permitted only when no static/SCIP signal exists (e.g., ambiguous
+2. **CLI-first for SCIP tools**: treat SCIP indexers as **CLI tools**, not stable library APIs.
+   Invoke them via child process (e.g., `scip-typescript index`) and parse the emitted `index.scip`
+   using SCIP bindings. Do not import internal package modules as a dependency boundary.
+3. **LLM last resort**: LLMs are permitted only when no static/SCIP signal exists (e.g., ambiguous
    boundary semantics); language specs must call this out explicitly.
-3. **Unified graph shape**: all languages emit the same node/edge catalog; missing data must be
+4. **Unified graph shape**: all languages emit the same node/edge catalog; missing data must be
    marked as gaps rather than inventing language-specific node types.
-4. **FileIndexResult-only output**: per ingest_spec §2.2–§2.3, language indexers emit
+5. **FileIndexResult-only output**: per ingest_spec §2.2–§2.3, language indexers emit
    `FileIndexResult[]` and do not write directly to storage.
-5. **Registry-driven loading**: indexers register via `getLanguageIndexers()` (ingest_spec §3.6);
+6. **Registry-driven loading**: indexers register via `getLanguageIndexers()` (ingest_spec §3.6);
    language specs must document their `languageIds` and `canHandleFile` rules.
+
+**References (SCIP tooling)**:
+
+- [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- [SCIP protocol + bindings](https://github.com/sourcegraph/scip)
+- [Sourcegraph “Writing an indexer”](https://sourcegraph.com/docs/code-search/code-navigation/writing_an_indexer)
 
 ## 3. Per-language Specs
 

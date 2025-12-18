@@ -54,8 +54,24 @@ explicitly out of scope per user request.
 
 ### 3.1 Primary pipeline (SCIP-first)
 
-- Run `scip-typescript` CLI to generate SCIP payload; parse occurrences/relationships to build
-  symbols, CALL/TYPE_REF/IMPORT references, and ranges. citeturn0search1
+- Run the **`scip-typescript` CLI** to generate a SCIP index (`index.scip`); parse
+  occurrences/relationships to build symbols, CALL/TYPE_REF/IMPORT references, and ranges. Use CLI
+  invocation (child process) rather than importing internal modules.  
+  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- Parse `index.scip` using SCIP protocol bindings (TypeScript bindings are available from the SCIP
+  repo); do not depend on scip-typescript internal APIs.  
+  Docs: [SCIP protocol + bindings](https://github.com/sourcegraph/scip)
+- **Supported Node versions**: v18 and v20 for `scip-typescript`.  
+  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- **JS-only projects**: run with `--infer-tsconfig`.  
+  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- **Workspaces**: use `--yarn-workspaces` or `--pnpm-workspaces` when applicable.  
+  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- **Progress diagnostics**: use `--progress-bar` when indexing appears stalled (noisy in CI).  
+  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- **OOM mitigation**: either pass `--no-global-caches` or increase Node heap via
+  `node --max-old-space-size=... "$(which scip-typescript)" index ...`.  
+  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
 
 ### 3.2 Known SCIP gaps (as of Dec 18, 2025)
 
@@ -111,6 +127,9 @@ denylist (tests/fixtures/vendor). No LLM for symbols/calls/references.
 - Default CLI timeout 120s per batch; on timeout, fall back to AST for that batch and log
   diagnostic.
 - AST fallback runs per-file; cap parallelism to CPU cores to reduce heap pressure.
+- Prefer `index.scip` as the output filename (SCIP tooling defaults); use `scip snapshot` for
+  deterministic golden tests and debugging.  
+  Docs: [Writing an indexer](https://sourcegraph.com/docs/code-search/code-navigation/writing_an_indexer)
 
 ### 3.8 Extraction matrix (summary)
 

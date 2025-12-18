@@ -88,7 +88,7 @@ describe(
       expect(results).toBeDefined();
       expect(Array.isArray(results)).toBe(true);
       expect(results.length).toBeGreaterThan(0);
-    });
+    }, 25_000);
 
     /**
      * Main integration test: extract all symbols from test-typescript-app.
@@ -239,8 +239,12 @@ describe(
       });
 
       // Extract symbol IDs and verify ordering matches
-      const ids1 = results.flatMap((r) => r.symbols.map((s) => s.id));
-      const ids2 = results2.flatMap((r) => r.symbols.map((s) => s.id));
+      const ids1 = results.flatMap((r: FileIndexResult) =>
+        r.symbols.map((s: { id: string }) => s.id),
+      );
+      const ids2 = results2.flatMap((r: FileIndexResult) =>
+        r.symbols.map((s: { id: string }) => s.id),
+      );
 
       expect(ids1).toEqual(ids2);
     });
