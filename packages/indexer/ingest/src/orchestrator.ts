@@ -23,6 +23,7 @@ import type {
   DryRunPlan,
   Logger,
   FileIndexResult,
+  GitClient,
 } from '@repo/indexer-types';
 
 import { createGitClient } from './git.js';
@@ -98,6 +99,104 @@ export async function resolveSnapshotForBranch(args: {
  * @reference ingest_spec.md §2.1, §6 (orchestration)
  * @reference configuration_and_server_setup.md §2 (git clone)
  */
+/**
+ * Clone repository if gitUrl is configured and repo doesn't exist.
+ * Cite: ingest_spec.md §6 (orchestration)
+ */
+async function ensureRepositoryExists(
+  repoRoot: string,
+  gitUrl: string | undefined,
+  git: GitClient,
+  logger: Logger,
+): Promise<void> {
+  if (!gitUrl) return;
+
+  const repoExists = await checkRepoExists(repoRoot);
+  if (!repoExists) {
+    logger.info('Repository not found, attempting clone', {
+      gitUrl,
+      targetPath: repoRoot,
+    });
+    try {
+      await git.clone({
+        gitUrl,
+        targetPath: repoRoot,
+      });
+      logger.info('Repository cloned successfully', { targetPath: repoRoot });
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Failed to clone repository', { message: error.message });
+      throw error;
+    }
+  }
+}
+
+/**
+ * Fetch latest commits from remote if enabled.
+ * Cite: ingest_spec.md §6.2 (fetch behavior)
+ */
+async function fetchLatestCommits(
+  repoRoot: string,
+  branch: string,
+  shouldFetch: boolean,
+  git: GitClient,
+  logger: Logger,
+): Promise<void> {
+  if (!shouldFetch) return;
+
+  logger.debug('Fetching latest commits from remote', { branch });
+  try {
+    await git.fetch({ repoPath: repoRoot, ref: branch });
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    logger.warn('Failed to fetch', { message: error.message });
+    // Continue anyway; local ref might be sufficient
+  }
+}
+
+/**
+ * Run language indexers on changed files if not in dry-run mode.
+ * Cite: ingest_spec.md §6.3 (language indexing)
+ */
+async function indexChangedFiles(
+  changedFiles: ChangedFileSet,
+  codebaseRoot: string,
+  snapshotId: string,
+  dryRun: boolean,
+  logger: Logger,
+): Promise<FileIndexResult[]> {
+  if (dryRun) {
+    logger.info('Dry-run mode: skipping indexing and graph/vector writes');
+    return [];
+  }
+
+  const filesToIndex = [...changedFiles.added, ...changedFiles.modified];
+  if (filesToIndex.length === 0) {
+    return [];
+  }
+
+  logger.info('Running language indexers', { fileCount: filesToIndex.length });
+  try {
+    const indexResults = await indexFiles({
+      codebaseRoot,
+      snapshotId,
+      filePaths: filesToIndex,
+    });
+    logger.info('Language indexing completed', {
+      filesIndexed: indexResults.length,
+      totalSymbols: indexResults.reduce((sum, r) => sum + r.symbols.length, 0),
+    });
+    return indexResults;
+  } catch (error) {
+    // Per ingest_spec.md §6.5: log error but continue with partial results
+    logger.warn(
+      'Language indexing had issues',
+      error instanceof Error ? { message: error.message } : { error: String(error) },
+    );
+    return [];
+  }
+}
+
 export async function runSnapshot(args: {
   snapshotRef?: SnapshotRef;
   codebaseId: string;
@@ -151,43 +250,11 @@ export async function runSnapshot(args: {
       repoRoot = path.join(indexerConfig.cloneBasePath, codebaseId);
     }
 
-    // Optional: Clone repo if not present
-    if (codebaseConfig?.gitUrl) {
-      const repoExists = await checkRepoExists(repoRoot);
-      if (!repoExists) {
-        logger.info('Repository not found, attempting clone', {
-          gitUrl: codebaseConfig.gitUrl,
-          targetPath: repoRoot,
-        });
-        try {
-          await git.clone({
-            gitUrl: codebaseConfig.gitUrl,
-            targetPath: repoRoot,
-          });
-          logger.info('Repository cloned successfully', { targetPath: repoRoot });
-        } catch (error) {
-          logger.error(
-            'Failed to clone repository',
-            error instanceof Error ? { message: error.message } : { error: String(error) },
-          );
-          throw error;
-        }
-      }
-    }
+    // Ensure repository exists
+    await ensureRepositoryExists(repoRoot, codebaseConfig?.gitUrl, git, logger);
 
-    // Optional: fetch latest from remote
-    if (shouldFetch) {
-      logger.debug('Fetching latest commits from remote', { branch });
-      try {
-        await git.fetch({ repoPath: repoRoot, ref: branch });
-      } catch (error) {
-        logger.warn(
-          'Failed to fetch',
-          error instanceof Error ? { message: error.message } : { error: String(error) },
-        );
-        // Continue anyway; local ref might be sufficient
-      }
-    }
+    // Fetch latest commits from remote
+    await fetchLatestCommits(repoRoot, branch, shouldFetch, git, logger);
 
     // Resolve branch to snapshot
     const snapshotRef = await resolveSnapshotForBranch({
@@ -223,36 +290,14 @@ export async function runSnapshot(args: {
       renamed: changedFiles.renamed.length,
     });
 
-    let indexResults: FileIndexResult[] = [];
-
-    if (!dryRun) {
-      // Slice 2: Run language indexers on changed files
-      const filesToIndex = [...changedFiles.added, ...changedFiles.modified];
-
-      if (filesToIndex.length > 0) {
-        logger.info('Running language indexers', { fileCount: filesToIndex.length });
-        try {
-          indexResults = await indexFiles({
-            codebaseRoot: repoRoot,
-            snapshotId: snapshotRef.snapshotId!,
-            filePaths: filesToIndex,
-          });
-          logger.info('Language indexing completed', {
-            filesIndexed: indexResults.length,
-            totalSymbols: indexResults.reduce((sum, r) => sum + r.symbols.length, 0),
-          });
-        } catch (error) {
-          // Per ingest_spec.md §6.5: log error but continue with partial results
-          logger.warn(
-            'Language indexing had issues',
-            error instanceof Error ? { message: error.message } : { error: String(error) },
-          );
-          // Continue with empty results; graph writes will be empty/partial
-        }
-      }
-    } else {
-      logger.info('Dry-run mode: skipping indexing and graph/vector writes');
-    }
+    // Index changed files
+    const indexResults = await indexChangedFiles(
+      changedFiles,
+      repoRoot,
+      snapshotRef.snapshotId!,
+      dryRun,
+      logger,
+    );
 
     return { snapshotRef, changedFiles, indexResults };
   } catch (error) {

@@ -35,6 +35,7 @@ const stripAnsi = (line) =>
 const isNoise = (line) => noisePatterns.some((pattern) => pattern.test(line));
 
 const [outputFile] = process.argv.slice(2);
+const typecheckCycleMarker = 'File change detected. Starting incremental compilation...';
 
 let output = process.stdout;
 if (outputFile) {
@@ -43,8 +44,18 @@ if (outputFile) {
 
 let buffer = '';
 
+const resetOutputFile = () => {
+  if (!outputFile) return;
+  output.end();
+  output = createWriteStream(outputFile, { flags: 'w' });
+};
+
 const flushLine = (line) => {
   if (!line) return;
+  if (line.includes(typecheckCycleMarker)) {
+    resetOutputFile();
+    return;
+  }
   const cleaned = stripAnsi(line).trim();
   if (!cleaned) return;
   if (isNoise(cleaned)) return;

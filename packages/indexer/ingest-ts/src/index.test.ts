@@ -37,15 +37,27 @@ describe('TypeScript/JavaScript Language Indexer (Placeholder)', () => {
     });
   });
 
-  describe('indexFiles (Placeholder)', () => {
-    it('should throw not-implemented error', () => {
-      expect(() => {
-        tsJsIndexer.indexFiles({
-          codebaseRoot: '/repo',
-          snapshotId: 'test-snap:main',
-          filePaths: ['src/index.ts'],
-        });
-      }).toThrow('Slice 2A1: Symbol extraction not yet implemented');
+  describe('indexFiles', () => {
+    it('should return empty array when no files provided', async () => {
+      const result = await tsJsIndexer.indexFiles({
+        codebaseRoot: '/nonexistent',
+        snapshotId: 'test-snap:main',
+        filePaths: [],
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it('should filter files and return FileIndexResult array', async () => {
+      // Even with non-existent codebase, should return empty result (not crash)
+      const result = await tsJsIndexer.indexFiles({
+        codebaseRoot: '/nonexistent',
+        snapshotId: 'test-snap:main',
+        filePaths: ['src/index.ts'],
+      });
+
+      // Result should be an array
+      expect(Array.isArray(result)).toBe(true);
     });
   });
 
