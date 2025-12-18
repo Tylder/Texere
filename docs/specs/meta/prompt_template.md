@@ -45,7 +45,6 @@ This is a code/test change task.
   3) Tools / tool schemas / tool integration → `feature/texere-tool-spec.md`.
   4) Frontend / SSR / ISR / PPR → add `engineering/rendering-strategies.md`.
 - Skim package-level READMEs/configs for files you’ll touch; skip unrelated packages.
-- **If `logs/dev.log` exists, the `dev:log` watcher is running.** If missing, ask the user to run `pnpm dev:log`.
 - **If `logs/typecheck.log` exists, the `typecheck:watch:log` watcher is running.** If missing, ask the user to run `pnpm typecheck:watch:log`.
 - Note: These log files are automatically deleted when their respective scripts are closed. Console shows full output; filtered logs remove noisy warnings/ANSI for agent use only.
 
@@ -71,7 +70,7 @@ Plan first, then edit.
 Execution:
 - Edit docs.
 - Run `pnpm format:staged` on changed files.
-- `pnpm post:report:fast` is optional for docs-only; run it if code-adjacent examples were touched or if the user requests. If `logs/dev.log` or `logs/typecheck.log` exist, skim for regressions.
+- `pnpm post:report:fast` is optional for docs-only; run it if code-adjacent examples were touched or if the user requests. If `logs/typecheck.log` exists, skim for regressions.
 
 Validate: Ensure consistency—if you change a behavior spec, update code/tests that implement it.
 ```
@@ -83,7 +82,7 @@ Validate: Ensure consistency—if you change a behavior spec, update code/tests 
 ```
 Execution loop (strict):
 - After every file change, run `pnpm post:report:fast`. Do not proceed if red.
-- If `logs/dev.log` or `logs/typecheck.log` exist, read them after each edit and fix surfaced issues before more changes. Never start/stop watchers yourself.
+- If `logs/typecheck.log` exists, read it after each edit and fix surfaced issues before more changes. Never start/stop watchers yourself.
 - Keep diffs small; one change set at a time, then re-run the fast gate.
 - Code discipline: follow eslint_code_quality.md (workspace imports, no `any`, explicit return types), typescript_configuration.md (NodeNext, no baseUrl/paths, use package exports + `workspace:*` deps), prettier_formatting.md (root config).
   - **Type Safety & Cleanup Checklist (before validation):**
