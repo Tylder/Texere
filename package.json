@@ -21,7 +21,7 @@
     "lint:fix": "oxlint --fix && nx run-many --target=lint --fix --all --parallel --outputStyle=static --skip-nx-cache",
     "lint:fix-suggestions": "oxlint --fix --fix-suggestions && nx run-many --target=lint --fix --all --parallel --skip-nx-cache",
     "lint:fix:fast": "oxlint --fix",
-    "post:report": "pnpm clean && (pnpm run format && pnpm run lint:fix) && nx run-many --target=check-types --all --parallel && nx run-many --target=test:coverage --all --parallel && nx run-many --target=build --all --parallel && node scripts/aggregate-coverage.mjs",
+    "post:report": "pnpm clean && nx reset && nx sync && (pnpm run format && pnpm run lint:fix) && nx run-many --target=check-types --all --parallel && nx run-many --target=test:coverage --all --parallel && nx run-many --target=build --all --parallel && node scripts/aggregate-coverage.mjs",
     "post:report:fast": "pnpm run lint:fix:fast && nx run-many --target=check-types --all --parallel --outputStyle=static && nx run-many --target=test:coverage --all --parallel --outputStyle=static && node scripts/aggregate-coverage.mjs",
     "prepare": "husky",
     "quality": "pnpm run format:check && nx run-many --targets=lint,check-types,test,build --all --parallel",

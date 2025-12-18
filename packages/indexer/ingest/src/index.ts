@@ -104,18 +104,18 @@ export function computeChangedFiles(_args: {
  * @reference ingest_spec.md §2.2 (per-language responsibility)
  * @reference language_indexers_spec.md
  */
-export async function indexFiles(_args: {
+export async function indexFiles(args: {
   codebaseRoot: string;
   snapshotId: string;
   filePaths: string[];
 }): Promise<FileIndexResult[]> {
-  // TODO: Implement language indexer dispatch
-  // 1. Group filePaths by language (detect from extension)
-  // 2. For TS/JS files: call tsIndexer.indexFiles()
-  // 3. For Py files: call pyIndexer.indexFiles() (via subprocess/sidecar)
-  // 4. Merge results: FileIndexResult[]
-  // 5. Filter by security/allow patterns from config
-  return await Promise.resolve([]);
+  // Import the language indexer dispatcher
+  const { indexFiles: dispatchIndexFiles } = await import('./languages/index.js');
+
+  // TODO: Filter by security/allow patterns from config (ingest_spec.md §6.5)
+  const results = await dispatchIndexFiles(args);
+
+  return results;
 }
 
 // ============================================================================
