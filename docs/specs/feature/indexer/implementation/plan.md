@@ -108,34 +108,103 @@ stop).
 - Daemon lock utilities: `packages/features/indexer/core/src/daemon/lock.ts` (new)
 - CLI commands: `apps/indexer-cli/src/{commands,daemon,lock,validate}/*` (modular per command)
 
-## Slice 2 — TypeScript Language Indexer (Symbols/Calls/Refs/Tests/Boundaries)
+## Slice 2A1 — TS/JS Symbol Extraction (SCIP + AST)
 
-**Purpose**: Extract `FileIndexResult` for TS/JS.  
+**Purpose**: Emit symbols only (no edges) with stable IDs and kind classification.  
 **Scope**:
 
-- Implement `ts-indexer` (AST) covering symbols, CALL/TYPE_REF/IMPORT references, Boundary
-  heuristics (Express) per `ingest_spec.md` §5.1; `language_indexers_spec.md` (placeholder—document
-  decisions in code comments).
-- Test detection (`describe/it/test`) per `ingest_spec.md` §5.1; map to TestCase nodes.
-- Boundary detection: verb/path + handler symbol IDs (`Boundary.id` format from
-  `nodes/Boundary.md`).
-- Enforce symbol ID construction (path+name+range) per `ingest_spec.md` §3,
-  `symbol_id_stability_spec.md`.  
-  **Acceptance**: For `test-typescript-app` snapshot-2 fixture, extracted counts meet
-  `test_repository_spec.md` Node/Edge matrices.  
-  **Tests**: Golden `FileIndexResult` for key files (user.service.ts, routes.ts, validators.ts) as
-  specified in `test_repository_spec.md` (Golden Snapshots). **Docs to consult**:
-  [`ingest_spec.md`](../ingest_spec.md) §3–5;
-  [`language_indexers_spec.md`](../language_indexers_spec.md);
-  [`nodes/Boundary.md`](../nodes/Boundary.md);
-  [`test_repository_spec.md`](../test_repository_spec.md) (Node/Edge matrices, Edge Cases 1–9);
-  [`symbol_id_stability_spec.md`](../symbol_id_stability_spec.md);
-  [`edges/REFERENCES.md`](../edges/REFERENCES.md), [`edges/LOCATION.md`](../edges/LOCATION.md),
-  [`edges/REALIZES.md`](../edges/REALIZES.md).  
-  **Code areas**: `packages/features/indexer/ingest/src/languages/ts-indexer.ts`; shared types in
-  `packages/features/indexer/types/src`; extractors in
-  `packages/features/indexer/ingest/src/extractors/*`; goldens under
-  `packages/features/indexer/ingest/__tests__/fixtures`.
+- Run SCIP + AST fallback per `ts_ingest_spec` §3.1–§3.8 for symbol defs; apply ID rules (§2, §5.1).
+- Enforce path filters/denylist; deterministic ordering.
+
+**Acceptance**: On `/home/anon/TexereIndexerRestRepo` branch `main`, symbol list matches golden; no
+duplicates; IN_SNAPSHOT present for all symbols.  
+**Tests/Gates**:
+
+- Unit: `symbol_kinds.ts` (expected symbol ids/kinds/ranges).
+- Integration (gate): `main` branch golden snapshot (symbols only) must match exactly. **Docs**:
+  `ts_ingest_spec` §2–§3, §5.1; `ingest_spec` §3; `symbol_id_stability_spec`. **Code areas**:
+  `ingest/src/extractors/symbols.ts`; wiring in `ts-indexer.ts`.
+
+## Slice 2A2 — TS/JS References (CALL/IMPORT/TYPE_REF) with Merge/Dedupe
+
+**Purpose**: Add references on top of symbols with SCIP-first + AST gap fill.  
+**Scope**:
+
+- Implement CALL/IMPORT/TYPE_REF extraction per `ts_ingest_spec` §3.1–§3.8; apply merge/dedupe rules
+  (§3.6), confidence tagging, ordering.
+- Handle SCIP gaps (decorator_shorthand, dynamic_import_unit, jsx_namespace_unit) with diagnostics.
+
+**Acceptance**: On branch `main`, references match golden; zero orphan edges; diagnostics recorded
+for gap fixtures.  
+**Tests/Gates**:
+
+- Unit: `single_call.ts`, `single_import.ts`, `single_typeref.ts`, `decorator_shorthand.ts`,
+  `dynamic_import_unit.ts`, `jsx_namespace_unit.ts`.
+- Integration (gate): `main` branch golden for symbols+references must match; fail build if drift.
+  **Docs**: [`languages/ts_ingest_spec.md`](../languages/ts_ingest_spec.md) §3.2–§3.8, §5.1;
+  [`edges/REFERENCES.md`](../edges/REFERENCES.md);
+  [`test_repository_spec.md`](../test_repository_spec.md) baseline. **Code areas**:
+  `ingest/src/extractors/references.ts`; merge logic in `ts-indexer.ts`.
+
+## Slice 2B1 — TS/JS Boundaries
+
+**Purpose**: Add Boundary detection + related edges on top of symbols/references.  
+**Scope**:
+
+- Framework heuristics per `ts_ingest_spec` §4.4 & §4.14 (Express, Next, tRPC, Nest, WebSocket,
+  CLI).
+- Emit Boundary nodes, LOCATION (IN_FILE/IN_MODULE), HANDLED_BY to handler Symbol.
+- Respect denylist/allowlist; diagnostics for ambiguous/LLM fallback (if used).
+
+**Acceptance**: On `/home/anon/TexereIndexerRestRepo` branch `snapshot-2`, boundary counts and
+verb/path/handler match goldens; zero orphan Boundaries.  
+**Tests/Gates**:
+
+- Unit: `express_boundary.ts`, `next_api_route.ts`, `trpc_boundary.ts`, `nest_boundary.ts`.
+- Integration (gate): `snapshot-2` boundary golden must pass before proceeding to 2B2.  
+  **Docs**: [`languages/ts_ingest_spec.md`](../languages/ts_ingest_spec.md) §4.4, §4.14, §7.1–§7.3;
+  [`nodes/Boundary.md`](../nodes/Boundary.md); [`edges/LOCATION.md`](../edges/LOCATION.md). **Code
+  areas**: `ingest/src/extractors/boundaries.ts`.
+
+## Slice 2B2 — TS/JS Test Cases
+
+**Purpose**: Detect TestCase nodes and REALIZES {TESTS} edges.  
+**Scope**:
+
+- Implement test DSL detection per `ts_ingest_spec` §4.6; nested name assembly; skip/todo flags.
+- REALIZES {role:'TESTS'} to symbols via call graph/name heuristics (§5, §7.2).
+
+**Acceptance**: On branch `snapshot-2` (and later), TestCase nodes + REALIZES edges match goldens;
+skip/todo preserved.  
+**Tests/Gates**:
+
+- Unit: `jest_unit.test.ts`.
+- Integration (gate): `snapshot-2` and `snapshot-4` test goldens must pass.  
+  **Docs**: [`languages/ts_ingest_spec.md`](../languages/ts_ingest_spec.md) §4.6, §5, §7.2–§7.3;
+  [`edges/REALIZES.md`](../edges/REALIZES.md). **Code areas**: `ingest/src/extractors/tests.ts`.
+
+## Slice 2B3 — TS/JS Data Contracts & V2 Nodes (Message/Secret/Workflow)
+
+**Purpose**: Add DataContract extraction and optional V2 nodes/edges.  
+**Scope**:
+
+- DataContract extraction per `ts_ingest_spec` §4.5 (Prisma, Zod, OpenAPI, Drizzle); emit MUTATES
+  READ/WRITE edges (§5).
+- Optional V2 nodes gated by `enableV2Nodes` per §5.3: Message, Secret, Workflow + EVENT edges.
+- Apply fixture→assertion mapping (§7.1–§7.2) and diagnostics contract (§6).
+
+**Acceptance**: On branches `snapshot-3`/`snapshot-4`, data contracts and MUTATES edges match
+goldens; V2 nodes appear only when flag enabled.  
+**Tests/Gates**:
+
+- Unit: `prisma_model_unit.prisma`, `zod_schema_unit.ts`, `openapi_unit.json`, `drizzle_table.ts`,
+  V2 node fixtures.
+- Integration (gate): `snapshot-3`/`snapshot-4` goldens with flag off; repeat with flag on for V2
+  coverage before advancing to Slice 3.  
+  **Docs**: [`languages/ts_ingest_spec.md`](../languages/ts_ingest_spec.md) §4.5, §5.3, §7.1–§7.3;
+  [`nodes/DataContract.md`](../nodes/DataContract.md); [`edges/MUTATES.md`](../edges/MUTATES.md);
+  [`non_code_assets_ingest_spec.md`](../non_code_assets_ingest_spec.md) for V2 semantics.  
+  **Code areas**: `ingest/src/extractors/datacontracts.ts`; `ingest/src/extractors/v2-nodes.ts`.
 
 ## Slice 3 — Graph Persistence (Neo4j) with Cardinality Constraints
 

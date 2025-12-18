@@ -1,6 +1,6 @@
 # Texere Indexer – TypeScript/JavaScript Ingest Spec
 
-**Document Version:** 0.4  
+**Document Version:** 0.5  
 **Last Updated:** December 18, 2025  
 **Status:** Active (TS/JS ingestion)  
 **Backlink:** [High-Level Spec](../../README.md) → [Ingest Spec](../ingest_spec.md) (§1.1,
@@ -17,6 +17,7 @@
 - [6. Error Handling & Logging](#6-error-handling--logging)
 - [7. Testing Guidance](#7-testing-guidance)
 - [8. Changelog](#8-changelog)
+- [9. Implementation Readiness](#9-implementation-readiness)
 
 ## 1. Scope & Audience
 
@@ -126,6 +127,17 @@ denylist (tests/fixtures/vendor). No LLM for symbols/calls/references.
 | DOCUMENTS edges                       | —                                       | doc→target, confidence           | —                  | documentation_indexing pipeline |
 | REALIZES (TESTS/VERIFIES)             | call graph + names → heuristic          | role, target ids                 | heuristic          | TS ingest                       |
 | MUTATES                               | Prisma/ORM/SQL detection                | operation, entity                | ast                | TS ingest                       |
+
+### 3.9 Config surface (normative defaults)
+
+- `ingest.ts.scipBatchSize`: default 2_000 files per SCIP run.
+- `ingest.ts.scipTimeoutMs`: default 120_000.
+- `ingest.ts.allowlist`: optional glob array to override denylist for specific paths.
+- `ingest.ts.denylist`: optional glob additions; merged with `.gitignore` + enforced defaults.
+- `ingest.ts.disableLLM`: boolean, default false; when true, drop LLM fallback entirely.
+- `ingest.ts.enableV2Nodes`: boolean, default false; gates Message/Secret/Workflow nodes + EVENT
+  edges.
+- `ingest.ts.maxParallelAst`: defaults to number of CPU cores.
 
 ## 4. Node Extraction Rules
 
@@ -273,6 +285,13 @@ For each node type, steps are ordered: SCIP → AST → heuristic → LLM.
 - Denylisted paths emit zero nodes/edges.
 - If SCIP failed, AST fallback was attempted and diagnostic recorded.
 
+### 5.3 V2 node/edge activation
+
+- `enableV2Nodes=false` (default): do not emit Message/Secret/Workflow nodes or EVENT edges; other
+  nodes/edges unchanged.
+- `enableV2Nodes=true`: emit V2 nodes; EVENT edges (PUBLISHES/CONSUMES/EMITS/LISTENS_TO) emitted
+  when channels are discovered in code or config.
+
 ## 6. Error Handling & Logging
 
 - File-level SCIP or AST failure → log, skip file, continue (ingest_spec §6.4).
@@ -287,6 +306,19 @@ For each node type, steps are ordered: SCIP → AST → heuristic → LLM.
 - Integration: golden `FileIndexResult` fixtures for routes, tRPC/NestJS, Prisma/Zod, Jest/Vitest,
   Next.js API routes, and doc/config stubs.
 - Each test description cites this spec section (meta/spec_writing §9; testing_specification §3.6).
+- Integration/E2E: run full extraction against `test-typescript-app` per test_repository_spec (§2
+  Repository Structure, §3–§4 coverage matrices, §8 validation checklist) and compare to golden
+  snapshots.
+- Repository location for integration/E2E: `/home/anon/TexereIndexerRestRepo` (mirror of
+  `test-typescript-app`), use this path when wiring end-to-end runs.
+- Branch coverage (test_repository_spec Git branches):
+  - `main` (baseline)
+  - `snapshot-1` (base structure)
+  - `snapshot-2` (boundary-focused changes)
+  - `snapshot-3` (rename simulated as delete+add)
+  - `snapshot-4` (modified symbol tracking)
+- E2E expectation: index each branch in order, assert snapshotType=`branch`, branch property set,
+  IN_SNAPSHOT cardinality holds, incremental diff reflects branch deltas (ingest_spec §6.1).
 - Suggested golden fixture set:
   - `express_route.ts`: Express router with middleware + error handler.
   - `nest_controller.ts`: Decorators with property shorthand (`imports`) to exercise SCIP gap.
@@ -302,11 +334,116 @@ For each node type, steps are ordered: SCIP → AST → heuristic → LLM.
   - `docs/readme.md`: SpecDoc stub + DOCUMENTS handoff.
   - `config/.env.example`: Configuration + Secret redaction.
 
+### 7.1 Fixture→assertion mapping (minimum)
+
+| Fixture file         | Spec sections exercised                         | Required assertions                                                      |
+| -------------------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
+| express_route.ts     | Boundary §4.4; REFERENCES CALL §5; PATTERN      | Boundary verb/path detected; CALL edges present; middleware PATTERN refs |
+| nest_controller.ts   | SCIP gap §3.2; Boundary §4.4                    | AST fallback fills CALL; Boundary path = controller+method; handler id   |
+| dynamic_import.ts    | SCIP gap §3.2; REFERENCES IMPORT/CALL §5        | IMPORT + CALL emitted for literal and template `import()`                |
+| jsx_namespace.tsx    | SCIP gap §3.2; REFERENCES CALL §5               | CALL emitted for namespaced component                                    |
+| trpc_router.ts       | Boundary §4.4; REALIZES IMPLEMENTS (downstream) | Boundary per procedure key; handler symbol linked                        |
+| prisma_schema.prisma | DataContract §4.5; MUTATES §5                   | DataContract nodes + CRUD MUTATES edges                                  |
+| drizzle_table.ts     | DataContract §4.5; MUTATES §5                   | Table entity emitted; READ/WRITE edges where client used                 |
+| zod_schema.ts        | DataContract §4.5                               | Fields captured with optional flags                                      |
+| next_api_route.ts    | Boundary §4.4                                   | Boundary path from file; verb from export name                           |
+| jest_tests.test.ts   | TestCase §4.6; REALIZES TESTS §5                | Nested test names; skip/todo flags; REALIZES edges to targets            |
+| docs/readme.md       | SpecDoc §4.7; DOCUMENTS handoff                 | SpecDoc stub emitted; no DOCUMENTS edge from TS pass                     |
+| config/.env.example  | Configuration §4.8; Secret §4.12                | Config nodes redacted; Secret nodes hashed; DEPENDS_ON config edges      |
+
+### 7.2 Required tests (integration & e2e)
+
+Use `/home/anon/TexereIndexerRestRepo` (branches `main`, `snapshot-1`..`snapshot-4`) as the system
+test repo. Each test cites this section.
+
+1. **Baseline snapshot (main)** — Verify full node/edge cardinality vs. golden:
+   - All mandatory nodes present; one IN_SNAPSHOT each; no orphan CALL/TYPE_REF/IMPORT.
+   - Branch metadata: snapshotType=`branch`, branch=`main`.
+2. **Incremental diff (snapshot-1 → snapshot-2)** — Git diff drives reindex:
+   - Only changed files reindexed; unchanged symbols retain IDs.
+   - New boundaries from snapshot-2 appear with IN_SNAPSHOT; removed ones absent.
+3. **Rename simulated as delete+add (snapshot-2 → snapshot-3)** — Per ingest_spec §3.2A:
+   - Symbol IDs for renamed file change; TRACKS INTRODUCED for new, none for delete.
+   - No orphan CALLs to removed symbols.
+4. **Modified symbol tracking (snapshot-3 → snapshot-4)**:
+   - TRACKS.MODIFIED present for changed symbols; unchanged symbols lack MODIFIED.
+5. **SCIP gap coverage**:
+   - `nest_controller.ts`: CALL edges present via AST; diagnostic notes SCIP gap.
+   - `dynamic_import.ts`: IMPORT + CALL emitted even if SCIP misses.
+6. **Boundary detection across frameworks**:
+   - express_route.ts, next_api_route.ts, trpc_router.ts, nest_controller.ts: verb/path captured,
+     HANDLED_BY linked, LOCATION edges set.
+7. **Data contracts**:
+   - prisma_schema.prisma, drizzle_table.ts, zod_schema.ts: entities emitted; fields captured;
+     MUTATES READ/WRITE edges created from client usage.
+8. **Tests → code**:
+   - jest_tests.test.ts: REALIZES {role:'TESTS'} edges to targeted symbols; skip/todo preserved.
+9. **Config/Secrets/Dependencies**:
+   - .env.example: redacted Config nodes; Secret nodes hashed; DEPENDS_ON {kind:'CONFIG'} edges.
+   - package.json + lockfile: Dependency nodes + DEPENDS_ON {kind:'LIBRARY'} edges from imports.
+10. **Documentation handoff**:
+    - docs/\*.md: SpecDoc stubs emitted; no DOCUMENTS edges from TS pass; LOCATION edges exist.
+11. **Denylist enforcement**:
+    - Fixture under fixtures/ or .next/: zero nodes/edges; diagnostic records skip reason.
+12. **V2 flag behavior**:
+    - enableV2Nodes=false: no Message/Secret/Workflow nodes or EVENT edges.
+    - enableV2Nodes=true: V2 nodes emitted; EVENT edges created when code+config share channel.
+13. **Diagnostics contract**:
+    - Force SCIP failure (bad tsconfig); assert per-file diagnostic fields
+      `{filePath, tool, severity, message, phase, retryable}` and AST fallback ran.
+
+E2E harness expectations:
+
+- Index branches in order (`main`, `snapshot-1`..`snapshot-4`); assert branch metadata and diff
+  behavior match ingest_spec §6.1.
+- Goldens stored alongside fixture repo or in `/home/anon/TexereIndexerRestRepo/goldens`.
+
+### 7.3 Unit test expectations (minimal fixture set)
+
+Use one-file micro-fixtures to isolate behaviors; assert sorted outputs and confidence values.
+
+- **Symbols**: `symbol_kinds.ts` with function/class/method/const/type/interface/enum; assert kind +
+  range + CONTAINS edges; skip `.d.ts` unless sole def.
+- **CALL**: `single_call.ts` with one call; expect exactly one CALL edge `{fromId,toId,line,col}`
+  sorted; confidence `scip`.
+- **IMPORT**: `single_import.ts` with one import; assert IMPORT edge; no duplicates after dedupe.
+- **TYPE_REF**: `single_typeref.ts` (interface reference); expect one TYPE_REF edge.
+- **Decorator gap**: `decorator_shorthand.ts` (Nest-like property shorthand); SCIP gap triggers AST
+  CALL with `confidence:'ast'`, `note:'scip-gap'`.
+- **Dynamic import**: `dynamic_import_unit.ts`; expect IMPORT + CALL even if SCIP misses; confidence
+  `ast`.
+- **Namespace JSX**: `jsx_namespace_unit.tsx`; expect CALL to component from AST fallback.
+- **Boundary microtests**:
+  - `express_boundary.ts`: verb/path/handler + HANDLED_BY.
+  - `trpc_boundary.ts`: procedure key → boundary.
+  - `nest_boundary.ts`: controller + method decorators produce boundary path; handler linked.
+- **DataContract microtests**:
+  - `prisma_model_unit.prisma`: entity + fields.
+  - `zod_schema_unit.ts`: fields + optionality captured.
+  - `openapi_unit.json`: components.schemas parsed to DataContract.
+- **TestCase microtest**: `jest_unit.test.ts` with nested describe/it + skip/todo; REALIZES {TESTS}
+  edges to callee.
+- **Denylist**: place fixture under `fixtures/denylisted.ts`; expect zero nodes/edges; diagnostic
+  notes skip reason.
+- **Diagnostics contract**: `broken_tsconfig` scenario; force SCIP failure; assert diagnostic fields
+  `{filePath, tool:'scip', severity, message, phase, retryable}` and AST fallback ran when allowed.
+- **Ordering & dedupe**: every unit test asserts outputs sorted by filePath/startLine/startCol and
+  no duplicate edges by `{fromId,toId,line,col,type}`.
+
 ## 8. Changelog
 
 | Date       | Version | Editor | Summary                                                                                         |
 | ---------- | ------- | ------ | ----------------------------------------------------------------------------------------------- |
+| 2025-12-18 | 0.5     | @agent | Added acceptance checklists, config surface, fixture→assertion map, v2 flag semantics.          |
 | 2025-12-18 | 0.4     | @agent | Added extraction matrix, merge rules, guardrails, denylist, validation checklist, fixture list. |
 | 2025-12-18 | 0.3     | @agent | Made node/edge rules exhaustive; added ID/confidence rules, SCIP gaps, doc/config interactions. |
 | 2025-12-18 | 0.2     | @agent | Covered all nodes/edges, optional nodes, LLM guardrails.                                        |
 | 2025-12-18 | 0.1     | @agent | Initial TS/JS ingestion spec (Draft).                                                           |
+
+## 9. Implementation Readiness
+
+- Complete the validation checklist in §5.2 before shipping.
+- Wire config defaults from §3.9 into the ingest configuration loader.
+- Implement SCIP→AST merge rules (§3.6) and deterministic sort before returning results.
+- Honor path denylist/allowlist semantics (§2) and feature flag for V2 nodes/edges (§5.3).
+- Build and run the golden fixture set (§7.1); integrate into test_repository_spec once finalized.

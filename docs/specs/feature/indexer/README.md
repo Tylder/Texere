@@ -150,12 +150,15 @@ details).
 
 1. **Phase 1 (Foundation)**: Finalize **test_repository_spec** + **graph_schema_spec**,
    **vector_store_spec**, **llm_prompts_spec**
-2. **Phase 2 (Setup)**: Complete remaining specs (**configuration_spec**, **api_gateway_spec**,
-   **language_indexers_spec**)
-3. **Phase 3 (Code)**: Implement `indexer/{types, core, ingest, query, workers}` per
-   **nx_layout_spec**
+2. **Phase 2 (Specs Setup)**: Complete blocking specs only (**configuration_spec**,
+   **api_gateway_spec**, **language_indexers_spec**). Defer language-specific detail until code
+   slice.
+3. **Phase 3 (Ingest Implementation)**: Implement `indexer/{types, core, ingest, query, workers}`
+   per **nx_layout_spec**. Apply **languages/ts_ingest_spec** §3–§7 and
+   **non_code_assets_ingest_spec** during implementation.
 4. **Phase 4 (Test)**: Write unit/integration/golden tests per **testing_strategy_spec** using
-   **test_repository_spec**
+   **test_repository_spec**; cover fixtures in **languages/ts_ingest_spec** §7.1–§7.3 and branch
+   scenarios in `TexereIndexerRestRepo` (test_repository_spec §6).
 5. **Phase 5 (Integrate)**: Connect with agents via **api_gateway_spec**
 
 ---
