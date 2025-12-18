@@ -1,7 +1,7 @@
 # TypeScript Configuration & Project Linking (Nx + pnpm)
 
 **Status:** Active  
-**Last Updated:** 2025-12-17  
+**Last Updated:** 2025-12-18  
 **Audience:** Backend, Frontend, Tooling  
 **Related:** build_system.md, eslint_code_quality.md, testing_strategy.md, testing_specification.md,
 documentation_spec.md
@@ -103,13 +103,12 @@ pulling test-only types into the published surface. **Tests must be type-checked
   zero-artifact pass is required (e.g., before publishing). TypeScript build mode requires emit
   (cannot combine `--build` with `--noEmit` or `--outDir` overrides). (Refs: TypeScript project
   references handbook; https://www.typescriptlang.org/docs/handbook/project-references.html, Nx TS
-  workspace guide;
+  workspace guide
   https://nx.dev/technologies/typescript/recipes/switch-to-workspaces-project-references)
 - Script: `"build": "tsc -b tsconfig.lib.json"` to build runtime output using project references so
   dependencies are built in topo order. Using `-p tsconfig.lib.json --incremental` can miss
   dependent emits and is not aligned with the Nx TypeScript project-linking guidance. (Refs: Nx TS
-  executor guidance https://nx.dev/technologies/typescript/executors, Nx TS project linking
-  https://nx.dev/concepts/typescript-project-linking)
+  project linking https://nx.dev/concepts/typescript-project-linking)
 - `"sideEffects": false` for publishable libraries.
 - Keep version fields aligned with workspace policy (semantic versioning; pre-1.0 allowed for
   internal libs).
@@ -170,6 +169,8 @@ pulling test-only types into the published surface. **Tests must be type-checked
 
 ## 10. Changelog
 
+- **2025-12-18:** Clarified no `baseUrl/paths`; reiterated build via `tsc -b` scripts; kept split
+  configs and workspace linking guidance current with Nx 22 docs.
 - **2025-12-17:** `check-types` defaults to incremental `tsc -b tsconfig.json`; added optional
   `check-types:clean`; clarified build-mode emit vs cleanup and migration guidance.
 - **2025-12-16:** Added explicit REQUIRED language for spec config references in §4.1 & §4.2;

@@ -10,7 +10,10 @@
       "options": {
         "script": "build"
       },
-      "outputs": ["{workspaceRoot}/dist/packages/langgraph-orchestrator"]
+      "outputs": [
+        "{workspaceRoot}/dist/packages/langgraph-orchestrator",
+        "{projectRoot}/.cache/tsconfig.lib.tsbuildinfo"
+      ]
     },
     "check-types": {
       "executor": "nx:run-script",

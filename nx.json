@@ -56,7 +56,11 @@
         "{projectRoot}/next.config.js",
         "{projectRoot}/.env*"
       ],
-      "outputs": ["{projectRoot}/.next/**", "!{projectRoot}/.next/cache/**"],
+      "outputs": [
+        "{projectRoot}/dist",
+        "{projectRoot}/.cache/tsconfig.lib.tsbuildinfo",
+        "{projectRoot}/.cache/tsconfig.spec.tsbuildinfo"
+      ],
       "cache": true,
       "options": {
         "clean": false

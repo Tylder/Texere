@@ -1,7 +1,7 @@
 # Build System: Nx + TypeScript Composite Projects
 
 **Status:** Active  
-**Last Updated:** 2025-12-17  
+**Last Updated:** 2025-12-18  
 **Audience:** Backend, Frontend, DevOps, Tooling  
 **Related:** typescript_configuration.md, nx_lang_graph_feature_layout_spec.md
 
@@ -48,7 +48,8 @@ Covers:
    with implicit ordering constraints; TypeScript composite semantics are preserved.
 
 4. **One build command per project:** Each project has a single `build` script in package.json that
-   runs `tsc -b tsconfig.lib.json` (respects composite references).
+   runs `tsc -b tsconfig.lib.json` (respects composite references). Builds are executed via
+   `nx:run-script` (non-batch).
 
 5. **Nx caching optimizes rebuilds:** Task caching and incremental compilation mean only changed
    projects and dependents rebuild.
@@ -104,7 +105,10 @@ Nx reads both sources to build a task dependency graph. In each project's `proje
     "build": {
       "executor": "nx:run-script",
       "options": { "script": "build" },
-      "outputs": ["{workspaceRoot}/dist/packages/foo"],
+      "outputs": [
+        "{workspaceRoot}/dist/packages/foo",
+        "{projectRoot}/.cache/tsconfig.lib.tsbuildinfo"
+      ],
       "inputs": ["default", "{projectRoot}/tsconfig.lib.json", "{projectRoot}/src/**"],
       "dependsOn": ["^build"]
     }
@@ -175,7 +179,10 @@ this build.
     "build": {
       "executor": "nx:run-script",
       "options": { "script": "build" },
-      "outputs": ["{workspaceRoot}/dist/apps/<name>"],
+      "outputs": [
+        "{workspaceRoot}/dist/apps/<name>",
+        "{projectRoot}/.cache/tsconfig.lib.tsbuildinfo"
+      ],
       "inputs": ["default", "{projectRoot}/tsconfig.lib.json", "{projectRoot}/src/**"],
       "dependsOn": ["^build"]
     },
@@ -210,7 +217,11 @@ Applications also use `dependsOn: ["^build"]` to ensure all libraries are built 
         "{projectRoot}/next.config.js",
         "{projectRoot}/.env*"
       ],
-      "outputs": ["{projectRoot}/.next/**", "!{projectRoot}/.next/cache/**"],
+      "outputs": [
+        "{workspaceRoot}/dist/{projectRoot}",
+        "{projectRoot}/.cache/tsconfig.lib.tsbuildinfo",
+        "{projectRoot}/.cache/tsconfig.spec.tsbuildinfo"
+      ],
       "cache": true
     }
   }
@@ -293,10 +304,11 @@ Worker 3: (waiting)
 
 ```bash
 pnpm typecheck
-# nx run-many --target=check-types --all --parallel && tsc -b tsconfig.json
+# nx run-many --target=check-types --all --parallel
 ```
 
-Validates per-project spec configs (test-only types) and root configuration.
+Validates per-project spec configs (test-only types). Root config is references-only; we don’t run a
+separate root `tsc -b`.
 
 ### 6.3 Testing
 
@@ -316,7 +328,7 @@ Slower alternative for final validation:
 
 ```bash
 pnpm post:report
-# Like post:report:fast but also includes full linting and build
+# Like post:report:fast but also includes full linting and build, then `pnpm clean`
 ```
 
 ---
@@ -520,14 +532,14 @@ error TS6305: Output file 'dist/index.js' has not been built from source
 
 ### 10.2 Key `project.json` Fields for Builds
 
-| Field       | Purpose                                                            |
-| ----------- | ------------------------------------------------------------------ |
-| `executor`  | Task runner (usually `nx:run-script` to call package.json scripts) |
-| `options`   | Arguments passed to the executor (e.g., `{ "script": "build" }`)   |
-| `outputs`   | Artifact paths created by this task (for caching and cleanup)      |
-| `inputs`    | Source file patterns that trigger cache invalidation               |
-| `dependsOn` | Task dependencies (e.g., `["^build"]` for upstream projects)       |
-| `cache`     | Enable/disable Nx caching (default: true)                          |
+| Field       | Purpose                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------ |
+| `executor`  | Task runner (build uses `nx:run-script` calling `tsc -b tsconfig.lib.json`)                |
+| `options`   | Arguments passed to the executor (e.g., `{ "script": "build" }`)                           |
+| `outputs`   | Artifact paths created by this task (include `dist` and `.cache/tsconfig.lib.tsbuildinfo`) |
+| `inputs`    | Source file patterns that trigger cache invalidation                                       |
+| `dependsOn` | Task dependencies (e.g., `["^build"]` for upstream projects)                               |
+| `cache`     | Enable/disable Nx caching (default: true)                                                  |
 
 ---
 
@@ -548,5 +560,7 @@ error TS6305: Output file 'dist/index.js' has not been built from source
 
 ## 12. Changelog
 
+- **2025-12-18:** Aligned with current setup: build uses `nx:run-script` (`tsc -b`), no batch;
+  outputs include `dist` + `.cache/tsconfig.*.tsbuildinfo` for Nx caching; corrected targetDefaults.
 - **2025-12-16:** Initial version. Documented parallel build architecture, composite project
   ordering, `dependsOn` configuration, and troubleshooting.

@@ -10,7 +10,10 @@
       "options": {
         "script": "build"
       },
-      "outputs": ["{workspaceRoot}/dist/packages/indexer/core"],
+      "outputs": [
+        "{workspaceRoot}/dist/packages/indexer/core",
+        "{projectRoot}/.cache/tsconfig.lib.tsbuildinfo"
+      ],
       "inputs": ["default", "{projectRoot}/tsconfig.lib.json", "{projectRoot}/src/**"],
       "dependsOn": ["^build"]
     },

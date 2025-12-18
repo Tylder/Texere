@@ -8,7 +8,10 @@
     "build": {
       "executor": "nx:run-script",
       "options": { "script": "build" },
-      "outputs": ["{workspaceRoot}/dist/apps/indexer-cli"],
+      "outputs": [
+        "{workspaceRoot}/dist/apps/indexer-cli",
+        "{projectRoot}/.cache/tsconfig.lib.tsbuildinfo"
+      ],
       "inputs": ["default", "{projectRoot}/tsconfig.lib.json", "{projectRoot}/src/**"],
       "dependsOn": ["^build"]
     },
