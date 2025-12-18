@@ -38,15 +38,16 @@ You are an agent working in Texere, a spec-driven TypeScript monorepo.
 
 ```
 This is a code/test change task.
-- Additional mandatory reading:
-  - docs/specs/engineering/testing_strategy.md
-  - docs/specs/engineering/testing_specification.md
-  - docs/specs/engineering/documentation_spec.md (only if also editing docs/specs)
-- Also skim any package-level READMEs/configs relevant to this task.
+- Engineering staples (always): docs/specs/engineering/{eslint_code_quality,typescript_configuration,testing_strategy,testing_specification,build_system,prettier_formatting}.md. Add documentation_spec if also editing docs/specs.
+- Targeted specs (pick one row based on the prompt):
+  1) Indexer / slice / edges / nodes / feature mapping / LLM prompts / graph → read `feature/indexer/README.md`; then only what applies: `nodes/README.md`, `edges/README.md`, `graph_schema_spec.md`, `llm_prompts_spec.md`, `implementation/plan.md` (delivery slices), `ingest_spec.md`, `nx_layout_spec.md`, `configuration_and_server_setup.md`, `languages/ts_ingest_spec.md` (TS/JS) or `languages/python_ingest_spec.md` (Python), `test_repository_spec.md`, `testing_strategy_spec.md` (feature folder).
+  2) Orchestration / agents / workflow / checkpoints / langgraph → `feature/langgraph_orchestrator_spec.md`.
+  3) Tools / tool schemas / tool integration → `feature/texere-tool-spec.md`.
+  4) Frontend / SSR / ISR / PPR → add `engineering/rendering-strategies.md`.
+- Skim package-level READMEs/configs for files you’ll touch; skip unrelated packages.
 - **If `logs/dev.log` exists, the `dev:log` watcher is running.** If missing, ask the user to run `pnpm dev:log`.
 - **If `logs/typecheck.log` exists, the `typecheck:watch:log` watcher is running.** If missing, ask the user to run `pnpm typecheck:watch:log`.
-- Note: These log files are automatically deleted when their respective scripts are closed.
-- Console shows full output; filtered logs remove noisy warnings/ANSI for agent use only.
+- Note: These log files are automatically deleted when their respective scripts are closed. Console shows full output; filtered logs remove noisy warnings/ANSI for agent use only.
 
 Plan (no code): restate requirements with spec citations; list files/tests you expect to touch and why; call out risks/open questions. Wait for approval before edits. After plan approval, use the Execution Prompt below.
 ```
@@ -85,6 +86,13 @@ Execution loop (strict):
 - If `logs/dev.log` or `logs/typecheck.log` exist, read them after each edit and fix surfaced issues before more changes. Never start/stop watchers yourself.
 - Keep diffs small; one change set at a time, then re-run the fast gate.
 - Code discipline: follow eslint_code_quality.md (workspace imports, no `any`, explicit return types), typescript_configuration.md (NodeNext, no baseUrl/paths, use package exports + `workspace:*` deps), prettier_formatting.md (root config).
+  - **Type Safety & Cleanup Checklist (before validation):**
+    - [ ] No `any` types. All parameters, returns, and member accesses typed explicitly via interfaces/types.
+    - [ ] Interfaces/types defined for internal data structures **before** implementation (prevents `any` placeholders).
+    - [ ] All functions have explicit return type annotations, including closures used in `map/sort/filter`.
+    - [ ] No unused imports or variables; remove dead scaffolding code immediately after implementation.
+    - [ ] Async functions have at least one `await` expression; sync functions not marked `async` (semantic correctness).
+    - [ ] CJS `require()` calls documented with ESLint disable comment + justification if unavoidable (e.g., runtime config loading).
 - Pure/testable code patterns:
   - Favor pure functions (same input ⇒ same output, no side effects). Keep domain logic in a functional core; push I/O to thin adapters (Functional Core, Imperative Shell).
   - Inject effectful deps (time, randomness, I/O clients) via small `deps` objects or parameters instead of importing globals; avoid module-level mutable state.
