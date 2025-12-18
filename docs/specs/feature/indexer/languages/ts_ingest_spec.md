@@ -1,112 +1,221 @@
 # Texere Indexer – TypeScript/JavaScript Ingest Spec
 
-**Document Version:** 0.2  
+**Document Version:** 0.3  
 **Last Updated:** December 18, 2025  
 **Status:** Active (TS/JS ingestion)  
-**Backlink:** [Ingest Spec](../ingest_spec.md) (§1.1, §2.2–§2.3),
-[Language Indexers](../language_indexers_spec.md)
+**Backlink:** [High-Level Spec](../../README.md) → [Ingest Spec](../ingest_spec.md) (§1.1,
+§2.2–§2.3) → [Language Indexers](../language_indexers_spec.md)
 
 ## Quick Navigation
 
 - [1. Scope & Audience](#1-scope--audience)
-- [2. Inputs & Outputs](#2-inputs--outputs)
-- [3. Toolchain & Fallbacks](#3-toolchain--fallbacks)
-- [4. Node Ingestion Map](#4-node-ingestion-map)
+- [2. Inputs, Outputs & IDs](#2-inputs-outputs--ids)
+- [3. Toolchain, Coverage & Gaps](#3-toolchain-coverage--gaps)
+- [4. Node Extraction Rules](#4-node-extraction-rules)
 - [5. Edge Emission Rules](#5-edge-emission-rules)
-- [6. Error Handling](#6-error-handling)
+- [6. Error Handling & Logging](#6-error-handling--logging)
 - [7. Testing Guidance](#7-testing-guidance)
 - [8. Changelog](#8-changelog)
 
 ## 1. Scope & Audience
 
-Defines how the TS/JS indexer produces `FileIndexResult` for the Texere Knowledge Graph while
-keeping graph shape identical to other languages (ingest_spec §1.1). Audience: indexer engineers and
-reviewers.
+Defines the TS/JS language pass for producing `FileIndexResult` while keeping the graph shape
+identical to other languages (ingest_spec §1.1; language_indexers_spec §2). Audience: indexer
+engineers, reviewers, and agents wiring ingest to higher-level (docs/config) pipelines. Python is
+explicitly out of scope per user request.
 
-## 2. Inputs & Outputs
+## 2. Inputs, Outputs & IDs
 
-- **Input**: `{ codebaseRoot, snapshotId, filePaths[] }` filtered to
-  `['ts','tsx','js','mjs','cjs','mts','cts']` via `canHandleFile` (ingest_spec §4; clarification
-  7a).
-- **Output**: `FileIndexResult[]` containing symbols, calls, references, boundaries, data contracts,
-  test cases, configuration, errors, messages, dependencies, secrets (redacted), and workflow
-  markers when present (clarification 2a).
+- **Inputs**: `{ codebaseRoot, snapshotId, filePaths[] }` filtered by
+  `['ts','tsx','js','mjs','cjs','mts','cts']` via `canHandleFile` (ingest_spec §4;
+  language_indexers_spec §2.5).
+- **Outputs**: `FileIndexResult[]` with symbols, calls, references, boundaries, data contracts, test
+  cases, SpecDoc stubs, configuration, errors, messages, dependencies, secrets (redacted), workflow
+  markers.
+- **ID formulas (snapshot-scoped)**:
+  - Module: `${snapshotId}:${modulePath}`
+  - File: `${snapshotId}:${filePath}`
+  - Symbol: `${snapshotId}:${filePath}:${symbolName}:${startLine}:${startCol}`
+  - Boundary: `${snapshotId}:boundary:${kind}:${identifier}`
+  - DataContract: `${snapshotId}:datacontract:${entityName}`
+  - TestCase: `${snapshotId}:${filePath}:${testName}`
+  - SpecDoc/Configuration/Error/Message/Dependency/Secret/Workflow:
+    `${snapshotId}:${nodeType}:${stableKey}`
+- **Confidence**: `confidence: 'static' | 'scip' | 'ast' | 'heuristic' | 'llm'`; default `scip`.
+  LLM-derived items must be labeled `llm` (language_indexers_spec §2.2).
 
-## 3. Toolchain & Fallbacks
+## 3. Toolchain, Coverage & Gaps
 
-1. **Primary (SCIP-first)**: run `scip-typescript` CLI to produce SCIP payloads; parse occurrences
-   to drive symbol IDs, references, and calls. citeturn0search1
-2. **Fallback**: TypeScript Compiler API (Program + TypeChecker) when SCIP is unavailable or errors.
-3. **Test/boundary heuristics** reuse AST from whichever path ran (SCIP or TS AST).
-4. **LLM usage**: only when static/SCIP signals cannot classify an entity; every LLM-derived
-   node/edge carries `confidence: 'llm'` and honors path denylist (clarification 5a).
+### 3.1 Primary pipeline (SCIP-first)
 
-## 4. Node Ingestion Map (full catalog)
+- Run `scip-typescript` CLI to generate SCIP payload; parse occurrences/relationships to build
+  symbols, CALL/TYPE_REF/IMPORT references, and ranges. citeturn0search1
 
-| Node (catalog)                                              | Extraction (SCIP-first)                                                                                                                                                                      | Fallback / Notes                                                                |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Codebase                                                    | Provided by orchestrator; language pass does not create; attaches `IN_SNAPSHOT` edges to its outputs.                                                                                        | —                                                                               |
-| Snapshot                                                    | Provided; language pass never creates Snapshot.                                                                                                                                              | —                                                                               |
-| Module                                                      | Derived from TS project refs and path roots; SCIP package/symbol path first segment → Module; emit Module + `CONTAINS` to Snapshot.                                                          | TS AST + `tsconfig` resolution.                                                 |
-| File                                                        | Each indexed path; emit File + `IN_SNAPSHOT` to Snapshot and `CONTAINS` to Module.                                                                                                           | Same.                                                                           |
-| Symbol                                                      | SCIP `definition` occurrences → Symbol; kind from syntax (function/class/method/const/type/interface/enum).                                                                                  | TS AST + TypeChecker fallback.                                                  |
-| Boundary                                                    | Express/Fastify/Hono `app/fastify/hono.METHOD`, Next.js route exports, tRPC routers, NestJS controllers, WebSocket handlers, CLI (yargs/commander), event emitters. Handler Symbol = callee. | AST patterns; LLM only if handler kind ambiguous.                               |
-| DataContract                                                | Prisma schema, Zod schemas, GraphQL SDL, OpenAPI YAML/JSON; ID from declaration name; include field shape when static.                                                                       | Zod/Prisma AST; JSON/YAML parse; if unknown, emit stub with `confidence:'llm'`. |
-| TestCase                                                    | `describe/it/test` (jest/vitest), `Deno.test`; name from first string arg; nested blocks create hierarchical IDs.                                                                            | Same.                                                                           |
-| SpecDoc                                                     | `.md/.mdx` co-located: emit SpecDoc stub + LOCATION to File/Module so doc pipeline can upsert content; owner: documentation_indexing_spec (clarification 1b).                                | Stub only; doc indexer fills content.                                           |
-| Configuration                                               | `.env.example`, `config/*.ts`, `next.config.*`, `vite.config.*`, `jest.config.*`; emit Configuration node with key path metadata; redact values.                                             | AST/JSON parse.                                                                 |
-| Error                                                       | Classes extending `Error`; emit Error nodes; mark thrown sites.                                                                                                                              | AST only; no LLM.                                                               |
-| Message                                                     | Kafka/NATS/RabbitMQ clients, SNS/SQS SDKs, WebSocket pub/sub; emit Message with topic/channel name.                                                                                          | AST string literal/topic inference; no LLM.                                     |
-| Dependency                                                  | From package.json + lockfile; emit Dependency nodes (name/version).                                                                                                                          | Static parse.                                                                   |
-| Secret                                                      | Secret-like literals in config (regex on key names); emit Secret node with hashed placeholder; do not store value.                                                                           | AST heuristic; no LLM.                                                          |
-| Workflow                                                    | Temporal/Conductor/cron wrappers (`workflow.execute`, `cron.schedule`); emit Workflow node with name/cron.                                                                                   | AST pattern; LLM only if name inferred from string templates.                   |
-| Feature / Pattern / Incident / ExternalService / StyleGuide | Not emitted by language pass; reference owner specs (`llm_prompts_spec`, `patterns_and_incidents_spec`). TS supplies symbols/boundaries for downstream edges (clarif 1b).                    | —                                                                               |
+### 3.2 Known SCIP gaps (as of Dec 18, 2025)
+
+- Decorator property shorthand and some cross-file decorator definitions are not linked in SCIP
+  output (issue #415). citeturn0search2
+- Historical versions missed some dynamic `import()` and namespace re-exports; treat absence as a
+  potential SCIP gap when AST shows the construct.
+- JSX component call sites may be missing CALL edges when components are namespaced or default
+  exported anonymously; validate with fallback.
+
+### 3.3 Fallback path (TypeScript AST + TypeChecker)
+
+Use Program + TypeChecker on the same file set when:
+
+1. SCIP CLI fails or emits zero occurrences for a file.
+2. Constructs match known SCIP gaps (3.2).
+3. We need framework-specific classification (e.g., Express route handlers) that SCIP does not tag.
+
+Fallback extracts definitions, references, and call graph by:
+
+- Resolving symbols via `getSymbolAtLocation` and `getResolvedSignature`.
+- Walking `CallExpression`, `NewExpression`, `Decorator`, `TaggedTemplateExpression`,
+  `ImportDeclaration`, `Export*`, `TypeReferenceNode`, `HeritageClause`.
+- Building IDs with the same formulas as §2.
+
+### 3.4 LLM usage (last resort)
+
+Only when static signals cannot classify Boundary/DataContract/TestCase intent (e.g., ambiguous
+string-built routes). Mark `confidence: 'llm'`, attach raw heuristic evidence, and respect path
+denylist (tests/fixtures/vendor). No LLM for symbols/calls/references.
+
+### 3.5 Non-language interactions
+
+- SpecDoc stubs: emit LOCATION edges so the doc ingest pipeline can upsert content later (ties into
+  documentation_indexing_spec).
+- Configuration stubs: emit CONFIG nodes with redacted values; config ingest can enrich.
+- Repo-level metadata (Codebase/Snapshot) is orchestrated upstream; TS pass must not create it.
+
+## 4. Node Extraction Rules
+
+For each node type, steps are ordered: SCIP → AST → heuristic → LLM.
+
+### 4.1 Module
+
+- Source: first path segment derived from `tsconfig` project references; if absent, use directory
+  root containing the file.
+- Emit Module, CONTAINS Snapshot→Module, and IN_SNAPSHOT (cardinality = 1).
+
+### 4.2 File
+
+- One per indexed path; CONTAINS Module→File; IN_SNAPSHOT File→Snapshot.
+- Store hash (sha1 of contents) for TRACKS creation upstream.
+
+### 4.3 Symbol
+
+- SCIP definitions → Symbol with kind inferred from syntax node (function, class, method, const,
+  type/interface/enum).
+- Fill CALL/TYPE_REF/IMPORT from SCIP relationships; if missing and AST finds them, add with
+  `confidence:'ast'`.
+- Skip generated `.d.ts` unless it is the only definition.
+
+### 4.4 Boundary
+
+- Detect HTTP/gRPC/CLI/event handlers:
+  - Express/Fastify/Hono/Koa: `app.METHOD`, `router.METHOD`, `fastify.route`.
+  - Next.js/Remix file-based routes: default export `GET/POST/...` or `loader/action`.
+  - tRPC: `router({ key: procedure... })`.
+  - NestJS: `@Controller` + `@Get/@Post/...`.
+  - WebSocket: `ws.on('message'|'connection')`.
+  - CLI: commander/yargs `command`, `action`.
+- Handler Symbol is callee; emit Boundary with verb/path/kind metadata.
+- If route is string-built and AST cannot resolve, fall back to LLM classification (3.4).
+
+### 4.5 DataContract
+
+- Prisma schema: `model` blocks → entity + fields; mark CRUD operations via client calls.
+- Zod schemas: `z.object({...})` assigned to const/export; capture field keys + optionality.
+- GraphQL SDL: `type`, `input`, `enum`; derive name and fields.
+- OpenAPI JSON/YAML: `components.schemas` entries.
+- Drizzle/TypeORM/Sequelize models: class decorators or `pgTable`, `sequelize.define`.
+- If shape cannot be parsed, emit stub with `confidence:'heuristic'` or `llm`.
+
+### 4.6 TestCase
+
+- Jest/Vitest: `describe`/`it`/`test`; Mocha compatible; Deno.test; Playwright `test`.
+- Name = joined string/title args; nested blocks concatenate with `/`.
+- Mark skip/todo flags for downstream quality metrics.
+
+### 4.7 SpecDoc
+
+- Files `*.md|*.mdx` co-located with source; emit SpecDoc stub + LOCATION to File & Module.
+- No content ingest here; doc pipeline owns DOCUMENTS edges.
+
+### 4.8 Configuration (v2 optional but supported)
+
+- `.env.example`, `*.env.sample`, `config/*.ts`, `next.config.*`, `vite.config.*`, `jest.config.*`.
+- Parse keys; redact values; store source path and format.
+
+### 4.9 Error (v2 optional)
+
+- Classes extending `Error` or using `createError` helpers; emit Error nodes and LOCATION.
+
+### 4.10 Message (v2 optional)
+
+- Kafka/NATS/RabbitMQ/SNS/SQS clients; topic/subject/queue literal captured as `channel`.
+- WebSocket `emit/on` string literals.
+
+### 4.11 Dependency (v2 optional)
+
+- From package.json + lockfile: name, version; LOCATION to root package file.
+
+### 4.12 Secret (v2 optional)
+
+- Heuristic regex on identifier/key names (`token`, `secret`, `apiKey`); value replaced with hash;
+  skip if value is obviously placeholder.
+
+### 4.13 Workflow (v2 optional)
+
+- Temporal/Conductor/AWS Step Functions wrappers or cron schedulers; name/cron if literal.
 
 ## 5. Edge Emission Rules
 
-- **CONTAINS**: Snapshot→Module→File→Symbol;
-  File→{Boundary,DataContract,TestCase,Configuration,Error,Message,Workflow,Secret,Dependency};
-  Module→same when defined at module scope.
-- **IN_SNAPSHOT**: exactly one per snapshot-scoped node emitted by TS indexer (Module, File, Symbol,
-  Boundary, DataContract, TestCase, Configuration, Error, Message, Workflow, Secret, Dependency) per
-  ingest_spec §6.3.
-- **LOCATION**: Boundary/TestCase/Configuration/Error/Message/Workflow/Secret/Dependency → File +
-  Module; Boundary → handler Symbol (`role:'HANDLED_BY'}`).
-- **REFERENCES**: `CALL` (SCIP or CallExpression), `IMPORT` (import/require), `TYPE_REF`
-  (TypeReference), `PATTERN` (pattern matches), `SIMILAR` (embedding similarity placeholder),
-  `EVENT_PUBLISH`/`EVENT_CONSUME` (Message producers/consumers).
-- **REALIZES**: `role:'TESTS'` (TestCase→Symbol when call graph shows invocation); `role:'VERIFIES'`
-  (TestCase→Feature when feature tag in test name); `role:'IMPLEMENTS'` (Boundary/Symbol→Feature
-  written downstream using TS outputs).
-- **DOCUMENTS**: SpecDoc/StyleGuide → Module/File/Symbol/Feature; TS emits SpecDoc stubs + LOCATION
-  for deterministic edge upsert by doc indexer.
-- **MUTATES**: Symbol/Boundary → DataContract when Prisma/TypeORM/Drizzle client CRUD or SQL tags
-  detected.
-- **DEPENDS_ON**: Symbol/Module/Boundary → Dependency nodes (npm packages), ExternalService (HTTP
-  host literal), Configuration.
-- **TRACKS**: Snapshot introduction/modification edges created centrally; TS provides symbol/file
-  hashes.
-- **IMPACTS**: Created by incident pipeline; TS provides symbol ids only.
-- **EVENT RELATIONSHIPS**: Message ↔ Symbol/Boundary via producer/consumer detection using topic
-  name.
+- **CONTAINS**: Snapshot→Module→File→Symbol; File→{Boundary,DataContract,TestCase,SpecDoc,
+  Configuration, Error, Message, Dependency, Secret, Workflow}.
+- **IN_SNAPSHOT**: exactly one per snapshot-scoped node emitted by this pass (ingest_spec §6.3).
+- **LOCATION**:
+  - Boundary/TestCase/... → File (role:`IN_FILE`) and Module (role:`IN_MODULE`).
+  - Boundary → handler Symbol (role:`HANDLED_BY`).
+- **REFERENCES**:
+  - CALL: from SCIP relationships; AST fallback for decorators, JSX components, dynamic imports
+    (coverage gap §3.2). citeturn0search2
+  - TYPE_REF: TypeReference, HeritageClause, implements/extends.
+  - IMPORT: ES imports, requires, re-exports, dynamic `import()` when literal string.
+  - PATTERN: pattern tags (e.g., Express middleware) detected heuristically.
+  - SIMILAR: placeholder for embedding similarity (no emission here).
+- **REALIZES**:
+  - TESTS: TestCase→Symbol when call graph shows invocation or name includes symbol.
+  - VERIFIES: TestCase→Feature when feature tag appears in title (`[feature:foo]`).
+  - IMPLEMENTS: Boundary/Symbol→Feature populated downstream using TS outputs.
+- **MUTATES**: Symbol/Boundary → DataContract when CRUD or SQL tagged template detected.
+- **DEPENDS_ON**: Symbol/Module/Boundary → Dependency (npm), ExternalService (URL host literals),
+  Configuration (config keys).
+- **DOCUMENTS**: SpecDoc → Module/File/Symbol placeholder; doc ingest resolves targets.
+- **TRACKS**: Upstream process uses file/symbol hashes to add INTRODUCED/MODIFIED.
+- **EVENT (v2)**: Message producers/consumers create PUBLISHES/CONSUMES/EMITS/LISTENS_TO variants
+  mapped onto REFERENCED edges when event graph is enabled.
 
-## 6. Error Handling
+## 6. Error Handling & Logging
 
-- File-level parse/SCIP failures → skip file, log, continue (ingest_spec §6.4).
-- SCIP run failure → fall back to TS AST path; if both fail mark snapshot `index_failed`.
-- Cardinality validation: ensure one `IN_SNAPSHOT` per snapshot-scoped node before returning
-  (ingest_spec §6.3).
+- File-level SCIP or AST failure → log, skip file, continue (ingest_spec §6.4).
+- SCIP CLI failure → rerun AST path; if both fail, mark snapshot `index_failed`.
+- Validate one IN_SNAPSHOT per emitted node before returning; fail-fast if violated.
+- Attach diagnostics per file (`errors[]`) with tool (`scip`|`ts-ast`|`heuristic`) and message.
 
 ## 7. Testing Guidance
 
-- Unit tests: symbol classification matrix, CALL/IMPORT/TYPE_REF extraction, boundary heuristics per
-  framework.
-- Integration: golden `FileIndexResult` for representative files (routes, tests, schemas).
-- Tests cite sections: e.g., `ts_ingest_spec §5` for edge expectations.
+- Unit: symbol classification matrix, CALL/IMPORT/TYPE_REF coverage, decorator + dynamic import gap
+  tests (cite §3.2, §5).
+- Integration: golden `FileIndexResult` fixtures for routes, tRPC/NestJS, Prisma/Zod, Jest/Vitest,
+  Next.js API routes, and doc/config stubs.
+- Each test description cites this spec section (meta/spec_writing §9; testing_specification §3.6).
 
 ## 8. Changelog
 
-| Date       | Version | Editor | Summary                                                  |
-| ---------- | ------- | ------ | -------------------------------------------------------- |
-| 2025-12-18 | 0.2     | @agent | Covered all nodes/edges, optional nodes, LLM guardrails. |
-| 2025-12-18 | 0.1     | @agent | Initial TS/JS ingestion spec (Draft).                    |
+| Date       | Version | Editor | Summary                                                                                         |
+| ---------- | ------- | ------ | ----------------------------------------------------------------------------------------------- |
+| 2025-12-18 | 0.3     | @agent | Made node/edge rules exhaustive; added ID/confidence rules, SCIP gaps, doc/config interactions. |
+| 2025-12-18 | 0.2     | @agent | Covered all nodes/edges, optional nodes, LLM guardrails.                                        |
+| 2025-12-18 | 0.1     | @agent | Initial TS/JS ingestion spec (Draft).                                                           |
