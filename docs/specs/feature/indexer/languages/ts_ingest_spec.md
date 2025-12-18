@@ -4,7 +4,8 @@
 **Last Updated:** December 18, 2025  
 **Status:** Active (TS/JS ingestion)  
 **Backlink:** [High-Level Spec](../../README.md) → [Ingest Spec](../ingest_spec.md) (§1.1,
-§2.2–§2.3) → [Language Indexers](../language_indexers_spec.md)
+§2.2–§2.3) → [Language Indexers](../language_indexers_spec.md) →
+[Non-Code Assets Ingest](../non_code_assets_ingest_spec.md)
 
 ## Quick Navigation
 
@@ -141,12 +142,14 @@ For each node type, steps are ordered: SCIP → AST → heuristic → LLM.
 ### 4.7 SpecDoc
 
 - Files `*.md|*.mdx` co-located with source; emit SpecDoc stub + LOCATION to File & Module.
-- No content ingest here; doc pipeline owns DOCUMENTS edges.
+- No content ingest here; doc pipeline owns DOCUMENTS edges (non_code_assets_ingest_spec.md §4.1;
+  documentation_indexing_spec.md).
 
 ### 4.8 Configuration (v2 optional but supported)
 
 - `.env.example`, `*.env.sample`, `config/*.ts`, `next.config.*`, `vite.config.*`, `jest.config.*`.
 - Parse keys; redact values; store source path and format.
+- Cross-language normalization rules live in non_code_assets_ingest_spec.md §4.2.
 
 ### 4.9 Error (v2 optional)
 
@@ -156,19 +159,23 @@ For each node type, steps are ordered: SCIP → AST → heuristic → LLM.
 
 - Kafka/NATS/RabbitMQ/SNS/SQS clients; topic/subject/queue literal captured as `channel`.
 - WebSocket `emit/on` string literals.
+- Config-sourced channels are covered in non_code_assets_ingest_spec.md §4.5.
 
 ### 4.11 Dependency (v2 optional)
 
 - From package.json + lockfile: name, version; LOCATION to root package file.
+- Shared manifest rules: non_code_assets_ingest_spec.md §4.3.
 
 ### 4.12 Secret (v2 optional)
 
 - Heuristic regex on identifier/key names (`token`, `secret`, `apiKey`); value replaced with hash;
   skip if value is obviously placeholder.
+- Secret redaction rules shared with non_code_assets_ingest_spec.md §4.4.
 
 ### 4.13 Workflow (v2 optional)
 
 - Temporal/Conductor/AWS Step Functions wrappers or cron schedulers; name/cron if literal.
+- Config-defined workflows: non_code_assets_ingest_spec.md §4.6.
 
 ## 5. Edge Emission Rules
 

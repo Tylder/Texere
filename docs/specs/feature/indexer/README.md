@@ -40,10 +40,11 @@ details.
 
 ### Core Specifications (Active – Authoritative)
 
-| Document                                     | Purpose                                                                                                       |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| [**ingest_spec.md**](./ingest_spec.md)       | Complete v1 ingestion pipeline, language indexers, Git diff, extractors, error handling, testing requirements |
-| [**nx_layout_spec.md**](./nx_layout_spec.md) | Nx monorepo structure: `indexer/{types, core, ingest, query, workers}` libraries and dependency rules         |
+| Document                                                               | Purpose                                                                                                       |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| [**ingest_spec.md**](./ingest_spec.md)                                 | Complete v1 ingestion pipeline, language indexers, Git diff, extractors, error handling, testing requirements |
+| [**nx_layout_spec.md**](./nx_layout_spec.md)                           | Nx monorepo structure: `indexer/{types, core, ingest, query, workers}` libraries and dependency rules         |
+| [**non_code_assets_ingest_spec.md**](./non_code_assets_ingest_spec.md) | Cross-language ingest for documentation, configuration, dependencies, secrets, messages, workflows            |
 
 ### Testing & Development (Foundation for Implementation)
 
@@ -74,10 +75,12 @@ details.
 
 **Medium priority** (implementation details):
 
-| Document                                                         | Purpose                                                                                        |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| [**symbol_id_stability_spec.md**](./symbol_id_stability_spec.md) | Symbol ID algorithm, Git rename/move handling, incremental diff logic                          |
-| [**language_indexers_spec.md**](./language_indexers_spec.md)     | TypeScript/JavaScript AST rules, Python sidecar protocol, framework heuristics, test detection |
+| Document                                                                 | Purpose                                                                                        |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| [**symbol_id_stability_spec.md**](./symbol_id_stability_spec.md)         | Symbol ID algorithm, Git rename/move handling, incremental diff logic                          |
+| [**language_indexers_spec.md**](./language_indexers_spec.md)             | TypeScript/JavaScript AST rules, Python sidecar protocol, framework heuristics, test detection |
+| [**languages/ts_ingest_spec.md**](./languages/ts_ingest_spec.md)         | TS/JS ingest rules (SCIP-first, AST fallback), node/edge extraction, IDs, gap handling         |
+| [**languages/python_ingest_spec.md**](./languages/python_ingest_spec.md) | Python ingest rules (SCIP + libcst/pycg fallback), node/edge extraction (when in scope)        |
 
 **Optional for v1**:
 

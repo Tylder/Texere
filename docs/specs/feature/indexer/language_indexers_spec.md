@@ -41,10 +41,11 @@ Audience: indexer engineers, agents implementing ingest, reviewers validating co
 
 ## 3. Per-language Specs
 
-- **TypeScript/JavaScript**: see `languages/ts_ingest_spec.md` (SCIP-first via scip-typescript, TS
-  compiler AST fallback, framework heuristics, node/edge coverage).
-- **Python**: see `languages/python_ingest_spec.md` (SCIP-first via scip-python, libcst/pycg
-  fallback, pytest/FastAPI/Flask heuristics, node/edge coverage).
+- **TypeScript/JavaScript**: `languages/ts_ingest_spec.md` (SCIP-first via scip-typescript, TS
+  compiler AST fallback, framework heuristics, node/edge coverage; cross-links non-code asset
+  ingest).
+- **Python**: `languages/python_ingest_spec.md` (SCIP-first via scip-python, libcst/pycg fallback,
+  pytest/FastAPI/Flask heuristics, node/edge coverage).
 
 ## 4. Testing Expectations
 
