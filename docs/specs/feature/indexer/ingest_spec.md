@@ -32,6 +32,21 @@ It is **incremental**, **language‑agnostic**, and uses a unified structure (`F
 - Boundaries, schema entities, test cases.
 - LLM-assisted feature mapping + test↔feature + boundary↔feature.
 
+### 1.1 Language-agnostic ingest principles (new)
+
+- **Graph shape is identical across languages**: node/edge catalogs in `nodes/` and `edges/` are the
+  single source of truth; language indexers must populate the same types with language-specific
+  extraction steps.
+- **SCIP-first**: if a language has a maintained SCIP indexer, ingest **must** prefer it for
+  symbols/references/calls (deterministic, stable IDs). For TS/JS use
+  `@sourcegraph/scip-typescript`; for Python use `@sourcegraph/scip-python`.
+  citeturn0search0turn0search1
+- **LLM last resort**: only use LLMs when deterministic static signals are unavailable (e.g.,
+  ambiguous boundary inference or doc→code linking). All static/SCIP-derived data takes precedence.
+- **Per-language specs**: detailed ingestion rules live in `languages/ts_ingest_spec.md` and
+  `languages/python_ingest_spec.md`; this file stays language-agnostic and orchestrates the
+  contract.
+
 ### Snapshot retention & selection (Branch-Based):
 
 - **Own repos**: Configuration file (`.indexer-config.json`) specifies `trackedBranches` array
@@ -205,6 +220,7 @@ export interface LanguageIndexer {
 ## 5.1 TypeScript Indexer (`ts-indexer.ts`)
 
 - Backend: TypeScript compiler API (optional SCIP internal use).
+- Detailed ingestion rules: `languages/ts_ingest_spec.md`.
 - Performs:
   - AST traversal.
   - Symbol extraction.
@@ -216,6 +232,7 @@ export interface LanguageIndexer {
 ## 5.2 Python Indexer (`py-indexer.ts`)
 
 - Node wrapper calling a Python sidecar (`libcst` or `ast`).
+- Detailed ingestion rules: `languages/python_ingest_spec.md`.
 - **Basic analysis only (per 1.2A)**:
   - Symbol extraction.
   - Simple call extraction.
