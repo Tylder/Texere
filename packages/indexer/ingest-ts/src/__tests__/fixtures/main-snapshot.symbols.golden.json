@@ -1,0 +1,27 @@
+{
+  "snapshotId": "test-ts-app:main",
+  "metadata": {
+    "timestamp": "2025-12-18T23:48:06.693Z",
+    "testRepoPath": "/home/anon/TexereIndexerRestRepo",
+    "filesProcessed": 42,
+    "totalSymbols": 953
+  },
+  "summary": {
+    "totalSymbols": 953,
+    "totalFiles": 42,
+    "byKind": {
+      "other": 388,
+      "interface": 20,
+      "class": 12,
+      "function": 3,
+      "method": 36,
+      "type": 494
+    }
+  },
+  "validationChecks": {
+    "allSymbolsHaveIds": true,
+    "allSymbolsHaveNames": true,
+    "allSymbolsHaveKinds": true,
+    "allSymbolsHaveRanges": true
+  }
+}
