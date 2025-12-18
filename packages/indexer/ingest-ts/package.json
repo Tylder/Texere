@@ -1,0 +1,51 @@
+{
+  "name": "@repo/indexer-ingest-ts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript/JavaScript language indexer: SCIP + AST fallback symbol extraction for Texere Knowledge Graph",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "@repo/source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "@repo/source": "./src/*.ts",
+      "import": "./dist/*.js"
+    }
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -b tsconfig.lib.json",
+    "check-types": "tsc -b tsconfig.json",
+    "check-types:clean": "tsc -b tsconfig.json --stopOnBuildErrors && tsc -b tsconfig.json --clean",
+    "lint": "eslint . --cache --cache-location \"$NX_WORKSPACE_ROOT/.cache/eslint/\"",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest --watch"
+  },
+  "dependencies": {
+    "@repo/indexer-core": "workspace:*",
+    "@repo/indexer-types": "workspace:*",
+    "@sourcegraph/scip-typescript": "^0.3.9",
+    "typescript": "^5.9"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.9.3",
+    "@vitest/coverage-v8": "^4.0.15",
+    "eslint": "^9.39.1",
+    "simple-git": "^3.30.0",
+    "vitest": "^4.0.15"
+  }
+}

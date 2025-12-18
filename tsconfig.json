@@ -17,6 +17,9 @@
       "path": "./packages/indexer/ingest"
     },
     {
+      "path": "./packages/indexer/ingest-ts"
+    },
+    {
       "path": "./packages/indexer/query"
     },
     {

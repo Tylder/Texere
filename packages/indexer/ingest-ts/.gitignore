@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+dist
+.cache
+
+# Test outputs
+coverage
+.nyc_output
+
+# Development
+*.tsbuildinfo
+
+# OS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# IDE
+.idea
+.vscode
+*.code-workspace
