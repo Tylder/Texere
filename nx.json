@@ -57,7 +57,10 @@
         "{projectRoot}/.env*"
       ],
       "outputs": ["{projectRoot}/.next/**", "!{projectRoot}/.next/cache/**"],
-      "cache": true
+      "cache": true,
+      "options": {
+        "clean": false
+      }
     },
     "lint": {
       "dependsOn": ["^lint"],

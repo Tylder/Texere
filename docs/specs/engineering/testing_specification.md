@@ -608,7 +608,7 @@ apps/cart-e2e/
 
 | Command                          | Purpose / Notes                                                                                             | Cite As |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------- |
-| `pnpm post:report:fast`          | Format fix (fast), oxlint fix, typecheck, test:coverage in parallel; uses incremental `tsc -b` artifacts    | §6.2.1  |
+| `pnpm post:report:fast`          | Lint fix (fast) → typecheck → test:coverage, run in phases; keeps artifacts for speed (no final clean)      | §6.2.1  |
 | `pnpm post:report`               | Format fix + full lint + check-types + test:coverage + build, then `pnpm clean` to remove emitted artifacts | §6.2.2  |
 | `pnpm typecheck`                 | Nx `check-types` across all projects (incremental `tsc -b tsconfig.json`)                                   | §6.2.3  |
 | `pnpm typecheck --filter <proj>` | Project-scoped typecheck (uses project’s `check-types` script)                                              | §6.2.4  |
