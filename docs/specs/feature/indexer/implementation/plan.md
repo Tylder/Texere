@@ -115,15 +115,27 @@ stop).
 
 - Run SCIP + AST fallback per `ts_ingest_spec` §3.1–§3.8 for symbol defs; apply ID rules (§2, §5.1).
 - Enforce path filters/denylist; deterministic ordering.
+- Create new Nx package `@repo/indexer-ingest-ts` with complete symbol extraction engine.
 
 **Acceptance**: On `/home/anon/TexereIndexerRestRepo` branch `main`, symbol list matches golden; no
-duplicates; IN_SNAPSHOT present for all symbols.  
+duplicates; IN_SNAPSHOT present for all symbols. All 287 symbols from test_repository_spec.md
+extracted.
+
 **Tests/Gates**:
 
-- Unit: `symbol_kinds.ts` (expected symbol ids/kinds/ranges).
-- Integration (gate): `main` branch golden snapshot (symbols only) must match exactly. **Docs**:
-  `ts_ingest_spec` §2–§3, §5.1; `ingest_spec` §3; `symbol_id_stability_spec`. **Code areas**:
-  `ingest/src/extractors/symbols.ts`; wiring in `ts-indexer.ts`.
+- Unit: 12–15 tests covering symbol kinds, ID generation, docstrings, export detection,
+  deduplication, path filtering (60–75% coverage).
+- Integration: Full pipeline on `main` branch golden snapshot (symbols only) must match exactly.
+
+**Docs to consult**: [`2a1-ts-symbol-extraction.md`](./2a1-ts-symbol-extraction.md) (comprehensive
+implementation plan); `ts_ingest_spec` §2–§3, §5.1; `ingest_spec` §3; `symbol_id_stability_spec`;
+`test_repository_spec` §3; `testing_strategy.md` §2.2–4.
+
+**Code areas**:
+
+- New package: `packages/indexer/ingest-ts/{src,__tests__,project.json,package.json,README.md}`
+- Implementation: `symbol-extractor.ts`, `scip-runner.ts`, `ast-fallback.ts`, `symbol-kinds.ts`
+- Integration: `packages/indexer/ingest/src/index.ts` (re-export TS indexer API)
 
 ## Slice 2A2 — TS/JS References (CALL/IMPORT/TYPE_REF) with Merge/Dedupe
 

@@ -10,8 +10,8 @@ You are an agent working in Texere, a spec-driven TypeScript monorepo.
 ## Mandatory Reading (before planning)
 - AGENTS.md
 - README.md (root)
-- docs/specs/README.md (spec index)
-- From the index, read all feature/domain specs relevant to the task (e.g., feature/indexer/*, feature/langgraph_orchestrator_spec.md, feature/texere-tool-spec.md).
+- docs/specs/README.md (spec index) → use this to choose what else to read.
+- Then select only the feature/domain specs that are relevant to the specific task (e.g., feature/indexer/* for indexer work, feature/langgraph_orchestrator_spec.md for orchestration). Do not read unrelated specs.
 
 ## Workflow
 1. **Spec Gate:** Restate governing requirements with spec citations; ask if spec updates/approvals are needed.
@@ -22,6 +22,7 @@ You are an agent working in Texere, a spec-driven TypeScript monorepo.
 
 ## Key Rules
 - Specs are authoritative; cite sections in code/tests.
+- Research is task-scoped: after AGENTS.md and README.md, choose only the specs that are pertinent to the prompt.
 - Never start/stop watchers yourself.
 - Use workspace-scoped installs and `workspace:*` ranges.
 - Use Semantic search (`mcp__code_search__search_code`) for conceptual searches.
@@ -38,13 +39,8 @@ You are an agent working in Texere, a spec-driven TypeScript monorepo.
 ```
 This is a code/test change task.
 - Additional mandatory reading:
-  - docs/specs/engineering/eslint_code_quality.md
-  - docs/specs/engineering/typescript_configuration.md
   - docs/specs/engineering/testing_strategy.md
   - docs/specs/engineering/testing_specification.md
-  - docs/specs/engineering/build_system.md
-  - docs/specs/engineering/prettier_formatting.md
-  - docs/specs/engineering/rendering-strategies.md (include for any frontend/SSR/ISR/PPR work)
   - docs/specs/engineering/documentation_spec.md (only if also editing docs/specs)
 - Also skim any package-level READMEs/configs relevant to this task.
 - **If `logs/dev.log` exists, the `dev:log` watcher is running.** If missing, ask the user to run `pnpm dev:log`.
