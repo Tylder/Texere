@@ -5,7 +5,7 @@
  * Removes warnings, deprecation notices, and progress messages.
  * Pass through stdin, filtered output goes to stdout and optionally to a file.
  */
-import { createWriteStream } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 
 const noisePatterns = [
   /ExperimentalWarning/,
@@ -18,6 +18,13 @@ const noisePatterns = [
   /pathToFileURL/,
   /fs\.Stats constructor/,
   /\(Use `.*trace.*\)/,
+  /^> /,
+  /^\[[^\]]+\]\s*>/,
+  /^\[eslint-config\]$/,
+  /^\[[^\]]+\]\s*$/,
+  /\bStarting compilation in watch mode\.\.\.$/,
+  /NX\s+Successfully ran target check-types/,
+  /skip type checking for eslint-config package/,
   /^\s*$/, // Empty lines
   /^@personacore\/\w+:dev: \(node:\d+\)/, // Node process warnings
 ];
@@ -37,29 +44,44 @@ const isNoise = (line) => noisePatterns.some((pattern) => pattern.test(line));
 const [outputFile] = process.argv.slice(2);
 const typecheckCycleMarker = 'File change detected. Starting incremental compilation...';
 
-let output = process.stdout;
-if (outputFile) {
-  output = createWriteStream(outputFile, { flags: 'w' });
-}
+const logLines = [];
+const lastLineByPackage = new Map();
+const rewriteLogFile = () => {
+  if (!outputFile) return;
+  writeFileSync(outputFile, `${logLines.join('\n')}\n`, 'utf8');
+};
 
 let buffer = '';
 
-const resetOutputFile = () => {
-  if (!outputFile) return;
-  output.end();
-  output = createWriteStream(outputFile, { flags: 'w' });
-};
-
 const flushLine = (line) => {
   if (!line) return;
-  if (line.includes(typecheckCycleMarker)) {
-    resetOutputFile();
-    return;
-  }
   const cleaned = stripAnsi(line).trim();
   if (!cleaned) return;
   if (isNoise(cleaned)) return;
-  output.write(cleaned + '\n');
+  const packageMatch = cleaned.match(/^\[([^\]]+)\]\s*/);
+  if (packageMatch) {
+    const packageName = packageMatch[1];
+    if (lastLineByPackage.get(packageName) === cleaned) {
+      return;
+    }
+    lastLineByPackage.set(packageName, cleaned);
+  }
+  if (packageMatch && cleaned.includes(typecheckCycleMarker)) {
+    const packageName = packageMatch[1];
+    for (let i = logLines.length - 1; i >= 0; i -= 1) {
+      if (logLines[i].startsWith(`[${packageName}]`)) {
+        logLines.splice(i, 1);
+      }
+    }
+    rewriteLogFile();
+    return;
+  }
+  if (outputFile) {
+    logLines.push(cleaned);
+    rewriteLogFile();
+    return;
+  }
+  process.stdout.write(cleaned + '\n');
 };
 
 process.stdin.on('data', (chunk) => {
@@ -71,5 +93,4 @@ process.stdin.on('data', (chunk) => {
 
 process.stdin.on('end', () => {
   flushLine(buffer);
-  if (outputFile) output.end();
 });
