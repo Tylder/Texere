@@ -734,6 +734,11 @@ export default async function ProductPage({ params }) {
 }
 ```
 
+### 10.5 Testability & Determinism
+
+- Prefer render modes that keep server output deterministic for E2E/VRT; gate or disable animations
+  during Playwright runs to reduce flake. citeturn1search6
+
 #### 3c. Very Frequently (Per Request)
 
 → **Use PPR or SSR**

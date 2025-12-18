@@ -233,6 +233,15 @@ test('user can login and access dashboard', async ({ page }) => {
 
 **Cite as:** §4.4
 
+### 4.5 Determinism & Side-Effect Isolation
+
+- Keep domain logic in a Functional Core with I/O in an Imperative Shell; inject adapters for
+  HTTP/fs/clock/RNG to keep unit/integration tests deterministic. citeturn1search1
+- Stub/seed time and randomness in tests (e.g., fixed `clock.now`, seeded RNG) to avoid flaky
+  assertions. citeturn1search1
+- Prefer explicit assertions over broad snapshots; reserve snapshots for stable, human-reviewed
+  outputs to reduce flake and review noise. citeturn3search0
+
 ---
 
 ## 5. Next.js-Specific Considerations
@@ -303,6 +312,13 @@ test('dashboard page loads', async ({ page }) => {
 ```
 
 **Cite as:** §5.2
+
+### 5.3 Accessibility-First Queries
+
+- In RTL/Playwright, prefer accessible queries (`getByRole`, `getByLabelText`, `getByText`) before
+  `data-testid`; this yields more resilient selectors and aligns with Testing Library guidance.
+  citeturn0search2turn0search3
+- Keep `data-testid` as a last resort for non-semantic elements.
 
 ---
 
@@ -531,6 +547,13 @@ test('hero section at 1024px', async ({ page }) => {
 ```
 
 **Cite as:** §9.2
+
+### 9.3 Flake-Reduction Defaults for VRT/E2E
+
+- Use locators with auto-wait (roles/labels) instead of `waitForTimeout`; set fixed viewport and
+  disable animations where possible to stabilize diffs. citeturn1search6
+- Enable retries with trace/video on first retry for flaky specs and mock external calls to
+  eliminate nondeterministic dependencies. citeturn1search0
 
 ---
 

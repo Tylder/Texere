@@ -199,6 +199,15 @@ export default function handleUser(user: User) { ... }  // ❌ Default export
 | ---------------- | ----------- | ------------------------------------------------- |
 | `no-unused-vars` | error       | Catch unused variables; prefix with `_` to ignore |
 
+### 3.5 Side-Effect Discipline & Determinism
+
+- **Avoid module-level mutable state** in core logic; keep state in small, test-scoped contexts.
+- **Inject effectful deps** (time, randomness, I/O clients) via parameters/`deps` objects instead of
+  calling `Date.now()`/`Math.random()`/globals directly; enables deterministic tests and pure
+  functions (Functional Core, Imperative Shell pattern). citeturn2search7
+- Prefer typed Result/Either returns for recoverable errors over throwing for control flow; improves
+  exhaustiveness and testability. citeturn3search0
+
 **✅ Correct:**
 
 ```typescript

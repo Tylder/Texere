@@ -61,6 +61,20 @@ configs, package.json requirements, and contributor workflow for adding or movin
 - `compilerOptions.noEmit: true`, `allowImportingTsExtensions: true`, `moduleDetection: "force"`.
 - Maintained by `nx sync` so TypeScript graph = Nx project graph.
 
+### 3.3 NodeNext over Bundler for Libraries
+
+- Libraries must use `moduleResolution: "nodenext"` (and matching `module`) to keep declaration
+  output compatible with Node ESM consumers. `moduleResolution: "bundler"` is only for app builds;
+  it permits extensionless imports that can break `.d.ts` consumers. citeturn0search0
+- Keep extensionful relative imports in ESM to preserve correct declaration resolution for
+  downstream users. citeturn0search0
+
+### 3.4 Deterministic Adapters
+
+- Inject time and randomness via adapters (`clock.now()`, `rng.next()`) instead of calling
+  `Date.now()` / `Math.random()` in core logic to keep builds and tests deterministic.
+  citeturn2search7
+
 ## 4. Per-Project Configuration
 
 ### 4.1 Libraries (Node or React)

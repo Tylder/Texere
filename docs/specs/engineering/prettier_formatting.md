@@ -118,6 +118,12 @@ All directories use the root `prettier.config.mjs`.
 }
 ```
 
+### 3.4 ESM Import Compatibility (NodeNext)
+
+- Keep extensionful ESM imports; do not rely on formatters that strip file extensions, as NodeNext
+  resolution requires explicit extensions for declarations to stay valid for consumers.
+  citeturn0search0
+
 - `proseWrap: 'always'` – Soft wrap prose at `printWidth` for readable markdown diffs
 
 **JSX/React files** (`apps/admin-ui`, `apps/web`):

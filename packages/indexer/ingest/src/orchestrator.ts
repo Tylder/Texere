@@ -22,9 +22,11 @@ import type {
   RunDeps,
   DryRunPlan,
   Logger,
+  FileIndexResult,
 } from '@repo/indexer-types';
 
 import { createGitClient } from './git.js';
+import { indexFiles } from './languages/index.js';
 
 /**
  * Check if repository directory exists.
@@ -109,6 +111,7 @@ export async function runSnapshot(args: {
 }): Promise<{
   snapshotRef: SnapshotRef;
   changedFiles: ChangedFileSet;
+  indexResults?: FileIndexResult[];
   skipped?: boolean;
 }> {
   const {
@@ -220,11 +223,38 @@ export async function runSnapshot(args: {
       renamed: changedFiles.renamed.length,
     });
 
-    if (dryRun) {
-      logger.info('Dry-run mode: skipping graph/vector writes');
+    let indexResults: FileIndexResult[] = [];
+
+    if (!dryRun) {
+      // Slice 2: Run language indexers on changed files
+      const filesToIndex = [...changedFiles.added, ...changedFiles.modified];
+
+      if (filesToIndex.length > 0) {
+        logger.info('Running language indexers', { fileCount: filesToIndex.length });
+        try {
+          indexResults = await indexFiles({
+            codebaseRoot: repoRoot,
+            snapshotId: snapshotRef.snapshotId!,
+            filePaths: filesToIndex,
+          });
+          logger.info('Language indexing completed', {
+            filesIndexed: indexResults.length,
+            totalSymbols: indexResults.reduce((sum, r) => sum + r.symbols.length, 0),
+          });
+        } catch (error) {
+          // Per ingest_spec.md §6.5: log error but continue with partial results
+          logger.warn(
+            'Language indexing had issues',
+            error instanceof Error ? { message: error.message } : { error: String(error) },
+          );
+          // Continue with empty results; graph writes will be empty/partial
+        }
+      }
+    } else {
+      logger.info('Dry-run mode: skipping indexing and graph/vector writes');
     }
 
-    return { snapshotRef, changedFiles };
+    return { snapshotRef, changedFiles, indexResults };
   } catch (error) {
     logger.error('Failed to run snapshot', error as Error);
     throw error;

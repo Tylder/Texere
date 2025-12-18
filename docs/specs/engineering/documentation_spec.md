@@ -40,6 +40,9 @@
    code/tests.
 4. **Scannability:** Readers should find answers in ≤30 seconds via headings, quick nav, and tables.
 5. **Minimal duplication:** Prefer links over copy-paste; reuse shared sections via references.
+6. **Consistency with runtime constraints:** Code samples must use extensionful ESM imports
+   (NodeNext) and show injected time/randomness/IO deps where relevant to mirror production
+   patterns. citeturn0search0turn2search7
 
 ## 4. Document Types & Required Content
 
