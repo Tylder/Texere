@@ -1,6 +1,6 @@
 # Texere Indexer – TypeScript/JavaScript Ingest Spec
 
-**Document Version:** 0.3  
+**Document Version:** 0.4  
 **Last Updated:** December 18, 2025  
 **Status:** Active (TS/JS ingestion)  
 **Backlink:** [High-Level Spec](../../README.md) → [Ingest Spec](../ingest_spec.md) (§1.1,
@@ -44,6 +44,10 @@ explicitly out of scope per user request.
     `${snapshotId}:${nodeType}:${stableKey}`
 - **Confidence**: `confidence: 'static' | 'scip' | 'ast' | 'heuristic' | 'llm'`; default `scip`.
   LLM-derived items must be labeled `llm` (language_indexers_spec §2.2).
+- **Path filters**: base denylist comes from the repo `.gitignore` plus enforced defaults
+  `**/node_modules/**`, `**/.next/**`, `**/dist/**`, `**/coverage/**`, `**/__snapshots__/**`,
+  `**/fixtures/**`, `**/vendor/**`. Allowlist overrides only via explicit config. LLM is never
+  invoked on denylisted paths.
 
 ## 3. Toolchain, Coverage & Gaps
 
@@ -55,9 +59,9 @@ explicitly out of scope per user request.
 ### 3.2 Known SCIP gaps (as of Dec 18, 2025)
 
 - Decorator property shorthand and some cross-file decorator definitions are not linked in SCIP
-  output (issue #415). citeturn0search2
+  output (issue #415). citeturn0search4
 - Historical versions missed some dynamic `import()` and namespace re-exports; treat absence as a
-  potential SCIP gap when AST shows the construct.
+  potential SCIP gap when AST shows the construct. citeturn0search3
 - JSX component call sites may be missing CALL edges when components are namespaced or default
   exported anonymously; validate with fallback.
 
@@ -88,6 +92,40 @@ denylist (tests/fixtures/vendor). No LLM for symbols/calls/references.
   documentation_indexing_spec).
 - Configuration stubs: emit CONFIG nodes with redacted values; config ingest can enrich.
 - Repo-level metadata (Codebase/Snapshot) is orchestrated upstream; TS pass must not create it.
+
+### 3.6 Merge & ordering rules (SCIP + AST)
+
+1. Prefer SCIP ranges/occurrences; merge AST-derived items only when SCIP is absent for that
+   source/target/line/col.
+2. Dedupe by `{fromId,toId,line,col,type}`; keep highest-confidence source (`scip` > `ast` >
+   `heuristic` > `llm`).
+3. When both SCIP and AST exist but disagree on target (e.g., decorator shorthand), keep SCIP target
+   and add AST target as secondary with `confidence:'ast'` and `note:'scip-gap'`.
+4. Sort emissions deterministically by `filePath`, `startLine`, `startCol` before returning.
+
+### 3.7 Performance guardrails
+
+- Run `scip-typescript` with `--project <tsconfig>`; batch ≤ 2_000 TS-family files per invocation to
+  avoid memory spikes. If repo exceeds 2_000 files, split by project references or directory.
+- Default CLI timeout 120s per batch; on timeout, fall back to AST for that batch and log
+  diagnostic.
+- AST fallback runs per-file; cap parallelism to CPU cores to reduce heap pressure.
+
+### 3.8 Extraction matrix (summary)
+
+| Node/Edge                             | Source order                            | Required metadata                | Default confidence | Owner pipeline                  |
+| ------------------------------------- | --------------------------------------- | -------------------------------- | ------------------ | ------------------------------- |
+| Module/File                           | filesystem → tsconfig                   | path, hash                       | static             | TS ingest                       |
+| Symbol                                | SCIP defs → AST defs                    | kind, range                      | scip               | TS ingest                       |
+| CALL/TYPE_REF/IMPORT                  | SCIP rels → AST walker                  | fromId, toId, location, type     | scip               | TS ingest                       |
+| Boundary                              | SCIP (when present) → AST pattern → LLM | verb, path, handlerId, framework | ast                | TS ingest                       |
+| DataContract                          | AST (Prisma/Zod/SDL/OpenAPI) → LLM      | fields when static               | ast                | TS ingest                       |
+| TestCase                              | AST test DSL walker                     | name, location, flags            | ast                | TS ingest                       |
+| SpecDoc stub                          | filesystem                              | path, title preview              | static             | TS ingest → doc ingest          |
+| Config/Dependency/Secret/Msg/Workflow | AST or manifest parse                   | key/version/channel/schedule     | ast/static         | TS ingest → non-code ingest     |
+| DOCUMENTS edges                       | —                                       | doc→target, confidence           | —                  | documentation_indexing pipeline |
+| REALIZES (TESTS/VERIFIES)             | call graph + names → heuristic          | role, target ids                 | heuristic          | TS ingest                       |
+| MUTATES                               | Prisma/ORM/SQL detection                | operation, entity                | ast                | TS ingest                       |
 
 ## 4. Node Extraction Rules
 
@@ -177,6 +215,20 @@ For each node type, steps are ordered: SCIP → AST → heuristic → LLM.
 - Temporal/Conductor/AWS Step Functions wrappers or cron schedulers; name/cron if literal.
 - Config-defined workflows: non_code_assets_ingest_spec.md §4.6.
 
+### 4.14 Framework pattern hints (normative examples)
+
+- **Express/Fastify/Hono/Koa**: match `app|router.METHOD(path, handler)`; handler is last arg or
+  returned from `compose`. Capture middleware chain as PATTERN references.
+- **Next.js/Remix API routes**: file-based default export `GET/POST/...` or `loader/action`
+  functions; boundary path from file location.
+- **tRPC**: `router({ key: procedure`…`})`; boundary path = router key; handler = procedure
+  resolver.
+- **NestJS**: `@Controller('path')` + `@Get/@Post/...`; boundary path = controller path + method
+  path; handler symbol = method.
+- **WebSocket**: `ws.on('message'|'connection', handler)`; boundary kind = `websocket`.
+- **CLI (commander/yargs)**: `program.command().action(handler)`; boundary verb = `CLI`, path =
+  command string.
+
 ## 5. Edge Emission Rules
 
 - **CONTAINS**: Snapshot→Module→File→Symbol; File→{Boundary,DataContract,TestCase,SpecDoc,
@@ -204,6 +256,23 @@ For each node type, steps are ordered: SCIP → AST → heuristic → LLM.
 - **EVENT (v2)**: Message producers/consumers create PUBLISHES/CONSUMES/EMITS/LISTENS_TO variants
   mapped onto REFERENCED edges when event graph is enabled.
 
+### 5.1 Symbol ID stability (TS specifics)
+
+- Overloads: append signature index (`symbolName#<overloadIndex>`) to ID.
+- Merged declarations (namespace + function/class): prefer value-space declaration for Symbol ID;
+  add TYPE_REF edges to type-space declaration if present.
+- Re-exports: Symbol ID stays at original defining file; create IMPORT reference from re-export
+  site.
+
+### 5.2 Validation checklist (per FileIndexResult)
+
+- One IN_SNAPSHOT per emitted node.
+- Every File has a Module parent; every Symbol has a File parent.
+- No CALL edge targets an unknown Symbol ID.
+- Boundary handler Symbol exists.
+- Denylisted paths emit zero nodes/edges.
+- If SCIP failed, AST fallback was attempted and diagnostic recorded.
+
 ## 6. Error Handling & Logging
 
 - File-level SCIP or AST failure → log, skip file, continue (ingest_spec §6.4).
@@ -218,11 +287,26 @@ For each node type, steps are ordered: SCIP → AST → heuristic → LLM.
 - Integration: golden `FileIndexResult` fixtures for routes, tRPC/NestJS, Prisma/Zod, Jest/Vitest,
   Next.js API routes, and doc/config stubs.
 - Each test description cites this spec section (meta/spec_writing §9; testing_specification §3.6).
+- Suggested golden fixture set:
+  - `express_route.ts`: Express router with middleware + error handler.
+  - `nest_controller.ts`: Decorators with property shorthand (`imports`) to exercise SCIP gap.
+    citeturn0search4
+  - `dynamic_import.ts`: literal and template `import()` for CALL/IMPORT fallback.
+    citeturn0search3
+  - `jsx_namespace.tsx`: namespaced JSX component usage.
+  - `trpc_router.ts`: router with nested procedures.
+  - `prisma_schema.prisma` + `drizzle_table.ts`: DataContract + MUTATES coverage.
+  - `zod_schema.ts`: Zod object schema with refinements.
+  - `next_api_route.ts`: file-based HTTP verbs.
+  - `jest_tests.test.ts`: nested describe/it with skip/todo flags.
+  - `docs/readme.md`: SpecDoc stub + DOCUMENTS handoff.
+  - `config/.env.example`: Configuration + Secret redaction.
 
 ## 8. Changelog
 
 | Date       | Version | Editor | Summary                                                                                         |
 | ---------- | ------- | ------ | ----------------------------------------------------------------------------------------------- |
+| 2025-12-18 | 0.4     | @agent | Added extraction matrix, merge rules, guardrails, denylist, validation checklist, fixture list. |
 | 2025-12-18 | 0.3     | @agent | Made node/edge rules exhaustive; added ID/confidence rules, SCIP gaps, doc/config interactions. |
 | 2025-12-18 | 0.2     | @agent | Covered all nodes/edges, optional nodes, LLM guardrails.                                        |
 | 2025-12-18 | 0.1     | @agent | Initial TS/JS ingestion spec (Draft).                                                           |
