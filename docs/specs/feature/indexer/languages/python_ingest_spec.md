@@ -1,8 +1,8 @@
 # Texere Indexer – Python Ingest Spec
 
-**Document Version:** 0.1  
+**Document Version:** 0.2  
 **Last Updated:** December 18, 2025  
-**Status:** Draft  
+**Status:** Active (Python ingestion)  
 **Backlink:** [Ingest Spec](../ingest_spec.md) (§1.1, §2.2–§2.3),
 [Language Indexers](../language_indexers_spec.md)
 
@@ -24,9 +24,10 @@ keeping graph shape identical to other languages.
 
 ## 2. Inputs & Outputs
 
-- **Input**: `{ codebaseRoot, snapshotId, filePaths[] }` filtered to `['py']`.
-- **Output**: `FileIndexResult[]` with symbols, calls, references, boundaries, data contracts, and
-  test cases.
+- **Input**: `{ codebaseRoot, snapshotId, filePaths[] }` filtered to `['py']` (packages, modules,
+  scripts).
+- **Output**: `FileIndexResult[]` with symbols, calls, references, boundaries, data contracts, test
+  cases, configuration, errors, messages, dependencies, secrets (redacted), workflow markers.
 
 ## 3. Toolchain & Fallbacks
 
@@ -34,52 +35,56 @@ keeping graph shape identical to other languages.
    and references. citeturn0search0
 2. **Fallback**: Python sidecar using `libcst` for tolerant parsing plus `PyCG` for lightweight call
    graph reconstruction when SCIP fails or is unavailable. citeturn0search4turn1search0
-3. **LLM usage**: only when boundary semantics cannot be resolved statically (e.g., custom router
-   decorators) and must be flagged with `confidence: 'llm'`.
+3. **LLM usage**: only when static/SCIP signals cannot classify an entity; flag `confidence: 'llm'`
+   and honor denylist.
 
 ## 4. Node Ingestion Map (full catalog)
 
-| Node (catalog)                                              | Extraction (SCIP-first)                                                                                                                                                             | Fallback / Notes                                                   |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Codebase                                                    | Provided by orchestrator before language pass; linked by `snapshotId`.                                                                                                              | —                                                                  |
-| Snapshot                                                    | Provided by orchestrator; language pass attaches `IN_SNAPSHOT` edges only.                                                                                                          | —                                                                  |
-| Module                                                      | Package roots from `__init__.py` hierarchy; SCIP `package` identifiers → `CONTAINS` to Snapshot.                                                                                    | Filesystem walk + libcst package detection.                        |
-| File                                                        | Each `.py` file; `IN_SNAPSHOT` to Snapshot and `CONTAINS` to Module.                                                                                                                | Same.                                                              |
-| Symbol                                                      | SCIP definitions; classify as function/class/method/const/type.                                                                                                                     | libcst visitors over `FunctionDef`, `ClassDef`, assignments.       |
-| Boundary                                                    | Decorated callables: FastAPI/Starlette (`@app.get/post/...`), Flask (`@app.route`), Django views, Click/Argparse CLIs, Celery tasks. Handler symbol = decorated function or method. | libcst decorator inspection; LLM only if decorator target unknown. |
-| DataContract                                                | Pydantic `BaseModel`, SQLAlchemy declarative models, dataclasses, Django ORM models; ID from class name.                                                                            | libcst class analysis; emit doc-only if fields unresolved.         |
-| TestCase                                                    | Pytest functions `test_*`, pytest classes `Test*`, unittest `TestCase` methods.                                                                                                     | libcst pattern; mark skipped if syntax invalid.                    |
-| SpecDoc                                                     | Markdown handled by doc indexer (not emitted here).                                                                                                                                 | —                                                                  |
-| Configuration                                               | `.env.example`, `settings.py`, `config/*.py`; detected by config indexer (not emitted here).                                                                                        | —                                                                  |
-| Error                                                       | Custom exceptions subclassing `Exception`; optional (v2+) unless enabled.                                                                                                           | libcst class detection.                                            |
-| Message                                                     | Pub/sub payloads from clients (pydantic schemas passed to producers/consumers); optional.                                                                                           | libcst + string literal topics.                                    |
-| Dependency                                                  | `requirements*.txt` / `poetry.lock` resolved centrally; language pass emits `DEPENDS_ON` only.                                                                                      | —                                                                  |
-| Secret                                                      | Not emitted by language pass; security scanner handles.                                                                                                                             | —                                                                  |
-| Workflow                                                    | Not emitted in v1; future Airflow/Prefect parsers.                                                                                                                                  | —                                                                  |
-| Feature / Pattern / Incident / ExternalService / StyleGuide | Not emitted by language pass; produced by higher-level extractors (ingest_spec §2.3).                                                                                               | —                                                                  |
+| Node (catalog)                                              | Extraction (SCIP-first)                                                                                                                                                                                 | Fallback / Notes                                                               |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Codebase                                                    | Provided by orchestrator; language pass attaches `IN_SNAPSHOT` edges to outputs.                                                                                                                        | —                                                                              |
+| Snapshot                                                    | Provided; language pass never creates Snapshot.                                                                                                                                                         | —                                                                              |
+| Module                                                      | Package roots from `__init__.py` hierarchy; SCIP `package` identifiers → `CONTAINS` to Snapshot.                                                                                                        | Filesystem walk + libcst package detection.                                    |
+| File                                                        | Each `.py` file; emit File + `IN_SNAPSHOT` and `CONTAINS` to Module.                                                                                                                                    | Same.                                                                          |
+| Symbol                                                      | SCIP definitions; classify as function/class/method/const/type.                                                                                                                                         | libcst visitors over `FunctionDef`, `ClassDef`, assignments.                   |
+| Boundary                                                    | Decorated callables: FastAPI/Starlette (`@app.get/post/...`), Flask (`@app.route`), Django views, Click/Argparse CLIs, Celery tasks, WebSocket handlers. Handler symbol = decorated function or method. | libcst decorator inspection; LLM only if decorator target unknown.             |
+| DataContract                                                | Pydantic `BaseModel`, SQLAlchemy declarative models, dataclasses, Django ORM models; ID from class name; include field definitions.                                                                     | libcst class analysis; emit stub with `confidence:'llm'` if fields unresolved. |
+| TestCase                                                    | Pytest functions `test_*`, pytest classes `Test*`, unittest `TestCase` methods.                                                                                                                         | libcst pattern; mark skipped if syntax invalid.                                |
+| SpecDoc                                                     | `.md/.rst` co-located: emit SpecDoc stub + LOCATION to File/Module; doc indexer owns content (clarification 1b).                                                                                        | Stub only.                                                                     |
+| Configuration                                               | `.env.example`, `settings.py`, `config/*.py`, Django settings modules; emit Configuration with key metadata; redact values.                                                                             | libcst parse.                                                                  |
+| Error                                                       | Custom exceptions subclassing `Exception`; emit Error nodes; mark throw sites.                                                                                                                          | libcst class detection; no LLM.                                                |
+| Message                                                     | Pub/sub payloads (Celery tasks, Kafka/NATS clients, SNS/SQS boto3, websockets); emit Message node with topic/queue.                                                                                     | libcst + string literal topics; no LLM.                                        |
+| Dependency                                                  | `requirements*.txt` / `poetry.lock`; emit Dependency nodes (name/version) and file provenance.                                                                                                          | Static parse.                                                                  |
+| Secret                                                      | Secret-like literals (key/token) in settings; emit Secret node with hashed placeholder; do not store value.                                                                                             | Heuristic; no LLM.                                                             |
+| Workflow                                                    | Airflow DAG definitions, Prefect flows, Celery beat schedules; emit Workflow node with name/cron if present.                                                                                            | libcst pattern; LLM only if name inferred from strings.                        |
+| Feature / Pattern / Incident / ExternalService / StyleGuide | Not emitted by language pass; reference owner specs (`llm_prompts_spec`, `patterns_and_incidents_spec`). Inputs supplied via symbols/boundaries.                                                        | —                                                                              |
 
 ## 5. Edge Emission Rules
 
-- **CONTAINS**: Snapshot→Module→File→Symbol; Module/File → Boundary/DataContract/TestCase when
-  defined inside.
-- **IN_SNAPSHOT**: exactly one per Module/File/Symbol/Boundary/DataContract/TestCase (ingest_spec
-  §6.3).
-- **LOCATION**: Boundary/TestCase → File + Module; Boundary → handler Symbol (`role:'HANDLED_BY'`).
-- **REFERENCES**: `CALL` (SCIP or PyCG), `IMPORT`, `TYPE_REF`, `PATTERN`, `SIMILAR` (populated
-  later).
-- **REALIZES**:
-  - `role:'IMPLEMENTS'`: Symbol ↔ Feature (higher-level extractor).
-  - `role:'TESTS'`: TestCase → Symbol under test when call graph shows invocation.
-  - `role:'VERIFIES'`: TestCase → Feature when feature marker found in test name/marker.
-- **MUTATES**: Symbol/Boundary → DataContract when ORM session or Pydantic model methods invoked;
-  HTTP client JSON schemas treated as DataContract when inferred.
-- **DEPENDS_ON**: Symbol/Module/Boundary → external packages (lockfiles), HTTP clients
-  (`requests/httpx`), configs.
-- **DOCUMENTS**: SpecDoc/StyleGuide → Symbol/Module/Feature via doc indexer (not emitted here).
-- **TRACKS**: Snapshot introduction/modification added centrally.
-- **IMPACTS**: Incident relationships added by incident pipeline.
-- **EVENT RELATIONSHIPS** (v2+): Message edges added only if Message nodes emitted; Python pass
-  records producer/consumer sites for later edge creation.
+- **CONTAINS**: Snapshot→Module→File→Symbol;
+  File→{Boundary,DataContract,TestCase,Configuration,Error,Message,Workflow,Secret,Dependency};
+  Module→same when defined at module scope.
+- **IN_SNAPSHOT**: exactly one per snapshot-scoped node emitted by Python indexer (Module, File,
+  Symbol, Boundary, DataContract, TestCase, Configuration, Error, Message, Workflow, Secret,
+  Dependency) per ingest_spec §6.3.
+- **LOCATION**: Boundary/TestCase/Configuration/Error/Message/Workflow/Secret/Dependency → File +
+  Module; Boundary → handler Symbol (`role:'HANDLED_BY'`).
+- **REFERENCES**: `CALL` (SCIP or PyCG), `IMPORT`, `TYPE_REF`, `PATTERN` (pattern matches),
+  `SIMILAR` (embedding placeholder), `EVENT_PUBLISH`/`EVENT_CONSUME` (Message producers/consumers).
+- **REALIZES**: `role:'TESTS'` (TestCase→Symbol when call graph shows invocation); `role:'VERIFIES'`
+  (TestCase→Feature when feature tag in test name/marker); `role:'IMPLEMENTS'`
+  (Boundary/Symbol→Feature written downstream using Python outputs).
+- **DOCUMENTS**: SpecDoc/StyleGuide → Module/File/Symbol/Feature; Python emits SpecDoc stubs +
+  LOCATION for deterministic edge upsert by doc indexer.
+- **MUTATES**: Symbol/Boundary → DataContract when ORM session CRUD or Pydantic model serialization
+  detected.
+- **DEPENDS_ON**: Symbol/Module/Boundary → Dependency nodes (pip packages), ExternalService (HTTP
+  host literal), Configuration.
+- **TRACKS**: Snapshot introduction/modification added centrally; Python provides symbol/file
+  hashes.
+- **IMPACTS**: Added by incident pipeline; Python provides symbol ids only.
+- **EVENT RELATIONSHIPS**: Message ↔ Symbol/Boundary via producer/consumer detection using
+  topic/queue name.
 
 ## 6. Error Handling
 
@@ -96,6 +101,7 @@ keeping graph shape identical to other languages.
 
 ## 8. Changelog
 
-| Date       | Version | Editor | Summary                                |
-| ---------- | ------- | ------ | -------------------------------------- |
-| 2025-12-18 | 0.1     | @agent | Initial Python ingestion spec (Draft). |
+| Date       | Version | Editor | Summary                                                  |
+| ---------- | ------- | ------ | -------------------------------------------------------- |
+| 2025-12-18 | 0.2     | @agent | Covered all nodes/edges, optional nodes, LLM guardrails. |
+| 2025-12-18 | 0.1     | @agent | Initial Python ingestion spec (Draft).                   |
