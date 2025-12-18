@@ -7,33 +7,26 @@
 ```
 You are an agent working in Texere, a spec-driven TypeScript monorepo.
 
-## Quick Reference
-- **Project docs:** AGENTS.md (workflows + rules), README.md (structure + commands)
-- **Behavior specs:** docs/specs/README.md (LLM-first high-level spec + index). System specs in docs/specs/system/, tooling in docs/specs/engineering/.
-- **Quality gate:** default to pnpm post:report:fast after each edit (format + oxlint fix + typecheck + test:coverage); run full pnpm post:report only before handoff or when requested.
-- **Watchers:** if logs/dev.log or logs/typecheck.log exist, read them after each edit and fix surfaced errors. If missing, ask the user to start pnpm dev:log and pnpm typecheck:watch:log.
-- **Monorepo:** pnpm --filter <pkg>, workspace:* for local deps, scoped imports
-
-## Spec Index (docs/specs/)
-Use `docs/specs/README.md` as the entry point; it contains the full high-level spec and links to all other specs.
+## Mandatory Reading (before planning)
+- AGENTS.md
+- README.md (root)
+- docs/specs/README.md (spec index)
+- From the index, read all feature/domain specs relevant to the task (e.g., feature/indexer/*, feature/langgraph_orchestrator_spec.md, feature/texere-tool-spec.md).
 
 ## Workflow
-1. **Spec Gate:** Find governing spec(s) in the index above. Restate behavior. Ask if spec changes or approvals needed.
-2. **Plan:** List files/tests. Wait for approval before editing.
-3. **Execute:** Edit files; reference spec §N in test `describe()` blocks (e.g., `describe('DM triage (backend §5.2)', () => ...)`).
-4. **Validate:** Run `pnpm post:report:fast` after each edit (fast gate). Run full `pnpm post:report` before handoff or when requested. All must pass before you ask for review.
+1. **Spec Gate:** Restate governing requirements with spec citations; ask if spec updates/approvals are needed.
+2. **Plan:** List files/tests you expect to touch and why. Wait for approval before edits.
+3. **Execute:** Use the code/test or docs template below.
+4. **Validate:** Run required gate(s) after each edit.
 5. **Summary:** What changed, why (spec refs), tests run.
 
 ## Key Rules
-- **Spec is authoritative:** adjust code to match spec; never modify spec without approval.
-- **Tests required:** all code changes must have tests with spec section citations.
-- **Monorepo discipline:** use `pnpm --filter <pkg> add <dep>` (not global), `workspace:*` in package.json, scoped imports across packages.
-- **Be concise:** answer directly. When clarifying, ask numbered questions with lettered options (A = recommended).
-- **NEVER run servers or watchers:** Ask the user to start, stop, restart, or manage them.
-- **You must read and follow what is the AGENTS.md file.**
-- **Use Semantic search (`mcp__code_search__search_code`) for conceptual searches.**
-- **Use Playwright MCP (`mcp__playwright__*`) with host.docker.internal for interactive testing.**
-- **You also have JetBrains debugger MCP tools available; use them for step-through debugging when helpful.**
+- Specs are authoritative; cite sections in code/tests.
+- Never start/stop watchers yourself.
+- Use workspace-scoped installs and `workspace:*` ranges.
+- Use Semantic search (`mcp__code_search__search_code`) for conceptual searches.
+- Use Playwright MCP (`mcp__playwright__*`) with host.docker.internal for interactive testing.
+- You also have JetBrains debugger MCP tools available; use them for step-through debugging when helpful.
 ```
 
 ---
@@ -44,23 +37,22 @@ Use `docs/specs/README.md` as the entry point; it contains the full high-level s
 
 ```
 This is a code/test change task.
+- Additional mandatory reading:
+  - docs/specs/engineering/eslint_code_quality.md
+  - docs/specs/engineering/typescript_configuration.md
+  - docs/specs/engineering/testing_strategy.md
+  - docs/specs/engineering/testing_specification.md
+  - docs/specs/engineering/build_system.md
+  - docs/specs/engineering/prettier_formatting.md
+  - docs/specs/engineering/rendering-strategies.md (include for any frontend/SSR/ISR/PPR work)
+  - docs/specs/engineering/documentation_spec.md (only if also editing docs/specs)
+- Also skim any package-level READMEs/configs relevant to this task.
 - **If `logs/dev.log` exists, the `dev:log` watcher is running.** If missing, ask the user to run `pnpm dev:log`.
 - **If `logs/typecheck.log` exists, the `typecheck:watch:log` watcher is running.** If missing, ask the user to run `pnpm typecheck:watch:log`.
 - Note: These log files are automatically deleted when their respective scripts are closed.
 - Console shows full output; filtered logs remove noisy warnings/ANSI for agent use only.
-- **Per-Edit Checklist (no exceptions unless the user explicitly says to skip):**
-  - After every file you modify (even within a multi-file batch), run `pnpm post:report:fast`.
-  - If `logs/dev.log` or `logs/typecheck.log` exist, read them and fix surfaced issues before the next edit.
-  - Confirm the fast gate is green before proceeding to further edits.
-- **Full Gate:** Run `pnpm post:report` once the change set is stable or before handoff/review; also run it early for cross-cutting or tooling changes (tsconfig/Nx/config/deps) where full lint/type/build coverage is needed.
-- While watchers run:
-  1. Read relevant specs first: linting (`docs/specs/engineering/eslint_code_quality.md`) and TypeScript (`docs/specs/engineering/typescript_configuration.md`); add testing specs (`docs/specs/engineering/testing_strategy.md`, `docs/specs/engineering/testing_specification.md`) if writing/editing tests. read `docs/specs/engineering/documentation_spec.md`. If unclear, ask numbered questions with lettered options (A recommended).
-  2. Plan (with approval) before edits citing spec sections.
-  3. Implement in small, deterministic units; fix issues surfaced in `logs/*.log` after each change.
-  4. Add tests that reference the governing spec section in their descriptions (cite testing strategy §2.2–§4.4 and testing specification §3–§7 for test structure/patterns).
-- Summary with files touched and spec references.
 
-**Stop if:** Watchers not running, any test fails, spec is unclear, or design needs approval. Report immediately and ask user for next step.
+Plan (no code): restate requirements with spec citations; list files/tests you expect to touch and why; call out risks/open questions. Wait for approval before edits. After plan approval, use the Execution Prompt below.
 ```
 
 ---
@@ -72,12 +64,39 @@ This is a code/test change task.
 ```
 This is a docs/spec change task.
 
-**Workflow:**
-1. Identify affected spec files.
-2. Read and follow docs/specs/meta/spec_writing.md (all specs must conform to §1–11).
-3. Make edits.
-4. Run `pnpm format:staged` on changed files.
-5. Note: heavier commands (lint, test, build) skipped for docs-only; confirm if needed. If code wasn’t touched, `pnpm post:report:fast` is optional, but still skim `logs/dev.log` and `logs/typecheck.log` for regressions if they are present.
+Additional mandatory reading (docs-only):
+- docs/specs/meta/spec_writing.md
+- docs/specs/engineering/documentation_spec.md
+- Any feature/engineering specs referenced by the doc you are editing.
 
-**Validate:** Ensure consistency—if you change a behavior spec, update code/tests that implement it.
+Plan first, then edit.
+
+Execution:
+- Edit docs.
+- Run `pnpm format:staged` on changed files.
+- `pnpm post:report:fast` is optional for docs-only; run it if code-adjacent examples were touched or if the user requests. If `logs/dev.log` or `logs/typecheck.log` exist, skim for regressions.
+
+Validate: Ensure consistency—if you change a behavior spec, update code/tests that implement it.
+```
+
+---
+
+## Execution Prompt (send after plan approval)
+
+```
+Execution loop (strict):
+- After every file change, run `pnpm post:report:fast`. Do not proceed if red.
+- If `logs/dev.log` or `logs/typecheck.log` exist, read them after each edit and fix surfaced issues before more changes. Never start/stop watchers yourself.
+- Keep diffs small; one change set at a time, then re-run the fast gate.
+- Code discipline: follow eslint_code_quality.md (workspace imports, no `any`, explicit return types), typescript_configuration.md (NodeNext, no baseUrl/paths, use package exports + `workspace:*` deps), prettier_formatting.md (root config).
+- Pure/testable code patterns:
+  - Favor pure functions (same input ⇒ same output, no side effects). Keep domain logic in a functional core; push I/O to thin adapters (Functional Core, Imperative Shell).
+  - Inject effectful deps (time, randomness, I/O clients) via small `deps` objects or parameters instead of importing globals; avoid module-level mutable state.
+  - Prefer immutable data (`readonly`, spread to copy), explicit Result/Either-style returns instead of throwing for control flow; model failure in types.
+  - Keep functions small, single-purpose; avoid hidden shared state; make async boundaries explicit with `async`/`await`.
+  - For randomness/time, accept adapters (e.g., `clock.now`, `rng.next`) so tests can supply determinism.
+- Tests: colocated `*.test.ts(x)` next to source (testing_specification.md §3.1); cite governing spec sections in `describe`; aim for trophy distribution targets (testing_strategy.md §2.2) and coverage goals; use RTL/Vitest/Playwright per testing_specification.
+- Run `pnpm post:report` before handoff or for cross-cutting/tooling changes (tsconfig/Nx/config/deps).
+- Summarize changes with files touched, spec refs, and tests run.
+Stop if watchers not running, tests fail, or spec is unclear; ask for direction.
 ```
