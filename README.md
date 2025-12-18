@@ -181,6 +181,8 @@ These commands run while you're actively writing code:
 - **`pnpm post:report:fast`** – Quick validation (~30s): format + oxlint fix + typecheck +
   test:coverage. Use this after each code change to catch obvious issues without waiting for full
   ESLint.
+- **`pnpm check:fast`** – Ultra-fast loop: `lint:fast` (oxlint) + `typecheck`. Use while coding when
+  you don’t need coverage or build outputs.
 
 ### Quality Gates
 

@@ -57,7 +57,7 @@
         "{projectRoot}/.env*"
       ],
       "outputs": [
-        "{projectRoot}/dist",
+        "{workspaceRoot}/dist/{projectRoot}",
         "{projectRoot}/.cache/tsconfig.lib.tsbuildinfo",
         "{projectRoot}/.cache/tsconfig.spec.tsbuildinfo"
       ],

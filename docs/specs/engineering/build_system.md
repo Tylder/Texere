@@ -234,7 +234,7 @@ Applications also use `dependsOn: ["^build"]` to ensure all libraries are built 
 
 ## 5. Build Scripts in `package.json`
 
-Each project defines build scripts that Nx calls via `nx:run-script`:
+Each project defines build scripts that Nx calls via `nx:run-script` (validated on Nx 22.3.x):
 
 ### 5.1 Library Build Script
 
@@ -309,6 +309,12 @@ pnpm typecheck
 
 Validates per-project spec configs (test-only types). Root config is references-only; we don’t run a
 separate root `tsc -b`.
+
+For faster local feedback (no coverage/build), use:
+
+```bash
+pnpm check:fast  # lint:fast (oxlint) + typecheck
+```
 
 ### 6.3 Testing
 
