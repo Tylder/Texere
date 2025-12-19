@@ -19,8 +19,8 @@
   (keeps root `tsconfig.json` and IDE graph accurate).
 - Console shows full output; filtered logs remove noisy warnings/ANSI for agent use only.
 - While watchers run:
-  1. Read relevant specs first; if unclear, ask numbered questions with lettered options (A
-     recommended).
+  1. Read relevant specs first; if unclear, ask numbered explained questions with lettered options.
+     You must put the recommended answer at A.
   2. Plan steps citing spec sections.
   3. Implement in small, deterministic units; fix issues surfaced in `logs/*.log`.
   4. Add tests that reference the governing spec section in their descriptions.

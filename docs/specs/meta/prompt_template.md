@@ -147,9 +147,12 @@ Exclude narrative/background/changelog unless required for behavior.
 Include external links only when a spec requires an external standard/tool to implement correctly.
 Otherwise omit all external links.
 
-## Conflict Handling
-If two specs conflict, include both in required reading and explicitly flag the conflict. Do not
-pull in additional docs to “average it out.”
+## Research Memo Requirement
+If the user’s request requires research beyond specs (e.g., current implementation state, existing
+code paths, repo structure, or other non-spec facts), you must:
+- Perform that research first.
+- Create a concise markdown research memo in the repo (place under `docs/llm_research/`).
+- Reference that memo in the required reading list and instruct the acting LLM to read it in full.
 
 ## Clarifying Questions (required when needed)
 If any requirement is ambiguous or blocking:
@@ -166,8 +169,8 @@ Provide one prompt containing:
 - Required reading list with file paths + line numbers (trimmed to binding requirements only).
 - Optional reading list (only if ambiguity remains).
 - External links grouped by topic, with 1–2 line relevance note each.
-- Brief “Discovery Justification” for each inferred doc.
-- No validation gates, no commands, no workflow steps, no planning gates.
+- Research memo reference (if created).
+- A clean version of the user's request.
 
 ## Full Prompt (from user)
 PASTE THE USER’S FULL PROMPT BELOW THIS LINE
