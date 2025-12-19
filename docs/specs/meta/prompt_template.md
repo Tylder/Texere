@@ -138,7 +138,7 @@ anything further or make any judgment calls about what to read.
 
 ## Output Requirements (single prompt)
 Produce ONE prompt that includes:
-- A required reading list with file paths and **section numbers**.
+- A required reading list with file paths and **line numbers**.
 - Any external links required (from internet research), grouped by topic.
 - The governing rules/workflow needed to execute the task.
 - A plan gate: require the next LLM to restate requirements with citations and list expected files/tests.
