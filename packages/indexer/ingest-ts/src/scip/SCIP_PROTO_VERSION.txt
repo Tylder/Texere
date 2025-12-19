@@ -1,0 +1,1 @@
+scip.proto v0.6.1 (9d5796159c97c3b107355c424f6c06fb1a0ea01c)

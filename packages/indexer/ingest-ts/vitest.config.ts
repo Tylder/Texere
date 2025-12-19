@@ -25,7 +25,7 @@ export default defineConfig({
         branches: 10,
       },
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['**/.cache/**', 'dist', '**/*.d.ts', '**/node_modules/**'],
+      exclude: ['**/.cache/**', 'dist', '**/*.d.ts', '**/node_modules/**', 'src/scip/**'],
     },
     setupFiles: './vitest.setup.ts',
   },

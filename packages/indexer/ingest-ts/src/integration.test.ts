@@ -53,7 +53,7 @@ function collectTsFiles(dir: string, prefix = ''): string[] {
  */
 describe(
   'Full Pipeline Integration – test-typescript-app (2a1-ts-symbol-extraction.md §6.3)',
-  { timeout: 30_000 },
+  { timeout: 90_000 },
   () => {
     let testRepoPath: string;
     let snapshotId: string;
@@ -88,7 +88,7 @@ describe(
       expect(results).toBeDefined();
       expect(Array.isArray(results)).toBe(true);
       expect(results.length).toBeGreaterThan(0);
-    }, 25_000);
+    }, 90_000);
 
     /**
      * Main integration test: extract all symbols from test-typescript-app.

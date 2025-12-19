@@ -17,6 +17,7 @@ coverage
 # Auto-generated files
 **/next-env.d.ts
 **/.eslintignore
+**/generated/**
 
 # Logs & misc
 logs

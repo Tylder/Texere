@@ -65,9 +65,65 @@ explicitly out of scope per user request.
   Docs: [Writing an indexer](https://sourcegraph.com/docs/code-search/code-navigation/writing_an_indexer);
   [SCIP repo](https://github.com/sourcegraph/scip);
   [scip-php binding regen example](https://packagist.org/packages/davidrjenni/scip-php)
-- Parse `index.scip` using SCIP protocol bindings (TypeScript bindings are available from the SCIP
-  repo); do not depend on scip-typescript internal APIs.  
+- Parse `index.scip` using the generated SCIP protocol bindings; **do not** parse JSON output from
+  `scip-typescript print` in the ingest pipeline. `print` is **diagnostics only**.  
   Docs: [SCIP protocol + bindings](https://github.com/sourcegraph/scip)
+
+**Binding generation requirements (normative, specific):**
+
+1. **Pin a schema version**: choose a specific `scip.proto` version (tag or commit hash) and record
+   it in a small text file alongside the generated bindings (e.g.,
+   `packages/indexer/ingest-ts/src/scip/SCIP_PROTO_VERSION.txt`).
+2. **Codegen tool (required)**: use `ts-proto` (protoc plugin) + `@bufbuild/protobuf` runtime. This
+   is the **only supported generator** for SCIP bindings in this repo.  
+   Rationale: `ts-proto` produces idiomatic TS and uses `@bufbuild/protobuf` for encode/decode
+   semantics.  
+   Docs: [ts-proto](https://github.com/stephenh/ts-proto)
+3. **Generate TypeScript bindings** from `scip.proto` using `protoc` + `ts-proto` and commit the
+   output under `packages/indexer/ingest-ts/src/scip/`. Do not generate bindings at runtime.
+4. **Runtime decoding must use the generated bindings** to parse the binary `index.scip`
+   (`scip.Index` root message). No JSON round-tripping in production code.
+5. **When upgrading SCIP**: update `scip.proto` → regenerate bindings → update the pinned version
+   file → re-run the relevant tests.
+
+**How to generate (required commands):**
+
+```
+# from repo root (one-time deps)
+pnpm --filter @repo/indexer-ingest-ts add -D ts-proto @bufbuild/protobuf
+
+# generate bindings (required script)
+pnpm --filter @repo/indexer-ingest-ts run scip:generate
+```
+
+**When to run generation (required):**
+
+- On initial setup of `@repo/indexer-ingest-ts`.
+- Any time `SCIP_PROTO_VERSION.txt` changes (schema bump).
+- Any time `scip.proto` changes (even if the version file did not).
+
+**Prerequisite (required):**
+
+- `protoc` **must be installed** on the system running code generation (dev/CI only). Runtime
+  indexing does not require `protoc`.
+
+**Required script (source of truth):**
+
+- `packages/indexer/ingest-ts/package.json` → `scip:generate`
+  - Runs `protoc` with `ts-proto` to emit bindings into `src/scip/generated/`
+  - Adds `// @ts-nocheck` headers to generated files to skip typechecking
+
+**Allowed layout (example):**
+
+```
+packages/indexer/ingest-ts/src/scip/
+  README.md
+  SCIP_PROTO_VERSION.txt
+  scip.proto
+  scip_pb.ts        # generated bindings (name/tool-dependent)
+  index.ts          # re-exports for parser code
+```
+
 - **Supported Node versions**: v18 and v20 for `scip-typescript`.  
   Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
 - **JS-only projects**: run with `--infer-tsconfig`.  

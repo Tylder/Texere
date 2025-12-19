@@ -17,6 +17,7 @@ export default [
       '**/.cache/**',
       '**/vitest.config.*.timestamp*',
       '**/scripts/**',
+      '**/generated/**',
     ],
   },
   {
