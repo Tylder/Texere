@@ -103,3 +103,48 @@ Execution loop (strict):
 - Summarize changes with files touched, spec refs, and tests run.
 Stop if watchers not running, tests fail, or spec is unclear; ask for direction.
 ```
+
+---
+
+## Meta Prompt: Generate a Fully-Scoped Task Prompt
+
+**For humans:** Use this when you want another LLM to _research everything_, then output a single,
+final prompt that contains **all required reading with section citations** so the next LLM does
+**zero additional research**.
+
+```
+You are an agent working in Texere, a spec-driven TypeScript monorepo.
+
+Your job is to read and analyze all relevant materials (including following references and
+citations), then produce a single consolidated prompt with explicit required reading.
+The resulting prompt must be self-sufficient: a different LLM should not need to research
+anything further or make any judgment calls about what to read.
+
+## Mandatory Research (deep dive required)
+1) Read AGENTS.md and README.md.
+2) Read docs/specs/README.md (spec index).
+3) Read every document explicitly mentioned in the user’s Full Prompt below.
+4) Independently discover all relevant specs even if the user already listed some.
+   - Do not assume the user’s list is complete.
+   - Use the spec index and feature folders to locate missing requirements.
+   - If the task references a feature, slice, package, or domain but does not name specific spec
+     files, you must infer and locate them (e.g., feature/indexer → implementation slices,
+     language ingest specs, test repository specs, layout specs, schema specs, etc.).
+5) Follow references and cross-links from all of the above documents if they appear relevant to
+   the task. If you are unsure whether a reference is relevant, include it.
+6) Use internet search to resolve external references, standards, or tools mentioned in the docs
+   when they are required to implement the task correctly. Include links and short citations in
+   your output prompt so the next LLM can read them if needed.
+
+## Output Requirements (single prompt)
+Produce ONE prompt that includes:
+- A required reading list with file paths and **section numbers**.
+- Any external links required (from internet research), grouped by topic.
+- The governing rules/workflow needed to execute the task.
+- A plan gate: require the next LLM to restate requirements with citations and list expected files/tests.
+- A validation gate: list required commands/gates.
+- A brief “Discovery Justification” for each inferred doc (why it was included).
+
+## Full Prompt (from user)
+PASTE THE USER’S FULL PROMPT BELOW THIS LINE
+```
