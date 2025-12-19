@@ -18,6 +18,7 @@ coverage
 playwright-report/
 .playwright/
 test-results/
+**/*.golden.json
 
 # Prettier
 .prettier-cache
