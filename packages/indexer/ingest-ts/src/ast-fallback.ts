@@ -105,7 +105,7 @@ function createSymbol(
     range,
     filePath,
     isExported: isExported(node),
-    docstring: getDocstring(node, sourceFile),
+    docstring: getDocstring(node),
     confidence: 'ast',
     note: undefined,
   };
@@ -157,7 +157,7 @@ function extractVariableDeclarations(
         range,
         filePath,
         isExported: isExported(varStmt),
-        docstring: getDocstring(varStmt, sourceFile),
+        docstring: getDocstring(varStmt),
         confidence: 'ast',
         note: undefined,
       };

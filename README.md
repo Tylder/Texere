@@ -64,8 +64,7 @@ Configuration files at the workspace root:
 
 Follow the fast-feedback pattern documented in `AGENTS.md`:
 
-1. **Start watchers** (run in separate terminals):
-   - `pnpm dev:log` – Runtime + tests; filtered logs to `logs/dev.log`
+1. **Start watcher**:
    - `pnpm typecheck:watch:log` – Type checking; filtered logs to `logs/typecheck.log`
 
 2. **Read specs first**: Consult `docs/specs/` for architecture and requirements
@@ -171,8 +170,6 @@ These commands run while you're actively writing code:
 
 - **`pnpm dev`** – Run all packages in development mode (Nx parallel). Use this to see runtime
   changes as you code.
-- **`pnpm dev:log`** – Run with filtered dev logs written to `logs/dev.log`. Recommended for
-  agent-driven development (reduces noise, keeps focus).
 - **`pnpm typecheck:watch:log`** – Watch mode for type checking; logs to `logs/typecheck.log`. Run
   in a separate terminal while developing.
 
@@ -219,10 +216,7 @@ These commands validate code quality:
 **During active development:**
 
 ```bash
-# Terminal 1: Runtime feedback
-pnpm dev:log
-
-# Terminal 2: Type feedback
+# Terminal: Type feedback
 pnpm typecheck:watch:log
 
 # Terminal 3: As you make changes

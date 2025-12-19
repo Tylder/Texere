@@ -51,8 +51,7 @@
 - Purpose statement (1–2 sentences), install prerequisites, quickstart commands, validation
   commands.
 - Repo map (apps, packages, tooling roots) with links to deeper specs.
-- Pointers to active watchers (`pnpm dev:log`, `pnpm typecheck:watch:log`) and `logs/*.log`
-  contract.
+- Pointers to active watcher (`pnpm typecheck:watch:log`) and `logs/*.log` contract.
 - Ownership/contact for escalation.
 
 ### 4.2 Package/App README (co-located)

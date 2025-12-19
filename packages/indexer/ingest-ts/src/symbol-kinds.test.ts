@@ -283,7 +283,7 @@ describe('Symbol Kind Classification (ts_ingest_spec.md §4, test_repository_spe
         }
       });
 
-      const doc = getDocstring(foundNode!, sourceFile);
+      const doc = getDocstring(foundNode!);
       expect(doc).toBeUndefined();
     });
 
@@ -300,7 +300,7 @@ describe('Symbol Kind Classification (ts_ingest_spec.md §4, test_repository_spe
       });
 
       // Just verify it doesn't crash and returns a string or undefined
-      const doc = getDocstring(foundNode!, sourceFile);
+      const doc = getDocstring(foundNode!);
       expect(typeof doc === 'string' || doc === undefined).toBe(true);
     });
   });
@@ -413,7 +413,7 @@ describe('Symbol Kind Classification (ts_ingest_spec.md §4, test_repository_spe
         }
       });
 
-      const doc = getDocstring(foundNode!, sourceFile);
+      const doc = getDocstring(foundNode!);
       // Should extract comment or return undefined
       expect(typeof doc === 'string' || doc === undefined).toBe(true);
     });
@@ -434,7 +434,7 @@ describe('Symbol Kind Classification (ts_ingest_spec.md §4, test_repository_spe
         }
       });
 
-      const doc = getDocstring(foundNode!, sourceFile);
+      const doc = getDocstring(foundNode!);
       // Should extract first non-empty line
       expect(typeof doc === 'string' || doc === undefined).toBe(true);
     });

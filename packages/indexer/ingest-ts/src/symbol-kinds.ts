@@ -131,45 +131,47 @@ export function getNameFromNode(node: ts.Node & { name?: ts.Node }): string | un
  * Cite: 2a1-ts-symbol-extraction.md §5.4 (docstring extraction)
  *
  * @param node - TypeScript AST node
- * @param sourceFile - Source file (needed for comment access)
  * @returns First line of JSDoc comment, or undefined if none
  */
-export function getDocstring(node: ts.Node, sourceFile: ts.SourceFile): string | undefined {
-  // Get leading comments for this node
-  const fullText = sourceFile.getFullText();
-  const comments = ts.getLeadingCommentRanges(fullText, node.getStart(sourceFile));
-
-  if (!comments || comments.length === 0) {
+export function getDocstring(node: ts.Node): string | undefined {
+  // Use the standard TypeScript compiler method to get JSDoc
+  const jsDocs = ts.getJSDocCommentsAndTags(node);
+  if (!jsDocs || jsDocs.length === 0) {
     return undefined;
   }
 
-  // Get the last comment (most recent) before the node
-  const lastComment = comments[comments.length - 1];
-  if (!lastComment) {
+  // Process the first JSDoc comment
+  const jsDoc = jsDocs[0];
+  if (!jsDoc) {
     return undefined;
   }
 
-  const commentText = fullText.substring(lastComment.pos, lastComment.end);
-
-  // Extract text from JSDoc comment
-  // Remove /** */ or // or /* */ syntax
-  let cleanText = commentText;
-
-  // Remove leading /** and trailing */
-  if (cleanText.startsWith('/**')) {
-    cleanText = cleanText.replace(/^\/\*\*\s*/, '').replace(/\s*\*\/$/, '');
-  } else if (cleanText.startsWith('/*')) {
-    cleanText = cleanText.replace(/^\/\*\s*/, '').replace(/\s*\*\/$/, '');
-  } else if (cleanText.startsWith('//')) {
-    cleanText = cleanText.replace(/^\/\/\s*/, '');
+  // For JSDoc nodes, extract the text
+  let commentText = '';
+  if (ts.isJSDoc(jsDoc)) {
+    // JSDoc comment: get the comment string
+    if (jsDoc.comment) {
+      if (typeof jsDoc.comment === 'string') {
+        commentText = jsDoc.comment;
+      } else if (Array.isArray(jsDoc.comment)) {
+        // comment is a NodeArray<JSDocComment>
+        const parts: string[] = [];
+        for (const c of jsDoc.comment) {
+          if (typeof c === 'string') {
+            parts.push(c);
+          } else if ('text' in c && typeof (c as Record<string, unknown>)['text'] === 'string') {
+            parts.push((c as Record<string, unknown>)['text'] as string);
+          }
+        }
+        commentText = parts.join('');
+      }
+    }
   }
 
-  // Remove leading * from each line (JSDoc format)
-  const lines = cleanText.split('\n').map((line) => line.replace(/^\s*\*\s?/, ''));
+  // Clean up and return first line
+  const cleanText = commentText.trim().split('\n')[0]?.trim();
 
-  // Return first non-empty line
-  const firstLine = lines.find((line) => line.trim().length > 0);
-  return firstLine?.trim() || undefined;
+  return cleanText || undefined;
 }
 
 /**

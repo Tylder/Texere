@@ -114,6 +114,12 @@ stop).
 **Scope**:
 
 - Run SCIP + AST fallback per `ts_ingest_spec` §3.1–§3.8 for symbol defs; apply ID rules (§2, §5.1).
+- Vendor `scip.proto` and **generate TS bindings** into `packages/indexer/ingest-ts/src/scip/`
+  (committed artifacts). Parse `index.scip` using these bindings (no dependency on `scip-typescript`
+  internals). Honor SCIP parsing requirements (`ts_ingest_spec` §3.1.1) including metadata-first
+  ordering, range decoding, and encoding conversion.
+- Use `scip snapshot` and `protoc --decode=scip.Index scip.proto` for diagnostics only (no
+  production fallback); document expected workflows in the spec.
 - Enforce path filters/denylist; deterministic ordering.
 - Create new Nx package `@repo/indexer-ingest-ts` with complete symbol extraction engine.
 

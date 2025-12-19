@@ -10,11 +10,8 @@
 
 - **NEVER attempt to run, start, stop, or restart servers or watchers.** Ask the user to manage
   them.
-- User runs two watchers in separate terminals for feature work:
-  - `pnpm dev:log` – runtime + tests; writes filtered logs to `logs/dev.log`.
+- User runs one watcher for feature work:
   - `pnpm typecheck:watch:log` – type checking; writes filtered logs to `logs/typecheck.log`.
-- **If `logs/dev.log` exists, the `dev:log` watcher is running.** If missing, ask the user to run
-  `pnpm dev:log`.
 - **If `logs/typecheck.log` exists, the `typecheck:watch:log` watcher is running.** If missing, ask
   the user to run `pnpm typecheck:watch:log`.
 - Note: These log files are automatically deleted when their respective scripts are closed.

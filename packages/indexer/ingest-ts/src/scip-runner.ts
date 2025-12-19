@@ -54,6 +54,7 @@ interface ScipIndex {
 
 /**
  * Generate stable symbol ID per formula.
+ * Pure function: deterministic based on input parameters only.
  * Cite: symbol_id_stability_spec.md §2.1
  * Formula: ${snapshotId}:${filePath}:${symbolName}:${startLine}:${startCol}
  *
@@ -64,7 +65,7 @@ interface ScipIndex {
  * @param startCol – 1-indexed start column
  * @returns Stable symbol ID
  */
-function generateSymbolId(
+export function generateSymbolId(
   snapshotId: string,
   filePath: string,
   symbolName: string,
@@ -156,8 +157,9 @@ function invokeScipCliAndParse(
       'npx',
       '@sourcegraph/scip-typescript',
       'index',
-      `--project=${absoluteTsconfigPath}`,
+      `--cwd=${codebaseRoot}`,
       `--output=${outputFile}`,
+      absoluteTsconfigPath,
     ].join(' ');
 
     try {
@@ -235,9 +237,13 @@ function invokeScipCliAndParse(
 
 /**
  * Infer symbol kind from display name.
+ * Pure function: deterministic based on input string only.
  * Cite: ts_ingest_spec.md §3.1 (symbol kind inference)
+ *
+ * @param displayName – Display name from SCIP metadata
+ * @returns Inferred symbol kind
  */
-function inferSymbolKind(displayName: string): ScipSymbol['kind'] {
+export function inferSymbolKind(displayName: string): ScipSymbol['kind'] {
   const lower = displayName.toLowerCase();
   if (lower.includes('function')) return 'function';
   if (lower.includes('class')) return 'class';

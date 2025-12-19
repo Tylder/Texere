@@ -1,7 +1,7 @@
 # Texere Indexer – TypeScript/JavaScript Ingest Spec
 
-**Document Version:** 0.5  
-**Last Updated:** December 18, 2025  
+**Document Version:** 0.7  
+**Last Updated:** December 19, 2025  
 **Status:** Active (TS/JS ingestion)  
 **Backlink:** [High-Level Spec](../../README.md) → [Ingest Spec](../ingest_spec.md) (§1.1,
 §2.2–§2.3) → [Language Indexers](../language_indexers_spec.md) →
@@ -58,6 +58,13 @@ explicitly out of scope per user request.
   occurrences/relationships to build symbols, CALL/TYPE_REF/IMPORT references, and ranges. Use CLI
   invocation (child process) rather than importing internal modules.  
   Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- **Generate TS bindings from `scip.proto` and commit them** under
+  `packages/indexer/ingest-ts/src/scip/`. Do not depend on `scip-typescript` internal modules. SCIP
+  repo guidance allows either importing bindings or generating them from the protobuf schema; we
+  choose vendoring + generation for end-to-end control.  
+  Docs: [Writing an indexer](https://sourcegraph.com/docs/code-search/code-navigation/writing_an_indexer);
+  [SCIP repo](https://github.com/sourcegraph/scip);
+  [scip-php binding regen example](https://packagist.org/packages/davidrjenni/scip-php)
 - Parse `index.scip` using SCIP protocol bindings (TypeScript bindings are available from the SCIP
   repo); do not depend on scip-typescript internal APIs.  
   Docs: [SCIP protocol + bindings](https://github.com/sourcegraph/scip)
@@ -72,6 +79,30 @@ explicitly out of scope per user request.
 - **OOM mitigation**: either pass `--no-global-caches` or increase Node heap via
   `node --max-old-space-size=... "$(which scip-typescript)" index ...`.  
   Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- **Debugging/inspection only**: use `scip snapshot` for golden inspection and `protoc` to decode
+  `index.scip` when diagnosing parsing errors. These are diagnostics, not fallbacks in the ingest
+  pipeline.  
+  Docs: [Writing an indexer](https://sourcegraph.com/docs/code-search/code-navigation/writing_an_indexer);
+  [Decoding SCIP index file](https://help.sourcegraph.com/hc/en-us/articles/15045932124941-Decoding-SCIP-index-file)
+
+### 3.1.1 SCIP schema and parsing requirements (TS ingest)
+
+- **Binary format**: `index.scip` is protobuf3 binary; root message is `scip.Index`.
+- **Streaming requirement**: `Index.metadata` must appear first in the stream; parser must accept
+  metadata before any documents.
+- **Paths**: `Metadata.project_root` is the absolute repo URI; `Document.relative_path` is relative
+  to `project_root` and is the canonical file key.
+- **Encodings**: honor `Metadata.text_document_encoding` and `Document.position_encoding` when
+  converting ranges into TS ingest `Range` values. Convert SCIP 0-based positions to 1-based
+  `{startLine,startCol,endLine,endCol}` in `FileIndexResult`.
+- **Ranges**: `Occurrence.range` is an `int32[]` with 3 or 4 elements: `[startLine,startCol,endCol]`
+  or `[startLine,startCol,endLine,endCol]`. For 3-element ranges, `endLine = startLine`.
+- **Definitions**: treat `SymbolRole.Definition` in `Occurrence.symbol_roles` as the canonical
+  definition; occurrences without definition roles are references only.
+- **Symbols**: use the SCIP symbol grammar; treat `local` scheme symbols as file-scoped and do not
+  emit separate snapshot symbols for external packages unless a local definition exists.
+- **External symbols**: parse `Index.external_symbols` to resolve reference targets; do not emit
+  `IN_SNAPSHOT` Symbol nodes for external-only symbols (treat them as external dependencies).
 
 ### 3.2 Known SCIP gaps (as of Dec 18, 2025)
 
@@ -453,6 +484,8 @@ Use one-file micro-fixtures to isolate behaviors; assert sorted outputs and conf
 
 | Date       | Version | Editor | Summary                                                                                         |
 | ---------- | ------- | ------ | ----------------------------------------------------------------------------------------------- |
+| 2025-12-19 | 0.7     | @agent | Added SCIP schema parsing requirements and external symbol handling rules.                      |
+| 2025-12-19 | 0.6     | @agent | Specify SCIP binding generation path, parsing/debug workflow, and CLI diagnostics.              |
 | 2025-12-18 | 0.5     | @agent | Added acceptance checklists, config surface, fixture→assertion map, v2 flag semantics.          |
 | 2025-12-18 | 0.4     | @agent | Added extraction matrix, merge rules, guardrails, denylist, validation checklist, fixture list. |
 | 2025-12-18 | 0.3     | @agent | Made node/edge rules exhaustive; added ID/confidence rules, SCIP gaps, doc/config interactions. |

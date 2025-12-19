@@ -431,21 +431,14 @@ Nx caches task outputs (the `outputs` field in `project.json`), further optimizi
 
 Run two watchers in separate terminals:
 
-**Terminal 1: Runtime & Tests**
-
-```bash
-pnpm dev:log
-# Watches src/**/*.ts, runs build + tests, logs to logs/dev.log
-```
-
-**Terminal 2: Type Checking**
+**Terminal 1: Type Checking**
 
 ```bash
 pnpm typecheck:watch:log
 # Watches tsconfig files, runs type checks, logs to logs/typecheck.log
 ```
 
-Both use `--parallel`, respecting `dependsOn` order.
+Single watcher for type checks; runtime/test watcher has been removed.
 
 ### 8.3 Pre-Commit & CI
 

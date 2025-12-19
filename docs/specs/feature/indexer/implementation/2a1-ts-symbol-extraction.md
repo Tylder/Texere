@@ -1,8 +1,8 @@
 # Slice 2A1: TypeScript/JavaScript Symbol Extraction – Implementation Plan
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Status:** Implementation-Ready  
-**Last Updated:** December 18, 2025  
+**Last Updated:** December 19, 2025  
 **Author:** Agent (Texere Indexer Team)  
 **Related Slices:** [Slice 2A Plan Overview](./plan.md) → Slices 2A1 → 2A2 → 2B1–2B3
 
@@ -197,17 +197,26 @@ Input (TS/JS files)
 
 ### 4.4 SCIP Runner Notes (Implementation Detail)
 
+**STATUS (Slice 2A1)**: SCIP binary protobuf parsing is required in Slice 2A1. Use generated
+bindings and the schema parsing requirements in `ts_ingest_spec.md` §3.1.1; AST fallback remains
+secondary for SCIP gaps and failures.
+
 - **Invocation**: run the `scip-typescript` **CLI** (child process), not a programmatic API.  
-  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
-- **Output**: expect `index.scip` (binary SCIP). Parse using SCIP bindings from the SCIP repo.  
-  Docs: [SCIP protocol + bindings](https://github.com/sourcegraph/scip)
-- **Flags**: use `--infer-tsconfig` for JS-only repos; `--yarn-workspaces` / `--pnpm-workspaces` for
-  workspaces; `--progress-bar` for diagnosing stalls.  
-  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+   Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)  
+   Command:
+  `npx @sourcegraph/scip-typescript index --cwd=<codebaseRoot> --output=<outputFile> <tsconfigPath>`
+- **Output**: Binary SCIP protobuf format (`index.scip`). Parse via generated bindings; follow
+  `ts_ingest_spec.md` §3.1.1 for metadata ordering, range decoding, and encoding conversions.  
+   Docs: [SCIP schema](https://github.com/sourcegraph/scip/blob/main/scip.proto) |
+  [CLI reference](https://github.com/sourcegraph/scip/blob/main/docs/CLI.md)
+- **Flags**: use `--cwd` for working directory; `--infer-tsconfig` for JS-only repos;
+  `--yarn-workspaces` / `--pnpm-workspaces` for workspaces; `--progress-bar` for diagnosing
+  stalls.  
+   Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
 - **OOM mitigation**: prefer `--no-global-caches` or increase Node heap size when the CLI OOMs.  
-  Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
-- **Golden tests**: use `scip snapshot` when debugging SCIP output or pinning `index.scip`.  
-  Docs: [Writing an indexer](https://sourcegraph.com/docs/code-search/code-navigation/writing_an_indexer)
+   Docs: [scip-typescript README](https://github.com/sourcegraph/scip-typescript)
+- **Diagnostics**: use `scip snapshot` or `protoc --decode=scip.Index scip.proto` for inspection
+  only (no ingest fallback).
 
 **Symbol ID Formula** (cite: symbol_id_stability_spec.md §2.1):
 
