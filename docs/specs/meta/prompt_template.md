@@ -115,35 +115,59 @@ final prompt that contains **all required reading with section citations** so th
 ```
 You are an agent working in Texere, a spec-driven TypeScript monorepo.
 
-Your job is to read and analyze all relevant materials (including following references and
-citations), then produce a single consolidated prompt with explicit required reading.
-The resulting prompt must be self-sufficient: a different LLM should not need to research
-anything further or make any judgment calls about what to read.
+Your job is to read and analyze only the materials required to execute the task, then produce a
+single consolidated prompt with explicit required reading. The prompt must be self-sufficient,
+but minimal: do not include unrelated specs or links. Assume context and attention are limited.
 
-## Mandatory Research (deep dive required)
-1) Read AGENTS.md and README.md.
-2) Read docs/specs/README.md (spec index).
-3) Read every document explicitly mentioned in the user’s Full Prompt below.
-4) Independently discover all relevant specs even if the user already listed some.
-   - Do not assume the user’s list is complete.
-   - Use the spec index and feature folders to locate missing requirements.
-   - If the task references a feature, slice, package, or domain but does not name specific spec
-     files, you must infer and locate them (e.g., feature/indexer → implementation slices,
-     language ingest specs, test repository specs, layout specs, schema specs, etc.).
-5) Follow references and cross-links from all of the above documents if they appear relevant to
-   the task. If you are unsure whether a reference is relevant, include it.
-6) Use internet search to resolve external references, standards, or tools mentioned in the docs
-   when they are required to implement the task correctly. Include links and short citations in
-   your output prompt so the next LLM can read them if needed.
+## Mandatory Research (minimal, targeted)
+1) Always read:
+   - AGENTS.md
+   - README.md
+   - docs/specs/README.md (spec index)
+2) Read every document explicitly named by the user.
+3) Discover missing directly relevant specs using the index:
+   - Include only specs that define requirements, interfaces, acceptance criteria, or test fixtures
+     for this task.
+   - Exclude placeholders, legacy stubs, or unrelated domain/engineering docs unless the task
+     explicitly depends on them.
+4) Follow cross-links only if they define hard requirements needed for this task’s behavior.
+   - If unsure, list as “optional” instead of required.
+
+## Relevance Test (must pass to include a file)
+A file is required only if it answers at least one:
+- What must be built?
+- How must it interface with other parts?
+- What must be validated?
+
+## Line-Range Trimming (mandatory)
+For long specs, include only the smallest line ranges that contain binding requirements.
+Exclude narrative/background/changelog unless required for behavior.
+
+## External Links (allowed but strict)
+Include external links only when a spec requires an external standard/tool to implement correctly.
+Otherwise omit all external links.
+
+## Conflict Handling
+If two specs conflict, include both in required reading and explicitly flag the conflict. Do not
+pull in additional docs to “average it out.”
+
+## Clarifying Questions (required when needed)
+If any requirement is ambiguous or blocking:
+- Ask questions before finishing the research or output prompt.
+- Use the AGENTS.md format: numbered questions with lettered options (A recommended).
+- Questions must be intelligent and only about information not answerable via repo/spec research.
+- Do not ask for info you could discover by reading or searching.
+
+## Stop Condition
+If ambiguity remains after required docs, list it as questions instead of adding more reading.
 
 ## Output Requirements (single prompt)
-Produce ONE prompt that includes:
-- A required reading list with file paths and **line numbers**.
-- Any external links required (from internet research), grouped by topic.
-- The governing rules/workflow needed to execute the task.
-- A plan gate: require the next LLM to restate requirements with citations and list expected files/tests.
-- A validation gate: list required commands/gates.
-- A brief “Discovery Justification” for each inferred doc (why it was included).
+Provide one prompt containing:
+- Required reading list with file paths + line numbers (trimmed to binding requirements only).
+- Optional reading list (only if ambiguity remains).
+- External links grouped by topic, with 1–2 line relevance note each.
+- Brief “Discovery Justification” for each inferred doc.
+- No validation gates, no commands, no workflow steps, no planning gates.
 
 ## Full Prompt (from user)
 PASTE THE USER’S FULL PROMPT BELOW THIS LINE
