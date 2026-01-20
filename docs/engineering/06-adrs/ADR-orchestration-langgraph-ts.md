@@ -171,8 +171,11 @@ LangGraph directly solves our core problems:
 
 ## Known Issues / Open Questions
 
-1. **Graph inspection cost:** We have not yet evaluated whether LangSmith's cost is acceptable, or
-   whether open-source alternatives are sufficient. This is a blocker for PROB-031.
+1. ~~**Graph inspection cost:** We have not yet evaluated whether LangSmith's cost is acceptable, or
+   whether open-source alternatives are sufficient. This is a blocker for PROB-031.~~ **RESOLVED by
+   ADR-orchestration-observability:** Use LangGraph Studio + native visualization for dev; skip
+   LangSmith; defer production tracing.
+
 2. **Schema evolution:** What happens to old checkpoints when the epistemic state schema changes?
    (PROB-022)
 3. **Agent compliance:** LangGraph makes routes explicit, but agents still choose to use tools; how
