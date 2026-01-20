@@ -1,8 +1,5 @@
 ---
 doc_type: adr
-domain: virtual_influencer_testing
-reference_prefix: ADR-VI-TECH
-adr_id: ADR-VI-TECH-7
 status: accepted
 version: 1.0
 decision_date: 2026-01-09
@@ -11,7 +8,7 @@ effective_date: 2026-01-09
 author: @agent
 ---
 
-# ADR-VI-TECH-7: Testing Implementation & Specification
+# ADR: Testing Implementation & Specification
 
 **Status:** Accepted
 

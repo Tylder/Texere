@@ -1,8 +1,5 @@
 ---
 doc_type: adr
-domain: virtual_influencer_testing
-reference_prefix: ADR-VI-TECH
-adr_id: ADR-VI-TECH-6
 status: accepted
 version: 1.0
 decision_date: 2026-01-09
@@ -11,7 +8,7 @@ effective_date: 2026-01-09
 author: @agent
 ---
 
-# ADR-VI-TECH-6: Testing Strategy — Testing Trophy Model
+# ADR: Testing Strategy — Testing Trophy Model
 
 **Status:** Accepted
 
@@ -48,11 +45,10 @@ keeping test suites maintainable and execution fast.
 **Driven by:** Test effectiveness, maintainability, CI/CD speed, developer experience  
 **Related:**
 
-- [ADR-VI-TECH-7](./ADR-VI-TECH-7-testing-implementation-specification.md) (implementation details)
-- [ADR-VI-TECH-1](./ADR-VI-TECH-1-frontend-tech-stack.md) (tech stack: Vitest, RTL, Playwright)
-- [ADR-VI-TECH-3](./ADR-VI-TECH-3-eslint-oxlint-hybrid-linting.md) (static analysis)
-- [ADR-VI-TECH-4](./ADR-VI-TECH-4-typescript-strict-project-references.md) (TypeScript strict
-  mode)  
+- [ADR: Testing Implementation](./ADR-testing-implementation-specification.md) (implementation
+  details)
+- [ADR: ESLint/Oxlint Hybrid Linting](./ADR-eslint-oxlint-hybrid-linting.md) (static analysis)
+- [ADR: TypeScript Strict](./ADR-typescript-strict-project-references.md) (TypeScript strict mode)  
   **Implemented by (current):** Test files across packages, vitest.config.ts, Playwright E2E suites
 
 ---
@@ -238,8 +234,9 @@ maintainable), smaller unit section (fast isolation tests), small E2E (real brow
 
 ### Requires
 
-- **Testing implementation spec:** see ADR-VI-TECH-7 (vitest config, colocated patterns, coverage
-  targets)
+- **Testing implementation spec:** see
+  [ADR: Testing Implementation](./ADR-testing-implementation-specification.md) (vitest config,
+  colocated patterns, coverage targets)
 - **CI/CD gate:** `pnpm test:coverage` must pass before merging
 - **Code review discipline:** ensure integration tests test behavior, not implementation
 - **Developer education:** training on React Testing Library, accessibility testing, MSW mocking
@@ -309,7 +306,8 @@ test('operator generates media, reviews, and saves checkpoint', async ({ page })
 
 ## Notes
 
-- **Coverage targets:** 70–80% overall, 100% for critical paths (see ADR-VI-TECH-7 §6)
+- **Coverage targets:** 70–80% overall, 100% for critical paths (see
+  [ADR: Testing Implementation](./ADR-testing-implementation-specification.md) §6)
 - **Test placement:** Colocated with source (`*.test.tsx` in same directory as source)
 - **CI/CD gate:** `pnpm test:coverage` must pass; coverage must meet targets
 - **Playwright:** run in CI only (too slow for local feedback); local testing uses Vitest
