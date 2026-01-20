@@ -80,6 +80,7 @@ Operational rule of thumb:
 - **PROB-005** Tooling interoperability is unreliable (MCP tools and beyond)
 - **PROB-006** Model portability and model-mismatch failures
 - **PROB-012** Cost blow-ups from context bloat and repeated ingestion
+- **PROB-037** Prompt brittleness undermines consistent agent behavior
 - **PROB-036** Unbounded retries and unpredictable degradation under quotas/timeouts/outages
 
 ### Integration and execution
@@ -100,6 +101,8 @@ Operational rule of thumb:
 - **PROB-024** No composable quality-control layer to intercept and challenge outputs
 - **PROB-031** Orchestration is a black box (insufficient observability for diagnosis)
 - **PROB-032** No evidence-backed self-improvement loop for orchestration configuration
+- **PROB-038** No accumulation of user feedback or learned preferences
+- **PROB-039** Context spillage across tasks leads to cross-contamination
 
 ### Environment, security, and dependency topology
 
@@ -116,6 +119,7 @@ Operational rule of thumb:
 - **PROB-029** Users cannot reliably anchor references when communicating with agents
 - **PROB-030** State changes across sessions are not clearly surfaced to the user
 - **PROB-035** Uncertainty and confidence are not communicated in a decision-usable way
+- **PROB-040** No systematic trust calibration for agent outputs
 
 ## 3) Taxonomy and classification (to make the catalogue spec-ready)
 
@@ -1764,10 +1768,250 @@ then continues by guessing file locations, leading to incorrect changes.
 
 ---
 
-Understood. I’ll analyze the document and propose additional problems that a solo developer using
-this kind of AI coding system would realistically face. These new problems will be formatted just
-like the existing entries — with tags, classification, scenario snippets, resolution indicators, and
-scope boundaries — and focus especially on areas not yet covered in the catalogue.
+### PROB-037 — Prompt brittleness undermines consistent agent behavior
 
-I'll let you know once the new problem definitions are ready. You can keep chatting with me while I
-work on this.
+**Tags:** [Orchestration] [Models] [Continuity]
+
+**Classification:** Frequency: High · Impact: High · Cost sensitivity: Low · Blast radius:
+Multi-repo
+
+**Problem statement**
+
+The system's guidance to the agent (prompts, roles, and instructions) is fragile. Small changes in
+wording, context, or model choice can lead to disproportionately large shifts in agent behavior.
+Development workflows become unreliable because prompt-tuning, rather than robust mechanisms, is
+carrying too much burden in keeping the agent on track.
+
+**Failure modes**
+
+- A minor rephrase of a request causes the agent to skip critical steps or tools.
+- Upgrading or switching the model breaks previously working prompt instructions.
+- The agent's compliance with policies or style guides drifts if they are not repeatedly reinforced
+  in each prompt.
+- Orchestration logic that works in one project or session fails in a slightly different context due
+  to unseen prompt ambiguities.
+
+**Scenario snippet**
+
+After a model update, the agent stops running tests before suggesting fixes—even though the prompt
+still instructs it to do so. A solo developer adds a single clarification to the prompt in a new
+session; suddenly the agent's replies ignore earlier context and repeat work. The workflow now
+requires manual prompt debugging to restore the expected behavior.
+
+**Resolution indicators**
+
+- Prompt and instruction changes (or model swaps) do not routinely destabilize the agent's workflow
+  compliance.
+- The agent's core behaviors (tool use, policy adherence, reasoning steps) remain consistent across
+  sessions without requiring constant prompt tweaks.
+- The system can accommodate natural language variation or evolving instructions, indicating a more
+  resilient alignment than brittle, hard-coded prompt phrases.
+
+**Risk if unsolved**
+
+- Every prompt or model change becomes a potential regression, making the system labor-intensive to
+  maintain.
+- Users lose trust in the system's reliability and avoid updates or minor re-specifications, leading
+  to stagnation and brittle usage patterns.
+- The burden of prompt engineering stays on the solo dev, offsetting the benefits of assistance.
+
+**Boundary / not this**
+
+- Not a demand for perfect invariance across models or phrasing; the problem is over-reliance on a
+  fragile prompt template instead of robust, systematic behavior control.
+
+---
+
+### PROB-038 — No accumulation of user feedback or learned preferences
+
+**Tags:** [Continuity] [Evaluation] [Orchestration]
+
+**Classification:** Frequency: High · Impact: High · Cost sensitivity: Low · Blast radius:
+Multi-repo
+
+**Problem statement**
+
+The system does not learn from the user's feedback, corrections, or preferences over time. Each
+session or task starts fresh, so the agent repeats mistakes or style violations that the user had
+previously corrected. There is no durable improvement or personalization based on how the solo
+developer interacts with the assistant, limiting long-term usefulness.
+
+**Failure modes**
+
+- The agent reintroduces a coding style or library that the user explicitly rejected in an earlier
+  session.
+- Known false starts or pitfalls (e.g. an approach that failed last week) are suggested again as if
+  they were never tried.
+- The system forgets decision resolutions – the user has to remind the agent of earlier conclusions
+  or preferences in each session.
+- No matter how many times a particular fix or tweak is applied by the user, future suggestions
+  don't reflect that learning (no reduction in repeated errors).
+
+**Scenario snippet**
+
+Over the course of a project, the user repeatedly tells the agent to use functional components
+instead of class components in a React codebase. Each new feature, the agent suggests a class
+component again, having no memory of this preference. The solo dev spends time correcting the same
+issue multiple times, feeling as though the assistant has no notion of their coding conventions or
+past guidance.
+
+**Resolution indicators**
+
+- The system's suggestions begin to align with the user's established preferences (tools, style,
+  architectural choices) without being reminded every time.
+- Repeated mistakes or previously corrected errors become less frequent as the project progresses.
+- The agent can acknowledge prior feedback (e.g. "Using approach X since you preferred that
+  previously") or at least avoid past rejected solutions in similar future contexts.
+- Over multiple sessions, the need for user re-correction of identical issues decreases noticeably.
+
+**Risk if unsolved**
+
+- The solo developer's trust and patience wear thin due to seeing the same mistakes recur, leading
+  them to disengage from using the assistant for critical work.
+- Efficiency gains plateau or reverse – time saved by the AI in one instance is lost in correcting
+  it later again and again.
+- Without a learning loop, the system cannot truly improve or adapt to a project's evolving norms,
+  making it unsuitable for long-term use on a single codebase.
+
+**Boundary / not this**
+
+- Not a request for full auto-tuning or AI self-modification; the problem is the absence of any
+  lightweight mechanism to capture and reuse feedback (e.g. remembered decisions, style guidelines,
+  "don't do that" lessons) that a solo dev naturally provides during collaboration.
+
+---
+
+### PROB-039 — Context spillage across tasks leads to cross-contamination
+
+**Tags:** [Continuity] [Governance] [StateVisibility]
+
+**Classification:** Frequency: Medium · Impact: High · Cost sensitivity: Low · Blast radius:
+Multi-repo
+
+**Problem statement**
+
+The system lacks strict context isolation for different tasks or projects. Knowledge and assumptions
+bleed from one thread of work into another without clear intent, causing the agent to mix contexts.
+A solo developer often juggles multiple features or even separate repositories, but the assistant
+may treat them as one giant context, leading to suggestions that are irrelevant, incorrect, or even
+proprietary to the wrong project.
+
+**Failure modes**
+
+- While working on task B, the agent references a requirement or code from task A that isn't
+  actually relevant to B.
+- The assistant uses information from an old project when assisting with a new project, confusing
+  names or leaking details (e.g. suggesting an internal API from a different codebase).
+- After a context switch (like checking out a different git branch or repository), the agent
+  continues with outdated assumptions from the previous context.
+- Parallel conversations or sessions influence each other unintentionally, creating tangled state
+  (one feature's discussion alters the agent's understanding of another feature).
+
+**Scenario snippet**
+
+A developer has an open issue to refactor the authentication module and another to update the
+payment service. While focusing on the payment service, the agent suddenly brings up token
+expiration logic from the authentication module (a different task) as if it's relevant, leading the
+user down a needless rabbit hole. In another case, the user works on a personal project after a work
+project; the agent suggests using a proprietary library from the work project in the personal
+project code, an inappropriate cross-context suggestion that occurred because it didn't isolate the
+two projects' knowledge.
+
+**Resolution indicators**
+
+- The assistant cleanly segregates knowledge by task or project unless explicitly instructed to
+  cross-reference. It "stays in its lane" for a given thread of work.
+- When the user switches context (new feature, new repo, new session), the system either resets
+  relevant state or transparently re-aligns to the new scope, without unprompted carryover from the
+  old scope.
+- The user can run concurrent tasks or swap between projects without the agent confusing the
+  contexts. Any blending of context is deliberate (triggered by user linking two topics) rather than
+  accidental.
+- The system provides some visibility or confirmation of the active context to reassure the user
+  that past unrelated info is not influencing current answers.
+
+**Risk if unsolved**
+
+- Suggestions will often be context-inappropriate, leading to mistakes that waste time (or even
+  serious bugs, if code from the wrong context is applied blindly).
+- The user must constantly police and reset the assistant's context, which is tedious and
+  error-prone.
+- In the worst case, a private or sensitive detail from one project could leak into another, posing
+  confidentiality risks.
+- The assistant cannot be safely used for multi-tasking or multi-project work, significantly
+  limiting its practical utility for a solo dev wearing many hats.
+
+**Boundary / not this**
+
+- Not a requirement to never reuse knowledge (the user may intentionally bring context from one task
+  to another); the problem is the unintentional and unmanaged leakage of context that should remain
+  separate, due to lack of scoping controls in the system.
+
+---
+
+### PROB-040 — No systematic trust calibration for agent outputs
+
+**Tags:** [UXClarity] [Evaluation] [Traceability]
+
+**Classification:** Frequency: High · Impact: High · Cost sensitivity: Low · Blast radius: Repo
+
+**Problem statement**
+
+The system provides the solo developer with no consistent way to gauge how much to trust the AI's
+outputs. There is no systematic trust calibration mechanism or reliable cues. As a result, the user
+is often guessing whether a suggestion is solid or needs careful vetting. The assistant's fluent
+answers can mask uncertainty or lack of grounding, and there's no tracking of past reliability to
+inform the user's level of caution.
+
+**Failure modes**
+
+- The agent presents a high-risk code change (e.g. a security-sensitive modification) with
+  unwarranted confidence, and the user accepts it at face value when they shouldn't.
+- Conversely, the user ends up double-checking even routine suggestions because they have no basis
+  to judge the agent's confidence or past accuracy, leading to wasted effort.
+- There is no record or indicator of how often the assistant's answers have been correct or required
+  fixes, so the user's trust (or lack thereof) is driven only by ad-hoc anecdotal memory.
+- Tone and verbosity are the user's only clues; a casual or concise answer might be interpreted as
+  confident when it's actually a guess, or vice versa.
+
+**Scenario snippet**
+
+The agent suggests a complex database migration. It sounds sure of itself, so the developer proceeds
+– only to hit major issues because the agent's understanding was incomplete. There had been subtle
+hints of uncertainty (it overlooked a known constraint), but the system gave no explicit signal. In
+another case, after a few such surprises, the developer assumes the agent's suggestions are
+generally untrustworthy and begins rewriting code manually that the agent could handle, reducing the
+assistant to a rubber duck. Without any calibrated indicators, the solo dev oscillates between
+over-trusting and under-utilizing the AI.
+
+**Resolution indicators**
+
+- Each significant recommendation comes with cues or context that help the user decide on trust:
+  e.g. evidence citations, uncertainty qualifiers, or an explicit confidence level.
+- The system's communication of uncertainty is consistent and decision-useful – the developer can
+  tell at a glance which parts of an answer are well-grounded and which need verification.
+- Over time, the user develops an accurate mental model of the assistant's reliability (or even sees
+  metrics of past performance), allowing for calibrated trust. High-confidence, historically
+  reliable suggestions are fast-tracked, whereas speculative ones trigger user review or agent
+  double-checks by design.
+- The user's need to manually scrutinize every single output is reduced, without blindly accepting
+  everything – they know when vigilance is needed.
+
+**Risk if unsolved**
+
+- Over-trust: The user might delegate critical tasks to the agent that it handles incorrectly,
+  leading to serious bugs or security incidents because warnings signs weren't visible.
+- Under-trust: The user might ignore or redo correct solutions, losing much of the efficiency gains.
+  In effect, the AI becomes more hindrance than help.
+- In both cases, the utility of the system drops – the developer either spends extra time fixing
+  avoidable mistakes or forgoes the assistant's help on tasks where it could have added value, due
+  to lack of trust.
+- Ultimately, an inability to calibrate trust means the system cannot be safely given
+  responsibility, limiting it to toy scenarios in the eyes of the user.
+
+**Boundary / not this**
+
+- Not a demand for perfect accuracy or formal verification of all outputs; the problem is the lack
+  of transparent, usable signals for the user to judge when to trust the agent's work versus apply
+  caution. In other words, the system does little to help the user be an informed collaborator
+  rather than a blind follower or constant skeptic.
