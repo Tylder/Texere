@@ -14,7 +14,7 @@ Modern Node/ESM library template aligned with Nx + strict TypeScript.
   (vitest v8)
 - Coverage thresholds + include/exclude pre-set in `vitest.config.ts` (testing_strategy §2.2)
 - Exports map provided; `type: module`; treeshaking-friendly
-- Tags: replace `scope:__scope__` with an allowed scope (see AGENTS/README)
+- Tags: replace `scope:__scope__` with an allowed scope (see AGENTS.md)
 
 ## Quickstart
 
@@ -25,13 +25,34 @@ Modern Node/ESM library template aligned with Nx + strict TypeScript.
 
 ## Structure
 
-- `src/` – library source (colocate `*.test.ts` with spec references in describes).
+- `src/` – library source; colocate `*.test.ts` with spec references in describes.
 - `tsconfig.*` – lib/spec split; NodeNext; no bundler resolution.
 - `vitest.config.ts` – v8 coverage thresholds + include/exclude.
 
+## Testing Standards
+
+All test files must cite their governing spec sections in the describe block:
+
+```typescript
+describe('MyFunction (ADR-VI-TECH-6 §2.2–§4.4, ADR-VI-TECH-7 §3–§6)', () => {
+  it('does something', () => {
+    // test body
+  });
+});
+```
+
+This ensures traceability to the testing standards documented in
+[ADR-VI-TECH-6 §2.2–§4.4](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-6-testing-strategy-trophy.md)
+and
+[ADR-VI-TECH-7 §3–§6](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-7-testing-implementation-specification.md).
+
+Coverage targets are **70–80%** per
+[ADR-VI-TECH-7 §Coverage Targets](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-7-testing-implementation-specification.md#coverage-targets--quality-gates).
+Focus on critical paths at 100%; aim for 70%+ on other code.
+
 ## Quality & Tooling
 
-- Husky pre-commit runs `pnpm format:staged`; ensure new paths are formatted.
+- Husky pre-commit runs `pnpm quality`; ensure new paths are formatted.
 - Lint: `pnpm nx run __name__:lint`; Typecheck: `pnpm nx run __name__:check-types`; Build emits d.ts
   to `dist/`.
 - Lint target caches inputs (src + optional local eslint config) and uses the shared root ESLint
@@ -40,5 +61,8 @@ Modern Node/ESM library template aligned with Nx + strict TypeScript.
 ## Docs & Specs
 
 - TypeScript config: `docs/specs/engineering/typescript_configuration.md`
-- Testing strategy/specification: `docs/specs/engineering/testing_strategy.md`,
-  `docs/specs/engineering/testing_specification.md`
+- Testing strategy/specification:
+  [ADR-VI-TECH-6](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-6-testing-strategy-trophy.md)
+  (§2.2),
+  [ADR-VI-TECH-7](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-7-testing-implementation-specification.md)
+  (§3)

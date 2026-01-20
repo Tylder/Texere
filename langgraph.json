@@ -1,8 +1,0 @@
-{
-  "node_version": "22",
-  "dependencies": ["packages/langgraph-orchestrator"],
-  "graphs": {
-    "answerQuestion": "packages/langgraph-orchestrator/src/index.ts:buildAnswerQuestionGraph"
-  },
-  "env": ".env"
-}

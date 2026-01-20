@@ -5,20 +5,12 @@ const config = {
   singleQuote: true,
   trailingComma: 'all',
   endOfLine: 'lf',
-  // ESLint now handles import ordering (eslint_code_quality.md §3.3)
-  plugins: ['prettier-plugin-packagejson', 'prettier-plugin-tailwindcss'],
+  plugins: ['prettier-plugin-packagejson'],
   overrides: [
     {
       files: '*.md',
       options: {
         proseWrap: 'always',
-      },
-    },
-    {
-      files: ['apps/**/*.{tsx,jsx}'],
-      options: {
-        jsxSingleQuote: false,
-        bracketSameLine: false,
       },
     },
   ],

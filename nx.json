@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "ignore": ["**/vendor/**"],
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",
@@ -8,38 +9,21 @@
       }
     },
     {
-      "plugin": "@nx/playwright/plugin",
-      "options": {
-        "targetName": "e2e"
-      }
-    },
-    {
-      "plugin": "@nx/next/plugin",
-      "options": {
-        "buildTargetName": "build",
-        "devTargetName": "dev",
-        "startTargetName": "start",
-        "serveStaticTargetName": "serve-static"
-      }
-    },
-    {
       "plugin": "@nx/js/typescript",
       "options": {
         "typecheck": {
-          "targetName": "typecheck"
+          "targetName": "check-types"
         },
         "build": {
           "targetName": "build",
-          "configName": "tsconfig.lib.json",
-          "buildDepsName": "build-deps",
-          "watchDepsName": "watch-deps"
+          "configName": "tsconfig.lib.json"
         }
       }
     },
     {
       "plugin": "@nx/vitest",
       "options": {
-        "testTargetName": "vitest:test",
+        "testTargetName": "test",
         "ciTargetName": "test-ci"
       }
     }
@@ -51,16 +35,9 @@
         "{projectRoot}/src/**",
         "{projectRoot}/package.json",
         "{projectRoot}/tsconfig.json",
-        "{projectRoot}/vite.config.ts",
-        "{projectRoot}/vite.config.js",
-        "{projectRoot}/next.config.js",
-        "{projectRoot}/.env*"
+        "{projectRoot}/tsconfig.lib.json"
       ],
-      "outputs": [
-        "{workspaceRoot}/dist/{projectRoot}",
-        "{projectRoot}/.cache/tsconfig.lib.tsbuildinfo",
-        "{projectRoot}/.cache/tsconfig.spec.tsbuildinfo"
-      ],
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "cache": true,
       "options": {
         "clean": false
@@ -68,11 +45,7 @@
     },
     "lint": {
       "dependsOn": ["^lint"],
-      "inputs": [
-        "{projectRoot}/src/**",
-        "{projectRoot}/tests/**",
-        "{workspaceRoot}/eslint.config.mjs"
-      ],
+      "inputs": ["{projectRoot}/src/**", "{workspaceRoot}/eslint.config.mjs"],
       "cache": true
     },
     "check-types": {
@@ -80,7 +53,6 @@
       "inputs": [
         "{projectRoot}/src/**",
         "{projectRoot}/package.json",
-        "{projectRoot}/tsconfig.json",
         "{projectRoot}/tsconfig*.json"
       ],
       "cache": true
@@ -89,29 +61,27 @@
       "dependsOn": ["^test"],
       "inputs": [
         "{projectRoot}/src/**",
-        "{projectRoot}/tests/**",
         "{projectRoot}/vitest.config.ts",
+        "{projectRoot}/vitest.setup.ts",
         "{projectRoot}/package.json"
       ],
-      "outputs": ["{projectRoot}/.test/**"],
+      "outputs": ["{projectRoot}/coverage"],
       "cache": true
     },
-    "test:coverage": {
-      "dependsOn": ["^test:coverage"],
+    "test-ci": {
+      "dependsOn": ["^test-ci"],
       "inputs": [
         "{projectRoot}/src/**",
-        "{projectRoot}/tests/**",
         "{projectRoot}/vitest.config.ts",
+        "{projectRoot}/vitest.setup.ts",
         "{projectRoot}/package.json"
       ],
       "outputs": ["{projectRoot}/coverage/**"],
       "cache": true
     },
-    "format": {
-      "cache": false
-    },
-    "dev": {
-      "cache": false
+    "test:coverage": {
+      "executor": "nx:run-script",
+      "options": { "script": "test:coverage" }
     }
   }
 }

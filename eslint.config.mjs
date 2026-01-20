@@ -8,7 +8,6 @@ export default [
       'node_modules/**',
       '.nx/**',
       '**/tsconfig.json',
-      '.next/**',
       'dist/**',
       'build/**',
       'out/**',
@@ -18,6 +17,7 @@ export default [
       '**/vitest.config.*.timestamp*',
       '**/scripts/**',
       '**/generated/**',
+      '**/vendor/**',
     ],
   },
   {
@@ -46,31 +46,6 @@ export default [
       parserOptions: {
         allowDefaultProject: true,
       },
-    },
-  },
-  {
-    // Enforce Nx tag-based boundaries (observability §4.3)
-    rules: {
-      '@nx/enforce-module-boundaries': [
-        'error',
-        {
-          depConstraints: [
-            {
-              sourceTag: 'runtime:web',
-              onlyDependOnLibsWithTags: ['runtime:web', 'runtime:shared'],
-            },
-            {
-              sourceTag: 'runtime:edge',
-              onlyDependOnLibsWithTags: ['runtime:edge', 'runtime:shared'],
-            },
-            {
-              sourceTag: 'runtime:server',
-              onlyDependOnLibsWithTags: ['runtime:server', 'runtime:shared'],
-            },
-            { sourceTag: 'runtime:shared', onlyDependOnLibsWithTags: ['runtime:shared'] },
-          ],
-        },
-      ],
     },
   },
 ];

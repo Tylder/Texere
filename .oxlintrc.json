@@ -1,7 +1,7 @@
 {
   "env": {
     "node": true,
-    "browser": true,
+    "browser": false,
     "es2025": true
   },
   "rules": {
@@ -23,12 +23,13 @@
     "node_modules/",
     "dist/",
     "build/",
+    ".nx/",
     "coverage/",
     ".next/",
-    ".mastra/",
     "out/",
     ".test/",
-    "**/.cache/",
+    ".cache/",
+    "**/vendor/",
     "**/*.d.ts"
   ]
 }

@@ -37,7 +37,6 @@ dist
 next-env.d.ts
 *.tsbuildinfo
 
-
 # Debug
 npm-debug.log*
 yarn-debug.log*
@@ -52,18 +51,6 @@ yarn-error.log*
 .pnpm-store
 .pnpm
 .vscode
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md
-# Moved to component-sources
-/site_build/lq_ai_studio/
-
-# Component source artifacts (use per-project .gitignore instead)
-/component-sources/**/node_modules/
-/component-sources/**/.env.local
-/component-sources/**/dist/
-/component-sources/**/.next/
-/component-sources/**/build/
-/component-sources/**/.vite/
 
 **/screenshots/
 
@@ -71,12 +58,21 @@ yarn-error.log*
 **/.log
 
 vitest.config.*.timestamp*
-# LangGraph API
-.langgraph_api
-
-.indexer-config.json
 
 post-report.log
 post-report-output.txt
 
 .cache
+
+.tmp
+/.serena/
+/.claude/
+*.lo
+
+# OpenCode task workflow (gitignored; use workflow.export_task for audit/debug)
+.opencode/tasks/
+# Exception: keep plugin, tool definitions, and schema files
+!.opencode/plugin/
+!.opencode/tool/
+!.opencode/**/*.schema.json
+/reference_repos/

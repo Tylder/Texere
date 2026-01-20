@@ -47,11 +47,33 @@
     },
     "test": {
       "executor": "nx:run-script",
-      "options": { "script": "test" }
+      "options": { "script": "test" },
+      "outputs": ["{projectRoot}/coverage"],
+      "inputs": [
+        "default",
+        "{projectRoot}/app/**",
+        "{projectRoot}/components/**",
+        "{projectRoot}/vitest.config.ts",
+        "{projectRoot}/vitest.setup.ts",
+        "{projectRoot}/package.json"
+      ],
+      "dependsOn": ["^test"],
+      "cache": true
     },
     "test:coverage": {
       "executor": "nx:run-script",
-      "options": { "script": "test:coverage" }
+      "options": { "script": "test:coverage" },
+      "outputs": ["{projectRoot}/coverage/**"],
+      "inputs": [
+        "default",
+        "{projectRoot}/app/**",
+        "{projectRoot}/components/**",
+        "{projectRoot}/vitest.config.ts",
+        "{projectRoot}/vitest.setup.ts",
+        "{projectRoot}/package.json"
+      ],
+      "dependsOn": ["^test:coverage"],
+      "cache": true
     }
   }
 }

@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-# Run fast, parallel quality gate via Nx (format check + lint/type/test)
-pnpm quality

@@ -16,11 +16,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'json'],
+      reportsDirectory: './coverage',
       thresholds: {
-        statements: 60,
-        lines: 60,
-        functions: 60,
-        branches: 50,
+        statements: 70,
+        lines: 70,
+        functions: 70,
+        branches: 65,
       },
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['**/.cache/**', 'dist', '**/*.d.ts', '**/node_modules/**'],

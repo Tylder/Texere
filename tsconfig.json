@@ -8,31 +8,10 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/langgraph-orchestrator"
+      "path": "./packages/eslint-config"
     },
     {
-      "path": "./packages/indexer/workers"
-    },
-    {
-      "path": "./packages/indexer/ingest"
-    },
-    {
-      "path": "./packages/indexer/ingest-ts"
-    },
-    {
-      "path": "./packages/indexer/query"
-    },
-    {
-      "path": "./packages/indexer/types"
-    },
-    {
-      "path": "./packages/indexer/utils"
-    },
-    {
-      "path": "./packages/indexer/core"
-    },
-    {
-      "path": "./apps/indexer-cli"
+      "path": "./packages/typescript-config"
     }
   ]
 }

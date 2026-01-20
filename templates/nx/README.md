@@ -1,4 +1,4 @@
-# Nx Templates (Dec 2025)
+# Nx Templates (Jan 2026)
 
 Purpose: fast, spec-aligned scaffolds for new packages/apps without running Nx generators. Use when
 you need deterministic boilerplate that already matches our TypeScript, lint, and test standards.
@@ -32,7 +32,7 @@ you need deterministic boilerplate that already matches our TypeScript, lint, an
    - `__description__` → short description
    - `__scope__` → tag scope for Nx (e.g., `scope:orch`, `scope:tools`)
 3. Adjust tags in `project.json` if needed; ensure they match repo conventions. Choose an allowed
-   scope (see AGENTS/README) instead of leaving `scope:__scope__`.
+   scope (see AGENTS.md) instead of leaving `scope:__scope__`.
 4. Run `pnpm install` if new deps were added (React/Next templates).
 5. Run `pnpm nx graph` to verify the project is picked up.
 

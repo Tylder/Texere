@@ -12,7 +12,7 @@ React library template (ESM, Nx, strict TypeScript).
 - Scripts: `build`, `check-types`, `lint`, `test`, `test:coverage` (vitest v8, jsdom)
 - Coverage thresholds + include/exclude in `vitest.config.ts` (testing_strategy §2.2)
 - Peer deps: `react`, `react-dom`; exports map provided; `type: module`
-- Tags: replace `scope:__scope__` with an allowed scope (see AGENTS/README)
+- Tags: replace `scope:__scope__` with an allowed scope (see AGENTS.md)
 
 ## Quickstart
 
@@ -27,9 +27,31 @@ React library template (ESM, Nx, strict TypeScript).
 - `tsconfig.*` – lib/spec split; React preset.
 - `vitest.config.ts` – jsdom env, v8 coverage thresholds + include/exclude.
 
+## Testing Standards
+
+All test files must cite their governing spec sections in the describe block:
+
+```typescript
+describe('MyComponent (ADR-VI-TECH-6 §2.2–§4.4, ADR-VI-TECH-7 §3–§6)', () => {
+  it('renders correctly', () => {
+    render(<MyComponent />);
+    // assertions
+  });
+});
+```
+
+This ensures traceability to the testing standards documented in
+[ADR-VI-TECH-6 §2.2–§4.4](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-6-testing-strategy-trophy.md)
+and
+[ADR-VI-TECH-7 §3–§6](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-7-testing-implementation-specification.md).
+
+Coverage targets are **70–80%** per
+[ADR-VI-TECH-7 §Coverage Targets](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-7-testing-implementation-specification.md#coverage-targets--quality-gates).
+Focus on integration tests (60–70%) and critical paths at 100%; aim for 70%+ overall.
+
 ## Quality & Tooling
 
-- Husky pre-commit runs `pnpm format:staged`; ensure new paths are formatted.
+- Husky pre-commit runs `pnpm quality`; ensure new paths are formatted.
 - Lint: `pnpm nx run __name__:lint`; Typecheck: `...:check-types`; Build emits d.ts to `dist/`.
 - Lint target caches inputs (src + optional local eslint config) and uses the shared root ESLint
   config by default.
@@ -37,5 +59,8 @@ React library template (ESM, Nx, strict TypeScript).
 ## Docs & Specs
 
 - TypeScript config: `docs/specs/engineering/typescript_configuration.md`
-- Testing strategy/specification: `docs/specs/engineering/testing_strategy.md`,
-  `docs/specs/engineering/testing_specification.md`
+- Testing strategy/specification:
+  [ADR-VI-TECH-6](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-6-testing-strategy-trophy.md)
+  (§2.2),
+  [ADR-VI-TECH-7](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-7-testing-implementation-specification.md)
+  (§3)

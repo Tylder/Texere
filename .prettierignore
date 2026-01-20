@@ -12,7 +12,6 @@ build
 out
 coverage
 .test
-.mastra
 
 # Auto-generated files
 **/next-env.d.ts
@@ -27,9 +26,9 @@ logs
 .idea
 .vscode
 
-# Component sources (external projects, not subject to repo formatting)
-component-sources
-
 /.nx/cache
 /.nx/workspace-data
 **/.log
+
+# Vendored code (git subtree)
+**/vendor/

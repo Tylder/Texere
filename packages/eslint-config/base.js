@@ -118,20 +118,6 @@ export const config = tseslint.config(
           disallowTypeAnnotations: true,
         },
       ],
-      // Monorepo discipline: block relative cross-package imports (eslint_code_quality.md §3.1)
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              // Block imports like ../../packages/other-pkg, but allow ../sibling (same package)
-              group: ['../../**', '../../../**', '../../../../**', '../../../../../**'],
-              message:
-                'Cross-package relative imports are not allowed. Use workspace imports (@repo/*) instead.',
-            },
-          ],
-        },
-      ],
       // Import sorting enforced by ESLint per spec (eslint_code_quality.md §3.3)
       'import/order': [
         'error',
@@ -173,7 +159,7 @@ export const config = tseslint.config(
       'security/detect-object-injection': 'off',
       'sonarjs/cognitive-complexity': ['warn', 20],
       'unicorn/prefer-node-protocol': 'error',
-      // Allow intentional “_” prefix for unused bindings
+      // Allow intentional "_" prefix for unused bindings
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
