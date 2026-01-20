@@ -20,29 +20,56 @@ The goal is to:
 
 - **Exploration logs** capture messy thinking and are intentionally disposable.
 - **Problem Definitions** are the first durable convergence artifact.
-- **Domain RFC / XRFC / RFC** are exploratory and may evolve until closed.
-- **ADR / REQ** are durable records (append-only or immutable-by-ID).
-- **Specs** are versioned contracts that may evolve while remaining consistent with REQs and ADRs.
+- **Domain RFC / XRFC** establish vocabulary and usage before writing obligations.
+- **Requirements (REQ)** drive the system; they define what must be true.
+- **RFC / ADR** explore how to meet requirements and record decisions.
+- **Specs** are versioned contracts that implement REQs and depend on ADRs.
 - **Implementation Plans** are operational roadmaps that must not introduce new decisions.
 
 ### Canonical sequence
 
 1. **Exploration Log (EXPLOG)** – capture brainstorms and raw thinking (disposable)
 2. **Problem Definition (PROBDEF)** – converge on what is actually wrong/needed (durable)
-3. **Domain / Concept RFC (DRFC)** – define what the system is (exploratory)
-4. **Experience RFC (XRFC)** – define how the system is used (exploratory)
-5. **RFC (Proposal / Design Discussion)** – explore options and trade-offs (exploratory)
-6. **ADR (Architecture Decision Record)** – record decisions when they are made (durable)
-7. **Requirements (REQ)** – define what MUST be true (durable)
-8. **Specifications (Spec)** – define the build/test contract (versioned)
+3. **Domain / Concept RFC (DRFC)** – define what the system is (exploratory; establishes vocabulary)
+4. **Experience RFC (XRFC)** – define how the system is used (exploratory; establishes usage intent)
+5. **Requirements (REQ)** – define what MUST be true (durable; driven by PROBDEF resolution
+   indicators)
+6. **RFC (Proposal / Design Discussion)** – explore options and trade-offs to meet REQs
+   (exploratory)
+7. **ADR (Architecture Decision Record)** – record decisions when they are made (durable)
+8. **Specifications (Spec)** – define the build/test contract (versioned; implements REQs, depends
+   on ADRs)
 9. **Implementation Plan (IMPL-PLAN)** – define sequencing and execution roadmap (operational)
+
+### Rationale for requirements-first order
+
+**Why REQ comes before RFC/ADR:**
+
+Traditional requirements-first design is more robust than exploring options first:
+
+- **Requirements drive exploration.** If you write RFC/ADR before REQ, you design solutions without
+  a clear contract for what they must satisfy. Options look attractive in a vacuum but may miss
+  obligations.
+- **Requirements prevent scope creep.** Clarifying "what must be true" before designing focuses RFC
+  work on solving real problems, not imagined ones.
+- **Requirements are testable.** REQs have measurable fit criteria; RFCs then evaluate options
+  against those criteria, not against vague goals.
+- **Decisions become defensible.** An ADR that says "we chose X to satisfy REQ-Y" is more credible
+  than "we chose X because it seemed good."
+
+This does not mean REQs are written in isolation. They derive from PROBDEF resolution indicators
+(the observable signals that problems are solved). The sequence ensures obligations are clear before
+commitment.
 
 ### Mandatory gates
 
 - No **REQ** is created unless it traces to one or more **PROBDEF** problems.
-- No **Spec** is considered “ready” unless it lists the REQs it implements and the ADRs it depends
+- No **RFC** is created without reference to the **REQ(s)** it is meant to satisfy.
+- No **ADR** is accepted without reference to at least one **REQ** or **RFC** that justified the
+  decision.
+- No **Spec** is considered "ready" unless it lists the REQs it implements and the ADRs it depends
   on.
-- No work is considered “ready to execute” unless there is a current **IMPL-PLAN**.
+- No work is considered "ready to execute" unless there is a current **IMPL-PLAN**.
 
 ---
 
@@ -259,26 +286,86 @@ See `_templates/XRFC-template.md`
 
 ---
 
-## 4. RFC (Proposal / Discussion)
+## 4. Requirements (REQ)
 
 ### Purpose
 
-Explore **options and trade-offs** before committing.
+Define **normative obligations**: what MUST be true regardless of implementation.
 
-This is where thinking happens.
+This is the contract that drives exploration and decisions. Requirements are derived from PROBDEF
+resolution indicators and are used to evaluate options in RFCs and justify ADRs.
 
 ### Use when
 
-- Multiple viable approaches exist
+- You need testable, durable obligations
+- Multiple implementations or teams must align
+- You want to ensure exploration (RFC) and decisions (ADR) are grounded in clear requirements
+
+### Minimum content (required)
+
+- Statement using MUST/SHOULD/MAY (one obligation)
+- Measurable fit criteria
+- Verification method
+- Traceability (must link upward to PROBDEF; optionally to DRFC/XRFC if they inform the requirement)
+
+### Lifecycle / status
+
+- **Proposed** → candidate obligation
+- **Approved** → accepted contract
+- **Deprecated** → replaced by a new REQ ID when intent changes
+
+### What belongs here
+
+- MUST / SHOULD / MAY statements
+- Measurable fit criteria
+- Verification method
+- Traceability back to problems
+
+### What does NOT belong here
+
+- Design decisions
+- Exploration
+- UI or API details
+- Options or trade-offs (those belong in RFC)
+
+### Rules
+
+- One obligation per requirement
+- Immutable by ID (deprecate and create a new ID when intent changes)
+- REQs are the contract; they drive RFC exploration
+
+### Output
+
+- Input to RFCs (what must we satisfy?)
+- Input to ADRs (what requirement justifies this decision?)
+- Input to specs and tests
+
+### Template
+
+See `_templates/REQ-template.md`
+
+---
+
+## 5. RFC (Proposal / Discussion)
+
+### Purpose
+
+Explore **options and trade-offs** to meet requirements.
+
+This is where thinking happens, informed by REQs.
+
+### Use when
+
+- Multiple viable approaches exist to satisfy one or more REQs
 - The change is cross-cutting, risky, or expensive to reverse
 
 ### Minimum content (required)
 
-- Problem statement (must link to PROBDEF problems)
+- REQ(s) being addressed (what must we satisfy?)
 - Goals and non-goals
 - Constraints
 - Options considered (at least 2 where realistic)
-- Trade-offs (explicit)
+- Trade-offs (explicit; how each option satisfies REQs differently)
 - Recommendation
 - Open questions
 
@@ -293,20 +380,21 @@ This is where thinking happens.
 ### What belongs here
 
 - Constraints
-- Options considered
+- Options considered (evaluated against REQs)
 - Trade-offs
 - Recommendation
 - Open questions
 
 ### What does NOT belong here
 
-- Binding obligations
+- Binding obligations (those are REQs)
 - Final decisions without recording them as ADRs
 
 ### Output
 
 - Decision points
 - Trigger for ADR creation
+- Informed evaluation of options against requirements
 
 ### Template
 
@@ -314,23 +402,25 @@ See `_templates/RFC-template.md`
 
 ---
 
-## 5. ADR (Architecture Decision Record)
+## 6. ADR (Architecture Decision Record)
 
 ### Purpose
 
 Record a **decision that has been made** and should not be re-litigated.
 
-This is the system’s memory.
+This is the system's memory. ADRs record which option was chosen (from RFC exploration) and why it
+best satisfies the requirements.
 
 ### Use when
 
 - A decision is costly or hard to reverse
 - Future readers will ask "why did we do this?"
+- An RFC has converged on a recommendation
 
 ### Minimum content (required)
 
 - Status
-- Context (including links to drivers: PROBDEF/REQ/RFC)
+- Context (including links to drivers: REQ(s)/RFC/PROBDEF)
 - Decision (specific)
 - Alternatives considered (at least the most plausible)
 - Consequences (positive and negative)
@@ -345,68 +435,16 @@ This is the system’s memory.
 - Append-only: do not rewrite; supersede
 - One decision per ADR
 - Supersede with a new ADR; never rewrite
+- Must reference the REQ(s) or RFC that justified the decision
 
 ### Output
 
 - Immutable rationale referenced by specs and code
+- Dependency constraint for specs
 
 ### Template
 
 See `_templates/ADR-template.md`
-
----
-
-## 6. Requirements (REQ)
-
-### Purpose
-
-Define **normative obligations**: what MUST be true regardless of implementation.
-
-This is the contract.
-
-### Use when
-
-- You need testable, durable obligations
-- Multiple implementations or teams must align
-
-### Minimum content (required)
-
-- Statement using MUST/SHOULD/MAY (one obligation)
-- Measurable fit criteria
-- Verification method
-- Traceability (must link upward to PROBDEF and at least one of: DRFC/XRFC/RFC)
-
-### Lifecycle / status
-
-- **Proposed** → candidate obligation
-- **Approved** → accepted contract
-- **Deprecated** → replaced by a new REQ ID when intent changes
-
-### What belongs here
-
-- MUST / SHOULD / MAY statements
-- Measurable fit criteria
-- Verification method
-- Traceability
-
-### What does NOT belong here
-
-- Design decisions
-- Exploration
-- UI or API details
-
-### Rules
-
-- One obligation per requirement
-- Immutable by ID (deprecate and create a new ID when intent changes)
-
-### Output
-
-- Input to specs and tests
-
-### Template
-
-See `_templates/REQ-template.md`
 
 ---
 
@@ -511,10 +549,10 @@ checkpoints, and defines what “done” looks like.
 - Converging on what is wrong/needed and how to measure improvement → **PROBDEF**
 - Clarifying what a thing fundamentally is → **DRFC**
 - Clarifying how something is used → **XRFC**
-- Still debating options and trade-offs → **RFC**
-- A decision has been made → **ADR**
-- Defining what must be true → **REQ**
-- Defining exact behavior or interfaces → **Spec**
+- Defining what must be true (derived from PROBDEF resolution indicators) → **REQ**
+- Still debating options and trade-offs to meet REQs → **RFC**
+- A decision has been made (to satisfy REQ(s)) → **ADR**
+- Defining exact behavior or interfaces (implementing REQs, depending on ADRs) → **Spec**
 - Sequencing delivery work for execution → **IMPL-PLAN**
 
 ---
@@ -548,9 +586,9 @@ breaks stable references and obscures intent changes.
 | PROBDEF   | Clarified or superseded; new file if intent changes       |
 | DRFC      | Rare refactor; supersede with new DRFC if meaning changes |
 | XRFC      | Replaced when experience intent changes                   |
+| REQ       | Immutable by ID; new ID for new intent                    |
 | RFC       | Closed/rejected; not versioned                            |
 | ADR       | Append-only; supersede with new ADR                       |
-| REQ       | Immutable by ID; new ID for new intent                    |
 | SPEC      | Evolves via git history                                   |
 | IMPL-PLAN | Evolves via git history                                   |
 
@@ -578,19 +616,19 @@ Mark the old document as `Status: Superseded` and link to the successor.
 
 ### Document of record (single source of truth)
 
-Use this table to keep document purpose crisp and to prevent “epistemic mixing” (exploration,
+Use this table to keep document purpose crisp and to prevent "epistemic mixing" (exploration,
 decisions, obligations, and implementation bleeding into each other):
 
-| Document  | Question it answers                          |
-| --------- | -------------------------------------------- |
-| PROBDEF   | What is wrong and how do we know it’s fixed? |
-| DRFC      | What _is_ this thing?                        |
-| XRFC      | How is it used?                              |
-| RFC       | What options did we consider?                |
-| ADR       | What did we decide and why?                  |
-| REQ       | What must be true?                           |
-| SPEC      | What exactly do we build/test?               |
-| IMPL-PLAN | How do we execute?                           |
+| Document  | Question it answers                          | Depends on          |
+| --------- | -------------------------------------------- | ------------------- |
+| PROBDEF   | What is wrong and how do we know it's fixed? | —                   |
+| DRFC      | What _is_ this thing?                        | PROBDEF             |
+| XRFC      | How is it used?                              | PROBDEF             |
+| REQ       | What must be true?                           | PROBDEF, DRFC, XRFC |
+| RFC       | What options satisfy these REQs?             | REQ, PROBDEF        |
+| ADR       | What did we decide and why?                  | REQ, RFC            |
+| SPEC      | What exactly do we build/test?               | REQ, ADR            |
+| IMPL-PLAN | How do we execute?                           | SPEC, REQ           |
 
 Use this mapping to prevent duplicated truth and drift:
 
@@ -598,10 +636,10 @@ Use this mapping to prevent duplicated truth and drift:
 - **Problems, failure modes, resolution indicators** → PROBDEF
 - **Conceptual meaning and vocabulary** → DRFC
 - **User/operator experience intent** → XRFC
-- **Options and trade-offs** → RFC
-- **Why we chose a solution** → ADR
-- **What must be true** → REQ
-- **What gets built and tested (contracts/behavior)** → Spec
+- **What must be true (driven by resolution indicators)** → REQ
+- **Options and trade-offs to meet REQs** → RFC
+- **Why we chose a solution (to satisfy REQ)** → ADR
+- **What gets built and tested (contracts/behavior implementing REQ)** → Spec
 - **How we will deliver it (sequencing)** → IMPL-PLAN
 
 **Rule:** if the same fact must stay true over time, it should have exactly one canonical home.
@@ -678,14 +716,14 @@ This preserves stable references, auditability, and avoids “history rewriting�
       README.md
     /03-experience
       README.md
-    /04-rfcs
-      README.md
-    /05-adrs
-      README.md
-      DECISIONS.md
-    /06-requirements
+    /04-requirements
       README.md
       INDEX.md
+    /05-rfcs
+      README.md
+    /06-adrs
+      README.md
+      DECISIONS.md
     /07-specifications
       README.md
     /08-implementation-plans
@@ -694,33 +732,19 @@ This preserves stable references, auditability, and avoids “history rewriting�
       README.md
 ```
 
-Numbers enforce reading order and prevent bikeshedding.
+Numbers enforce reading order (PROBDEF → REQ → RFC → ADR → SPEC) and prevent bikeshedding.
 
 **Indexing rules**
 
 - `/docs/engineering/README.md` is the entrypoint.
 - Each folder `README.md` lists documents in that folder and highlights the active ones.
-- `/06-requirements/INDEX.md` is the searchable, human-maintained registry of requirements (metadata
+- `/04-requirements/INDEX.md` is the searchable, human-maintained registry of requirements (metadata
   lives here, not inside each REQ).
 - `/09-initiatives/README.md` lists initiative index files and highlights the active initiatives.
 
 **Decision Log**
 
-- `/05-adrs/DECISIONS.md` is for small, low-risk decisions (1–5 lines each) that are not worth a
-  full ADR treatment.
-
-Numbers enforce reading order and prevent bikeshedding.
-
-**Indexing rules**
-
-- `/docs/engineering/README.md` is the entrypoint.
-- Each folder `README.md` lists documents in that folder and highlights the active ones.
-- `/06-requirements/INDEX.md` is the searchable, human-maintained registry of requirements (metadata
-  lives here, not inside each REQ).
-
-**Decision Log**
-
-- `/05-adrs/DECISIONS.md` is for small, low-risk decisions (1–5 lines each) that are not worth a
+- `/06-adrs/DECISIONS.md` is for small, low-risk decisions (1–5 lines each) that are not worth a
   full ADR treatment.
 
 ---
@@ -800,9 +824,29 @@ XRFC-<area>-<short-description>.md
 
 ---
 
-## 04-rfcs (Proposals / discussions)
+## 04-requirements (Normative requirements)
 
-**Purpose:** explore options and trade-offs.
+**Purpose:** define what must be true (driven by PROBDEF resolution indicators).
+
+**Naming:**
+
+```
+REQ-<domain>-<id>.md
+```
+
+**Rules:**
+
+- One requirement per file
+- IDs are immutable
+- Must trace to PROBDEF
+- Referenced by RFCs (what must be satisfied?), ADRs (why did we choose this?), and specs (what do
+  we implement?)
+
+---
+
+## 05-rfcs (Proposals / discussions)
+
+**Purpose:** explore options and trade-offs to meet REQs.
 
 **Naming:**
 
@@ -813,14 +857,15 @@ RFC-<area>-<topic>.md
 **Rules:**
 
 - Disposable after decisions are made
+- Must link to the REQ(s) being addressed
 - Must link to resulting ADRs
-- Must link to PROBDEF drivers
+- Evaluated against requirements, not abstract goals
 
 ---
 
-## 05-adrs (Architecture Decision Records)
+## 06-adrs (Architecture Decision Records)
 
-**Purpose:** record decisions permanently.
+**Purpose:** record decisions permanently (which option satisfies REQ).
 
 **Naming:**
 
@@ -835,32 +880,14 @@ ADR-<DOMAIN>-<NNN>-<short-title>.md
 - Sequential numbering (within domain if using prefixes)
 - Append-only
 - Never edited after acceptance
+- Must reference REQ(s) or RFC that justified the decision
 - See `DECISIONS.md` for lightweight decisions
-
----
-
-## 06-requirements (Normative requirements)
-
-**Purpose:** define what must be true.
-
-**Naming:**
-
-```
-REQ-<domain>-<id>.md
-```
-
-**Rules:**
-
-- One requirement per file
-- IDs are immutable
-- Must trace to PROBDEF
-- Referenced by specs and tests
 
 ---
 
 ## 07-specifications (Specifications)
 
-**Purpose:** define build/test contracts.
+**Purpose:** define build/test contracts (implementing REQs via ADR-justified decisions).
 
 **Naming:**
 
@@ -870,7 +897,8 @@ SPEC-<area>-<topic>.md
 
 **Rules:**
 
-- Must reference REQs and ADRs
+- Must reference REQs it implements
+- Must reference ADRs that justify design decisions
 - Versioned via git history
 
 ---
@@ -887,8 +915,9 @@ IMPL-PLAN-<area>-<topic>.md
 
 **Rules:**
 
-- Must reference Spec(s) and REQ(s)
+- Must reference Spec(s) and REQ(s) being implemented
 - Must not introduce new decisions; ADR first if needed
+- May reference ADRs for constraints
 
 ---
 
@@ -906,8 +935,9 @@ INIT-<area>-<topic>.md
 **Rules:**
 
 - One initiative per file.
-- The index should link to the current PROBDEF, relevant DRFC(s), XRFC(s), any active/closed RFC(s),
-  applicable ADR(s), all active REQ(s), the controlling SPEC(s), and the current IMPL-PLAN(s).
+- The index should link to: the current PROBDEF, relevant DRFC(s), XRFC(s), all active REQ(s), any
+  active/closed RFC(s), applicable ADR(s), the controlling SPEC(s), and the current IMPL-PLAN(s).
+- Link in order: PROBDEF → REQ → RFC → ADR → SPEC → IMPL-PLAN (the canonical sequence).
 - The index must not become a second spec; it is a curated link map plus status.
 
 ---
@@ -927,22 +957,34 @@ INIT-<area>-<topic>.md
 - EXPLOGs may link to anything, but nothing treats them as canonical truth.
 - PROBDEF links downstream only (it may reference context, but does not depend on downstream
   documents).
-- DRFCs are linked downstream only.
-- XRFCs link to DRFCs and PROBDEF; once created, link to REQs.
-- RFCs link to DRFCs, XRFCs, and PROBDEF; after closure they link to resulting ADRs.
-- ADRs link to their driver documents (PROBDEF/RFC/REQ).
-- REQs link to their drivers (PROBDEF plus DRFC/XRFC/RFC).
-- Specs link to REQs (Implements) and ADRs (Decision basis).
-- IMPL-PLAN links to Specs and REQs and may reference ADRs for constraints.
+- DRFCs link downstream only (referenced by REQs, RFCs, ADRs).
+- XRFCs link to DRFCs and PROBDEF; may inform REQs.
+- REQs link upward to PROBDEF and optionally to DRFC/XRFC that inform them.
+- RFCs link upward to REQ(s) they aim to satisfy, to PROBDEF for context, to DRFC/XRFC for
+  vocabulary.
+- ADRs link upward to REQ(s) they satisfy and to RFC(s) that explored the decision.
+- Specs link upward to REQ(s) they implement and to ADR(s) that justify design choices.
+- IMPL-PLAN links upward to Spec(s) and REQ(s) being implemented; may reference ADRs for
+  constraints.
 
 ### Reference style (recommended)
 
+- In REQs, include explicit links:
+  - `Driven by: PROBDEF-…` (required)
+  - `Informed by: DRFC-…` or `XRFC-…` (optional)
+- In RFCs, include explicit links:
+  - `Addresses REQ: REQ-…` (required)
+  - `Context: PROBDEF-…` (required)
+- In ADRs, include explicit links:
+  - `Satisfies REQ: REQ-…` (required)
+  - `Explored in: RFC-…` (recommended)
+  - `Context: PROBDEF-…` (optional)
 - In Specs, include explicit lists:
-  - `Implements: REQ-…`
-  - `Decision basis: ADR-…`
+  - `Implements: REQ-…` (required)
+  - `Decision basis: ADR-…` (required)
 - In IMPL-PLANs, include explicit lists:
-  - `Implements: SPEC-…`
-  - `Covers: REQ-…`
+  - `Implements: SPEC-…` (required)
+  - `Covers: REQ-…` (required)
   - `Constraints: ADR-…` (optional)
 
 No document should rely on directory position alone for meaning; always link explicitly.
