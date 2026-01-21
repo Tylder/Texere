@@ -3,102 +3,109 @@ type: META
 status: active
 stability: stable
 created: 2026-01-21
-last_updated: 2026-01-21T13:03:26.425Z
+last_updated: 2026-01-21T14:21:27.433Z
 area: documentation
 feature: system
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
 summary_short:
   'Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META'
-summary_long:
-  'Defines all document types, required frontmatter fields, mandatory sections (Relationships, TLDR,
+summary_long: |
+  Defines all document types, required frontmatter fields, mandatory sections (Relationships, TLDR,
   Scope, etc.), naming conventions, linking rules, and automation system. Includes examples for each
-  doc type, design decision rationale, and instructions for humans and LLMs.'
+  doc type, design decision rationale, and instructions for humans and LLMs.
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [99, 123]
+      lines: [119, 142]
       summary:
-        'Places this meta doc within the documentation indices and template references that other'
+        'Places this meta doc within the documentation indices and template references that other
+        docs rely on.'
       token_est: 120
     - title: 'TLDR'
-      lines: [124, 142]
+      lines: [144, 161]
       summary:
-        'Establishes the five-document lifecycle plus the formatting, linking, and automation rules'
+        'Establishes the five-document lifecycle plus the formatting, linking, and automation rules
+        that make it predictable and LLM-friendly.'
       token_est: 133
     - title: 'Scope'
-      lines: [143, 169]
+      lines: [413, 457]
       summary:
-        'Covers the documentation lifecycle conventions, metadata expectations, linking rules, and'
+        'Covers the documentation lifecycle conventions, metadata expectations, linking rules, and
+        the automation that keeps indices current.'
       token_est: 159
     - title: 'Main Content'
-      lines: [170, 392]
+      lines: [190, 412]
       summary:
-        'Covers the critical workflows, formatting rules, automation, and agent guidance that make'
+        'Covers the critical workflows, formatting rules, automation, and agent guidance that make
+        this system cohesive.'
       token_est: 1467
       subsections:
         - title: 'Critical: Keeping Indices in Sync'
-          lines: [175, 201]
+          lines: [195, 220]
           summary:
             'Every document creation or status change must immediately touch the folder README and
-            the'
+            the document registry, because downstream tooling and LLMs read those indices.'
           token_est: 220
         - title: 'Overview'
-          lines: [202, 227]
+          lines: [222, 246]
           summary:
             'Defines the five document types and the many-to-many relationships across the
             lifecycle.'
           token_est: 244
         - title: 'Document Format: YAML Frontmatter + Structured Sections'
-          lines: [228, 266]
+          lines: [248, 285]
           summary:
-            'Every document is structured for LLM readability via strict frontmatter and section'
+            'Every document is structured for LLM readability via strict frontmatter and section
+            expectations.'
           token_est: 246
         - title: 'Lifecycle Roles'
-          lines: [267, 286]
+          lines: [287, 305]
           summary:
             'Explains when to write each doc type and how Meta documents tie the system together.'
           token_est: 145
         - title: 'Naming, Linking & Key Principles'
-          lines: [287, 354]
+          lines: [307, 373]
           summary:
-            'Provides the folder/file naming, cross-linking rules, and core principles that keep'
+            'Provides the folder/file naming, cross-linking rules, and core principles that keep
+            documents consistent and machine-readable.'
           token_est: 292
         - title: 'Getting Started'
-          lines: [355, 379]
+          lines: [375, 398]
           summary: 'Lists the author flow and checklist for creating a compliant document.'
           token_est: 218
         - title: 'Section Indexing: Structure for LLM Parsing'
-          lines: [380, 392]
+          lines: [400, 412]
           summary: 'Section-first summaries let LLMs read just what they need.'
           token_est: 81
     - title: 'Scope'
-      lines: [393, 438]
-      summary: 'API covers offset/limit pagination; excludes cursor-based and export pagination.'
+      lines: [413, 457]
+      summary:
+        'API covers offset/limit pagination; excludes cursor-based and export pagination. ```'
       token_est: 322
       subsections:
         - title: 'For LLMs and Agents'
-          lines: [403, 416]
+          lines: [423, 435]
           summary: 'Instructions on how automated agents should interpret the documentation system.'
           token_est: 112
         - title: 'Automation: Keeping Indices in Sync'
-          lines: [417, 438]
+          lines: [437, 457]
           summary: 'Automation re-generates indices and validates metadata on every commit.'
           token_est: 159
     - title: 'Blockers'
-      lines: [439, 448]
+      lines: [459, 467]
       summary:
         'No active blockers; automation/human workflow currently handles indexing and validation.'
       token_est: 56
     - title: 'Design Decisions'
-      lines: [449, 462]
+      lines: [469, 481]
       token_est: 198
     - title: 'Assumptions & Unknowns'
-      lines: [463, 473]
+      lines: [483, 492]
       summary: 'Tracks open questions about the documentation system.'
       token_est: 120
     - title: 'Document Metadata'
-      lines: [474, 493]
+      lines: [494, 512]
       summary:
         'Mirrors the frontmatter for machine consumption so downstream tools can confirm metadata.'
       token_est: 98

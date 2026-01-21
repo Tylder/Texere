@@ -244,30 +244,16 @@ function embedSectionIndex(doc) {
   const contentAfterFrontmatter = doc.content.substring(frontmatterMatch[0].length);
 
   // Remove any existing index from frontmatter to get clean base
-  // Uses $ to match end-of-string (not just end-of-line), ensuring all indented content is removed
   const cleanFrontmatterYaml = frontmatterYaml.replace(/\s+(index):[\s\S]*$/m, '');
-
-  console.log(`[DEBUG] ${doc.relativePath}:`);
-  console.log(`  Frontmatter has ${frontmatterYaml.split('\n').length} lines`);
-
-  const hasOldIndex = /\s+(index):[\s\S]*$/m.test(frontmatterYaml);
-  if (hasOldIndex) {
-    console.log(`  ✓ Found and removed old index block`);
-  } else {
-    console.log(`  ℹ No old index block found`);
-  }
 
   // Extract sections fresh from the raw content (after removing frontmatter)
   const errors = [];
   let sections = extractSections(contentAfterFrontmatter, errors, doc.relativePath);
   if (errors.length > 0 || sections.length === 0) {
-    console.log(`  ✗ Skipping: ${errors.length > 0 ? 'extraction errors' : 'no sections found'}`);
     return false;
   }
 
-  console.log(`  Found ${sections.length} section(s)`);
-
-  // Build index with DUMMY line numbers [0, 0] - Prettier will handle all formatting
+  // Build index with DUMMY line numbers [0, 0]
   let indexYaml = `\nindex:\n  sections:`;
 
   for (const section of sections) {
@@ -304,21 +290,18 @@ function embedSectionIndex(doc) {
   const newFrontmatter = `---\n${cleanFrontmatterYaml}${indexYaml}\n---`;
   const fullContent = newFrontmatter + contentAfterFrontmatter;
 
-  console.log(`  Building temp doc with ${newFrontmatter.split('\n').length} frontmatter lines`);
+  // Write to real file with dummy index
+  fs.writeFileSync(doc.path, fullContent, 'utf-8');
 
-  // Format the ENTIRE document with Prettier
-  const tempPath = path.join(process.cwd(), `.temp-doc-${Date.now()}.md`);
-  fs.writeFileSync(tempPath, fullContent, 'utf-8');
-
+  // Format the document with Prettier
   try {
-    execSync(`npx prettier "${tempPath}" --write`, { stdio: 'pipe' });
-    console.log(`  ✓ Prettier formatting succeeded`);
+    execSync(`npx prettier "${doc.path}" --write`, { stdio: 'pipe' });
   } catch (err) {
-    console.log(`  ✗ Prettier formatting failed (ignoring): ${err.message}`);
+    // Silently ignore formatting errors
   }
 
-  const formattedContent = fs.readFileSync(tempPath, 'utf-8');
-  fs.unlinkSync(tempPath);
+  // Read the formatted content from real file
+  const formattedContent = fs.readFileSync(doc.path, 'utf-8');
 
   // Now find actual line numbers of each section heading in the formatted content
   const lines = formattedContent.split('\n');
@@ -346,7 +329,6 @@ function embedSectionIndex(doc) {
       }
 
       sectionLineMap.set(title, [i + 1, endLine + 1]); // 1-based line numbers
-      console.log(`  Found section "${title}" at lines [${i + 1}, ${endLine + 1}]`);
     }
   }
 
@@ -389,14 +371,20 @@ function embedSectionIndex(doc) {
   const finalFrontmatter = `---\n${cleanFrontmatterYaml}${realIndexYaml}\n---`;
   const finalContent = finalFrontmatter + contentAfterFrontmatter;
 
-  // Only write if changed (avoid unnecessary git churn)
-  if (finalContent !== doc.content) {
-    console.log(`  Writing ${finalFrontmatter.split('\n').length} lines to file`);
+  // Only proceed if changed
+  if (finalContent !== formattedContent) {
     fs.writeFileSync(doc.path, finalContent, 'utf-8');
+
+    // Run Prettier one more time to ensure final formatting
+    try {
+      execSync(`npx prettier "${doc.path}" --write`, { stdio: 'pipe' });
+    } catch (err) {
+      // Silently ignore formatting errors
+    }
+
     return true; // Indicate doc was modified
   }
 
-  console.log(`  No changes (content identical)`);
   return false;
 }
 
