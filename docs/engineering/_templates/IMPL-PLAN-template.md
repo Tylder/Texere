@@ -9,6 +9,12 @@ created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: core-api
 feature: pagination-system
+summary_short:
+  'Coordinate implementation of pagination across three endpoints (search, users, timeline)'
+summary_long:
+  'Coordinates 6 milestones from shared library build through production deployment. Work spans 3
+  teams (search, users, timeline endpoints). Includes work breakdown, risk register, rollout
+  strategy with canary deployment, and success criteria.'
 coordinates: [SPEC-search-results-pagination, SPEC-user-list-pagination, SPEC-timeline-pagination]
 covers:
   [REQ-pagination-system#REQ-001, REQ-pagination-system#REQ-002, REQ-pagination-system#REQ-003]
@@ -420,6 +426,12 @@ created: 2025-01-21
 last_updated: 2025-01-21
 area: core-api
 feature: pagination-system
+summary_short:
+  'Coordinate implementation of pagination across three endpoints (search, users, timeline)'
+summary_long:
+  'Coordinates 6 milestones from shared library build through production deployment. Work spans 3
+  teams (search, users, timeline endpoints). Includes work breakdown, risk register, rollout
+  strategy with canary deployment, and success criteria.'
 coordinates: [SPEC-search-results-pagination, SPEC-user-list-pagination, SPEC-timeline-pagination]
 covers:
   [REQ-pagination-system#REQ-001, REQ-pagination-system#REQ-002, REQ-pagination-system#REQ-003]

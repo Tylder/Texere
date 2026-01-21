@@ -3,14 +3,21 @@
 ```yaml
 ---
 type: IDEATION-unknowns
-status: draft # draft, active, archived
+status: draft
 stability: experimental
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: search
 feature: pagination-system
+summary_short:
+  'Open questions blocking Requirements: pagination approach, performance targets, real-time
+  requirements'
+summary_long:
+  'Lists 5 key unknowns (pagination type, page size limits, async vs sync, consistency, real-time)
+  with possible answers and closure criteria. Identifies 3 blockers that must resolve before REQ
+  finalization. Tracks resolved questions for audit trail.'
 unknowns_count: 5
-blockers_count: 2
+blockers_count: 3
 related_ideation: [IDEATION-pagination-problems, IDEATION-pagination-experience]
 ---
 ```

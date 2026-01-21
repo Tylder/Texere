@@ -3,14 +3,21 @@
 ```yaml
 ---
 type: IDEATION-problems
-status: draft # draft, active, archived
+status: draft
 stability: experimental
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: search
 feature: pagination-system
+summary_short:
+  'Problems discovered when browsing large result sets: timeouts, no pagination, inconsistent
+  behavior'
+summary_long:
+  'Identifies 3 key problems: timeouts on large datasets, inability to browse results efficiently,
+  and inconsistent pagination behavior across endpoints. Includes failure modes, real scenarios,
+  resolution indicators, and open questions. Drives Requirements once validated.'
 related_ideation: [IDEATION-pagination-experience, IDEATION-pagination-unknowns]
-drives: [] # Will link to Requirements once created
+drives: []
 ---
 ```
 

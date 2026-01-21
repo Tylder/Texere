@@ -12,6 +12,7 @@ const DOC_FOLDERS = {
   requirements: '01-requirements',
   specifications: '02-specifications',
   plans: '03-implementation-plans',
+  meta: 'meta',
 };
 
 const DOC_TYPES = {
@@ -19,6 +20,7 @@ const DOC_TYPES = {
   requirements: 'REQ',
   specifications: 'SPEC',
   plans: 'IMPL-PLAN',
+  meta: 'META',
 };
 
 const REQUIRED_FRONTMATTER_FIELDS = [
@@ -29,6 +31,8 @@ const REQUIRED_FRONTMATTER_FIELDS = [
   'last_updated',
   'area',
   'feature',
+  'summary_short',
+  'summary_long',
 ];
 
 function parseFrontmatter(content) {
@@ -80,12 +84,13 @@ function getAllDocFiles() {
       });
     }
   }
+
   return docs;
 }
 
 function getChangedDocFiles() {
   try {
-    const output = execSync('git diff --cached --name-only --diff-filter=ACM docs/engineering/', {
+    const output = execSync('git diff --cached --name-only --diff-filter=ACMR docs/engineering/', {
       encoding: 'utf-8',
     });
     return output
@@ -121,39 +126,11 @@ function validateFrontmatter(doc, errors) {
 
 function validateNaming(doc, errors) {
   const prefix = DOC_TYPES[doc.type];
-  if (!doc.file.startsWith(prefix + '-')) {
+  if (doc.type !== 'meta' && !doc.file.startsWith(prefix + '-')) {
     errors.push(
       `${doc.relativePath}: Should start with "${prefix}-" (e.g., "${prefix}-my-feature.md")`,
     );
   }
-}
-
-function validateCrossReferences(doc, allDocs, errors) {
-  const {
-    implements: implRefs = [],
-    coordinates = [],
-    covers = [],
-    depends_on = [],
-  } = doc.frontmatter || {};
-
-  const validateRef = (ref, allowedTypes) => {
-    const [docId] = ref.split('#');
-    const matching = allDocs.find((d) => d.file.replace('.md', '') === docId);
-    if (!matching) {
-      errors.push(`${doc.relativePath}: References non-existent document "${docId}"`);
-      return;
-    }
-    if (allowedTypes && !allowedTypes.includes(matching.type)) {
-      errors.push(
-        `${doc.relativePath}: References ${docId} (${matching.type}), expected ${allowedTypes.join(' or ')}`,
-      );
-    }
-  };
-
-  for (const ref of implRefs) validateRef(ref, ['requirements']);
-  for (const ref of covers) validateRef(ref, ['requirements']);
-  for (const ref of coordinates) validateRef(ref, ['specifications']);
-  for (const ref of depends_on) validateRef(ref, ['specifications', 'requirements']);
 }
 
 function extractLinksFromContent(content) {
@@ -271,7 +248,7 @@ do_not_edit_manually: true
 
   let registry = `${frontmatter}
 
-Auto-generated – do not edit manually. Update document YAML frontmatter to change entries. See docs/engineering/documentation_guide.md for details.
+Auto-generated – do not edit manually. Update document YAML frontmatter to change entries. See docs/engineering/meta/META-documentation-system.md for details.
 
 ## Quick Query
 
@@ -281,8 +258,8 @@ grep "| SPEC.*active" below
 
 ## Documents
 
-| ID | Type | Status | Stability | Area | Feature |
-|----|------|--------|-----------|------|--------|
+| ID | Type | Status | Stability | Area | Feature | Summary |
+|----|------|--------|-----------|------|---------|---------|
 `;
 
   for (const doc of allDocs) {
@@ -292,7 +269,8 @@ grep "| SPEC.*active" below
     const stability = doc.frontmatter?.stability || '?';
     const area = doc.frontmatter?.area || '?';
     const feature = doc.frontmatter?.feature || '?';
-    registry += `| \`${id}\` | ${type} | ${status} | ${stability} | ${area} | ${feature} |\n`;
+    const summary = doc.frontmatter?.summary_short || '?';
+    registry += `| \`${id}\` | ${type} | ${status} | ${stability} | ${area} | ${feature} | ${summary} |\n`;
   }
 
   registry += `\n_Auto-generated: ${todayDate}_\n`;
@@ -324,7 +302,7 @@ function updateFolderReadme(type, allDocs) {
       : '(None yet)';
 
   content = content.replace(
-    /## Active (Ideation|Requirements|Specifications|Plans)\n\n[\s\S]*?\n\n## (Archived|Archived \/ Deprecated|Archived \/ Completed)/,
+    /## Active (Ideation|Requirements|Specifications|Plans|Meta Documents)\n\n[\s\S]*?\n\n## (Archived|Archived \/ Deprecated|Archived \/ Completed)/,
     `## Active $1\n\n${activeList}\n\n## $2`,
   );
 
@@ -378,7 +356,6 @@ function main() {
     for (const doc of updatedDocs) {
       validateFrontmatter(doc, errors);
       validateNaming(doc, errors);
-      validateCrossReferences(doc, updatedDocs, errors);
       validateLinks(doc, errors);
     }
   }

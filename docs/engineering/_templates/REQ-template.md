@@ -3,12 +3,17 @@
 ```yaml
 ---
 type: REQ
-status: draft # draft, approved, deprecated
-stability: experimental # experimental, beta, stable
+status: draft
+stability: experimental
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: feature-area
 feature: feature-name
+summary_short: 'Offset/limit pagination required across all list endpoints'
+summary_long:
+  'Defines normative Requirements for system-wide pagination via offset/limit parameters. Specifies
+  supported ranges, response metadata, error handling, and <100ms performance target. One
+  Requirement implemented by multiple Specs (search, users, timeline) coordinated by one Plan.'
 ---
 ```
 

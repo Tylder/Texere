@@ -3,16 +3,22 @@
 ```yaml
 ---
 type: IDEATION-experience
-status: draft # draft, active, archived
+status: draft
 stability: experimental
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: search
 feature: pagination-system
+summary_short:
+  'How data analysts and API consumers will experience pagination: journeys, personas, invariants'
+summary_long:
+  'Defines 2 personas (Alice: data analyst, Bob: API consumer) and their primary workflows.
+  Establishes experience invariants (always show progress, consistent error messages), failure
+  recovery paths, and success signals. Drives user-centric Requirements.'
 personas_count: 2
 journeys_count: 2
 related_ideation: [IDEATION-pagination-problems, IDEATION-pagination-unknowns]
-drives: [] # Will link to Requirements once created
+drives: []
 ---
 ```
 

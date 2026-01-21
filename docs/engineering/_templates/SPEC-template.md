@@ -3,12 +3,18 @@
 ```yaml
 ---
 type: SPEC
-status: draft # draft, active, deprecated
-stability: experimental # experimental, beta, stable
+status: draft
+stability: experimental
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: api
 feature: pagination-system
+summary_short: 'GET /search endpoint with offset/limit pagination, metadata, and error handling'
+summary_long:
+  'Specifies API contract for paginated search results including request parameters (query, offset,
+  limit, filters), response schema with pagination metadata (total, offset, limit, remaining,
+  has_next, has_prev), error codes, and <100ms performance constraint. Implements
+  REQ-pagination-system via shared pagination library.'
 implements:
   [REQ-pagination-system#REQ-001, REQ-pagination-system#REQ-002, REQ-pagination-system#REQ-003]
 depends_on: [SPEC-shared-pagination-lib]
