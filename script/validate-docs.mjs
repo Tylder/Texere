@@ -4,8 +4,24 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 
+// ============================================================================
+// CONFIGURATION & MAGIC CONSTANTS
+// ============================================================================
+
 const DOCS_DIR = 'docs/engineering';
 const REGISTRY_FILE = path.join(DOCS_DIR, 'DOCUMENT-REGISTRY.md');
+
+// Indexing configuration
+const INDEXING_CONFIG = {
+  enabled: true,
+  summary_mode: 'skip', // 'error' or 'skip'
+  min_level: 2,
+  max_level: 3,
+  subsection_token_threshold: 300, // Skip subsections if parent section < this many tokens
+};
+
+// Token estimation (word count × multiplier)
+const TOKEN_ESTIMATE_MULTIPLIER = 1.3;
 
 const DOC_FOLDERS = {
   ideation: '00-ideation',
@@ -36,14 +52,6 @@ const REQUIRED_FRONTMATTER_FIELDS = [
   'summary_short',
   'summary_long',
 ];
-
-// Indexing configuration
-const INDEXING_CONFIG = {
-  enabled: true,
-  summary_mode: 'skip', // 'error' or 'skip' (will enforce 'error' once all docs updated)
-  min_level: 2,
-  max_level: 3,
-};
 
 /**
  * Sort documents deterministically:
@@ -471,7 +479,7 @@ function slugify(title) {
 function estimateTokens(text) {
   if (!text) return 0;
   const words = text.trim().split(/\s+/).length;
-  return Math.ceil(words * 1.3);
+  return Math.ceil(words * TOKEN_ESTIMATE_MULTIPLIER);
 }
 
 /**
@@ -540,9 +548,7 @@ function extractSections(content, errors, docRelativePath) {
     const section = {
       id: slugify(title),
       title,
-      level,
-      start_line: lineNum + 1, // 1-based
-      end_line: endLine + 1, // 1-based
+      lines: [lineNum + 1, endLine + 1], // 1-based
       summary,
       token_est: tokenEst,
       subsections: [],
@@ -604,26 +610,33 @@ index:
     indexYaml += `
     - id: ${section.id}
       title: "${section.title}"
-      level: ${section.level}
-      start_line: ${section.start_line}
-      end_line: ${section.end_line}
-      summary: ${section.summary ? `"${section.summary.replace(/"/g, '\\"')}"` : 'null'}
-      token_est: ${section.token_est}`;
+      lines: [${section.lines[0]}, ${section.lines[1]}]`;
 
-    if (section.subsections && section.subsections.length > 0) {
+    if (section.summary) {
+      indexYaml += `\n      summary: "${section.summary.replace(/"/g, '\\"')}"`;
+    }
+
+    indexYaml += `\n      token_est: ${section.token_est}`;
+
+    // Only include subsections if parent section exceeds token threshold
+    if (
+      section.subsections &&
+      section.subsections.length > 0 &&
+      section.token_est >= INDEXING_CONFIG.subsection_token_threshold
+    ) {
       indexYaml += '\n      subsections:';
       for (const sub of section.subsections) {
         indexYaml += `
         - id: ${sub.id}
           title: "${sub.title}"
-          level: ${sub.level}
-          start_line: ${sub.start_line}
-          end_line: ${sub.end_line}
-          summary: ${sub.summary ? `"${sub.summary.replace(/"/g, '\\"')}"` : 'null'}
-          token_est: ${sub.token_est}`;
+          lines: [${sub.lines[0]}, ${sub.lines[1]}]`;
+
+        if (sub.summary) {
+          indexYaml += `\n          summary: "${sub.summary.replace(/"/g, '\\"')}"`;
+        }
+
+        indexYaml += `\n          token_est: ${sub.token_est}`;
       }
-    } else {
-      indexYaml += '\n      subsections: []';
     }
   }
 
