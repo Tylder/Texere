@@ -22,6 +22,6 @@ grep "| SPEC.*active" below
 
 | ID                          | Type | Status | Stability | Area          | Feature | Summary                                                                                           |
 | --------------------------- | ---- | ------ | --------- | ------------- | ------- | ------------------------------------------------------------------------------------------------- |
-| `META-documentation-system` | META | active | stable    | documentation | system  | "Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META" |
+| `META-documentation-system` | META | active | stable    | documentation | system  | 'Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META' |
 
 _Auto-generated: 2026-01-21_

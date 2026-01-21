@@ -23,6 +23,8 @@ const DOC_TYPES = {
   meta: 'META',
 };
 
+const FOLDER_ORDER = ['ideation', 'requirements', 'specifications', 'plans', 'meta'];
+
 const REQUIRED_FRONTMATTER_FIELDS = [
   'type',
   'status',
@@ -35,6 +37,40 @@ const REQUIRED_FRONTMATTER_FIELDS = [
   'summary_long',
 ];
 
+/**
+ * Sort documents deterministically:
+ * 1. folder order (ideation → requirements → specifications → plans → meta)
+ * 2. area
+ * 3. feature
+ * 4. filename
+ */
+function sortDocs(docs) {
+  return docs.sort((a, b) => {
+    const folderOrderA = FOLDER_ORDER.indexOf(a.type);
+    const folderOrderB = FOLDER_ORDER.indexOf(b.type);
+    if (folderOrderA !== folderOrderB) return folderOrderA - folderOrderB;
+
+    const areaA = a.frontmatter?.area || '';
+    const areaB = b.frontmatter?.area || '';
+    if (areaA !== areaB) return areaA.localeCompare(areaB);
+
+    const featureA = a.frontmatter?.feature || '';
+    const featureB = b.frontmatter?.feature || '';
+    if (featureA !== featureB) return featureA.localeCompare(featureB);
+
+    return a.file.localeCompare(b.file);
+  });
+}
+
+/**
+ * Parse YAML frontmatter (simple parser, not full YAML spec).
+ * Handles:
+ * - key: value
+ * - key: [a, b, c]
+ * - key: 'multiline flow scalar'
+ * - key:\n  'value on next line'  (indented continuation)
+ * - key: | (block scalar)
+ */
 function parseFrontmatter(content) {
   const match = content.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return null;
@@ -43,20 +79,62 @@ function parseFrontmatter(content) {
   const result = {};
   const lines = yaml.split('\n');
 
-  for (const line of lines) {
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
     const colonIdx = line.indexOf(':');
+
     if (colonIdx > 0) {
       const key = line.substring(0, colonIdx).trim();
-      const value = line.substring(colonIdx + 1).trim();
+      let value = line.substring(colonIdx + 1).trim();
+
+      // If value is empty and next line is indented, it's the actual value
+      if (value === '' && i < lines.length - 1) {
+        const nextLine = lines[i + 1];
+        if (nextLine.match(/^\s/)) {
+          i++;
+          value = nextLine.trim();
+        }
+      }
+
+      // Handle multiline flow scalars (quoted strings spanning lines)
+      if (
+        (value.startsWith("'") && !value.endsWith("'")) ||
+        (value.startsWith('"') && !value.endsWith('"'))
+      ) {
+        const quote = value[0];
+        // Accumulate lines until closing quote
+        while (i < lines.length - 1) {
+          i++;
+          const nextLine = lines[i];
+          value += ' ' + nextLine.trim();
+          if (nextLine.trim().endsWith(quote)) break;
+        }
+        // Remove quotes
+        value = value.slice(1, value.lastIndexOf(quote));
+      }
+
+      // Handle arrays [a, b, c]
       if (value.startsWith('[') && value.endsWith(']')) {
         result[key] = value
           .slice(1, -1)
           .split(',')
           .map((v) => v.trim());
-      } else {
+      }
+      // Handle block scalars (| or >)
+      else if (value === '|' || value === '>') {
+        // Block scalar: consume next non-empty line
+        if (i < lines.length - 1) {
+          i++;
+          value = lines[i].trim();
+        }
+        result[key] = value;
+      } else if (value) {
         result[key] = value;
       }
     }
+
+    i++;
   }
 
   return Object.keys(result).length > 0 ? result : null;
@@ -148,32 +226,59 @@ function extractLinksFromContent(content) {
   return links;
 }
 
+/**
+ * Improved link validation:
+ * - Handles relative paths (foo.md, foo/bar.md)
+ * - Handles root paths (/docs/...)
+ * - Handles relative with ./
+ * - Treats common schemes as valid (mailto:, tel:, etc.)
+ */
 function linkExists(url, docDir) {
+  // External URLs
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return true;
   }
 
-  if (url.includes('#') && !url.startsWith('#')) {
+  // mailto, tel, etc.
+  if (url.includes(':') && !url.includes('/')) {
+    return true;
+  }
+
+  // Anchor-only links
+  if (url.startsWith('#')) {
+    return true;
+  }
+
+  // Fragment links (e.g., foo.md#section)
+  if (url.includes('#')) {
     const [docRef] = url.split('#');
-    if (docRef.includes('/')) {
-      const filePath = path.join(docDir, docRef);
-      return fs.existsSync(filePath);
+    if (docRef === '') return true; // #anchor-only
+
+    // Check if docRef exists
+    let filePath;
+    if (docRef.startsWith('/')) {
+      filePath = path.join(process.cwd(), docRef);
+    } else if (docRef.startsWith('.')) {
+      filePath = path.resolve(docDir, docRef);
     } else {
-      return true;
+      // Relative (no prefix): resolve from docDir
+      filePath = path.join(docDir, docRef);
     }
-  }
-
-  if (url.startsWith('.')) {
-    const filePath = path.resolve(docDir, url);
     return fs.existsSync(filePath);
   }
 
+  // Non-fragment links
+  let filePath;
   if (url.startsWith('/')) {
-    const filePath = path.join(process.cwd(), url);
-    return fs.existsSync(filePath);
+    filePath = path.join(process.cwd(), url);
+  } else if (url.startsWith('.')) {
+    filePath = path.resolve(docDir, url);
+  } else {
+    // Relative (no prefix): resolve from docDir
+    filePath = path.join(docDir, url);
   }
 
-  return true;
+  return fs.existsSync(filePath);
 }
 
 function validateLinks(doc, errors) {
@@ -204,15 +309,21 @@ function updateLastUpdated(doc) {
   return false;
 }
 
+/**
+ * Format files with Prettier.
+ * Patch 3: Stop swallowing Prettier errors.
+ */
 function formatFiles(filePaths) {
   if (filePaths.length === 0) return;
 
   try {
     execSync(`prettier ${filePaths.map((f) => `"${f}"`).join(' ')} --write`, {
-      stdio: 'pipe',
+      encoding: 'utf-8',
     });
-  } catch {
-    // Prettier errors are non-critical
+  } catch (err) {
+    console.error('❌ Prettier formatting failed:');
+    console.error(err.stderr || err.message);
+    throw err;
   }
 }
 
@@ -224,8 +335,13 @@ function getExistingFrontmatter() {
   return match ? match[0] : null;
 }
 
+/**
+ * Patch 0: Use sorted docs for deterministic generation.
+ * Patch 4: Sort docs before generation.
+ */
 function updateRegistry(allDocs) {
   const todayDate = new Date().toISOString().split('T')[0];
+  const sortedDocs = sortDocs(allDocs);
 
   let frontmatter = getExistingFrontmatter();
   if (!frontmatter) {
@@ -262,7 +378,7 @@ grep "| SPEC.*active" below
 |----|------|--------|-----------|------|---------|---------|
 `;
 
-  for (const doc of allDocs) {
+  for (const doc of sortedDocs) {
     const id = doc.file.replace('.md', '');
     const type = doc.frontmatter?.type || DOC_TYPES[doc.type] || '?';
     const status = doc.frontmatter?.status || '?';
@@ -278,14 +394,19 @@ grep "| SPEC.*active" below
   fs.writeFileSync(REGISTRY_FILE, registry, 'utf-8');
 }
 
+/**
+ * Patch 0: Use sorted docs for deterministic generation.
+ * Patch 4: Sort docs before generation.
+ */
 function updateFolderReadme(type, allDocs) {
   const folderName = DOC_FOLDERS[type];
   const readmePath = path.join(DOCS_DIR, folderName, 'README.md');
   if (!fs.existsSync(readmePath)) return;
 
   let content = fs.readFileSync(readmePath, 'utf-8');
+  const sortedDocs = sortDocs(allDocs);
 
-  const docsOfType = allDocs.filter(
+  const docsOfType = sortedDocs.filter(
     (d) => d.type === type && d.frontmatter?.status !== 'deprecated',
   );
   const activeDocsOfType = docsOfType.filter((d) => d.frontmatter?.status === 'active');
@@ -324,6 +445,23 @@ function updateFolderReadme(type, allDocs) {
   fs.writeFileSync(readmePath, content, 'utf-8');
 }
 
+/**
+ * Patch 1: Re-stage modified files so they are included in the commit.
+ */
+function restageModifiedFiles(filePaths) {
+  if (filePaths.length === 0) return;
+
+  try {
+    execSync(`git add ${filePaths.map((f) => `"${f}"`).join(' ')}`, {
+      stdio: 'pipe',
+    });
+  } catch (err) {
+    console.error('❌ Failed to re-stage files:');
+    console.error(err.message);
+    throw err;
+  }
+}
+
 function main() {
   const errors = [];
   const fixes = [];
@@ -350,7 +488,7 @@ function main() {
   }
 
   if (allDocs.length > 0) {
-    // Re-read docs after updating last_updated
+    // PATCH 0: Re-read docs after updating last_updated (fixes stale data)
     const updatedDocs = getAllDocFiles();
 
     for (const doc of updatedDocs) {
@@ -358,19 +496,30 @@ function main() {
       validateNaming(doc, errors);
       validateLinks(doc, errors);
     }
-  }
 
-  if (errors.length === 0) {
-    try {
-      updateRegistry(allDocs);
-      fixes.push('✅ Updated DOCUMENT-REGISTRY.md');
+    if (errors.length === 0) {
+      try {
+        // PATCH 0: Use updatedDocs instead of allDocs for generation
+        updateRegistry(updatedDocs);
+        fixes.push('✅ Updated DOCUMENT-REGISTRY.md');
 
-      for (const type of Object.keys(DOC_FOLDERS)) {
-        updateFolderReadme(type, allDocs);
+        for (const type of Object.keys(DOC_FOLDERS)) {
+          updateFolderReadme(type, updatedDocs);
+        }
+        fixes.push('✅ Updated folder READMEs');
+
+        // PATCH 1: Re-stage generated files
+        const filesToRestage = [
+          REGISTRY_FILE,
+          ...Object.values(DOC_FOLDERS).map((folderName) =>
+            path.join(DOCS_DIR, folderName, 'README.md'),
+          ),
+          ...updatedDocPaths,
+        ];
+        restageModifiedFiles(filesToRestage);
+      } catch (e) {
+        errors.push(`Failed to update registry or re-stage files: ${e.message}`);
       }
-      fixes.push('✅ Updated folder READMEs');
-    } catch (e) {
-      errors.push(`Failed to update registry: ${e.message}`);
     }
   }
 
