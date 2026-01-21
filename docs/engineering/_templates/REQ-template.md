@@ -85,7 +85,7 @@ performance. Excludes cursor, export, scheduling.
 
 **In separate docs:**
 
-- User experience expectations: IDEATION-pagination-experience.md
+- User experience expectations: IDEATION-EXPERIENCE-pagination.md
 - Specification details: SPEC-search-results-pagination.md (and others)
 - Execution roadmap: IMPL-PLAN-pagination-system.md
 
@@ -108,7 +108,7 @@ endpoints."
 Why is this required? What problem does it solve? Link to Ideation if applicable.
 
 Example: "Users need to browse large result sets efficiently. Offset/limit is the most familiar
-pagination pattern (from user research in IDEATION-pagination-experience.md). This applies to search
+pagination pattern (from user research in IDEATION-EXPERIENCE-pagination.md). This applies to search
 results, user lists, and activity timelines."
 
 **Measurable Fit Criteria:**
@@ -242,7 +242,7 @@ created: 2025-01-21
 last_updated: 2025-01-21
 area: core-api
 feature: pagination-system
-driven_by: [IDEATION-pagination-problems.md, IDEATION-pagination-experience.md]
+driven_by: [IDEATION-PROBLEMS-pagination.md, IDEATION-EXPERIENCE-pagination.md]
 implemented_by:
   [SPEC-search-results-pagination.md, SPEC-user-list-pagination.md, SPEC-timeline-pagination.md]
 blocks: [SPEC-search-results-pagination, SPEC-user-list-pagination, SPEC-timeline-pagination]

@@ -1,6 +1,5 @@
-```yaml
 ---
-type: IDEATION-experience
+type: IDEATION-EXPERIENCE
 status: draft
 stability: experimental
 created: YYYY-MM-DD
@@ -17,10 +16,9 @@ summary_long:
   recovery paths, and success signals. Drives user-centric Requirements.'
 personas_count: 2
 journeys_count: 2
-related_ideation: [IDEATION-pagination-problems, IDEATION-pagination-unknowns]
+related_ideation: [IDEATION-PROBLEMS-pagination, IDEATION-UNKNOWNS-pagination]
 drives: []
 ---
-```
 
 ## Document Relationships
 
@@ -28,7 +26,7 @@ Summary: Grounds user-centric Requirements; paired with Problems and Unknowns id
 
 **Upstream (context):**
 
-- IDEATION-pagination-problems.md (problems this experience addresses)
+- IDEATION-PROBLEMS-pagination.md (problems this experience addresses)
 
 **Downstream (informs):**
 
@@ -37,8 +35,8 @@ Summary: Grounds user-centric Requirements; paired with Problems and Unknowns id
 
 **Siblings (other ideation docs):**
 
-- IDEATION-pagination-problems.md (what's wrong?)
-- IDEATION-pagination-unknowns.md (what's uncertain?)
+- IDEATION-PROBLEMS-pagination.md (what's wrong?)
+- IDEATION-UNKNOWNS-pagination.md (what's uncertain?)
 
 **Related:**
 
@@ -85,8 +83,8 @@ implementation details.
 
 **In separate docs:**
 
-- Problems being solved: IDEATION-pagination-problems.md
-- Questions needing research: IDEATION-pagination-unknowns.md
+- Problems being solved: IDEATION-PROBLEMS-pagination.md
+- Questions needing research: IDEATION-UNKNOWNS-pagination.md
 - UI/UX specifications: SPEC-search-results-ui.md (future)
 - API requirements: REQ-pagination-system.md
 
@@ -316,8 +314,8 @@ Things to clarify with users / stakeholders.
 ## Document Metadata
 
 ```yaml
-id: IDEATION-pagination-experience
-type: IDEATION-experience
+id: IDEATION-EXPERIENCE-pagination
+type: IDEATION-EXPERIENCE
 status: draft
 stability: experimental
 created: 2025-01-21
@@ -326,7 +324,7 @@ area: search
 feature: pagination-system
 personas_count: 2
 journeys_count: 2
-related_ideation: [IDEATION-pagination-problems, IDEATION-pagination-unknowns]
+related_ideation: [IDEATION-PROBLEMS-pagination, IDEATION-UNKNOWNS-pagination]
 drives_to: REQ-pagination-system
 keywords: [experience, persona, journey, ux, user, api-consumer, pagination, browsing]
 ```

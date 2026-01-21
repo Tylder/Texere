@@ -1,6 +1,5 @@
-```yaml
 ---
-type: IDEATION-problems
+type: IDEATION-PROBLEMS
 status: draft
 stability: experimental
 created: YYYY-MM-DD
@@ -16,10 +15,9 @@ summary_long:
   'Identifies 3 key problems: timeouts on large datasets, inability to browse results efficiently,
   and inconsistent pagination behavior across endpoints. Includes failure modes, real scenarios,
   resolution indicators, and open questions. Drives Requirements once validated.'
-related_ideation: [IDEATION-pagination-experience, IDEATION-pagination-unknowns]
+related_ideation: [IDEATION-EXPERIENCE-pagination, IDEATION-UNKNOWNS-pagination]
 drives: []
 ---
-```
 
 ## Document Relationships
 
@@ -37,8 +35,8 @@ Unknowns docs.
 
 **Siblings (other ideation docs):**
 
-- IDEATION-pagination-experience.md (usage patterns)
-- IDEATION-pagination-unknowns.md (open questions)
+- IDEATION-EXPERIENCE-pagination.md (usage patterns)
+- IDEATION-UNKNOWNS-pagination.md (open questions)
 
 **Related:**
 
@@ -87,8 +85,8 @@ Summary: Real failure modes and user frustrations; not solutions or design detai
 
 **In separate docs:**
 
-- How users will experience pagination: IDEATION-pagination-experience.md
-- Open questions: IDEATION-pagination-unknowns.md
+- How users will experience pagination: IDEATION-EXPERIENCE-pagination.md
+- Open questions: IDEATION-UNKNOWNS-pagination.md
 - Business requirements: REQ-pagination-system.md (after approval)
 
 ---
@@ -274,8 +272,8 @@ Other problems that interact with these.
 ## Document Metadata
 
 ```yaml
-id: IDEATION-pagination-problems
-type: IDEATION-problems
+id: IDEATION-PROBLEMS-pagination
+type: IDEATION-PROBLEMS
 status: draft
 stability: experimental
 created: 2025-01-21
@@ -283,7 +281,7 @@ last_updated: 2025-01-21
 area: search
 feature: pagination-system
 problems_count: 3
-related_ideation: [IDEATION-pagination-experience, IDEATION-pagination-unknowns]
+related_ideation: [IDEATION-EXPERIENCE-pagination, IDEATION-UNKNOWNS-pagination]
 drives_to: REQ-pagination-system # Will be filled in after Requirements created
 keywords: [pagination, search, timeout, performance, ux, browsing, results]
 ```

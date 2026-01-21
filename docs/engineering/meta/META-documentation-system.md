@@ -29,17 +29,17 @@ index:
         that make it predictable and LLM-friendly.'
       token_est: 133
     - title: 'Scope'
-      lines: [413, 457]
+      lines: [418, 463]
       summary:
         'Covers the documentation lifecycle conventions, metadata expectations, linking rules, and
         the automation that keeps indices current.'
       token_est: 159
     - title: 'Main Content'
-      lines: [190, 412]
+      lines: [190, 417]
       summary:
         'Covers the critical workflows, formatting rules, automation, and agent guidance that make
         this system cohesive.'
-      token_est: 1467
+      token_est: 1472
       subsections:
         - title: 'Critical: Keeping Indices in Sync'
           lines: [195, 220]
@@ -65,47 +65,47 @@ index:
             'Explains when to write each doc type and how Meta documents tie the system together.'
           token_est: 145
         - title: 'Naming, Linking & Key Principles'
-          lines: [307, 373]
+          lines: [307, 378]
           summary:
             'Provides the folder/file naming, cross-linking rules, and core principles that keep
             documents consistent and machine-readable.'
-          token_est: 292
+          token_est: 297
         - title: 'Getting Started'
-          lines: [375, 398]
+          lines: [380, 403]
           summary: 'Lists the author flow and checklist for creating a compliant document.'
           token_est: 218
         - title: 'Section Indexing: Structure for LLM Parsing'
-          lines: [400, 412]
+          lines: [405, 417]
           summary: 'Section-first summaries let LLMs read just what they need.'
           token_est: 81
     - title: 'Scope'
-      lines: [413, 457]
+      lines: [418, 463]
       summary:
         'API covers offset/limit pagination; excludes cursor-based and export pagination. ```'
       token_est: 322
       subsections:
         - title: 'For LLMs and Agents'
-          lines: [423, 435]
+          lines: [428, 440]
           summary: 'Instructions on how automated agents should interpret the documentation system.'
           token_est: 112
         - title: 'Automation: Keeping Indices in Sync'
-          lines: [437, 457]
+          lines: [442, 463]
           summary: 'Automation re-generates indices and validates metadata on every commit.'
           token_est: 159
     - title: 'Blockers'
-      lines: [459, 467]
+      lines: [465, 473]
       summary:
         'No active blockers; automation/human workflow currently handles indexing and validation.'
       token_est: 56
     - title: 'Design Decisions'
-      lines: [469, 481]
+      lines: [475, 487]
       token_est: 198
     - title: 'Assumptions & Unknowns'
-      lines: [483, 492]
+      lines: [489, 498]
       summary: 'Tracks open questions about the documentation system.'
       token_est: 120
     - title: 'Document Metadata'
-      lines: [494, 512]
+      lines: [500, 518]
       summary:
         'Mirrors the frontmatter for machine consumption so downstream tools can confirm metadata.'
       token_est: 98
@@ -255,7 +255,7 @@ Relationships, TLDR, Scope, Main Content, Design Decisions, etc.
 
 ```yaml
 ---
-type: SPEC # or REQ, IMPL-PLAN, IDEATION-problems, IDEATION-experience, IDEATION-unknowns, META
+type: SPEC # or REQ, IMPL-PLAN, IDEATION-PROBLEMS, IDEATION-EXPERIENCE, IDEATION-UNKNOWNS, META
 status: active # draft, active, approved, deprecated, archived, on-hold, completed
 stability: stable # experimental, beta, stable
 created: 2025-01-21
@@ -271,7 +271,7 @@ summary_long: '(Longer 3-5 sentence summary)'
 
 **Fields explained:**
 
-- `type`: The document family (IDEATION, REQ, SPEC, IMPL-PLAN, META)
+- `type`: The document family (IDEATION-PROBLEMS/EXPERIENCE/UNKNOWNS, REQ, SPEC, IMPL-PLAN, META)
 - `status`: Workflow status captured in the registry
 - `stability`: How likely the content is to change
 - `created` / `last_updated`: ISO dates (the automation updates `last_updated` on commit)
@@ -317,7 +317,9 @@ documents consistent and machine-readable.
     README.md
     DOCUMENT-REGISTRY.md
     /_templates
-      IDEATION-template-*.md
+      IDEATION-PROBLEMS-template.md
+      IDEATION-EXPERIENCE-template.md
+      IDEATION-UNKNOWNS-template.md
       REQ-template.md
       SPEC-template.md
       IMPL-PLAN-template.md
@@ -325,7 +327,9 @@ documents consistent and machine-readable.
       README.md
     /00-ideation
       README.md
-      IDEATION-<feature>-*.md
+      IDEATION-PROBLEMS-<feature>.md
+      IDEATION-EXPERIENCE-<feature>.md
+      IDEATION-UNKNOWNS-<feature>.md
     /01-requirements
       README.md
       REQ-<feature>.md
@@ -342,7 +346,8 @@ documents consistent and machine-readable.
 
 **File naming:**
 
-- Ideation: `IDEATION-<feature>-problems.md`, `-experience.md`, `-unknowns.md`
+- Ideation: `IDEATION-PROBLEMS-<feature>.md`, `IDEATION-EXPERIENCE-<feature>.md`,
+  `IDEATION-UNKNOWNS-<feature>.md`
 - Requirements: `REQ-<feature>.md`
 - Specifications: `SPEC-<area>-<topic>.md`
 - Implementation Plans: `IMPL-PLAN-<area>-<topic>.md`
@@ -443,7 +448,8 @@ When you commit documentation changes:
 1. ✅ `DOCUMENT-REGISTRY.md` is regenerated from all document frontmatter
 2. ✅ Folder README lists are updated (Active/Archived sections)
 3. ✅ YAML frontmatter is validated for required fields
-4. ✅ Naming conventions are verified (IDEATION-, REQ-, SPEC-, IMPL-PLAN-, META-)
+4. ✅ Naming conventions are verified (IDEATION-PROBLEMS-/EXPERIENCE-/UNKNOWNS-, REQ-, SPEC-,
+   IMPL-PLAN-, META-)
 5. ✅ Cross-references are checked for valid targets
 6. ✅ The frontmatter index—the LLM-facing query surface built from each document’s metadata—is
    refreshed so agents can filter by type/area/status and the registry automation stays accurate

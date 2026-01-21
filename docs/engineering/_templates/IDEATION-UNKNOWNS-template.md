@@ -1,6 +1,5 @@
-```yaml
 ---
-type: IDEATION-unknowns
+type: IDEATION-UNKNOWNS
 status: draft
 stability: experimental
 created: YYYY-MM-DD
@@ -18,16 +17,15 @@ summary_long:
   finalization. Tracks resolved questions for audit trail.'
 unknowns_count: 5
 blockers_count: 3
-related_ideation: [IDEATION-pagination-problems, IDEATION-pagination-experience]
+related_ideation: [IDEATION-PROBLEMS-pagination, IDEATION-EXPERIENCE-pagination]
 ---
-```
 
 ## Document Relationships
 
 **Upstream (context):**
 
-- IDEATION-pagination-problems.md (problems driving these questions)
-- IDEATION-pagination-experience.md (user expectations)
+- IDEATION-PROBLEMS-pagination.md (problems driving these questions)
+- IDEATION-EXPERIENCE-pagination.md (user expectations)
 
 **Downstream (informs):**
 
@@ -36,12 +34,12 @@ related_ideation: [IDEATION-pagination-problems, IDEATION-pagination-experience]
 
 **Siblings (other ideation docs):**
 
-- IDEATION-pagination-problems.md (what's wrong?)
-- IDEATION-pagination-experience.md (how is it used?)
+- IDEATION-PROBLEMS-pagination.md (what's wrong?)
+- IDEATION-EXPERIENCE-pagination.md (how is it used?)
 
 **Related:**
 
-- IDEATION-pagination-unknowns.md (open questions)
+- IDEATION-UNKNOWNS-pagination.md (open questions)
 
 ---
 
@@ -76,8 +74,8 @@ related_ideation: [IDEATION-pagination-problems, IDEATION-pagination-experience]
 
 **In separate docs:**
 
-- Known problems: IDEATION-pagination-problems.md
-- Usage patterns: IDEATION-pagination-experience.md
+- Known problems: IDEATION-PROBLEMS-pagination.md
+- Usage patterns: IDEATION-EXPERIENCE-pagination.md
 - Design decisions: SPEC-\*.md
 - Requirements: REQ-pagination-system.md
 
@@ -366,8 +364,8 @@ increase later if needed.
 ## Document Metadata
 
 ```yaml
-id: IDEATION-pagination-unknowns
-type: IDEATION-unknowns
+id: IDEATION-UNKNOWNS-pagination
+type: IDEATION-UNKNOWNS
 status: draft
 stability: experimental
 created: 2025-01-21
@@ -378,7 +376,7 @@ unknowns_count: 5
 blockers_count: 3
 nice_to_know_count: 3
 resolved_count: 2
-related_ideation: [IDEATION-pagination-problems, IDEATION-pagination-experience]
+related_ideation: [IDEATION-PROBLEMS-pagination, IDEATION-EXPERIENCE-pagination]
 blocking_until: 2025-01-24
 keywords: [unknowns, assumptions, blockers, pagination, design-decisions, closure-criteria]
 ```

@@ -31,7 +31,7 @@ IMPL-PLAN-pagination-system.
 
 - REQ-pagination-system.md (Requirements this implements)
 - SPEC-shared-pagination-lib.md (shared code dependency)
-- IDEATION-pagination-experience.md (user context)
+- IDEATION-EXPERIENCE-pagination.md (user context)
 
 **Downstream (depends on this):**
 
@@ -98,7 +98,7 @@ frontend UI, export pagination, and result ranking.
 
 - Requirements: REQ-pagination-system.md
 - Shared library: SPEC-shared-pagination-lib.md
-- User experience: IDEATION-pagination-experience.md
+- User experience: IDEATION-EXPERIENCE-pagination.md
 - Execution plan: IMPL-PLAN-pagination-system.md
 
 ---

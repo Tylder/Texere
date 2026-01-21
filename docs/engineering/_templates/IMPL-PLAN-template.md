@@ -1,4 +1,3 @@
-```yaml
 ---
 type: IMPL-PLAN
 status: draft # draft, active, completed, on-hold
@@ -21,7 +20,6 @@ covers:
 depends_on: [SPEC-shared-pagination-lib]
 blocks: []
 ---
-```
 
 ## Document Relationships
 
@@ -102,7 +100,7 @@ Excludes detailed design (in Specs) and cursor pagination.
 - Search Spec: SPEC-search-results-pagination.md
 - User list Spec: SPEC-user-list-pagination.md
 - Timeline Spec: SPEC-timeline-pagination.md
-- User experience: IDEATION-pagination-experience.md
+- User experience: IDEATION-EXPERIENCE-pagination.md
 
 ---
 

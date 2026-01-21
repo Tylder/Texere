@@ -14,9 +14,9 @@ Template files for each document type. Use these as starting points when creatin
 
 ### Ideation Templates
 
-- **`IDEATION-template-problems.md`** – Problems, failure modes, scenarios, resolution indicators
-- **`IDEATION-template-experience.md`** – Personas, journeys, invariants, failure & recovery
-- **`IDEATION-template-unknowns.md`** – Open questions, blockers, closure criteria
+- **`IDEATION-PROBLEMS-template.md`** – Problems, failure modes, scenarios, resolution indicators
+- **`IDEATION-EXPERIENCE-template.md`** – Personas, journeys, invariants, failure & recovery
+- **`IDEATION-UNKNOWNS-template.md`** – Open questions, blockers, closure criteria
 
 Use all three for a complete ideation. You can skip Problems or Unknowns for small features, but
 Experience is usually useful.

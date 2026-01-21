@@ -1,6 +1,5 @@
-```yaml
 ---
-type: IDEATION-problems
+type: IDEATION-PROBLEMS
 status: draft
 stability: experimental
 created: 2025-01-21
@@ -9,12 +8,74 @@ area: ai-coding-system
 feature: state-and-visibility
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short: 'System lacks durable epistemic state, canonical baselines, and visibility into current understanding; state is hidden in chat narratives'
-summary_long: 'Identifies 6 critical state-management problems: no durable separation between facts/assumptions/unknowns, no safe separation of current baseline from history, no canonical user-visible understanding, invisible open work and decisions, opaque context selection, and no session-to-session delta visibility. Without good state infrastructure, all other system improvements are compromised.'
-related_ideation: [IDEATION-session-continuity-problems, IDEATION-orchestration-and-governance-problems, IDEATION-user-trust-and-feedback-problems]
+summary_short:
+  'System lacks durable epistemic state, canonical baselines, and visibility into current
+  understanding; state is hidden in chat narratives'
+summary_long:
+  'Identifies 6 critical state-management problems: no durable separation between
+  facts/assumptions/unknowns, no safe separation of current baseline from history, no canonical
+  user-visible understanding, invisible open work and decisions, opaque context selection, and no
+  session-to-session delta visibility. Without good state infrastructure, all other system
+  improvements are compromised.'
+related_ideation:
+  [
+    IDEATION-PROBLEMS-session-continuity,
+    IDEATION-PROBLEMS-orchestration-and-governance,
+    IDEATION-PROBLEMS-user-trust-and-feedback,
+  ]
 drives: []
+index:
+  sections:
+    - title: "Document Relationships"
+      lines: [80, 102]
+      token_est: 107
+    - title: "TLDR"
+      lines: [104, 129]
+      token_est: 210
+    - title: "Scope"
+      lines: [131, 155]
+      token_est: 142
+    - title: "Overview"
+      lines: [157, 168]
+      token_est: 116
+    - title: "Problems"
+      lines: [170, 471]
+      token_est: 2230
+      subsections:
+        - title: "Problem 1: PROB-003 — No durable epistemic state (facts, hypotheses, unknowns)"
+          lines: [172, 226]
+          token_est: 361
+        - title: "Problem 2: PROB-010 — No safe separation between "current baseline" and historical record"
+          lines: [228, 278]
+          token_est: 403
+        - title: "Problem 3: PROB-025 — Current system state is not externally visible or inspectable"
+          lines: [280, 325]
+          token_est: 393
+        - title: "Problem 4: PROB-026 — No canonical, user-visible "current understanding" baseline"
+          lines: [327, 377]
+          token_est: 380
+        - title: "Problem 5: PROB-027 — Open work (todos, unknowns, decisions) is not continuously visible"
+          lines: [379, 425]
+          token_est: 357
+        - title: "Problem 6: PROB-030 — State changes across sessions are not clearly surfaced to the user"
+          lines: [427, 471]
+          token_est: 336
+    - title: "Success Signals (System Level)"
+      lines: [473, 485]
+      token_est: 125
+    - title: "Assumptions"
+      lines: [487, 497]
+      token_est: 85
+    - title: "Unknowns"
+      lines: [499, 510]
+      token_est: 110
+    - title: "Related Problems"
+      lines: [512, 525]
+      token_est: 93
+    - title: "Document Metadata"
+      lines: [527, 559]
+      token_est: 68
 ---
-```
 
 ## Document Relationships
 
@@ -31,8 +92,8 @@ drives: []
 
 **Siblings (other ideation docs):**
 
-- IDEATION-session-continuity-problems.md (how state persists across sessions)
-- IDEATION-orchestration-and-governance-problems.md (how state discipline is enforced)
+- IDEATION-PROBLEMS-session-continuity.md (how state persists across sessions)
+- IDEATION-PROBLEMS-orchestration-and-governance.md (how state discipline is enforced)
 
 **Related:**
 
@@ -42,15 +103,22 @@ drives: []
 
 ## TLDR
 
-**Summary:** The system cannot tell the user (or itself) what it currently believes to be true, what is uncertain, what is still open, or why. State is buried in chat narratives, making it invisible, non-inspectable, and vulnerable to drift.
+**Summary:** The system cannot tell the user (or itself) what it currently believes to be true, what
+is uncertain, what is still open, or why. State is buried in chat narratives, making it invisible,
+non-inspectable, and vulnerable to drift.
 
-**What:** Establish durable, inspectable, externally visible state management as the foundation for agent-assisted coding.
+**What:** Establish durable, inspectable, externally visible state management as the foundation for
+agent-assisted coding.
 
-**Why:** Without visible state, the user and system operate on different implicit understandings, decisions are not durable across sessions, unknowns become silent assumptions, and orchestration cannot enforce discipline.
+**Why:** Without visible state, the user and system operate on different implicit understandings,
+decisions are not durable across sessions, unknowns become silent assumptions, and orchestration
+cannot enforce discipline.
 
-**How:** Design a state structure that separates facts from assumptions from decisions, makes it canonical and user-inspectable, tracks open items, and persists reliably across sessions.
+**How:** Design a state structure that separates facts from assumptions from decisions, makes it
+canonical and user-inspectable, tracks open items, and persists reliably across sessions.
 
-**Status:** Problem discovery phase; state management is blocking progress on all downstream systems.
+**Status:** Problem discovery phase; state management is blocking progress on all downstream
+systems.
 
 **Critical questions to answer:**
 
@@ -80,17 +148,22 @@ drives: []
 
 **In separate docs:**
 
-- How state persists across sessions: IDEATION-session-continuity-problems.md
-- How state discipline is enforced: IDEATION-orchestration-and-governance-problems.md
-- How state is used for trust calibration: IDEATION-user-trust-and-feedback-problems.md
+- How state persists across sessions: IDEATION-PROBLEMS-session-continuity.md
+- How state discipline is enforced: IDEATION-PROBLEMS-orchestration-and-governance.md
+- How state is used for trust calibration: IDEATION-PROBLEMS-user-trust-and-feedback.md
 
 ---
 
 ## Overview
 
-The agent-assisted coding system must maintain a coherent, durable, and externally visible representation of what it currently understands to be true, what is assumed, what is uncertain, what is being decided, and what work remains. Without this, the user and system drift apart, decisions are lost across sessions, unknowns become silent hypotheses, and quality control fails.
+The agent-assisted coding system must maintain a coherent, durable, and externally visible
+representation of what it currently understands to be true, what is assumed, what is uncertain, what
+is being decided, and what work remains. Without this, the user and system drift apart, decisions
+are lost across sessions, unknowns become silent hypotheses, and quality control fails.
 
-This document identifies 6 core state-visibility problems that affect all downstream systems. State infrastructure is not a feature; it is the foundation upon which continuity, orchestration, and user trust depend.
+This document identifies 6 core state-visibility problems that affect all downstream systems. State
+infrastructure is not a feature; it is the foundation upon which continuity, orchestration, and user
+trust depend.
 
 ---
 
@@ -123,14 +196,19 @@ Agent sessions typically maintain an undifferentiated narrative. They do not rel
 
 **Scenarios / Examples**
 
-- The agent reads one file and infers "this is the only service layer." Next session, that inference is treated as fact, causing missed integration points.
-- A constraint discovered during investigation is mentioned once, then treated as design decision without explicit acknowledgment.
-- The agent responds to ambiguity by guessing, and the guess becomes the assumed baseline for future work.
+- The agent reads one file and infers "this is the only service layer." Next session, that inference
+  is treated as fact, causing missed integration points.
+- A constraint discovered during investigation is mentioned once, then treated as design decision
+  without explicit acknowledgment.
+- The agent responds to ambiguity by guessing, and the guess becomes the assumed baseline for future
+  work.
 
 **Resolution Indicators**
 
-- The system maintains a durable separation between **facts**, **assumptions**, **hypotheses**, and **unknowns**, and that separation survives session resets.
-- The agent can consistently answer: "What do we know, what are we guessing, and what is unresolved?" without contradiction.
+- The system maintains a durable separation between **facts**, **assumptions**, **hypotheses**, and
+  **unknowns**, and that separation survives session resets.
+- The agent can consistently answer: "What do we know, what are we guessing, and what is
+  unresolved?" without contradiction.
 - Previously unvalidated assumptions do not silently become "background truth" in later sessions.
 - Changes in beliefs are explicitly marked (moved from unknown→assumption→fact) with rationale.
 
@@ -142,7 +220,8 @@ Agent sessions typically maintain an undifferentiated narrative. They do not rel
 
 **Non-goals / Boundaries**
 
-- Not a demand for philosophical completeness; the problem is practical: confusion between facts and guesses leads to wrong code.
+- Not a demand for philosophical completeness; the problem is practical: confusion between facts and
+  guesses leads to wrong code.
 
 ---
 
@@ -154,7 +233,8 @@ Agent sessions typically maintain an undifferentiated narrative. They do not rel
 
 **Problem Statement**
 
-Developers need a coherent view of the latest state, but losing or corrupting history destroys correctness and accountability. Many systems either:
+Developers need a coherent view of the latest state, but losing or corrupting history destroys
+correctness and accountability. Many systems either:
 
 - keep only summaries (truth loss), or
 - keep everything but cannot produce a coherent "current" view.
@@ -169,16 +249,20 @@ Developers need a coherent view of the latest state, but losing or corrupting hi
 
 **Scenarios / Examples**
 
-- A summarised "current plan" omits a rejected alternative and its rationale. Later work repeats the rejected approach because the history is inaccessible.
-- After a decision is revisited, the old decision statement is deleted, losing the evidence for why it was originally chosen.
-- The agent maintains both an "old view" and "new view" of architecture without explicit reconciliation, causing contradictions.
+- A summarised "current plan" omits a rejected alternative and its rationale. Later work repeats the
+  rejected approach because the history is inaccessible.
+- After a decision is revisited, the old decision statement is deleted, losing the evidence for why
+  it was originally chosen.
+- The agent maintains both an "old view" and "new view" of architecture without explicit
+  reconciliation, causing contradictions.
 
 **Resolution Indicators**
 
 - A coherent "current baseline" exists that does not require re-reading full history to use safely.
 - Historical records are not silently overwritten to keep the current view convenient.
 - The system can distinguish what is current vs what is historical vs what is derived/inferred.
-- Users can ask "what changed since we last paused?" and get a precise answer without re-reading logs.
+- Users can ask "what changed since we last paused?" and get a precise answer without re-reading
+  logs.
 
 **Impact**
 
@@ -188,7 +272,8 @@ Developers need a coherent view of the latest state, but losing or corrupting hi
 
 **Non-goals / Boundaries**
 
-- Not a demand for a specific storage model; the problem is unsafe collapse of "current" and "history" into an unreliable narrative.
+- Not a demand for a specific storage model; the problem is unsafe collapse of "current" and
+  "history" into an unreliable narrative.
 
 ---
 
@@ -200,7 +285,9 @@ Developers need a coherent view of the latest state, but losing or corrupting hi
 
 **Problem Statement**
 
-The user cannot reliably see what the system believes the current state is (what is true, what is in progress, what is blocked, and why). State is implicit in chat flow rather than explicit and inspectable.
+The user cannot reliably see what the system believes the current state is (what is true, what is in
+progress, what is blocked, and why). State is implicit in chat flow rather than explicit and
+inspectable.
 
 **Failure Modes**
 
@@ -212,8 +299,10 @@ The user cannot reliably see what the system believes the current state is (what
 
 **Scenarios / Examples**
 
-- After several turns, the user is unsure whether the agent is waiting on input, proceeding autonomously, or stuck, and issues redundant instructions that further confuse state.
-- The user reads an old assumption and assumes it is still current; the system has since learned new constraints but never surfaced the change.
+- After several turns, the user is unsure whether the agent is waiting on input, proceeding
+  autonomously, or stuck, and issues redundant instructions that further confuse state.
+- The user reads an old assumption and assumes it is still current; the system has since learned new
+  constraints but never surfaced the change.
 - A blocker is identified but then buried in chat; work proceeds as if it is unresolved.
 
 **Resolution Indicators**
@@ -243,7 +332,8 @@ The user cannot reliably see what the system believes the current state is (what
 
 **Problem Statement**
 
-There is no single, authoritative, user-visible representation of what the system currently believes to be true, assumed, constrained, and decided.
+There is no single, authoritative, user-visible representation of what the system currently believes
+to be true, assumed, constrained, and decided.
 
 **Failure Modes**
 
@@ -255,9 +345,12 @@ There is no single, authoritative, user-visible representation of what the syste
 
 **Scenarios / Examples**
 
-- The user believes a constraint was agreed upon earlier. The agent does not apply it because it exists only implicitly in prior conversation turns.
-- The user corrects an assumption in one turn; the agent uses the old assumption in the next turn because there is no canonical record of what was updated.
-- Two different problem statements are sketched in separate turns; no way to see which is "the current one".
+- The user believes a constraint was agreed upon earlier. The agent does not apply it because it
+  exists only implicitly in prior conversation turns.
+- The user corrects an assumption in one turn; the agent uses the old assumption in the next turn
+  because there is no canonical record of what was updated.
+- Two different problem statements are sketched in separate turns; no way to see which is "the
+  current one".
 
 **Resolution Indicators**
 
@@ -274,7 +367,8 @@ There is no single, authoritative, user-visible representation of what the syste
 
 **Non-goals / Boundaries**
 
-- Not a demand for a perfect summary; the problem is absence of an authoritative, inspectable baseline.
+- Not a demand for a perfect summary; the problem is absence of an authoritative, inspectable
+  baseline.
 
 **Overlap note:**
 
@@ -290,7 +384,8 @@ There is no single, authoritative, user-visible representation of what the syste
 
 **Problem Statement**
 
-Items that are still open (unknowns, pending decisions, risks, planned actions) are not persistently visible and are easily forgotten by both user and system.
+Items that are still open (unknowns, pending decisions, risks, planned actions) are not persistently
+visible and are easily forgotten by both user and system.
 
 **Failure Modes**
 
@@ -302,9 +397,12 @@ Items that are still open (unknowns, pending decisions, risks, planned actions) 
 
 **Scenarios / Examples**
 
-- A critic flags a missing edge case. Several turns later, implementation continues as if the issue was resolved, even though it was never addressed.
-- An unknown ("Does the API support pagination?") is raised; work proceeds as if the answer is "yes" without confirming.
-- A risk ("This refactoring might break migrations") is noted; the same risk is re-raised verbatim in a later session because it was never closed.
+- A critic flags a missing edge case. Several turns later, implementation continues as if the issue
+  was resolved, even though it was never addressed.
+- An unknown ("Does the API support pagination?") is raised; work proceeds as if the answer is "yes"
+  without confirming.
+- A risk ("This refactoring might break migrations") is noted; the same risk is re-raised verbatim
+  in a later session because it was never closed.
 
 **Resolution Indicators**
 
@@ -321,7 +419,8 @@ Items that are still open (unknowns, pending decisions, risks, planned actions) 
 
 **Non-goals / Boundaries**
 
-- Not a requirement for a separate task manager; the problem is loss of situational awareness within the current task.
+- Not a requirement for a separate task manager; the problem is loss of situational awareness within
+  the current task.
 
 ---
 
@@ -333,7 +432,8 @@ Items that are still open (unknowns, pending decisions, risks, planned actions) 
 
 **Problem Statement**
 
-When a user returns after time away, changes in understanding, decisions, risks, and open items are not clearly summarised, forcing re-orientation from scratch.
+When a user returns after time away, changes in understanding, decisions, risks, and open items are
+not clearly summarised, forcing re-orientation from scratch.
 
 **Failure Modes**
 
@@ -345,8 +445,10 @@ When a user returns after time away, changes in understanding, decisions, risks,
 
 **Scenarios / Examples**
 
-- After a day away, the user asks a question that was already answered and closed, because the change was never surfaced.
-- New context was gathered in the last session; the user spends an hour re-researching the same facts.
+- After a day away, the user asks a question that was already answered and closed, because the
+  change was never surfaced.
+- New context was gathered in the last session; the user spends an hour re-researching the same
+  facts.
 - A decision was made but not recorded; the user assumes it is still open and revisits it.
 
 **Resolution Indicators**
@@ -374,7 +476,8 @@ What does "solved" look like from the user and system perspective?
 
 - Users see a clear, canonical representation of the current understanding at any time.
 - Assumptions and facts are never confused; unknowns are never silently resolved.
-- The system can explain what it believes, what changed, and why, without requiring the user to re-read history.
+- The system can explain what it believes, what changed, and why, without requiring the user to
+  re-read history.
 - Open work and decisions remain visible until resolved.
 - Sessions do not corrupt state; users can resume work with clear next steps.
 - The system refuses to proceed when critical unknowns remain unresolved.
@@ -386,7 +489,8 @@ What does "solved" look like from the user and system perspective?
 Facts we are assuming but have not fully validated:
 
 - Users need to see state as structured data, not narrative summaries.
-- State visibility will reduce hallucination and assumption drift more than any other single intervention.
+- State visibility will reduce hallucination and assumption drift more than any other single
+  intervention.
 - A canonical state representation is feasible without requiring complex versioning systems.
 - Most users will accept a consistent, machine-generated state format over free-form chat summaries.
 
@@ -397,7 +501,8 @@ Facts we are assuming but have not fully validated:
 Questions that need answering before requirements or implementation:
 
 - What is the minimum viable state structure (facts, assumptions, unknowns, decisions, constraints)?
-- How should state be displayed to users (structured UI, special formatting, separate view, embedded in chat)?
+- How should state be displayed to users (structured UI, special formatting, separate view, embedded
+  in chat)?
 - How much state history should be retained (full vs recent vs snapshots)?
 - Should state be editable by users, or only by the system (with user confirmation)?
 - How should state conflicts (between user intent and system belief) be detected and surfaced?
@@ -410,17 +515,20 @@ Other problems that interact with state visibility:
 
 - **PROB-001** (Session resets): Cannot recover state across sessions without durable storage.
 - **PROB-008** (Hallucination): Invisible state enables assumptions to become facts silently.
-- **PROB-017** (Reliability on compliance): State discipline is impossible without visible checkpoints.
-- **PROB-031** (Orchestration opacity): Cannot diagnose orchestration issues without visible state at each step.
-- **PROB-035** (Uncertainty communication): Cannot calibrate trust without visible confidence metadata.
+- **PROB-017** (Reliability on compliance): State discipline is impossible without visible
+  checkpoints.
+- **PROB-031** (Orchestration opacity): Cannot diagnose orchestration issues without visible state
+  at each step.
+- **PROB-035** (Uncertainty communication): Cannot calibrate trust without visible confidence
+  metadata.
 
 ---
 
 ## Document Metadata
 
 ```yaml
-id: IDEATION-state-and-visibility-problems
-type: IDEATION-problems
+id: IDEATION-PROBLEMS-state-and-visibility
+type: IDEATION-PROBLEMS
 status: draft
 stability: experimental
 created: 2025-01-21
@@ -428,7 +536,24 @@ last_updated: 2025-01-21
 area: ai-coding-system
 feature: state-and-visibility
 problems_count: 6
-related_ideation: [IDEATION-session-continuity-problems, IDEATION-orchestration-and-governance-problems, IDEATION-user-trust-and-feedback-problems]
+related_ideation:
+  [
+    IDEATION-PROBLEMS-session-continuity,
+    IDEATION-PROBLEMS-orchestration-and-governance,
+    IDEATION-PROBLEMS-user-trust-and-feedback,
+  ]
 drives_to: [] # To be filled after Requirements are created
-keywords: [state, visibility, epistemic, baseline, canonical, open-work, session-delta, facts, assumptions, unknowns]
+keywords:
+  [
+    state,
+    visibility,
+    epistemic,
+    baseline,
+    canonical,
+    open-work,
+    session-delta,
+    facts,
+    assumptions,
+    unknowns,
+  ]
 ```

@@ -37,6 +37,8 @@ const DOC_TYPES = {
   meta: 'META',
 };
 
+const IDEATION_SUBTYPES = ['PROBLEMS', 'EXPERIENCE', 'UNKNOWNS'];
+
 const FOLDER_ORDER = ['ideation', 'requirements', 'specifications', 'plans', 'meta'];
 
 const REQUIRED_FRONTMATTER_FIELDS = [
@@ -207,10 +209,19 @@ function validateFrontmatter(doc, errors) {
     }
   }
 
-  if (doc.frontmatter.type && doc.frontmatter.type !== DOC_TYPES[doc.type]) {
-    errors.push(
-      `${doc.relativePath}: type="${doc.frontmatter.type}" doesn't match folder (expected ${DOC_TYPES[doc.type]})`,
-    );
+  if (doc.frontmatter.type) {
+    if (doc.type === 'ideation') {
+      const expectedTypes = IDEATION_SUBTYPES.map((subtype) => `${DOC_TYPES.ideation}-${subtype}`);
+      if (!expectedTypes.includes(doc.frontmatter.type)) {
+        errors.push(
+          `${doc.relativePath}: type="${doc.frontmatter.type}" doesn't match folder (expected one of ${expectedTypes.join(', ')})`,
+        );
+      }
+    } else if (doc.frontmatter.type !== DOC_TYPES[doc.type]) {
+      errors.push(
+        `${doc.relativePath}: type="${doc.frontmatter.type}" doesn't match folder (expected ${DOC_TYPES[doc.type]})`,
+      );
+    }
   }
 
   return Object.keys(doc.frontmatter || {}).length > 0;
@@ -218,6 +229,24 @@ function validateFrontmatter(doc, errors) {
 
 function validateNaming(doc, errors) {
   const prefix = DOC_TYPES[doc.type];
+  if (doc.type === 'ideation') {
+    const match = doc.file.match(/^IDEATION-([A-Z]+)-/);
+    if (!match || !IDEATION_SUBTYPES.includes(match[1])) {
+      errors.push(
+        `${doc.relativePath}: Should start with "IDEATION-(PROBLEMS|EXPERIENCE|UNKNOWNS)-" (e.g., "IDEATION-PROBLEMS-my-feature.md")`,
+      );
+      return;
+    }
+
+    if (doc.frontmatter?.type && doc.frontmatter.type !== `IDEATION-${match[1]}`) {
+      errors.push(
+        `${doc.relativePath}: type="${doc.frontmatter.type}" doesn't match filename subtype (expected IDEATION-${match[1]})`,
+      );
+    }
+
+    return;
+  }
+
   if (doc.type !== 'meta' && !doc.file.startsWith(prefix + '-')) {
     errors.push(
       `${doc.relativePath}: Should start with "${prefix}-" (e.g., "${prefix}-my-feature.md")`,
