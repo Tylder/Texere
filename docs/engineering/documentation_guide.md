@@ -1,990 +1,511 @@
-# System Documentation Guide (Revised)
+# System Documentation Guide
 
-This document defines **what types of documents exist**, **when to create each**, and **what
-information belongs where**. It is the authoritative guide for structuring thinking, decisions, and
-execution across the system.
+A simple documentation system for moving from idea to implementation in as few steps as possible,
+while remaining functional for humans and LLMs.
 
-The goal is to:
+## Overview
 
-- avoid mixing exploration, obligations, decisions, and implementation
-- keep durable knowledge durable, and disposable work disposable
-- ensure every document has a clear purpose and lifecycle
-- ensure early brainstorming converges into stable, testable intent
-- ensure every initiative ends with a **Spec** and an **Implementation Plan**
+This guide defines **four document types** that cover the full lifecycle: discovery through
+execution.
 
----
+| Document Type           | Required    | Purpose                                                     | Lifecycle                               |
+| ----------------------- | ----------- | ----------------------------------------------------------- | --------------------------------------- |
+| **Ideation**            | No          | Capture brainstorms, problems, personas, journeys, unknowns | Disposable; converges into Requirements |
+| **Requirements**        | Recommended | Define what MUST be true                                    | Durable; testable obligations           |
+| **Specification**       | Yes         | Define the build/test contract                              | Durable; evolves via git                |
+| **Implementation Plan** | Yes         | Define execution roadmap                                    | Operational; evolves via git            |
 
-## High-level flow (canonical order)
-
-**Lifecycle principle:**
-
-- **Exploration logs** capture messy thinking and are intentionally disposable.
-- **Problem Definitions** are the first durable convergence artifact.
-- **Domain RFC / XRFC** establish vocabulary and usage before writing obligations.
-- **Requirements (REQ)** drive the system; they define what must be true.
-- **RFC / ADR** explore how to meet requirements and record decisions.
-- **Specs** are versioned contracts that implement REQs and depend on ADRs.
-- **Implementation Plans** are operational roadmaps that must not introduce new decisions.
-
-### Canonical sequence
-
-1. **Exploration Log (EXPLOG)** – capture brainstorms and raw thinking (disposable)
-2. **Problem Definition (PROBDEF)** – converge on what is actually wrong/needed (durable)
-3. **Domain / Concept RFC (DRFC)** – define what the system is (exploratory; establishes vocabulary)
-4. **Experience RFC (XRFC)** – define how the system is used (exploratory; establishes usage intent)
-5. **Requirements (REQ)** – define what MUST be true (durable; driven by PROBDEF resolution
-   indicators)
-6. **RFC (Proposal / Design Discussion)** – explore options and trade-offs to meet REQs
-   (exploratory)
-7. **ADR (Architecture Decision Record)** – record decisions when they are made (durable)
-8. **Specifications (Spec)** – define the build/test contract (versioned; implements REQs, depends
-   on ADRs)
-9. **Implementation Plan (IMPL-PLAN)** – define sequencing and execution roadmap (operational)
-
-### Rationale for requirements-first order
-
-**Why REQ comes before RFC/ADR:**
-
-Traditional requirements-first design is more robust than exploring options first:
-
-- **Requirements drive exploration.** If you write RFC/ADR before REQ, you design solutions without
-  a clear contract for what they must satisfy. Options look attractive in a vacuum but may miss
-  obligations.
-- **Requirements prevent scope creep.** Clarifying "what must be true" before designing focuses RFC
-  work on solving real problems, not imagined ones.
-- **Requirements are testable.** REQs have measurable fit criteria; RFCs then evaluate options
-  against those criteria, not against vague goals.
-- **Decisions become defensible.** An ADR that says "we chose X to satisfy REQ-Y" is more credible
-  than "we chose X because it seemed good."
-
-This does not mean REQs are written in isolation. They derive from PROBDEF resolution indicators
-(the observable signals that problems are solved). The sequence ensures obligations are clear before
-commitment.
-
-### Mandatory gates
-
-- No **REQ** is created unless it traces to one or more **PROBDEF** problems.
-- No **RFC** is created without reference to the **REQ(s)** it is meant to satisfy.
-- No **ADR** is accepted without reference to at least one **REQ** or **RFC** that justified the
-  decision.
-- No **Spec** is considered "ready" unless it lists the REQs it implements and the ADRs it depends
-  on.
-- No work is considered "ready to execute" unless there is a current **IMPL-PLAN**.
+**Canonical sequence:** Ideation → Requirements → Specification → Implementation Plan
 
 ---
 
-## 0. Exploration Log (EXPLOG)
+## When to Write Each
 
-### Purpose
+### Ideation
 
-Capture messy, high-entropy exploration: brainstorms, back-and-forth sessions, contradictory ideas,
-partial workflows, and uncertainty.
+**Use when:**
 
-This exists because early discovery often requires a conversational process to find the truth of
-what should be built. EXPLOG lets you do that without contaminating contractual documents.
+- You are still discovering what you need
+- You are brainstorming options, unknowns, and tradeoffs
+- Your understanding is shifting day-to-day
 
-### Use when
+**What belongs here:**
 
-- You are still discovering what you want/need
-- You need to capture a brainstorming session for later synthesis
-- You are iterating quickly and your understanding is shifting day-to-day
+**1. Problems & Discovery**
 
-### Minimum content (required)
+- Raw ideas and alternative framings
+- Half-formed workflows and scenarios
+- Unresolved contradictions
+- Problems and failure modes (what's broken or insufficient)
+- Unknowns and assumptions
+- Success signals (what does "better" look like?)
 
-- Session header: date, participants (human/agent), topic
-- Notes (freeform)
-- End-of-session **Synthesis Delta**:
-  - New facts discovered
-  - New assumptions introduced
-  - Unknowns created or closed
-  - Candidate problems to add/update in PROBDEF
-  - Candidate journeys to add/update in XRFC
+**2. Experience & Usage** (required section)
 
-### Lifecycle / status
+- **Personas:** who will use this? (operators, users, system actors)
+- **Primary journeys:** 1–3 happy-path workflows per persona
+  - Example: "Alice (data analyst) wants to export results in CSV format in under 10 seconds"
+- **Experience invariants:** always / never statements
+  - Example: "Users should always see progress; never show a blank screen for >2 seconds"
+- **Failure & recovery:** what happens when things go wrong?
+  - Example: "Export fails midway → show error + option to retry or download partial results"
+- **Success signals:** time, clarity, error visibility
+  - Example: "Export completes in <5 seconds; user sees confirmation with download link"
 
-- Always **Draft**
-- Never treated as canonical truth
-- May be superseded or archived freely
+**What does NOT belong here:**
 
-### What belongs here
+- Finalized obligations using MUST/SHOULD/MAY (those go in Requirements)
+- Implementation details that will become commitments
+- Binding decisions (those go in Specification)
+- Architecture or technology choices
 
-- raw ideas
-- alternative framings
-- half-formed workflows
-- unresolved contradictions
-- “maybe” statements
+**How to write the Experience section:**
 
-### What does NOT belong here
+1. Start with **one persona** (e.g., "backend developer integrating our API")
+2. Describe **one primary journey** (the happy path) in 2–4 sentences
+3. Add **one invariant** (something that should always be true)
+4. Add **one failure case** (what do we do if this breaks?)
+5. Add **one success signal** (how do we know it worked?)
 
-- normative requirements (MUST/SHOULD/MAY)
-- binding decisions
-- implementation details that later become commitments
+Keep it conversational, not formal. The goal is clarity on usage intent, not obligation statements.
 
-### Output
+**Example:**
 
-- Inputs for PROBDEF, DRFC, XRFC, RFC
+```markdown
+## Experience
 
----
+### Persona: Alice (backend engineer)
 
-## 1. Problem Definition (PROBDEF)
+Alice integrates third-party APIs into our system. She needs quick feedback and clear error messages
+when integration fails.
 
-### Purpose
+### Primary Journey
 
-Define the **truth of what needs to be solved** before any design commitment.
+1. Alice writes a simple connector in our config format
+2. She runs a test command that validates the connector
+3. Within 5 seconds, she sees either "✓ Valid" or specific error details
+4. If valid, she deploys and monitors initial sync
 
-A Problem Definition is the first durable artifact for an initiative. It exists to prevent building
-the wrong thing correctly and to stop silent assumptions from becoming requirements.
+### Invariant
 
-### Use when
+Alice should never see a generic error. Errors must tell her exactly what went wrong.
 
-- You are starting a new initiative or major change
-- You need clarity on what is broken/insufficient and what “better” means
-- You have a workflow idea but the underlying need is still unstable
+### Failure Case
 
-### Minimum content (required)
+If the connector config is malformed, show "Config error at line 12: missing 'auth_type' field" not
+"Invalid config."
 
-- Scope and non-scope
-- Context / environment (who, where, constraints)
-- **Problems list** (one initiative can contain many problems), where each problem includes:
-  - Problem statement
-  - Failure modes (how the problem manifests)
-  - Scenario(s) / example(s)
-  - Resolution indicators (observable signals that the problem is addressed)
-  - Boundary / non-goals (explicitly what is not being solved)
-- Assumptions register
-- Unknowns register (with closure criteria)
-- Success signals (system-level observable outcomes)
+### Success Signal
 
-### Lifecycle / status
+Alice completes a new connector integration in under 30 minutes (including testing).
+```
 
-- **Draft** → iterated during discovery
-- **Accepted** → stable intent baseline; downstream documents must respect it
-- **Superseded** → replaced by a new PROBDEF when the initiative changes fundamentally
-
-### Rules
-
-- PROBDEF is authoritative for “what” and “why,” not “how.”
-- PROBDEF may reference workflows (XRFC) but must stand alone without them.
-- Problems may be refined for clarity, but do not rewrite history to match a favored solution.
-- If intent changes materially, create a new problem entry or supersede the document.
-
-### Output
-
-- Stable drivers for REQs
-- Stable baseline for XRFC/RFC debates
-- Trace targets for later verification
+**Output:** Converges into Requirements and Specification
 
 ---
 
-## 2. Domain / Concept RFC (DRFC)
+### Requirements
 
-### Purpose
+**Use when:**
 
-Define the **conceptual model** of the system or a major subsystem.
-
-This is where you put things you "know from the start":
-
-- what entities exist
-- what they fundamentally contain
-- invariants and lifecycle
-- vocabulary and mental model
-
-### Use when
-
-- Introducing a new core concept (e.g. Character, Canon, Job, Workflow)
-- You need shared understanding before discussing solutions
-
-### Minimum content (required)
-
-- Purpose and boundaries (what the concept is and is not)
-- Definitions/vocabulary
-- Concept model (conceptual facets and relationships)
-- Invariants (conceptual, non-normative)
-- Lifecycle overview (conceptual)
-- Open questions (if any)
-
-### Lifecycle / status
-
-- **Draft** → iterated freely
-- **Stable** → changes are rare; treat updates as deliberate refactors
-- If a DRFC is replaced, mark the older one as **Superseded** and link to the successor
-
-### What belongs here
-
-- Definitions (e.g. what a Character is)
-- Conceptual fields and groupings (not storage schemas)
-- Invariants (always true rules)
-- Lifecycle stages
-- High-level relationships between concepts
-
-### What does NOT belong here
-
-- MUST/SHOULD/MAY obligations
-- Implementation details
-- APIs, databases, UI components
-
-### Output
-
-- Shared vocabulary
-- Input to XRFCs and RFCs
-
-### Template
-
-See `_templates/DRFC-template.md`
-
----
-
-## 3. Experience RFC (XRFC)
-
-### Purpose
-
-Define the **end-to-end experience** for a persona (operator, user, system actor).
-
-Focus on usage, not internals.
-
-### Use when
-
-- Operator or user experience matters
-- You want to prevent building the wrong thing correctly
-
-### Minimum content (required)
-
-- Persona
-- 1–3 primary journeys (happy path)
-- Experience invariants (always / never)
-- Failure and recovery expectations
-- Success signals (time, clarity, error visibility)
-- Outputs: candidate REQs to be created (or links once created)
-
-### Lifecycle / status
-
-- **Draft** → iterated during exploration
-- **Accepted** → experience intent is agreed; use as a stable input to REQs
-- **Superseded** → replaced by a newer XRFC
-
-### What belongs here
-
-- Persona definition
-- Primary journeys (happy path)
-- Experience invariants (always / never)
-- Failure and recovery expectations
-- Success signals (time, clarity, error visibility)
-
-### What does NOT belong here
-
-- Normative requirements (no MUST/SHOULD/MAY)
-- Architecture or storage choices
-
-### Output
-
-- Candidate requirements
-- Input to technical RFCs
-
-### Template
-
-See `_templates/XRFC-template.md`
-
----
-
-## 4. Requirements (REQ)
-
-### Purpose
-
-Define **normative obligations**: what MUST be true regardless of implementation.
-
-This is the contract that drives exploration and decisions. Requirements are derived from PROBDEF
-resolution indicators and are used to evaluate options in RFCs and justify ADRs.
-
-### Use when
-
-- You need testable, durable obligations
+- You are ready to define testable obligations
 - Multiple implementations or teams must align
-- You want to ensure exploration (RFC) and decisions (ADR) are grounded in clear requirements
+- You want clear traceability from discovery to implementation
 
-### Minimum content (required)
+**What belongs here:**
 
-- Statement using MUST/SHOULD/MAY (one obligation)
-- Measurable fit criteria
-- Verification method
-- Traceability (must link upward to PROBDEF; optionally to DRFC/XRFC if they inform the requirement)
+- MUST/SHOULD/MAY statements (one per requirement)
+- Measurable fit criteria and verification method
+- Why this is needed (traceability to Ideation or problems)
+- Failure modes and edge cases
+- Non-goals (what is explicitly not required)
 
-### Lifecycle / status
+**What does NOT belong here:**
 
-- **Proposed** → candidate obligation
-- **Approved** → accepted contract
-- **Deprecated** → replaced by a new REQ ID when intent changes
+- Design or architecture choices (those go in Specification)
+- Exploration or options (those go in Ideation)
+- Implementation details
 
-### What belongs here
+**Lifecycle:**
 
-- MUST / SHOULD / MAY statements
-- Measurable fit criteria
-- Verification method
-- Traceability back to problems
+- Draft → development
+- Approved → accepted contract; use as reference in Spec
+- Deprecated → replaced by new requirement (do not rewrite; create new ID)
 
-### What does NOT belong here
-
-- Design decisions
-- Exploration
-- UI or API details
-- Options or trade-offs (those belong in RFC)
-
-### Rules
-
-- One obligation per requirement
-- Immutable by ID (deprecate and create a new ID when intent changes)
-- REQs are the contract; they drive RFC exploration
-
-### Output
-
-- Input to RFCs (what must we satisfy?)
-- Input to ADRs (what requirement justifies this decision?)
-- Input to specs and tests
-
-### Template
-
-See `_templates/REQ-template.md`
+**Output:** Feeds Specification and tests
 
 ---
 
-## 5. RFC (Proposal / Discussion)
+### Specification
 
-### Purpose
-
-Explore **options and trade-offs** to meet requirements.
-
-This is where thinking happens, informed by REQs.
-
-### Use when
-
-- Multiple viable approaches exist to satisfy one or more REQs
-- The change is cross-cutting, risky, or expensive to reverse
-
-### Minimum content (required)
-
-- REQ(s) being addressed (what must we satisfy?)
-- Goals and non-goals
-- Constraints
-- Options considered (at least 2 where realistic)
-- Trade-offs (explicit; how each option satisfies REQs differently)
-- Recommendation
-- Open questions
-
-### Lifecycle / status
-
-- **Draft** → discussion and iteration
-- **In review** → converging on a recommendation
-- **Accepted** → the proposal is approved as direction
-- **Closed** → once the resulting ADR(s) exist and the RFC is no longer the active debate surface
-- **Rejected** → explicitly not proceeding
-
-### What belongs here
-
-- Constraints
-- Options considered (evaluated against REQs)
-- Trade-offs
-- Recommendation
-- Open questions
-
-### What does NOT belong here
-
-- Binding obligations (those are REQs)
-- Final decisions without recording them as ADRs
-
-### Output
-
-- Decision points
-- Trigger for ADR creation
-- Informed evaluation of options against requirements
-
-### Template
-
-See `_templates/RFC-template.md`
-
----
-
-## 6. ADR (Architecture Decision Record)
-
-### Purpose
-
-Record a **decision that has been made** and should not be re-litigated.
-
-This is the system's memory. ADRs record which option was chosen (from RFC exploration) and why it
-best satisfies the requirements.
-
-### Use when
-
-- A decision is costly or hard to reverse
-- Future readers will ask "why did we do this?"
-- An RFC has converged on a recommendation
-
-### Minimum content (required)
-
-- Status
-- Context (including links to drivers: REQ(s)/RFC/PROBDEF)
-- Decision (specific)
-- Alternatives considered (at least the most plausible)
-- Consequences (positive and negative)
-
-### Lifecycle / status
-
-- **Accepted** → canonical record
-- **Superseded** → replaced by a newer ADR (link to successor)
-
-### Rules
-
-- Append-only: do not rewrite; supersede
-- One decision per ADR
-- Supersede with a new ADR; never rewrite
-- Must reference the REQ(s) or RFC that justified the decision
-
-### Output
-
-- Immutable rationale referenced by specs and code
-- Dependency constraint for specs
-
-### Template
-
-See `_templates/ADR-template.md`
-
----
-
-## 7. Specifications (Spec)
-
-### Purpose
-
-Define the **build/test contract**.
-
-This is what engineers implement and test against.
-
-### Use when
+**Use when:**
 
 - Something needs to be built
 - Interfaces, behavior, or invariants must be precise
+- You want a testable contract
 
-### Minimum content (required)
+**What belongs here:**
 
-- Scope and non-scope
-- Interfaces / observable behavior
-- Invariants and state transitions (if applicable)
-- Error semantics and failure modes
-- Validation approach (how conformance is proven)
-- References: Implements REQs; cites ADRs as decision basis
-
-### Lifecycle / status
-
-- **Draft** → under design
-- **Active** → used for implementation and testing
-- **Revised** → evolves via version control history
-
-### What belongs here
-
-- Data models
-- Interfaces (APIs, events, UI behavior)
-- State machines and invariants
-- Error semantics
+- Scope and non-scope (what is in/out of this spec)
+- Interfaces and observable behavior (APIs, state, UI interactions)
+- Invariants and state transitions
+- Error semantics and failure handling
+- Data models or schemas
 - Performance constraints (if required)
+- How conformance is verified (testing approach)
+- References: which Requirements are implemented, why design choices were made
+- Q&A: decisions made during exploration
 
-### What does NOT belong here
+**What does NOT belong here:**
 
-- Exploration or options
-- Justification (that lives in ADRs)
+- Exploration or options (that was Ideation)
+- Justification for design choices beyond "implements REQ-X" (keep it factual, not defensive)
 
-### Output
+**Lifecycle:**
 
-- Code
-- Tests
+- Draft → under design
+- Active → used for implementation and testing
+- Evolves via git history; no versioning in filename
 
-### Template
-
-See `_templates/SPEC-template.md`
+**Output:** Code and tests
 
 ---
 
-## 8. Implementation Plan (IMPL-PLAN)
+### Implementation Plan
 
-### Purpose
+**Use when:**
 
-Define the **execution roadmap** that turns a Spec into a delivered outcome.
+- A Specification is ready to implement
+- Work spans multiple milestones or needs staged rollout
+- You want a clear roadmap for execution
 
-An Implementation Plan is operational. It sequences work, identifies dependencies, sets verification
-checkpoints, and defines what “done” looks like.
+**What belongs here:**
 
-### Use when
-
-- A Spec is ready to implement
-- The work spans multiple milestones or needs staged rollout
-- You want resumability across days/weeks/agents
-
-### Minimum content (required)
-
-- References: the Spec(s), and the REQs being implemented
 - Preconditions (what must already be true)
-- Milestones (deliverable-oriented)
+- Milestones (deliverable-oriented, with clear completion criteria)
 - Work breakdown (sequenced steps; include dependencies)
-- Verification plan (how each milestone proves conformance)
+- Verification plan (how each milestone proves conformance to Spec)
 - Risk register (key risks and mitigations)
-- Rollout / migration / reversibility (if applicable)
+- Rollout, migration, or reversibility plan (if applicable)
 
-### Lifecycle / status
+**What does NOT belong here:**
 
-- **Draft** → during planning
-- **Active** → used during execution
-- **Revised** → updated as sequencing changes (versioned via git)
+- New decisions (if the plan requires a costly-to-reverse choice, create a new Specification first)
+- Restatement of the Spec (this references the Spec; focus on sequencing)
 
-### Rules
+**Lifecycle:**
 
-- Must not introduce new decisions. If the plan requires a costly-to-reverse choice, create an ADR
-  first.
-- Must not restate the Spec; it references the Spec and focuses on sequencing.
+- Draft → during planning
+- Active → used during execution
+- Updated as sequencing changes (versioned via git)
 
-### Output
-
-- A stable roadmap usable by humans and agents
+**Output:** A stable roadmap for humans and agents
 
 ---
 
-## Decision rules (how to know what to write)
+## Q&A Sections
 
-- Still discovering what you actually want → **EXPLOG**
-- Converging on what is wrong/needed and how to measure improvement → **PROBDEF**
-- Clarifying what a thing fundamentally is → **DRFC**
-- Clarifying how something is used → **XRFC**
-- Defining what must be true (derived from PROBDEF resolution indicators) → **REQ**
-- Still debating options and trade-offs to meet REQs → **RFC**
-- A decision has been made (to satisfy REQ(s)) → **ADR**
-- Defining exact behavior or interfaces (implementing REQs, depending on ADRs) → **Spec**
-- Sequencing delivery work for execution → **IMPL-PLAN**
+Q&A sections capture design thinking and problem-solving from exploration sessions (with humans or
+LLMs).
 
----
+**How to use:**
 
-## Versioning, identity, and supersession
+1. During ideation or design, capture questions and answers as they emerge
+2. Extract individual questions and place them where they inform decisions:
+   - Q about user workflow → embed in Requirements or Specification
+   - Q about tradeoffs → embed in Specification
+   - Q about unknowns → embed in Ideation or Requirements
+3. Embed as a `## Q&A` section at the **end of the document** (after primary content)
+4. No metadata tracking (no "answered on date X"); just Q and A
+5. **Show alternatives considered**, not just the final answer—this preserves why other options were
+   rejected
 
-### Core rule
+**Format:**
 
-**File names encode identity, not version.**
+```markdown
+## Q&A
 
-Versioning is expressed through:
+**Q: Should the API support pagination?**
 
-- git history (mechanical change tracking)
-- document status fields (semantic authority)
-- explicit supersession links (intent change)
+- Offset/limit pagination: simpler, familiar, but poor for distributed data
+- Cursor-based pagination: better for large datasets, but more complex
+- No pagination: simplest, but will timeout on large results
 
-Filename-based versioning (e.g. `-v1`, `-v2`, `latest.md`) is intentionally not used, because it
-breaks stable references and obscures intent changes.
+A: Start with offset/limit. It's familiar to clients and sufficient for phase 1. Document as a
+limitation. Cursor-based is blocked until we need to scale beyond 10k records.
 
-### Why versions are not in filenames
+**Q: How do we handle concurrent edits?**
 
-- Stable links matter more than visible version numbers.
-- Different document types have different lifecycle semantics.
-- Semantic change (intent) is handled via **new documents or new IDs**, not filename revisions.
+- Lock-based (pessimistic): prevents conflicts, but degrades UX if contention is high
+- Last-write-wins (optimistic): simple, but loses data silently
+- Operational transformation: preserves all changes, but complex
 
-### How versioning works by document type
-
-| Document  | Change model                                              |
-| --------- | --------------------------------------------------------- |
-| EXPLOG    | Disposable; no versioning                                 |
-| PROBDEF   | Clarified or superseded; new file if intent changes       |
-| DRFC      | Rare refactor; supersede with new DRFC if meaning changes |
-| XRFC      | Replaced when experience intent changes                   |
-| REQ       | Immutable by ID; new ID for new intent                    |
-| RFC       | Closed/rejected; not versioned                            |
-| ADR       | Append-only; supersede with new ADR                       |
-| SPEC      | Evolves via git history                                   |
-| IMPL-PLAN | Evolves via git history                                   |
-
-### When to create a new file instead of revising
-
-Create a new document (do **not** add a version suffix) when:
-
-- intent changes
-- scope changes materially
-- obligations change
-- a decision is reversed
-
-Mark the old document as `Status: Superseded` and link to the successor.
+A: Last-write-wins initially. Document as a limitation in error semantics section above. Move to OT
+only if audit trail becomes a hard requirement.
+```
 
 ---
 
-## Key principles
-
-- Exploration is disposable; intent, decisions, and contracts are durable
-- Problem Definitions are the first durable convergence artifact
-- Decisions are recorded when made, not later
-- Requirements never contain design
-- Specs never justify decisions
-- Plans do not create decisions
-
-### Document of record (single source of truth)
-
-Use this table to keep document purpose crisp and to prevent "epistemic mixing" (exploration,
-decisions, obligations, and implementation bleeding into each other):
-
-| Document  | Question it answers                          | Depends on          |
-| --------- | -------------------------------------------- | ------------------- |
-| PROBDEF   | What is wrong and how do we know it's fixed? | —                   |
-| DRFC      | What _is_ this thing?                        | PROBDEF             |
-| XRFC      | How is it used?                              | PROBDEF             |
-| REQ       | What must be true?                           | PROBDEF, DRFC, XRFC |
-| RFC       | What options satisfy these REQs?             | REQ, PROBDEF        |
-| ADR       | What did we decide and why?                  | REQ, RFC            |
-| SPEC      | What exactly do we build/test?               | REQ, ADR            |
-| IMPL-PLAN | How do we execute?                           | SPEC, REQ           |
-
-Use this mapping to prevent duplicated truth and drift:
-
-- **Raw exploration and brainstorm notes** → EXPLOG
-- **Problems, failure modes, resolution indicators** → PROBDEF
-- **Conceptual meaning and vocabulary** → DRFC
-- **User/operator experience intent** → XRFC
-- **What must be true (driven by resolution indicators)** → REQ
-- **Options and trade-offs to meet REQs** → RFC
-- **Why we chose a solution (to satisfy REQ)** → ADR
-- **What gets built and tested (contracts/behavior implementing REQ)** → Spec
-- **How we will deliver it (sequencing)** → IMPL-PLAN
-
-**Rule:** if the same fact must stay true over time, it should have exactly one canonical home.
-
-### ADR noise control (keep ADRs high-signal)
-
-- Use ADRs only for high-impact / costly-to-reverse decisions.
-- For smaller decisions, use a lightweight **Decision Log** (see folder structure) to avoid ADR
-  spam.
-- If a decision later becomes high-impact, promote it to an ADR and link back.
-
-If a document feels hard to write, it is often the wrong document type.
-
----
-
-## Folder structure and file naming
-
-This section defines the canonical on-disk structure and file naming conventions for all
-documentation. The goal is predictability, grep-ability, and stable references over time.
-
-### Organizing principle
-
-**Primary organization is by document type, not by feature/initiative folders.**
-
-Rationale:
-
-- Document types have different lifecycles (disposable vs append-only vs immutable-by-ID). Mixing
-  them inside feature folders leads to accidental drift and broken invariants.
-- Many documents are cross-cutting (especially DRFCs, ADRs, and some REQs) and do not belong to a
-  single feature.
-- Type-based folders make global queries trivial (e.g., “show all active specs”, “list all ADRs”,
-  “find all deprecated REQs”).
-
-**Do not create a `feature-a/` folder as the canonical home for its docs.** Instead, use explicit
-linking and an initiative index (see below).
-
-### Grouping related documents (Feature A, Initiative X)
-
-Use **initiative index documents** to group related docs without moving canonical files.
-
-- Create one index file per initiative/feature/theme:
-  - `INIT-<area>-<topic>.md`
-- The index contains curated links to the PROBDEF, DRFC(s), XRFC(s), RFC(s), ADR(s), REQ(s),
-  SPEC(s), and IMPL-PLAN(s) that together represent “Feature A”.
-
-This provides the navigation benefits of feature folders without the lifecycle and supersession
-problems.
-
-### Superseded and historical documents
-
-**Never move superseded documents into per-feature archives.**
-
-Rules:
-
-- A superseded document remains in its canonical **type folder**.
-- Mark it clearly with:
-  - `Status: Superseded`
-  - `Superseded by: <relative link>`
-- Update the relevant initiative index to point at the successor.
-
-This preserves stable references, auditability, and avoids “history rewriting”.
-
-### Root structure (recommended)
+## Folder Structure
 
 ```
 /docs
   /engineering
-    README.md
-    /00-exploration
+    README.md                       # entrypoint
+    documentation_guide.md          # this file
+    /00-ideation
       README.md
-    /01-problem-definitions
+      IDEATION-<area>-<topic>.md
+    /01-requirements
       README.md
-    /02-domain
+      REQ-<domain>-<id>.md
+    /02-specifications
       README.md
-    /03-experience
+      SPEC-<area>-<topic>.md
+    /03-implementation-plans
       README.md
-    /04-requirements
+      IMPL-PLAN-<area>-<topic>.md
+    /04-initiatives
       README.md
-      INDEX.md
-    /05-rfcs
-      README.md
-    /06-adrs
-      README.md
-      DECISIONS.md
-    /07-specifications
-      README.md
-    /08-implementation-plans
-      README.md
-    /09-initiatives
-      README.md
+      INIT-<area>-<topic>.md
 ```
-
-Numbers enforce reading order (PROBDEF → REQ → RFC → ADR → SPEC) and prevent bikeshedding.
-
-**Indexing rules**
-
-- `/docs/engineering/README.md` is the entrypoint.
-- Each folder `README.md` lists documents in that folder and highlights the active ones.
-- `/04-requirements/INDEX.md` is the searchable, human-maintained registry of requirements (metadata
-  lives here, not inside each REQ).
-- `/09-initiatives/README.md` lists initiative index files and highlights the active initiatives.
-
-**Decision Log**
-
-- `/06-adrs/DECISIONS.md` is for small, low-risk decisions (1–5 lines each) that are not worth a
-  full ADR treatment.
 
 ---
 
-## 00-exploration (Exploration Logs)
+## File Naming
 
-**Purpose:** capture raw discovery and brainstorming sessions.
-
-**Naming:**
+### Ideation
 
 ```
-EXPLOG-YYYY-MM-DD-<topic>.md
+IDEATION-<area>-<topic>.md
+
+Examples:
+  IDEATION-auth-session-strategy.md
+  IDEATION-cache-invalidation.md
 ```
 
-**Rules:**
-
-- Disposable; never treated as canonical truth
-- Must end with a Synthesis Delta section
-
----
-
-## 01-problem-definitions (Problem Definitions)
-
-**Purpose:** converge on what is wrong/needed and how to verify improvement.
-
-**Naming:**
-
-```
-PROBDEF-<area>-<topic>.md
-```
-
-**Examples:**
-
-- `PROBDEF-orchestration-state-and-resumability.md`
-- `PROBDEF-provider-registry-extraction.md`
-
-**Rules:**
-
-- One initiative per file; multiple numbered problems inside
-- Must include resolution indicators and boundaries per problem
-
----
-
-## 02-domain (Domain / Concept RFCs)
-
-**Purpose:** define what core concepts are.
-
-**Naming:**
-
-```
-DRFC-<topic>.md
-```
-
-**Rules:**
-
-- One domain concept per file
-- Rarely changed once stabilized
-- Referenced by XRFCs and RFCs
-
----
-
-## 03-experience (Experience RFCs)
-
-**Purpose:** define how the system is used.
-
-**Naming:**
-
-```
-XRFC-<area>-<short-description>.md
-```
-
-**Rules:**
-
-- Persona-focused
-- No MUST/SHOULD/MAY
-- Links to DRFCs for vocabulary and to PROBDEF for drivers
-
----
-
-## 04-requirements (Normative requirements)
-
-**Purpose:** define what must be true (driven by PROBDEF resolution indicators).
-
-**Naming:**
+### Requirements
 
 ```
 REQ-<domain>-<id>.md
+
+Examples:
+  REQ-API-001.md
+  REQ-UI-STATE-002.md
 ```
 
-**Rules:**
-
-- One requirement per file
-- IDs are immutable
-- Must trace to PROBDEF
-- Referenced by RFCs (what must be satisfied?), ADRs (why did we choose this?), and specs (what do
-  we implement?)
-
----
-
-## 05-rfcs (Proposals / discussions)
-
-**Purpose:** explore options and trade-offs to meet REQs.
-
-**Naming:**
-
-```
-RFC-<area>-<topic>.md
-```
-
-**Rules:**
-
-- Disposable after decisions are made
-- Must link to the REQ(s) being addressed
-- Must link to resulting ADRs
-- Evaluated against requirements, not abstract goals
-
----
-
-## 06-adrs (Architecture Decision Records)
-
-**Purpose:** record decisions permanently (which option satisfies REQ).
-
-**Naming:**
-
-```
-ADR-<NNN>-<short-title>.md
-or
-ADR-<DOMAIN>-<NNN>-<short-title>.md
-```
-
-**Rules:**
-
-- Sequential numbering (within domain if using prefixes)
-- Append-only
-- Never edited after acceptance
-- Must reference REQ(s) or RFC that justified the decision
-- See `DECISIONS.md` for lightweight decisions
-
----
-
-## 07-specifications (Specifications)
-
-**Purpose:** define build/test contracts (implementing REQs via ADR-justified decisions).
-
-**Naming:**
+### Specification
 
 ```
 SPEC-<area>-<topic>.md
+
+Examples:
+  SPEC-auth-session-handler.md
+  SPEC-cache-invalidation-system.md
 ```
 
-**Rules:**
-
-- Must reference REQs it implements
-- Must reference ADRs that justify design decisions
-- Versioned via git history
-
----
-
-## 08-implementation-plans (Implementation Plans)
-
-**Purpose:** define sequencing and execution roadmap.
-
-**Naming:**
+### Implementation Plan
 
 ```
 IMPL-PLAN-<area>-<topic>.md
+
+Examples:
+  IMPL-PLAN-auth-session-handler.md
+  IMPL-PLAN-cache-invalidation-system.md
 ```
 
-**Rules:**
-
-- Must reference Spec(s) and REQ(s) being implemented
-- Must not introduce new decisions; ADR first if needed
-- May reference ADRs for constraints
-
----
-
-## 09-initiatives (Initiative indexes)
-
-**Purpose:** provide a human- and agent-friendly navigation layer that groups related documents for
-a given initiative/feature without breaking canonical type-based storage.
-
-**Naming:**
+### Initiative Index
 
 ```
 INIT-<area>-<topic>.md
+
+Examples:
+  INIT-auth-system.md
+  INIT-caching-strategy.md
 ```
 
-**Rules:**
+One initiative index per feature/major theme. Groups related Ideation, Requirements, Specification,
+and Implementation Plan docs.
 
-- One initiative per file.
-- The index should link to: the current PROBDEF, relevant DRFC(s), XRFC(s), all active REQ(s), any
-  active/closed RFC(s), applicable ADR(s), the controlling SPEC(s), and the current IMPL-PLAN(s).
-- Link in order: PROBDEF → REQ → RFC → ADR → SPEC → IMPL-PLAN (the canonical sequence).
-- The index must not become a second spec; it is a curated link map plus status.
+**Initiative index contents:**
+
+- Link to the current Ideation doc (if exists)
+- Links to all active Requirements
+- Link to the controlling Specification
+- Link to the current Implementation Plan
+- Brief status/notes
 
 ---
 
-## Cross-linking rules
+## Cross-Linking Rules
 
-### Hard rules
+**Hard rules:**
 
-- Link explicitly using relative paths; do not rely on directory position as meaning.
-- Do not duplicate canonical truth across document types.
-- Prefer stable identifiers where available:
-  - ADR IDs (e.g., `ADR-014`) in ADRs/specs
-  - REQ IDs (e.g., `REQ-VI-PUB-1.1`) in requirements/specs
+- Link explicitly using relative paths
+- Do not duplicate truth across document types
+- Each key fact should have exactly one canonical home
 
-### Allowed link directions (default)
+**Link directions:**
 
-- EXPLOGs may link to anything, but nothing treats them as canonical truth.
-- PROBDEF links downstream only (it may reference context, but does not depend on downstream
-  documents).
-- DRFCs link downstream only (referenced by REQs, RFCs, ADRs).
-- XRFCs link to DRFCs and PROBDEF; may inform REQs.
-- REQs link upward to PROBDEF and optionally to DRFC/XRFC that inform them.
-- RFCs link upward to REQ(s) they aim to satisfy, to PROBDEF for context, to DRFC/XRFC for
-  vocabulary.
-- ADRs link upward to REQ(s) they satisfy and to RFC(s) that explored the decision.
-- Specs link upward to REQ(s) they implement and to ADR(s) that justify design choices.
-- IMPL-PLAN links upward to Spec(s) and REQ(s) being implemented; may reference ADRs for
-  constraints.
+- **Ideation** → links down to nothing yet; captures raw thinking
+- **Requirements** → link up to Ideation (what problem/discovery drove this?)
+- **Specification** → link up to Requirements (which REQs are implemented?) and optionally to
+  Ideation (context)
+- **Implementation Plan** → link up to Specification and Requirements
 
-### Reference style (recommended)
+**Reference style:**
 
-- In REQs, include explicit links:
-  - `Driven by: PROBDEF-…` (required)
-  - `Informed by: DRFC-…` or `XRFC-…` (optional)
-- In RFCs, include explicit links:
-  - `Addresses REQ: REQ-…` (required)
-  - `Context: PROBDEF-…` (required)
-- In ADRs, include explicit links:
-  - `Satisfies REQ: REQ-…` (required)
-  - `Explored in: RFC-…` (recommended)
-  - `Context: PROBDEF-…` (optional)
-- In Specs, include explicit lists:
-  - `Implements: REQ-…` (required)
-  - `Decision basis: ADR-…` (required)
-- In IMPL-PLANs, include explicit lists:
-  - `Implements: SPEC-…` (required)
-  - `Covers: REQ-…` (required)
-  - `Constraints: ADR-…` (optional)
+In Requirements, link upward:
 
-No document should rely on directory position alone for meaning; always link explicitly.
+```
+Driven by: ../00-ideation/IDEATION-foo.md
+```
+
+In Specification, link upward:
+
+```
+Implements:
+- ../01-requirements/REQ-UI-001.md
+- ../01-requirements/REQ-UI-002.md
+```
+
+In Implementation Plan, link upward:
+
+```
+Specification: ../02-specifications/SPEC-foo.md
+Covers Requirements:
+- ../01-requirements/REQ-UI-001.md
+- ../01-requirements/REQ-UI-002.md
+```
+
+---
+
+## Key Principles
+
+1. **Ideation is disposable.** It converges into Requirements/Specification; you can delete old
+   Ideation docs.
+
+2. **Requirements are the contract.** They define obligations independent of how they're built. They
+   drive verification.
+
+3. **Specification implements Requirements.** It shows exactly what gets built and tested. It
+   includes design decisions (the "why") but not exploration.
+
+4. **Implementation Plan focuses on sequencing.** It does not introduce new decisions; it orders
+   work and verifies completion.
+
+5. **One doc per type per feature.** For most features, one Ideation + one Requirements + one
+   Specification + one Implementation Plan.
+   - If a feature is small, skip Ideation.
+   - If requirements are obvious, keep them lightweight.
+   - Specs and Plans are always needed before building.
+
+6. **Q&A captures thinking.** Extract useful Q&A from design sessions and embed it in the document
+   it informs. Keeps reasoning visible.
+
+7. **Documents evolve via git, not versioning in filenames.** No `-v1`, `-v2` suffixes. History
+   lives in commits and pull requests.
+
+---
+
+## README Files in Each Folder
+
+Each numbered folder contains a `README.md` that:
+
+- Lists documents in that folder
+- Highlights active vs. archived docs
+- Provides brief context on the folder's purpose
+
+Example structure:
+
+```markdown
+# 02-Specifications
+
+Specifications define the build/test contract. Each Spec implements one or more Requirements and is
+ready for implementation and testing.
+
+## Active Specifications
+
+- [SPEC-auth-session-handler](SPEC-auth-session-handler.md)
+- [SPEC-cache-invalidation-system](SPEC-cache-invalidation-system.md)
+
+## Archived
+
+- [SPEC-legacy-auth-flow](SPEC-legacy-auth-flow.md) (superseded by SPEC-auth-session-handler)
+```
+
+---
+
+## Example: How It Flows
+
+**Day 1: Ideation**
+
+- Write `IDEATION-user-export-feature.md`
+- Capture: why users need exports, what formats, data scope, open questions
+- Q&A: "Should we support async export?" → discussed and captured
+
+**Day 2: Requirements**
+
+- Write `REQ-EXPORT-001.md`, `REQ-EXPORT-002.md`, etc.
+- Link back to Ideation for traceability
+- Define: export formats supported, performance limits, error handling
+- Q&A: "Which formats take priority?" → captured with decision
+
+**Day 3: Specification**
+
+- Write `SPEC-user-export-service.md`
+- Implement the Requirements
+- Define: API endpoints, response schemas, rate limits, error codes
+- Include: Q&A about tradeoffs made
+- Link to Requirements and any architectural decisions
+
+**Day 4: Implementation Plan**
+
+- Write `IMPL-PLAN-user-export-service.md`
+- Break into milestones: API scaffolding → format handlers → testing → deployment
+- Include: verification checkpoints, risks, rollout plan
+
+**Ongoing:**
+
+- Update `INIT-export-feature.md` to link all four documents
+- Use as a single entry point for understanding the feature
+
+---
+
+## Lifecycle Rules
+
+- **Ideation:** Disposable. Delete or archive when Requirements are finalized.
+- **Requirements:** Immutable by ID. If intent changes, deprecate and create a new REQ ID, not a new
+  version.
+- **Specification:** Evolves as implementation refines understanding. Versioning lives in git
+  history. No filename changes.
+- **Implementation Plan:** Updated as execution reveals sequencing changes. Versioned via git.
+
+Never move documents into version-suffixed folders (e.g., `v1`, `v2`). Use git history and clear
+status fields.
+
+---
+
+## For LLMs and Agents
+
+This system is designed to be machine-readable:
+
+1. **File structure is predictable.** Type-based folders make queries fast.
+2. **Cross-links are explicit.** All relationships are stated, not implied.
+3. **Q&A is plaintext and conversational.** LLMs can parse and reason about design decisions
+   naturally.
+4. **One document per type per feature.** No ambiguity about which Spec to read; there's one.
+5. **Each document is self-contained enough to read alone**, yet links to upstream docs for context.
+
+---
+
+## Getting Started
+
+1. Create a feature and start with Ideation or Requirements (skip Ideation if clear).
+2. Write a Specification once Requirements are stable.
+3. Write an Implementation Plan before starting work.
+4. Create an Initiative index in `04-initiatives` to link everything together.
+5. Update folder READMEs as you add documents.
+
+If a document feels hard to write, you might be mixing concerns. Review the "What belongs here"
+section for that doc type.
