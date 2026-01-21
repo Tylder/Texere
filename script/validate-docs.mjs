@@ -601,12 +601,11 @@ index:
     skeletonIndexYaml += `
     - title: "${section.title}"
       lines: [0, 0]`;
+    skeletonIndexYaml += `\n      token_est: ${section.token_est}`;
 
     if (section.summary) {
       skeletonIndexYaml += `\n      summary: "${section.summary.replace(/"/g, '\\"')}"`;
     }
-
-    skeletonIndexYaml += `\n      token_est: ${section.token_est}`;
 
     // Only include subsections if parent section exceeds token threshold
     if (
