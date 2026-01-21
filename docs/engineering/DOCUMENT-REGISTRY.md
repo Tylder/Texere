@@ -20,9 +20,10 @@ grep "| SPEC.*active" below
 
 ## Documents
 
-| ID                          | Type | Status | Stability    | Area          | Feature  | Summary                                                                                           |
-| --------------------------- | ---- | ------ | ------------ | ------------- | -------- | ------------------------------------------------------------------------------------------------- |
-| `SPEC-test-indexing`        | SPEC | draft  | experimental | testing       | indexing | Test doc                                                                                          |
-| `META-documentation-system` | META | active | stable       | documentation | system   | 'Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META' |
+| ID                          | Type | Status | Stability    | Area          | Feature           | Summary                                                                                           |
+| --------------------------- | ---- | ------ | ------------ | ------------- | ----------------- | ------------------------------------------------------------------------------------------------- |
+| `META-documentation-system` | META | active | stable       | documentation | system            | 'Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META' |
+| `META-long-summary-test`    | META | draft  | experimental | system        | long-summary-test | 'Testing very long summary wrapping for validate-docs.'                                           |
+| `SPEC-test-indexing`        | META | draft  | experimental | testing       | indexing          | Test doc                                                                                          |
 
 _Auto-generated: 2026-01-21_
