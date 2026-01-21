@@ -8,19 +8,29 @@
 
 ## Overview
 
-Roadmap for delivering SPEC-<area>-<topic> from start to production.
+Roadmap for coordinating delivery of multiple Specifications and Requirements.
+
+Example: "Implement pagination consistently across search, user lists, and timelines. Coordinate
+three teams delivering three Specs that all implement the same Requirements."
 
 ---
 
 ## References
 
-**Specification:** SPEC-export-service.md
+**Specifications:** One IMPL-PLAN can coordinate multiple Specs and Requirements.
+
+- SPEC-search-results-pagination.md
+- SPEC-user-list-pagination.md
+- SPEC-timeline-pagination.md
 
 **Covers Requirements:**
 
-- REQ-EXPORT-001
-- REQ-EXPORT-002
-- REQ-EXPORT-003
+- REQ-pagination-system.md#REQ-001
+- REQ-pagination-system.md#REQ-002
+- REQ-pagination-system.md#REQ-003
+
+Note: All three Specs above implement the same Requirements (pagination) but for different domains
+(search, users, timeline).
 
 ---
 
@@ -28,10 +38,11 @@ Roadmap for delivering SPEC-<area>-<topic> from start to production.
 
 What must already be true before we start?
 
-- [ ] Database supports 1M+ row queries
-- [ ] Auth system is deployed (we need user_id for exports)
-- [ ] File storage (S3 or equivalent) is available
-- [ ] Spec is approved and team aligned
+- [ ] All Specifications are approved and reviewed
+- [ ] Requirements are stable and approved
+- [ ] Teams are assigned to each Spec
+- [ ] Infrastructure dependencies are in place (e.g., databases indexed, services deployed)
+- [ ] Any blockers from other initiatives are resolved
 
 ---
 

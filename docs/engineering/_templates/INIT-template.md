@@ -12,8 +12,8 @@
 
 Brief description of this initiative and its goals.
 
-Example: "Enable users to export data in multiple formats with progress visibility. Improve
-reporting workflows and reduce support burden for data access."
+Example: "Enable users and API consumers to browse large result sets efficiently across search, user
+lists, and timelines. Improve performance and UX for list-heavy workflows."
 
 ---
 
@@ -28,39 +28,49 @@ Person responsible for coordination and decision-making.
 
 ## Ideation
 
-Raw discovery and brainstorming for this feature.
+Raw discovery and brainstorming for this initiative.
 
-- [IDEATION-export-problems.md](../00-ideation/IDEATION-export-problems.md) – Problems and failure
-  modes
-- [IDEATION-export-experience.md](../00-ideation/IDEATION-export-experience.md) – Personas,
+- [IDEATION-<feature>-problems.md](../00-ideation/IDEATION-<feature>-problems.md) – Problems and
+  failure modes
+- [IDEATION-<feature>-experience.md](../00-ideation/IDEATION-<feature>-experience.md) – Personas,
   journeys, use cases
-- [IDEATION-export-unknowns.md](../00-ideation/IDEATION-export-unknowns.md) – Open questions and
-  assumptions
+- [IDEATION-<feature>-unknowns.md](../00-ideation/IDEATION-<feature>-unknowns.md) – Open questions
+  and assumptions
 
 **Key Decisions from Ideation:**
 
-- Export will be synchronous (not queued) for phase 1
-- CSV and JSON formats; Parquet deferred to v2
-- 30-second timeout; async option blocked until demand justifies
+- Offset/limit pagination for v1 (not cursor-based)
+- Consistent pagination across search, user lists, timeline
+- Max page size: 100 (limit, not configurable)
 
 ---
 
 ## Requirements
 
-What MUST be true for this initiative to succeed?
+What MUST be true for this initiative to succeed.
 
-- [REQ-EXPORT-001](../01-requirements/REQ-EXPORT-001.md) – CSV export within 30s for up to 1M rows
-- [REQ-EXPORT-002](../01-requirements/REQ-EXPORT-002.md) – Clear error messages for export failures
-- [REQ-EXPORT-003](../01-requirements/REQ-EXPORT-003.md) – Progress visibility for exports >5s
+- [REQ-<feature>.md](../01-requirements/REQ-<feature>.md)
+  - REQ-001: Pagination via offset/limit
+  - REQ-002: Include metadata (total, offset, limit)
+  - REQ-003: Error handling for invalid parameters
 
 ---
 
-## Specification
+## Specifications
 
-The build/test contract.
+The build/test contracts. Note: One Requirement can be implemented by multiple Specs.
 
-- [SPEC-export-service.md](../02-specifications/SPEC-export-service.md) – Export API, schemas, error
-  handling
+- [SPEC-search-results-pagination.md](../02-specifications/SPEC-search-results-pagination.md)
+  - Implements: REQ-<feature>.md (all requirements)
+  - Status: Draft
+
+- [SPEC-user-list-pagination.md](../02-specifications/SPEC-user-list-pagination.md)
+  - Implements: REQ-<feature>.md (all requirements)
+  - Status: Draft
+
+- [SPEC-timeline-pagination.md](../02-specifications/SPEC-timeline-pagination.md)
+  - Implements: REQ-<feature>.md (all requirements)
+  - Status: Draft
 
 ---
 
@@ -68,13 +78,16 @@ The build/test contract.
 
 Roadmap for delivery.
 
-- [IMPL-PLAN-export-service.md](../03-implementation-plans/IMPL-PLAN-export-service.md)
+- [IMPL-PLAN-<area>-<topic>.md](../03-implementation-plans/IMPL-PLAN-<area>-<topic>.md)
+  - Coordinates: All three Specs above
+  - Covers: REQ-<feature>.md
 
 **Current Status:**
 
-- Milestone 1 (API Scaffolding): In progress
-- Milestone 2 (CSV Export): Not started
-- Milestone 3 (Progress): Planned for week 3
+- Milestone 1 (Shared library): In progress
+- Milestone 2 (Search integration): Not started
+- Milestone 3 (User list integration): Not started
+- Milestone 4 (Timeline integration): Not started
 
 ---
 
@@ -82,13 +95,14 @@ Roadmap for delivery.
 
 Deliverable-oriented progress tracking.
 
-| Milestone             | Target Date | Status      | Verification                            |
-| --------------------- | ----------- | ----------- | --------------------------------------- |
-| API scaffolding       | 2025-02-01  | In Progress | Endpoint accepts requests, stores in DB |
-| CSV export            | 2025-02-15  | Not Started | 1M rows in <30s; valid CSV output       |
-| Progress visibility   | 2025-02-22  | Not Started | Frontend shows live progress            |
-| Error handling        | 2025-03-01  | Not Started | All error codes tested                  |
-| Production deployment | 2025-03-08  | Not Started | Deployed; monitoring active             |
+| Milestone                 | Target Date | Status      | Verification                                              |
+| ------------------------- | ----------- | ----------- | --------------------------------------------------------- |
+| Shared pagination library | 2025-02-01  | In Progress | Library exports pagination logic; used by all three Specs |
+| Search results pagination | 2025-02-15  | Not Started | SPEC-search-results-pagination verified                   |
+| User list pagination      | 2025-03-01  | Not Started | SPEC-user-list-pagination verified                        |
+| Timeline pagination       | 2025-03-15  | Not Started | SPEC-timeline-pagination verified                         |
+| Integration testing       | 2025-03-22  | Not Started | All three endpoints tested together                       |
+| Production deployment     | 2025-03-29  | Not Started | Deployed; monitoring active                               |
 
 ---
 
@@ -96,13 +110,13 @@ Deliverable-oriented progress tracking.
 
 What could go wrong?
 
-- **Performance:** Query doesn't meet 30s target for 1M rows
-  - Mitigation: Start perf testing early; have async fallback ready
-- **Scope creep:** Requests for Parquet, Excel, scheduling features
-  - Mitigation: Document as v2; refer to Ideation decisions
-
-- **Database load:** Concurrent exports overload DB
-  - Mitigation: Connection pooling; rate limiting; monitor during testing
+- **Performance:** Pagination queries don't meet response time targets
+  - Mitigation: Performance test early (Milestone 1); have indexed queries ready
+- **Consistency issues:** Different Specs implement pagination slightly differently, breaking API
+  contracts
+  - Mitigation: Shared library enforces consistency; code review gates
+- **Scope creep:** Requests for cursor-based pagination, export pagination, historical pagination
+  - Mitigation: Document as v2 features; refer to Ideation decisions
 
 ---
 
@@ -110,9 +124,9 @@ What could go wrong?
 
 Other work that blocks this initiative.
 
-- Auth system (already deployed ✓)
-- File storage / S3 setup (in progress; ETA 2025-02-01)
-- Frontend team bandwidth (tentative; needs scheduling)
+- Database indexing on list endpoints (in progress; ETA 2025-01-31)
+- ORM query optimization (in progress; ETA 2025-02-05)
+- Performance monitoring setup (pending; requested 2025-01-15)
 
 ---
 
@@ -120,9 +134,10 @@ Other work that blocks this initiative.
 
 How stakeholders stay informed.
 
-- **Weekly update:** Every Friday 2pm, 15-min sync
-- **Status page:** [#export-feature Slack channel](slack://channel-id)
-- **Stakeholder review:** Bi-weekly with Product Leadership
+- **Weekly sync:** Every Friday 2pm, 30-min cross-functional
+- **Status updates:** Posted to #pagination-system Slack channel
+- **Blocker escalation:** Post to #platform-architecture if blocked
+- **Stakeholder review:** Monthly with Product Leadership
 
 ---
 
@@ -130,12 +145,13 @@ How stakeholders stay informed.
 
 When is this initiative complete?
 
-- [ ] All Requirements implemented
-- [ ] Spec verified (integration tests pass)
-- [ ] Deployed to production
+- [ ] All Requirements implemented (all three Specs verified)
+- [ ] Specs pass integration testing
+- [ ] Deployed to staging and production
 - [ ] Monitoring shows <0.1% error rate
-- [ ] User feedback collected (survey or interviews)
-- [ ] Documentation updated (help center, API docs)
+- [ ] Performance meets targets (<100ms per request)
+- [ ] API documentation updated
+- [ ] User/API consumer feedback collected (survey or interviews)
 
 ---
 
@@ -143,8 +159,8 @@ When is this initiative complete?
 
 Other work that interacts with this.
 
-- [INIT-auth-improvements](INIT-auth-improvements.md) – Uses updated auth system
-- [INIT-reporting-dashboard](INIT-reporting-dashboard.md) – Consumes export data
+- [INIT-search-optimization](INIT-search-optimization.md) – Uses pagination endpoints
+- [INIT-api-v2](INIT-api-v2.md) – Consumes pagination patterns
 
 ---
 
@@ -156,15 +172,16 @@ Other work that interacts with this.
 
 **What Went Well:**
 
-- Perf testing early prevented surprises
-- Team collaboration was smooth
+- Shared library approach prevented code duplication
+- Early performance testing caught index issues
+- Cross-team coordination was smooth
 
 **What Could Be Better:**
 
-- Scope creep on export formats; should have been firmer on "CSV only for v1"
-- Database indexing should have been done earlier
+- Should have involved database team earlier
+- Timeline estimates were optimistic
 
 **Lessons for Next Time:**
 
-- Lock scope earlier
-- Include DB tuning in Milestone 1 planning
+- Include infrastructure dependencies in planning
+- Start perf testing in Milestone 0, not Milestone 1

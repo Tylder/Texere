@@ -38,9 +38,18 @@ What is explicitly NOT included?
 
 Which Requirements does this Specification implement?
 
-- REQ-EXPORT-001: CSV format support within 30 seconds
-- REQ-EXPORT-002: Clear error messages for failures
-- REQ-EXPORT-003: Progress visibility for large exports
+Note: One Spec can implement multiple Requirements. One Requirement can be implemented by multiple
+Specs.
+
+- REQ-<feature>.md#REQ-001
+- REQ-<feature>.md#REQ-002
+- REQ-<feature>.md#REQ-003
+
+Example (pagination in search results):
+
+- REQ-pagination-system.md#REQ-001 (offset/limit support)
+- REQ-pagination-system.md#REQ-002 (metadata in response)
+- REQ-pagination-system.md#REQ-003 (error handling)
 
 ---
 

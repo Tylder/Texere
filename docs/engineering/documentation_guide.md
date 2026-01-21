@@ -3,6 +3,35 @@
 A simple documentation system for moving from idea to implementation in as few steps as possible,
 while remaining functional for humans and LLMs.
 
+---
+
+## Critical: Keeping Indices in Sync
+
+This system relies on indices (Initiative files and folder READMEs) staying current. **Without this,
+the system falls apart.**
+
+**How indices work:**
+
+- Each feature has one `INIT-<area>-<topic>.md` that maps to all related Ideation, Requirements,
+  Specs, and Plans
+- Folder READMEs (e.g., `/02-specifications/README.md`) list all documents in that folder
+- **When you create a new document, you MUST update:**
+  - The relevant folder README (add to the list)
+  - The relevant INIT file (add the link)
+
+**Who is responsible:** The person creating the document is responsible for updating indices
+immediately (as part of the same commit/PR).
+
+**When to update:**
+
+- Creating a new doc → update folder README + INIT file
+- Archiving a doc → move it from "Active" to "Archived" in README + update INIT
+- Deprecating a doc → mark as deprecated in status field + update INIT to point to successor
+
+This is not optional. Make it part of your PR checklist.
+
+---
+
 ## Overview
 
 This guide defines **four document types** that cover the full lifecycle: discovery through
@@ -16,6 +45,13 @@ execution.
 | **Implementation Plan** | Yes         | Define execution roadmap                                    | Operational; evolves via git            |
 
 **Canonical sequence:** Ideation → Requirements → Specification → Implementation Plan
+
+**Important:** The system is many-to-many, not one-to-one:
+
+- One Requirement can drive multiple Specifications
+- One Specification can implement multiple Requirements
+- One Implementation Plan can coordinate multiple Specs and Requirements
+- See the "[Many-to-Many Relationships](#many-to-many-relationships)" section for examples
 
 ---
 
@@ -63,6 +99,9 @@ execution.
 
 **Output:** Converges into Requirements and Specification
 
+**Lifecycle:** Ideation docs should be archived (not deleted) once Requirements are finalized.
+Archiving preserves history and prevents link rot.
+
 ---
 
 ### Requirements
@@ -73,11 +112,14 @@ execution.
 - Multiple implementations or teams must align
 - You want clear traceability from discovery to implementation
 
+**Structure:** One Requirements document per feature (e.g., `REQ-export-feature.md`), containing
+multiple numbered requirements.
+
 **What belongs here:**
 
-- MUST/SHOULD/MAY statements (one per requirement)
-- Measurable fit criteria and verification method
-- Why this is needed (traceability to Ideation or problems)
+- MUST/SHOULD/MAY statements (numbered list: REQ-001, REQ-002, etc.)
+- Measurable fit criteria and verification method per requirement
+- Why each is needed (traceability to Ideation or problems)
 - Failure modes and edge cases
 - Non-goals (what is explicitly not required)
 
@@ -93,7 +135,30 @@ execution.
 - Approved → accepted contract; use as reference in Spec
 - Deprecated → replaced by new requirement (do not rewrite; create new ID)
 
-**Output:** Feeds Specification and tests
+**Output:** Feeds Specifications and tests
+
+**Naming:**
+
+```
+REQ-<feature>.md
+
+Examples:
+  REQ-export-feature.md
+  REQ-pagination-system.md
+  REQ-auth-refresh-tokens.md
+```
+
+Inside each Requirements doc, individual requirements are numbered:
+
+```
+## REQ-001: CSV export format support
+## REQ-002: Export performance within 30 seconds
+## REQ-003: Export error messages are user-actionable
+```
+
+**Reusing Requirements:** Some requirements (like pagination) apply to multiple features. Create a
+single, canonical `REQ-pagination-system.md` and link to it from multiple Specs and Plans. This is
+not duplication—it's proper reuse.
 
 ---
 
@@ -104,6 +169,9 @@ execution.
 - Something needs to be built
 - Interfaces, behavior, or invariants must be precise
 - You want a testable contract
+
+**Important:** One Spec can implement multiple Requirements. One Requirement can be implemented by
+multiple Specs.
 
 **What belongs here:**
 
@@ -136,23 +204,27 @@ execution.
 
 **Use when:**
 
-- A Specification is ready to implement
+- One or more Specifications are ready to implement
 - Work spans multiple milestones or needs staged rollout
 - You want a clear roadmap for execution
+
+**Important:** One IMPL-PLAN can coordinate multiple Specs and Requirements.
 
 **What belongs here:**
 
 - Preconditions (what must already be true)
 - Milestones (deliverable-oriented, with clear completion criteria)
 - Work breakdown (sequenced steps; include dependencies)
-- Verification plan (how each milestone proves conformance to Spec)
+- Verification plan (how each milestone proves conformance to involved Specs)
 - Risk register (key risks and mitigations)
 - Rollout, migration, or reversibility plan (if applicable)
+- References: which Specs and Requirements this plan covers
 
 **What does NOT belong here:**
 
 - New decisions (if the plan requires a costly-to-reverse choice, create a new Specification first)
-- Restatement of the Spec (this references the Spec; focus on sequencing)
+- Restatement of the Specs (this references them; focus on sequencing)
+- Ideation rationale (readers follow links to Specs/Requirements for context)
 
 **Lifecycle:**
 
@@ -207,6 +279,77 @@ only if audit trail becomes a hard requirement.
 
 ---
 
+## Many-to-Many Relationships
+
+The system supports flexible many-to-many relationships. Here's a concrete example with pagination:
+
+### Scenario: Pagination is a cross-cutting requirement
+
+**REQ-pagination-system.md** (one canonical requirement):
+
+```
+## REQ-001: Pagination API
+System MUST support paginated results via offset/limit.
+Applies to: search results, user lists, activity timelines, and any list endpoint.
+```
+
+This one Requirement is implemented by **three separate Specs**:
+
+1. **SPEC-search-results-pagination.md** → Implements REQ-pagination-system
+   - Scope: search endpoint pagination
+   - Q&A: "Should search results include total count?" (specific to search)
+
+2. **SPEC-user-list-pagination.md** → Implements REQ-pagination-system
+   - Scope: /users endpoint pagination
+   - Q&A: "Should we support filtering during pagination?" (specific to users)
+
+3. **SPEC-timeline-pagination.md** → Implements REQ-pagination-system
+   - Scope: activity timeline pagination
+   - Q&A: "How do we handle timeline ordering with pagination?" (specific to timeline)
+
+All three Specs implement the **same Requirement**, but each handles it differently for their
+domain.
+
+### Coordinating with IMPL-PLAN
+
+**IMPL-PLAN-pagination-system.md** coordinates all three:
+
+```
+## Overview
+Implement pagination across search, user lists, and timeline.
+
+## Covers
+- REQ-pagination-system (all three implementations)
+
+## Specs Implemented
+- SPEC-search-results-pagination.md
+- SPEC-user-list-pagination.md
+- SPEC-timeline-pagination.md
+
+## Milestones
+1. Shared pagination library (used by all three Specs)
+2. Search results integration
+3. User list integration
+4. Timeline integration
+5. Testing and deployment
+```
+
+Each milestone verifies that each Spec's implementation conforms.
+
+### Linking Structure
+
+- **REQ-pagination-system.md** lists which Specs implement it (search, users, timeline)
+- **SPEC-search-results-pagination.md** links to REQ-pagination-system
+- **SPEC-user-list-pagination.md** links to REQ-pagination-system
+- **SPEC-timeline-pagination.md** links to REQ-pagination-system
+- **IMPL-PLAN-pagination-system.md** links to all three Specs
+- **INIT-pagination.md** links to the REQ and IMPL-PLAN
+
+This way, anyone reading any document can see: "Pagination is implemented across three features, all
+driven by one Requirement, coordinated by one Plan."
+
+---
+
 ## Folder Structure
 
 ```
@@ -229,7 +372,7 @@ only if audit trail becomes a hard requirement.
       IDEATION-<feature>-unknowns.md
     /01-requirements
       README.md
-      REQ-<domain>-<id>.md
+      REQ-<feature>.md
     /02-specifications
       README.md
       SPEC-<area>-<topic>.md
@@ -262,13 +405,18 @@ Examples:
 
 ### Requirements
 
+One Requirements document per feature:
+
 ```
-REQ-<domain>-<id>.md
+REQ-<feature>.md
 
 Examples:
-  REQ-API-001.md
-  REQ-UI-STATE-002.md
+  REQ-export-feature.md
+  REQ-pagination-system.md
+  REQ-auth-refresh-tokens.md
 ```
+
+Inside the document, individual requirements are numbered (REQ-001, REQ-002, etc.).
 
 ### Specification
 
@@ -276,8 +424,9 @@ Examples:
 SPEC-<area>-<topic>.md
 
 Examples:
+  SPEC-search-results-pagination.md
+  SPEC-user-list-pagination.md
   SPEC-auth-session-handler.md
-  SPEC-cache-invalidation-system.md
 ```
 
 ### Implementation Plan
@@ -286,8 +435,9 @@ Examples:
 IMPL-PLAN-<area>-<topic>.md
 
 Examples:
+  IMPL-PLAN-pagination-system.md
   IMPL-PLAN-auth-session-handler.md
-  IMPL-PLAN-cache-invalidation-system.md
+  IMPL-PLAN-export-feature.md
 ```
 
 ### Initiative Index
@@ -297,18 +447,19 @@ INIT-<area>-<topic>.md
 
 Examples:
   INIT-auth-system.md
-  INIT-caching-strategy.md
+  INIT-pagination.md
+  INIT-export-feature.md
 ```
 
-One initiative index per feature/major theme. Groups related Ideation, Requirements, Specification,
-and Implementation Plan docs.
+One initiative index per feature/major theme. Groups related Ideation, Requirements, Specs, and
+Plans.
 
 **Initiative index contents:**
 
-- Link to the current Ideation doc (if exists)
-- Links to all active Requirements
-- Link to the controlling Specification
-- Link to the current Implementation Plan
+- Links to all Ideation docs (Problems, Experience, Unknowns)
+- Link to the Requirements doc
+- Links to all related Specifications
+- Links to all related Implementation Plans
 - Brief status/notes
 
 ---
@@ -321,66 +472,72 @@ and Implementation Plan docs.
 - Do not duplicate truth across document types
 - Each key fact should have exactly one canonical home
 
-**Link directions:**
+**Link directions (upward only):**
 
 - **Ideation** → links down to nothing yet; captures raw thinking
 - **Requirements** → link up to Ideation (what problem/discovery drove this?)
 - **Specification** → link up to Requirements (which REQs are implemented?) and optionally to
   Ideation (context)
-- **Implementation Plan** → link up to Specification and Requirements
+- **Implementation Plan** → link up to Specifications and Requirements only (not Ideation)
 
 **Reference style:**
 
 In Requirements, link upward:
 
 ```
-Driven by: ../00-ideation/IDEATION-foo.md
+Driven by: ../00-ideation/IDEATION-foo-problems.md
+Context: ../00-ideation/IDEATION-foo-experience.md
 ```
 
 In Specification, link upward:
 
 ```
 Implements:
-- ../01-requirements/REQ-UI-001.md
-- ../01-requirements/REQ-UI-002.md
+- ../01-requirements/REQ-foo.md#REQ-001
+- ../01-requirements/REQ-bar.md#REQ-002
 ```
 
 In Implementation Plan, link upward:
 
 ```
-Specification: ../02-specifications/SPEC-foo.md
+Specs:
+- ../02-specifications/SPEC-search-pagination.md
+- ../02-specifications/SPEC-user-list-pagination.md
+
 Covers Requirements:
-- ../01-requirements/REQ-UI-001.md
-- ../01-requirements/REQ-UI-002.md
+- ../01-requirements/REQ-pagination.md#REQ-001
 ```
 
 ---
 
 ## Key Principles
 
-1. **Ideation is disposable.** It converges into Requirements/Specification; you can delete old
-   Ideation docs.
+1. **Ideation is disposable.** It converges into Requirements/Specification; archive old Ideation
+   docs to preserve history without clutter.
 
 2. **Requirements are the contract.** They define obligations independent of how they're built. They
-   drive verification.
+   drive verification. Reuse them across multiple Specs when appropriate.
 
-3. **Specification implements Requirements.** It shows exactly what gets built and tested. It
-   includes design decisions (the "why") but not exploration.
+3. **Specifications implement Requirements.** One Spec can implement one or more Requirements; one
+   Requirement can be implemented by multiple Specs. It shows exactly what gets built and tested.
 
-4. **Implementation Plan focuses on sequencing.** It does not introduce new decisions; it orders
-   work and verifies completion.
+4. **Implementation Plan coordinates delivery.** It can span multiple Specs and Requirements. It
+   orders work and verifies completion.
 
-5. **One doc per type per feature.** For most features, one Ideation doc per sub-type (Problems,
-   Experience, Unknowns) + one Requirements + one Specification + one Implementation Plan.
-   - If a feature is small, you might skip Problems or Unknowns (but Experience is usually useful).
-   - If requirements are obvious, keep them lightweight.
-   - Specs and Plans are always needed before building.
+5. **One Requirements doc per feature.** Inside it, number individual requirements (REQ-001,
+   REQ-002, etc.). Multiple Specs can implement the same Requirements doc.
+   - If Requirements are obvious, keep them lightweight.
+   - If multiple features need the same Requirement (like pagination), create one canonical
+     Requirements doc and reuse it.
 
 6. **Q&A captures thinking.** Extract useful Q&A from design sessions and embed it in the document
    it informs. Keeps reasoning visible.
 
 7. **Documents evolve via git, not versioning in filenames.** No `-v1`, `-v2` suffixes. History
    lives in commits and pull requests.
+
+8. **Indices must stay in sync.** Every new document requires updating the relevant folder README
+   and INIT file. Make this part of your PR checklist.
 
 ---
 
@@ -402,59 +559,65 @@ ready for implementation and testing.
 
 ## Active Specifications
 
+- [SPEC-search-results-pagination](SPEC-search-results-pagination.md)
+- [SPEC-user-list-pagination](SPEC-user-list-pagination.md)
 - [SPEC-auth-session-handler](SPEC-auth-session-handler.md)
-- [SPEC-cache-invalidation-system](SPEC-cache-invalidation-system.md)
 
 ## Archived
 
 - [SPEC-legacy-auth-flow](SPEC-legacy-auth-flow.md) (superseded by SPEC-auth-session-handler)
 ```
 
+**Responsibility:** The person creating a new Spec updates this README immediately (as part of the
+PR).
+
 ---
 
 ## Example: How It Flows
 
-**Day 1: Ideation**
+### Scenario: Implementing pagination across the system
 
-- Write `IDEATION-export-problems.md`: why users need exports, what's broken, success signals
-- Write `IDEATION-export-experience.md`: personas (data analysts, engineers), their workflows, pain
-  points
-- Write `IDEATION-export-unknowns.md`: async vs sync, format priorities, storage constraints
-- Q&A: "Should we support async export?" → captured in unknowns
+**Week 1: Ideation & Requirements**
 
-**Day 2: Requirements**
+- Write `IDEATION-pagination-problems.md`: why pagination is needed, failure modes, success signals
+- Write `IDEATION-pagination-experience.md`: personas (data analysts, API consumers), their
+  workflows
+- Write `IDEATION-pagination-unknowns.md`: offset/limit vs. cursor, performance targets
+- Write `REQ-pagination-system.md` with requirements:
+  - REQ-001: Pagination via offset/limit
+  - REQ-002: Performance: < 100ms response time
+  - REQ-003: Error handling for invalid limits
 
-- Write `REQ-EXPORT-001.md`, `REQ-EXPORT-002.md`, etc.
-- Link back to Ideation docs for traceability (which problems/experience drove this?)
-- Define: export formats supported, performance limits, error handling
-- Q&A: "Which formats take priority?" → captured with decision
+**Week 2: Specifications**
 
-**Day 3: Specification**
+- Write `SPEC-search-results-pagination.md`: Implements REQ-001, REQ-002, REQ-003 (search-specific)
+- Write `SPEC-user-list-pagination.md`: Implements REQ-001, REQ-002, REQ-003 (user-list-specific)
+- Write `SPEC-timeline-pagination.md`: Implements REQ-001, REQ-002, REQ-003 (timeline-specific)
+- All three link back to `REQ-pagination-system.md`
 
-- Write `SPEC-user-export-service.md`
-- Implement the Requirements
-- Define: API endpoints, response schemas, rate limits, error codes
-- Include: Q&A about tradeoffs made
-- Link to Requirements
+**Week 3: Implementation Plan**
 
-**Day 4: Implementation Plan**
-
-- Write `IMPL-PLAN-user-export-service.md`
-- Break into milestones: API scaffolding → format handlers → testing → deployment
-- Include: verification checkpoints, risks, rollout plan
+- Write `IMPL-PLAN-pagination-system.md`:
+  - Covers all three Specs
+  - References `REQ-pagination-system.md`
+  - Milestones: shared library → search integration → user list → timeline → testing → deployment
 
 **Ongoing:**
 
-- Update `INIT-export-feature.md` to link all ideation docs, requirements, spec, and plan
-- Use as a single entry point for understanding the feature
+- Update `INIT-pagination.md` to link Ideation, REQ, all three Specs, and the IMPL-PLAN
+- Update `/01-requirements/README.md` to list `REQ-pagination-system.md`
+- Update `/02-specifications/README.md` to list all three Specs
+- Update `/03-implementation-plans/README.md` to list the IMPL-PLAN
+- Update `/04-initiatives/README.md` to list `INIT-pagination.md`
 
 ---
 
 ## Lifecycle Rules
 
-- **Ideation:** Disposable. Delete or archive when Requirements are finalized.
-- **Requirements:** Immutable by ID. If intent changes, deprecate and create a new REQ ID, not a new
-  version.
+- **Ideation:** Archive (don't delete) when Requirements are finalized. Archiving preserves history
+  and prevents link rot.
+- **Requirements:** Immutable by ID. If intent changes, deprecate and create a new REQ number (e.g.,
+  REQ-001 deprecated → new REQ-004).
 - **Specification:** Evolves as implementation refines understanding. Versioning lives in git
   history. No filename changes.
 - **Implementation Plan:** Updated as execution reveals sequencing changes. Versioned via git.
@@ -472,18 +635,30 @@ This system is designed to be machine-readable:
 2. **Cross-links are explicit.** All relationships are stated, not implied.
 3. **Q&A is plaintext and conversational.** LLMs can parse and reason about design decisions
    naturally.
-4. **One document per type per feature.** No ambiguity about which Spec to read; there's one.
+4. **Many-to-many relationships are explicit.** Links show which Specs implement which Requirements,
+   which Plans coordinate which Specs.
 5. **Each document is self-contained enough to read alone**, yet links to upstream docs for context.
 
 ---
 
 ## Getting Started
 
-1. Create a feature and start with Ideation or Requirements (skip Ideation if clear).
-2. Write a Specification once Requirements are stable.
-3. Write an Implementation Plan before starting work.
-4. Create an Initiative index in `04-initiatives` to link everything together.
-5. Update folder READMEs as you add documents.
+1. Create an INIT file for your feature/initiative.
+2. Start with Ideation (Problems, Experience, Unknowns) or skip straight to Requirements if clear.
+3. Write a Requirements doc once discovery is stable.
+4. Write Specifications for each piece that needs to be built.
+5. Write an Implementation Plan to coordinate delivery.
+6. **Update indices immediately:** folder READMEs + INIT file.
+
+**Checklist for new documents:**
+
+- [ ] Document written with proper structure (use templates)
+- [ ] Status field set (Draft, Active, Approved, etc.)
+- [ ] Links to upstream docs (Ideation → REQ → Spec → Plan)
+- [ ] Q&A section includes alternatives considered (if applicable)
+- [ ] Folder README updated
+- [ ] INIT file updated
+- [ ] PR linked/referenced
 
 If a document feels hard to write, you might be mixing concerns. Review the "What belongs here"
 section for that doc type.

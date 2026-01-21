@@ -1,82 +1,118 @@
-# REQ-<domain>-<id>
+# REQ-<feature>
 
 **Status:** Draft | Approved | Deprecated
 
+**Date Started:** YYYY-MM-DD
+
 ---
 
-## Statement
+## Overview
+
+Brief description of what this Requirements document covers.
+
+Example: "All obligations for the pagination system across search, user lists, and timelines."
+
+---
+
+## REQ-001: <Title>
+
+**Statement:**
 
 One normative obligation (MUST/SHOULD/MAY).
 
-Example: "The system MUST support exporting data in CSV format and complete within 30 seconds for
-datasets up to 1M rows."
+Example: "The system MUST support paginated results via offset and limit parameters on all list
+endpoints."
 
----
-
-## Rationale
+**Rationale:**
 
 Why is this required? What problem does it solve? Link to Ideation if applicable.
 
-Example: "Customers need fast, reliable exports for large datasets. CSV is the most commonly
-requested format (from user research in IDEATION-export-experience.md). 30-second timeout aligns
-with user expectations from competitor analysis."
+Example: "Users need to browse large result sets efficiently. Offset/limit is the most familiar
+pagination pattern (from user research in IDEATION-pagination-experience.md). This applies to search
+results, user lists, and activity timelines."
 
----
-
-## Measurable Fit Criteria
+**Measurable Fit Criteria:**
 
 How do we know this requirement is met?
 
-- [ ] Export endpoint returns CSV within 30 seconds for 1M row dataset
-- [ ] System handles concurrent exports without queueing beyond initial submission
-- [ ] CSV output is valid and can be opened in Excel without errors
+- [ ] GET /search?offset=0&limit=20 returns exactly 20 results (or fewer if at end)
+- [ ] All list endpoints support offset and limit parameters
+- [ ] Documentation lists the valid range for limit (e.g., 1-100)
 
----
-
-## Verification Method
+**Verification Method:**
 
 How will we prove conformance?
 
-- Automated test: export 1M rows, assert response time < 30s
-- Manual test: export data in Excel, verify no corruption
-- Load test: 10 concurrent exports of 500k rows each
+- Automated test: pagination endpoint returns correct subset
+- Behavior test: offset=0 returns first items, offset=20 returns next 20
+- Edge case: offset beyond end of results returns empty array
+- Load test: pagination endpoints handle concurrent requests
 
 ---
 
-## Failure Modes
+## REQ-002: <Title>
 
-What can go wrong?
+**Statement:**
 
-- Export times out (network, memory, or processing issue)
-- CSV format is corrupted
-- Export succeeds but file is incomplete
+Example: "Pagination responses MUST include total count, current offset, and per-page limit in
+metadata."
+
+**Rationale:**
+
+Helps clients calculate remaining pages and show progress.
+
+**Measurable Fit Criteria:**
+
+- [ ] Response includes `total`, `offset`, `limit` in metadata
+- [ ] `total` reflects true count even if results are filtered
+- [ ] Client can calculate `remaining_pages = ceil((total - offset) / limit)`
+
+**Verification Method:**
+
+- Automated test: verify metadata fields present and accurate
+- Manual test: use pagination to browse complete result set, count matches total
+
+---
+
+## REQ-003: <Title>
+
+[Repeat structure above]
 
 ---
 
 ## Related Requirements
 
-Other requirements that interact with this one.
+Other requirements that interact with these.
 
-- REQ-EXPORT-002 (error handling for export failures)
-- REQ-EXPORT-003 (progress visibility for long-running exports)
+- REQ-performance (response times must be < 100ms)
+- REQ-error-handling (invalid offset/limit must return clear errors)
 
 ---
 
 ## Q&A
 
-**Q: Why not support async exports to avoid timeouts?**
+**Q: Should we support cursor-based pagination instead of offset/limit?**
 
-- Async (queued, email results): decouples from timeout, but needs infrastructure (job queue, email
-  service, storage)
-- Sync (immediate response): simpler, but timeouts on large data
-- Hybrid: best, but most complex
+- Offset/limit pagination: simpler, familiar, but doesn't work well with frequently-changing
+  datasets
+- Cursor-based pagination: stable for real-time data, but more complex
+- Both: support both approaches (future-proof, but significant complexity)
 
-A: Start with sync for <500k rows. Async is blocked until we need to scale beyond 1M rows or user
-demand justifies infrastructure cost.
+A: Start with offset/limit. It covers 95% of use cases and is easier for API consumers. Cursor-based
+is blocked until we need to handle real-time data streaming or massive result sets (>10M rows).
 
-**Q: Do we need to support incremental/streaming exports?**
+**Q: What's the maximum page size we should allow?**
 
-- Full export: fetch all, then return (current approach; simpler)
-- Streaming: send rows as they're processed (uses less memory; more complex)
+- No limit: let clients request 1M rows at once (flexible, but memory risk)
+- Hard limit (e.g., max 1000): protects server, but might be limiting
+- Configurable per endpoint: different limits for different data types (best, but complex)
 
-A: Full export for now. Streaming is blocked until we see memory pressure on large exports.
+A: Hard limit of 100 per endpoint for now. Document as a limitation. Move to per-endpoint config if
+we see real user demand for larger pages.
+
+**Q: Should pagination be consistent across internal and public APIs?**
+
+- Same pagination for both: consistent, easier to maintain
+- Different approaches: optimize each for its audience
+
+A: Same pagination approach for both. Consistency matters more than optimization at this stage.
