@@ -1,5 +1,3 @@
-# IDEATION-<feature>-problems
-
 ```yaml
 ---
 type: IDEATION-problems

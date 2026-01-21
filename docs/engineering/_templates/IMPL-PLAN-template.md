@@ -1,5 +1,3 @@
-# IMPL-PLAN-<area>-<topic>
-
 ```yaml
 ---
 type: IMPL-PLAN

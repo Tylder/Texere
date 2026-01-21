@@ -1,5 +1,3 @@
-# IDEATION-<feature>-experience
-
 ```yaml
 ---
 type: IDEATION-experience

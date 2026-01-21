@@ -1,5 +1,3 @@
-# IDEATION-<feature>-unknowns
-
 ```yaml
 ---
 type: IDEATION-unknowns
