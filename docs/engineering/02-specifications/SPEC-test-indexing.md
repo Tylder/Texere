@@ -13,14 +13,14 @@ summary_long: Test doc for indexing.
 index:
   sections:
     - id: section_a
-      title: 'Section A'
-      lines: [30, 33]
-      summary: 'First section.'
+      title: "Section A"
+      lines: [29, 32]
+      summary: "First section."
       token_est: 8
     - id: section_b
-      title: 'Section B'
-      lines: [34, 37]
-      summary: 'Second section.'
+      title: "Section B"
+      lines: [33, 36]
+      summary: "Second section."
       token_est: 8
 ---
 

@@ -690,7 +690,7 @@ ${cleanFrontmatterYaml}${skeletonIndexYaml}
   // Count lines: the closing --- is on line N, so content starts on line N+1
   const allLines = tempFrontmatter.split('\n');
   const closingDashIndex = allLines.indexOf('---', 1); // Array index of closing ---
-  const indexLineOffset = closingDashIndex + 1; // Line number of first content line (1-indexed)
+  const indexLineOffset = closingDashIndex; // Number of lines before the content block (used as offset)
 
   console.log(`[DEBUG] ${doc.relativePath}:`);
   console.log(`  tempFrontmatter has ${allLines.length} lines`);

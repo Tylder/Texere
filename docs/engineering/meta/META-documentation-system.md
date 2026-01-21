@@ -17,81 +17,81 @@ summary_long:
 index:
   sections:
     - id: critical_keeping_indices_in_sync
-      title: 'Critical: Keeping Indices in Sync'
-      lines: [106, 132]
+      title: "Critical: Keeping Indices in Sync"
+      lines: [105, 131]
       token_est: 198
     - id: overview
-      title: 'Overview'
-      lines: [133, 155]
+      title: "Overview"
+      lines: [132, 154]
       token_est: 192
     - id: document_format_yaml_frontmatter_structured_sections
-      title: 'Document Format: YAML Frontmatter + Structured Sections'
-      lines: [156, 199]
+      title: "Document Format: YAML Frontmatter + Structured Sections"
+      lines: [155, 198]
       token_est: 254
     - id: document_relationships
-      title: 'Document Relationships'
-      lines: [200, 224]
+      title: "Document Relationships"
+      lines: [199, 223]
       token_est: 65
     - id: tldr
-      title: 'TLDR'
-      lines: [225, 249]
+      title: "TLDR"
+      lines: [224, 248]
       token_est: 110
     - id: scope
-      title: 'Scope'
-      lines: [250, 281]
+      title: "Scope"
+      lines: [249, 280]
       token_est: 123
     - id: design_decisions
-      title: 'Design Decisions'
-      lines: [282, 301]
+      title: "Design Decisions"
+      lines: [281, 300]
       token_est: 175
     - id: document_metadata
-      title: 'Document Metadata'
-      lines: [302, 314]
+      title: "Document Metadata"
+      lines: [301, 313]
       token_est: 30
     - id: when_to_write_each
-      title: 'When to Write Each'
-      lines: [315, 376]
+      title: "When to Write Each"
+      lines: [314, 375]
       token_est: 227
     - id: manytomany_relationships
-      title: 'Many-to-Many Relationships'
-      lines: [377, 385]
+      title: "Many-to-Many Relationships"
+      lines: [376, 384]
       token_est: 34
     - id: folder_structure
-      title: 'Folder Structure'
-      lines: [386, 422]
+      title: "Folder Structure"
+      lines: [385, 421]
       token_est: 58
     - id: file_naming
-      title: 'File Naming'
-      lines: [423, 458]
+      title: "File Naming"
+      lines: [422, 457]
       token_est: 42
     - id: crosslinking_rules
-      title: 'Cross-Linking Rules'
-      lines: [459, 477]
+      title: "Cross-Linking Rules"
+      lines: [458, 476]
       token_est: 112
     - id: key_principles
-      title: 'Key Principles'
-      lines: [478, 504]
+      title: "Key Principles"
+      lines: [477, 503]
       token_est: 160
     - id: getting_started
-      title: 'Getting Started'
-      lines: [505, 527]
+      title: "Getting Started"
+      lines: [504, 526]
       token_est: 181
     - id: for_llms_and_agents
-      title: 'For LLMs and Agents'
-      lines: [528, 553]
+      title: "For LLMs and Agents"
+      lines: [527, 552]
       token_est: 112
     - id: section_indexing_structure_for_llm_parsing
-      title: 'Section Indexing: Structure for LLM Parsing'
-      lines: [554, 570]
+      title: "Section Indexing: Structure for LLM Parsing"
+      lines: [553, 569]
       token_est: 114
     - id: scope
-      title: 'Scope'
-      lines: [571, 641]
-      summary: 'API covers offset/limit pagination; excludes cursor-based and export pagination.'
+      title: "Scope"
+      lines: [570, 640]
+      summary: "API covers offset/limit pagination; excludes cursor-based and export pagination."
       token_est: 297
     - id: automation_keeping_indices_in_sync
-      title: 'Automation: Keeping Indices in Sync'
-      lines: [642, 701]
+      title: "Automation: Keeping Indices in Sync"
+      lines: [641, 700]
       token_est: 289
 ---
 
