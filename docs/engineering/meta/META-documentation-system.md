@@ -518,11 +518,9 @@ docs/engineering/02-specifications/SPEC-search-results-pagination.llm-index.yaml
 The index contains:
 
 ```yaml
-llm_index:
-  schema: llm-header-index/v1
+index:
   generated_at: 2026-01-21T12:42:11Z
-  document_path: docs/engineering/02-specifications/SPEC-search-results-pagination.md
-
+  generator: script/validate-docs.mjs
   sections:
     - id: scope
       title: Scope

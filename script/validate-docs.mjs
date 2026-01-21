@@ -561,33 +561,25 @@ function extractSections(content, errors, docRelativePath) {
 }
 
 /**
- * Generate and write section index file.
+ * Embed section index in document frontmatter.
  */
-function writeSectionIndex(doc, sections) {
-  const indexPath = doc.path.replace(/\.md$/, '.llm-index.yaml');
+function embedSectionIndex(doc, sections) {
+  const frontmatterMatch = doc.content.match(/^---\n([\s\S]*?)\n---/);
+  if (!frontmatterMatch) return; // No frontmatter, skip
+
+  const frontmatterYaml = frontmatterMatch[1];
+  const contentAfterFrontmatter = doc.content.substring(frontmatterMatch[0].length);
+
+  // Build index YAML
   const now = new Date().toISOString();
-
-  const index = {
-    llm_index: {
-      schema: 'llm-header-index/v1',
-      generated_at: now,
-      generator: 'script/validate-docs.mjs',
-      document_path: doc.relativePath,
-      sections,
-    },
-  };
-
-  // Convert to YAML manually (no deps)
-  let yaml = `llm_index:
-  schema: ${index.llm_index.schema}
-  generated_at: ${index.llm_index.generated_at}
-  generator: ${index.llm_index.generator}
-  document_path: ${index.llm_index.document_path}
-  sections:
-`;
+  let indexYaml = `
+index:
+  generated_at: "${now}"
+  generator: script/validate-docs.mjs
+  sections:`;
 
   for (const section of sections) {
-    yaml += `
+    indexYaml += `
     - id: ${section.id}
       title: "${section.title}"
       level: ${section.level}
@@ -597,9 +589,9 @@ function writeSectionIndex(doc, sections) {
       token_est: ${section.token_est}`;
 
     if (section.subsections && section.subsections.length > 0) {
-      yaml += '\n      subsections:';
+      indexYaml += '\n      subsections:';
       for (const sub of section.subsections) {
-        yaml += `
+        indexYaml += `
         - id: ${sub.id}
           title: "${sub.title}"
           level: ${sub.level}
@@ -609,13 +601,23 @@ function writeSectionIndex(doc, sections) {
           token_est: ${sub.token_est}`;
       }
     } else {
-      yaml += '\n      subsections: []';
+      indexYaml += '\n      subsections: []';
     }
   }
 
-  yaml += '\n';
+  // Combine frontmatter + index + content
+  const newFrontmatter = `---
+${frontmatterYaml}${indexYaml}
+---`;
 
-  fs.writeFileSync(indexPath, yaml, 'utf-8');
+  const newContent = newFrontmatter + contentAfterFrontmatter;
+
+  // Only write if changed (avoid unnecessary git churn)
+  if (newContent !== doc.content) {
+    fs.writeFileSync(doc.path, newContent, 'utf-8');
+    return true; // Indicate doc was modified
+  }
+  return false;
 }
 
 /**
@@ -681,19 +683,20 @@ function main() {
         }
         fixes.push('✅ Updated folder READMEs');
 
-        // Generate section indices
+        // Generate section indices (embedded in frontmatter)
         if (INDEXING_CONFIG.enabled) {
-          const indexedFiles = [];
+          let indexedCount = 0;
           for (const doc of updatedDocs) {
             const sections = extractSections(doc.content, errors, doc.relativePath);
             if (errors.length > 0) break; // Stop if indexing errors
             if (sections.length > 0) {
-              writeSectionIndex(doc, sections);
-              indexedFiles.push(doc.path.replace(/\.md$/, '.llm-index.yaml'));
+              if (embedSectionIndex(doc, sections)) {
+                indexedCount++;
+              }
             }
           }
-          if (indexedFiles.length > 0) {
-            fixes.push(`✅ Generated ${indexedFiles.length} section indices (.llm-index.yaml)`);
+          if (indexedCount > 0) {
+            fixes.push(`✅ Embedded section indices in ${indexedCount} documents`);
           }
         }
 

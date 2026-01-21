@@ -111,12 +111,9 @@ The index is **never embedded** in the document.
 ## 6. Index Schema (Canonical)
 
 ```yaml
-llm_index:
-  schema: llm-header-index/v1
+index:
   generated_at: 2026-01-21T12:42:11Z
-  generator: script/validate-docs.mjs@1.0.0
-  document_path: docs/engineering/02-specifications/SPEC-my-feature.md
-
+  generator: script/validate-docs.mjs
   sections:
     - id: scope
       title: Scope
