@@ -261,7 +261,7 @@ function embedSectionIndex(doc) {
     indexYaml += `\n      lines: [0, 0]`;
 
     if (section.summary) {
-      indexYaml += `\n      summary: "${section.summary.replace(/"/g, '\\"')}"`;
+      indexYaml += `\n      summary: '${section.summary}'`;
     }
 
     indexYaml += `\n      token_est: ${section.token_est}`;
@@ -278,7 +278,7 @@ function embedSectionIndex(doc) {
         indexYaml += `\n          lines: [0, 0]`;
 
         if (sub.summary) {
-          indexYaml += `\n          summary: "${sub.summary.replace(/"/g, '\\"')}"`;
+          indexYaml += `\n          summary: '${sub.summary}'`;
         }
 
         indexYaml += `\n          token_est: ${sub.token_est}`;
@@ -341,7 +341,7 @@ function embedSectionIndex(doc) {
     realIndexYaml += `\n      lines: [${startLine}, ${endLine}]`;
 
     if (section.summary) {
-      realIndexYaml += `\n      summary: "${section.summary.replace(/"/g, '\\"')}"`;
+      realIndexYaml += `\n      summary: '${section.summary}'`;
     }
 
     realIndexYaml += `\n      token_est: ${section.token_est}`;
@@ -359,7 +359,7 @@ function embedSectionIndex(doc) {
         realIndexYaml += `\n          lines: [${subStart}, ${subEnd}]`;
 
         if (sub.summary) {
-          realIndexYaml += `\n          summary: "${sub.summary.replace(/"/g, '\\"')}"`;
+          realIndexYaml += `\n          summary: '${sub.summary}'`;
         }
 
         realIndexYaml += `\n          token_est: ${sub.token_est}`;

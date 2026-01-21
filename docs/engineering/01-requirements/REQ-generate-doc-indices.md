@@ -17,58 +17,78 @@ summary_long: |
   LLMs to quickly identify relevant sections without reading entire documents.
 index:
   sections:
-    - title: "Document Relationships"
-      lines: [77, 99]
-      summary: "Driven by META-documentation-system; complements REQ-validate-docs with content-level indexing."
+    - title: 'Document Relationships'
+      lines: [97, 119]
+      summary:
+        'Driven by META-documentation-system; complements REQ-validate-docs with content-level
+        indexing.'
       token_est: 80
-    - title: "TLDR"
-      lines: [101, 120]
-      summary: "Extract H2/H3 heading hierarchy with summaries and token estimates; embed in frontmatter as machine-readable index."
+    - title: 'TLDR'
+      lines: [121, 140]
+      summary:
+        'Extract H2/H3 heading hierarchy with summaries and token estimates; embed in frontmatter as
+        machine-readable index.'
       token_est: 150
-    - title: "Scope"
-      lines: [122, 152]
-      summary: "Covers heading extraction, summary collection, token estimation, subsection inclusion logic, and frontmatter embedding."
+    - title: 'Scope'
+      lines: [142, 172]
+      summary:
+        'Covers heading extraction, summary collection, token estimation, subsection inclusion
+        logic, and frontmatter embedding.'
       token_est: 185
-    - title: "REQ-001: Extract H2 and H3 Headings"
-      lines: [154, 189]
-      summary: "Extract all H2 and H3 headings from document content (after frontmatter); build hierarchy with H3 as subsections of H2."
+    - title: 'REQ-001: Extract H2 and H3 Headings'
+      lines: [174, 209]
+      summary:
+        'Extract all H2 and H3 headings from document content (after frontmatter); build hierarchy
+        with H3 as subsections of H2.'
       token_est: 272
-    - title: "REQ-002: Collect Section Summaries"
-      lines: [191, 229]
-      summary: "Immediately after each heading, extract the \"Summary: ...\" line; if missing and summary_mode=error, report error."
+    - title: 'REQ-002: Collect Section Summaries'
+      lines: [211, 249]
+      summary:
+        'Immediately after each heading, extract the "Summary: ..." line; if missing and
+        summary_mode=error, report error.'
       token_est: 294
-    - title: "REQ-003: Token Estimation"
-      lines: [231, 264]
-      summary: "Estimate tokens for each section as word_count \* 1.3 multiplier; use for subsection inclusion filtering."
+    - title: 'REQ-003: Token Estimation'
+      lines: [251, 284]
+      summary:
+        'Estimate tokens for each section as word_count \* 1.3 multiplier; use for subsection
+        inclusion filtering.'
       token_est: 228
-    - title: "REQ-004: Subsection Filtering"
-      lines: [266, 299]
-      summary: "Only include H3 subsections in index if parent H2 section has ≥300 tokens; skip smaller sections to avoid clutter."
+    - title: 'REQ-004: Subsection Filtering'
+      lines: [286, 319]
+      summary:
+        'Only include H3 subsections in index if parent H2 section has ≥300 tokens; skip smaller
+        sections to avoid clutter.'
       token_est: 263
-    - title: "REQ-005: Embed Index in Frontmatter"
-      lines: [301, 350]
-      summary: "Add index field to document frontmatter with sections array; each section includes title, lines, summary, token_est, subsections."
+    - title: 'REQ-005: Embed Index in Frontmatter'
+      lines: [321, 370]
+      summary:
+        'Add index field to document frontmatter with sections array; each section includes title,
+        lines, summary, token_est, subsections.'
       token_est: 303
-    - title: "REQ-006: Determine Accurate Line Numbers"
-      lines: [352, 391]
-      summary: "Generate dummy index, format with Prettier, then replace line numbers with real 1-based line positions from formatted content."
+    - title: 'REQ-006: Determine Accurate Line Numbers'
+      lines: [372, 411]
+      summary:
+        'Generate dummy index, format with Prettier, then replace line numbers with real 1-based
+        line positions from formatted content.'
       token_est: 315
-    - title: "REQ-007: Format Document with Prettier"
-      lines: [393, 427]
-      summary: "Format documents with Prettier after embedding dummy index and before extracting real line numbers."
+    - title: 'REQ-007: Format Document with Prettier'
+      lines: [413, 447]
+      summary:
+        'Format documents with Prettier after embedding dummy index and before extracting real line
+        numbers.'
       token_est: 242
-    - title: "Design Decisions"
-      lines: [429, 442]
+    - title: 'Design Decisions'
+      lines: [449, 462]
       token_est: 245
-    - title: "Blockers"
-      lines: [444, 452]
-      summary: "No active blockers; script runs independently and modifies documents in-place."
+    - title: 'Blockers'
+      lines: [464, 472]
+      summary: 'No active blockers; script runs independently and modifies documents in-place.'
       token_est: 55
-    - title: "Assumptions & Unknowns"
-      lines: [454, 469]
+    - title: 'Assumptions & Unknowns'
+      lines: [474, 489]
       token_est: 292
-    - title: "Document Metadata"
-      lines: [471, 487]
+    - title: 'Document Metadata'
+      lines: [491, 507]
       token_est: 47
 ---
 

@@ -28,15 +28,15 @@ index:
   sections:
     - title: "Document Relationships"
       lines: [89, 114]
-      summary: "Foundational infrastructure for all other systems; without visible epistemic state, all continuity, orchestration, and trust improvements fail."
+      summary: 'Foundational infrastructure for all other systems; without visible epistemic state, all continuity, orchestration, and trust improvements fail.'
       token_est: 130
     - title: "TLDR"
       lines: [116, 141]
-      summary: "The system cannot tell the user (or itself) what it currently believes to be true, what is uncertain, what is still open, or why. State is buried in chat narratives, making it invisible, non-inspectable, and vulnerable to drift."
+      summary: 'The system cannot tell the user (or itself) what it currently believes to be true, what is uncertain, what is still open, or why. State is buried in chat narratives, making it invisible, non-inspectable, and vulnerable to drift.'
       token_est: 210
     - title: "Scope"
       lines: [143, 170]
-      summary: "Current state visibility, epistemic clarity, baseline vs history separation, open work tracking, and session-to-session deltas—not storage engines, UI design, or full audit trails."
+      summary: 'Current state visibility, epistemic clarity, baseline vs history separation, open work tracking, and session-to-session deltas—not storage engines, UI design, or full audit trails.'
       token_est: 173
     - title: "Overview"
       lines: [172, 183]
@@ -47,27 +47,27 @@ index:
       subsections:
         - title: "Problem 1: PROB-003 — No durable epistemic state (facts, hypotheses, unknowns)"
           lines: [187, 244]
-          summary: "Agent sessions maintain undifferentiated narrative; do not reliably separate confirmed facts, hypotheses, assumptions, unknowns, constraints, and decisions."
+          summary: 'Agent sessions maintain undifferentiated narrative; do not reliably separate confirmed facts, hypotheses, assumptions, unknowns, constraints, and decisions.'
           token_est: 384
         - title: "Problem 2: PROB-010 — No safe separation between "current baseline" and historical record"
           lines: [246, 300]
-          summary: "Developers need coherent latest state, but losing/corrupting history destroys correctness; many systems keep only summaries (truth loss) or everything but cannot produce coherent \"current\" view."
+          summary: 'Developers need coherent latest state, but losing/corrupting history destroys correctness; many systems keep only summaries (truth loss) or everything but cannot produce coherent "current" view.'
           token_est: 437
         - title: "Problem 3: PROB-025 — Current system state is not externally visible or inspectable"
           lines: [302, 350]
-          summary: "User cannot reliably see what system believes the current state is; state is implicit in chat flow rather than explicit and inspectable."
+          summary: 'User cannot reliably see what system believes the current state is; state is implicit in chat flow rather than explicit and inspectable.'
           token_est: 423
         - title: "Problem 4: PROB-026 — No canonical, user-visible "current understanding" baseline"
           lines: [352, 405]
-          summary: "No single, authoritative, user-visible representation of what system currently believes to be true, assumed, constrained, and decided."
+          summary: 'No single, authoritative, user-visible representation of what system currently believes to be true, assumed, constrained, and decided.'
           token_est: 403
         - title: "Problem 5: PROB-027 — Open work (todos, unknowns, decisions) is not continuously visible"
           lines: [407, 456]
-          summary: "Items still open (unknowns, pending decisions, risks, planned actions) are not persistently visible and are easily forgotten by both user and system."
+          summary: 'Items still open (unknowns, pending decisions, risks, planned actions) are not persistently visible and are easily forgotten by both user and system.'
           token_est: 387
         - title: "Problem 6: PROB-030 — State changes across sessions are not clearly surfaced to the user"
           lines: [458, 505]
-          summary: "When user returns after time away, changes in understanding, decisions, risks, and open items are not clearly summarized, forcing re-orientation from scratch."
+          summary: 'When user returns after time away, changes in understanding, decisions, risks, and open items are not clearly summarized, forcing re-orientation from scratch.'
           token_est: 366
     - title: "Success Signals (System Level)"
       lines: [507, 519]
