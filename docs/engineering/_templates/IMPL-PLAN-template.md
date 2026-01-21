@@ -9,6 +9,8 @@ created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: core-api
 feature: pagination-system
+frontmatter_auto_updated_by: script/validate-docs.mjs
+frontmatter_auto_updated_on_every: git commit (pre-commit hook)
 summary_short:
   'Coordinate implementation of pagination across three endpoints (search, users, timeline)'
 summary_long:

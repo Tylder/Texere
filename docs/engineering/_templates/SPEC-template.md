@@ -6,6 +6,8 @@ created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: api
 feature: pagination-system
+frontmatter_auto_updated_by: script/validate-docs.mjs
+frontmatter_auto_updated_on_every: git commit (pre-commit hook)
 summary_short: 'GET /search endpoint with offset/limit pagination, metadata, and error handling'
 summary_long:
   'Specifies API contract for paginated search results including request parameters (query, offset,

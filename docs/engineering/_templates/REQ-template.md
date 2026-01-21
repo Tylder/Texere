@@ -6,6 +6,8 @@ created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: feature-area
 feature: feature-name
+frontmatter_auto_updated_by: script/validate-docs.mjs
+frontmatter_auto_updated_on_every: git commit (pre-commit hook)
 summary_short: 'Offset/limit pagination required across all list endpoints'
 summary_long:
   'Defines normative Requirements for system-wide pagination via offset/limit parameters. Specifies

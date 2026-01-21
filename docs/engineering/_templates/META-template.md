@@ -6,6 +6,8 @@ created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: system
 feature: your-feature
+frontmatter_auto_updated_by: script/validate-docs.mjs
+frontmatter_auto_updated_on_every: git commit (pre-commit hook)
 summary_short: '(Brief 1-2 sentence summary of this meta document)'
 summary_long: '(Longer 3-5 sentence summary for LLM decision-making about relevance)'
 ---

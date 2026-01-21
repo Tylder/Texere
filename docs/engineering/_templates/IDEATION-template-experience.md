@@ -9,6 +9,8 @@ created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: search
 feature: pagination-system
+frontmatter_auto_updated_by: script/validate-docs.mjs
+frontmatter_auto_updated_on_every: git commit (pre-commit hook)
 summary_short:
   'How data analysts and API consumers will experience pagination: journeys, personas, invariants'
 summary_long:

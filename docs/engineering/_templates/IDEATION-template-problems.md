@@ -9,6 +9,8 @@ created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 area: search
 feature: pagination-system
+frontmatter_auto_updated_by: script/validate-docs.mjs
+frontmatter_auto_updated_on_every: git commit (pre-commit hook)
 summary_short:
   'Problems discovered when browsing large result sets: timeouts, no pagination, inconsistent
   behavior'

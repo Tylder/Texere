@@ -567,8 +567,22 @@ function embedSectionIndex(doc, sections) {
   const frontmatterMatch = doc.content.match(/^---\n([\s\S]*?)\n---/);
   if (!frontmatterMatch) return; // No frontmatter, skip
 
-  const frontmatterYaml = frontmatterMatch[1];
+  let frontmatterYaml = frontmatterMatch[1];
   const contentAfterFrontmatter = doc.content.substring(frontmatterMatch[0].length);
+
+  // Ensure frontmatter_auto_updated_by fields exist
+  if (!frontmatterYaml.includes('frontmatter_auto_updated_by:')) {
+    // Insert after feature field (or area if feature doesn't exist)
+    const featureMatch = frontmatterYaml.match(/(feature:.*\n)/);
+    const insertAfter = featureMatch ? featureMatch[1] : frontmatterYaml.match(/(area:.*\n)/)[1];
+    const insertPosition = frontmatterYaml.indexOf(insertAfter) + insertAfter.length;
+
+    frontmatterYaml =
+      frontmatterYaml.substring(0, insertPosition) +
+      'frontmatter_auto_updated_by: script/validate-docs.mjs\n' +
+      'frontmatter_auto_updated_on_every: git commit (pre-commit hook)\n' +
+      frontmatterYaml.substring(insertPosition);
+  }
 
   // Build index YAML
   const now = new Date().toISOString();
