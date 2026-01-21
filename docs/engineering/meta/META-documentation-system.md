@@ -469,6 +469,96 @@ This system is designed to be machine-readable first, human-readable second.
 
 ---
 
+## Section Indexing: Structure for LLM Parsing
+
+Every document is automatically indexed by section to allow LLMs to read only relevant parts without
+parsing the whole document.
+
+### How Section Indexing Works
+
+Sections are defined by **Markdown heading hierarchy**:
+
+- **H2 headings** (`## Title`) = top-level sections
+- **H3 headings** (`### Title`) = subsections of the parent H2
+- **H4 and deeper** = content within sections (not indexed)
+
+Each section that is indexed **must have a summary** on the very first non-empty line after the
+heading:
+
+```markdown
+## Scope
+
+Summary: API covers offset/limit pagination; excludes cursor-based and export pagination.
+
+**Includes:**
+
+- GET /search parameters
+- Response metadata
+- Error handling
+```
+
+### Summary Format
+
+Summaries are **content nuggets**, not descriptors:
+
+- ✅ GOOD: "API covers offset/limit pagination; excludes cursor-based and export"
+- ❌ BAD: "This section describes what the Spec includes and excludes"
+
+Summaries answer: **What are the key facts in this section that an LLM should know?**
+
+### Generated Index Files
+
+When you commit a document, the indexer automatically generates a sidecar file:
+
+```
+docs/engineering/02-specifications/SPEC-search-results-pagination.md
+docs/engineering/02-specifications/SPEC-search-results-pagination.llm-index.yaml
+```
+
+The index contains:
+
+```yaml
+llm_index:
+  schema: llm-header-index/v1
+  generated_at: 2026-01-21T12:42:11Z
+  document_path: docs/engineering/02-specifications/SPEC-search-results-pagination.md
+
+  sections:
+    - id: scope
+      title: Scope
+      level: 2
+      start_line: 45
+      end_line: 78
+      summary: API covers offset/limit pagination; excludes cursor-based and export pagination.
+      token_est: 420
+      subsections:
+        - id: includes
+          title: Includes
+          level: 3
+          start_line: 47
+          end_line: 56
+          summary: null
+          token_est: 180
+```
+
+### What LLMs Do With This Index
+
+An LLM can:
+
+1. **Read the index** to understand document structure at a glance
+2. **Select relevant sections** based on task (e.g., "show me the Scope section")
+3. **Read only those line ranges** from the document (lines 45-78)
+4. **Skip unrelated sections** entirely (saves tokens)
+
+Example: An LLM needs to know what this Spec covers:
+
+- Reads index
+- Finds section `scope` with summary
+- Reads only lines 45-78
+- Gets the answer without reading the full 500-line document
+
+---
+
 ## Automation: Keeping Indices in Sync
 
 To eliminate manual bookkeeping and ensure indices never drift, this system includes **automated

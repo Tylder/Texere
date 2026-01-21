@@ -14,6 +14,8 @@ summary_long: '(Longer 3-5 sentence summary for LLM decision-making about releva
 
 ## Document Relationships
 
+Summary: System documentation for documentation itself; referenced by all document types.
+
 **Upstream (this doc depends on):**
 
 - (None or list related docs)
@@ -34,6 +36,8 @@ summary_long: '(Longer 3-5 sentence summary for LLM decision-making about releva
 
 ## TLDR
 
+Summary: (One-sentence takeaway of what this meta doc defines or explains)
+
 **What:** Brief description of what this system/convention/document covers
 
 **Why:** Why does this matter? What problem does it solve?
@@ -45,6 +49,8 @@ summary_long: '(Longer 3-5 sentence summary for LLM decision-making about releva
 ---
 
 ## Scope
+
+Summary: (Key scope boundaries: what's in, what's out, what's related)
 
 **Includes:**
 

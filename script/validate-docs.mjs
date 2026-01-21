@@ -37,6 +37,14 @@ const REQUIRED_FRONTMATTER_FIELDS = [
   'summary_long',
 ];
 
+// Indexing configuration
+const INDEXING_CONFIG = {
+  enabled: true,
+  summary_mode: 'skip', // 'error' or 'skip' (will enforce 'error' once all docs updated)
+  min_level: 2,
+  max_level: 3,
+};
+
 /**
  * Sort documents deterministically:
  * 1. folder order (ideation → requirements → specifications → plans → meta)
@@ -446,6 +454,171 @@ function updateFolderReadme(type, allDocs) {
 }
 
 /**
+ * Slugify a title to create a section ID.
+ * Example: "Document Relationships" → "document_relationships"
+ */
+function slugify(title) {
+  return title
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^\w_]/g, '')
+    .replace(/_+/g, '_');
+}
+
+/**
+ * Estimate tokens in text (word count * 1.3).
+ */
+function estimateTokens(text) {
+  if (!text) return 0;
+  const words = text.trim().split(/\s+/).length;
+  return Math.ceil(words * 1.3);
+}
+
+/**
+ * Extract sections from markdown content.
+ * Returns array of section objects with H2/H3 hierarchy.
+ */
+function extractSections(content, errors, docRelativePath) {
+  const lines = content.split('\n');
+  const sections = [];
+  const stack = []; // Track nesting: [{level, section}]
+
+  for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+    const line = lines[lineNum];
+    const headingMatch = line.match(/^(#{2,3})\s+(.+)$/);
+
+    if (!headingMatch) continue;
+
+    const level = headingMatch[1].length;
+    const title = headingMatch[2];
+
+    if (level < INDEXING_CONFIG.min_level || level > INDEXING_CONFIG.max_level) continue;
+
+    // Pop stack to correct level
+    while (stack.length > 0 && stack[stack.length - 1].level >= level) {
+      stack.pop();
+    }
+
+    // Extract summary (next non-empty line should be "Summary: ...")
+    let summary = null;
+    let summaryLineNum = lineNum + 1;
+    while (summaryLineNum < lines.length && !lines[summaryLineNum].trim()) {
+      summaryLineNum++;
+    }
+
+    if (summaryLineNum < lines.length) {
+      const summaryLine = lines[summaryLineNum];
+      if (summaryLine.startsWith('Summary:')) {
+        summary = summaryLine.replace(/^Summary:\s*/, '').trim();
+      } else if (INDEXING_CONFIG.summary_mode === 'error') {
+        errors.push(
+          `${docRelativePath}: Missing summary after heading "${title}" (line ${lineNum + 1})`,
+        );
+        continue;
+      }
+    } else if (INDEXING_CONFIG.summary_mode === 'error') {
+      errors.push(
+        `${docRelativePath}: Missing summary after heading "${title}" (line ${lineNum + 1})`,
+      );
+      continue;
+    }
+
+    // Find end line (next heading of same or higher level, or EOF)
+    let endLine = lines.length - 1;
+    for (let i = lineNum + 1; i < lines.length; i++) {
+      const nextHeading = lines[i].match(/^(#{2,3})\s+(.+)$/);
+      if (nextHeading && nextHeading[1].length <= level) {
+        endLine = i - 1;
+        break;
+      }
+    }
+
+    // Get section content for token estimation
+    const sectionContent = lines.slice(lineNum, endLine + 1).join('\n');
+    const tokenEst = estimateTokens(sectionContent);
+
+    const section = {
+      id: slugify(title),
+      title,
+      level,
+      start_line: lineNum + 1, // 1-based
+      end_line: endLine + 1, // 1-based
+      summary,
+      token_est: tokenEst,
+      subsections: [],
+    };
+
+    if (level === 2) {
+      sections.push(section);
+      stack.push({ level, section });
+    } else if (level === 3 && stack.length > 0) {
+      stack[stack.length - 1].section.subsections.push(section);
+      stack.push({ level, section });
+    }
+  }
+
+  return sections;
+}
+
+/**
+ * Generate and write section index file.
+ */
+function writeSectionIndex(doc, sections) {
+  const indexPath = doc.path.replace(/\.md$/, '.llm-index.yaml');
+  const now = new Date().toISOString();
+
+  const index = {
+    llm_index: {
+      schema: 'llm-header-index/v1',
+      generated_at: now,
+      generator: 'script/validate-docs.mjs',
+      document_path: doc.relativePath,
+      sections,
+    },
+  };
+
+  // Convert to YAML manually (no deps)
+  let yaml = `llm_index:
+  schema: ${index.llm_index.schema}
+  generated_at: ${index.llm_index.generated_at}
+  generator: ${index.llm_index.generator}
+  document_path: ${index.llm_index.document_path}
+  sections:
+`;
+
+  for (const section of sections) {
+    yaml += `
+    - id: ${section.id}
+      title: "${section.title}"
+      level: ${section.level}
+      start_line: ${section.start_line}
+      end_line: ${section.end_line}
+      summary: ${section.summary ? `"${section.summary.replace(/"/g, '\\"')}"` : 'null'}
+      token_est: ${section.token_est}`;
+
+    if (section.subsections && section.subsections.length > 0) {
+      yaml += '\n      subsections:';
+      for (const sub of section.subsections) {
+        yaml += `
+        - id: ${sub.id}
+          title: "${sub.title}"
+          level: ${sub.level}
+          start_line: ${sub.start_line}
+          end_line: ${sub.end_line}
+          summary: ${sub.summary ? `"${sub.summary.replace(/"/g, '\\"')}"` : 'null'}
+          token_est: ${sub.token_est}`;
+      }
+    } else {
+      yaml += '\n      subsections: []';
+    }
+  }
+
+  yaml += '\n';
+
+  fs.writeFileSync(indexPath, yaml, 'utf-8');
+}
+
+/**
  * Patch 1: Re-stage modified files so they are included in the commit.
  */
 function restageModifiedFiles(filePaths) {
@@ -508,6 +681,22 @@ function main() {
         }
         fixes.push('✅ Updated folder READMEs');
 
+        // Generate section indices
+        if (INDEXING_CONFIG.enabled) {
+          const indexedFiles = [];
+          for (const doc of updatedDocs) {
+            const sections = extractSections(doc.content, errors, doc.relativePath);
+            if (errors.length > 0) break; // Stop if indexing errors
+            if (sections.length > 0) {
+              writeSectionIndex(doc, sections);
+              indexedFiles.push(doc.path.replace(/\.md$/, '.llm-index.yaml'));
+            }
+          }
+          if (indexedFiles.length > 0) {
+            fixes.push(`✅ Generated ${indexedFiles.length} section indices (.llm-index.yaml)`);
+          }
+        }
+
         // PATCH 1: Re-stage generated files
         const filesToRestage = [
           REGISTRY_FILE,
@@ -518,7 +707,7 @@ function main() {
         ];
         restageModifiedFiles(filesToRestage);
       } catch (e) {
-        errors.push(`Failed to update registry or re-stage files: ${e.message}`);
+        errors.push(`Failed to update registry, indices, or re-stage files: ${e.message}`);
       }
     }
   }

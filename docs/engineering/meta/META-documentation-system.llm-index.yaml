@@ -1,0 +1,347 @@
+llm_index:
+  schema: llm-header-index/v1
+  generated_at: 2026-01-21T12:19:23.357Z
+  generator: script/validate-docs.mjs
+  document_path: meta/META-documentation-system.md
+  sections:
+    - id: critical_keeping_indices_in_sync
+      title: 'Critical: Keeping Indices in Sync'
+      level: 2
+      start_line: 24
+      end_line: 50
+      summary: null
+      token_est: 198
+      subsections: []
+    - id: overview
+      title: 'Overview'
+      level: 2
+      start_line: 51
+      end_line: 73
+      summary: null
+      token_est: 192
+      subsections: []
+    - id: document_format_yaml_frontmatter_structured_sections
+      title: 'Document Format: YAML Frontmatter + Structured Sections'
+      level: 2
+      start_line: 74
+      end_line: 117
+      summary: null
+      token_est: 254
+      subsections:
+        - id: yaml_frontmatter_required
+          title: 'YAML Frontmatter (Required)'
+          level: 3
+          start_line: 78
+          end_line: 101
+          summary: null
+          token_est: 116
+        - id: mandatory_sections
+          title: 'Mandatory Sections'
+          level: 3
+          start_line: 102
+          end_line: 114
+          summary: null
+          token_est: 104
+        - id: 1_document_relationships
+          title: '1. Document Relationships'
+          level: 3
+          start_line: 115
+          end_line: 117
+          summary: null
+          token_est: 7
+    - id: document_relationships
+      title: 'Document Relationships'
+      level: 2
+      start_line: 118
+      end_line: 142
+      summary: null
+      token_est: 65
+      subsections:
+        - id: 2_tldr
+          title: '2. TLDR'
+          level: 3
+          start_line: 140
+          end_line: 142
+          summary: null
+          token_est: 6
+    - id: tldr
+      title: 'TLDR'
+      level: 2
+      start_line: 143
+      end_line: 167
+      summary: null
+      token_est: 110
+      subsections:
+        - id: 3_scope
+          title: '3. Scope'
+          level: 3
+          start_line: 165
+          end_line: 167
+          summary: null
+          token_est: 6
+    - id: scope
+      title: 'Scope'
+      level: 2
+      start_line: 168
+      end_line: 199
+      summary: null
+      token_est: 123
+      subsections:
+        - id: 4_main_content
+          title: '4. Main Content'
+          level: 3
+          start_line: 191
+          end_line: 194
+          summary: null
+          token_est: 21
+        - id: 5_design_decisions
+          title: '5. Design Decisions'
+          level: 3
+          start_line: 195
+          end_line: 199
+          summary: null
+          token_est: 16
+    - id: design_decisions
+      title: 'Design Decisions'
+      level: 2
+      start_line: 200
+      end_line: 219
+      summary: null
+      token_est: 175
+      subsections:
+        - id: 6_blockers_7_assumptions_unknowns
+          title: '6. Blockers & 7. Assumptions & Unknowns'
+          level: 3
+          start_line: 213
+          end_line: 216
+          summary: null
+          token_est: 20
+        - id: 8_document_metadata
+          title: '8. Document Metadata'
+          level: 3
+          start_line: 217
+          end_line: 219
+          summary: null
+          token_est: 7
+    - id: document_metadata
+      title: 'Document Metadata'
+      level: 2
+      start_line: 220
+      end_line: 232
+      summary: null
+      token_est: 30
+      subsections: []
+    - id: when_to_write_each
+      title: 'When to Write Each'
+      level: 2
+      start_line: 233
+      end_line: 294
+      summary: null
+      token_est: 227
+      subsections:
+        - id: ideation
+          title: 'Ideation'
+          level: 3
+          start_line: 235
+          end_line: 250
+          summary: null
+          token_est: 47
+        - id: requirements
+          title: 'Requirements'
+          level: 3
+          start_line: 251
+          end_line: 260
+          summary: null
+          token_est: 45
+        - id: specification
+          title: 'Specification'
+          level: 3
+          start_line: 261
+          end_line: 271
+          summary: null
+          token_est: 49
+        - id: implementation_plan
+          title: 'Implementation Plan'
+          level: 3
+          start_line: 272
+          end_line: 281
+          summary: null
+          token_est: 39
+        - id: meta
+          title: 'Meta'
+          level: 3
+          start_line: 282
+          end_line: 294
+          summary: null
+          token_est: 42
+    - id: manytomany_relationships
+      title: 'Many-to-Many Relationships'
+      level: 2
+      start_line: 295
+      end_line: 303
+      summary: null
+      token_est: 34
+      subsections: []
+    - id: folder_structure
+      title: 'Folder Structure'
+      level: 2
+      start_line: 304
+      end_line: 340
+      summary: null
+      token_est: 58
+      subsections: []
+    - id: file_naming
+      title: 'File Naming'
+      level: 2
+      start_line: 341
+      end_line: 376
+      summary: null
+      token_est: 42
+      subsections:
+        - id: ideation
+          title: 'Ideation'
+          level: 3
+          start_line: 343
+          end_line: 350
+          summary: null
+          token_est: 10
+        - id: requirements
+          title: 'Requirements'
+          level: 3
+          start_line: 351
+          end_line: 356
+          summary: null
+          token_est: 7
+        - id: specification
+          title: 'Specification'
+          level: 3
+          start_line: 357
+          end_line: 362
+          summary: null
+          token_est: 7
+        - id: implementation_plan
+          title: 'Implementation Plan'
+          level: 3
+          start_line: 363
+          end_line: 368
+          summary: null
+          token_est: 8
+        - id: meta
+          title: 'Meta'
+          level: 3
+          start_line: 369
+          end_line: 376
+          summary: null
+          token_est: 8
+    - id: crosslinking_rules
+      title: 'Cross-Linking Rules'
+      level: 2
+      start_line: 377
+      end_line: 395
+      summary: null
+      token_est: 112
+      subsections: []
+    - id: key_principles
+      title: 'Key Principles'
+      level: 2
+      start_line: 396
+      end_line: 422
+      summary: null
+      token_est: 160
+      subsections: []
+    - id: getting_started
+      title: 'Getting Started'
+      level: 2
+      start_line: 423
+      end_line: 445
+      summary: null
+      token_est: 181
+      subsections: []
+    - id: for_llms_and_agents
+      title: 'For LLMs and Agents'
+      level: 2
+      start_line: 446
+      end_line: 471
+      summary: null
+      token_est: 112
+      subsections: []
+    - id: section_indexing_structure_for_llm_parsing
+      title: 'Section Indexing: Structure for LLM Parsing'
+      level: 2
+      start_line: 472
+      end_line: 486
+      summary: null
+      token_est: 114
+      subsections:
+        - id: how_section_indexing_works
+          title: 'How Section Indexing Works'
+          level: 3
+          start_line: 476
+          end_line: 486
+          summary: null
+          token_est: 78
+    - id: scope
+      title: 'Scope'
+      level: 2
+      start_line: 487
+      end_line: 558
+      summary: 'API covers offset/limit pagination; excludes cursor-based and export pagination.'
+      token_est: 299
+      subsections:
+        - id: summary_format
+          title: 'Summary Format'
+          level: 3
+          start_line: 498
+          end_line: 506
+          summary: null
+          token_est: 62
+        - id: generated_index_files
+          title: 'Generated Index Files'
+          level: 3
+          start_line: 507
+          end_line: 541
+          summary: null
+          token_est: 94
+        - id: what_llms_do_with_this_index
+          title: 'What LLMs Do With This Index'
+          level: 3
+          start_line: 542
+          end_line: 558
+          summary: null
+          token_est: 114
+    - id: automation_keeping_indices_in_sync
+      title: 'Automation: Keeping Indices in Sync'
+      level: 2
+      start_line: 559
+      end_line: 618
+      summary: null
+      token_est: 289
+      subsections:
+        - id: what_gets_automated
+          title: 'What Gets Automated'
+          level: 3
+          start_line: 564
+          end_line: 575
+          summary: null
+          token_est: 89
+        - id: how_to_use
+          title: 'How to Use'
+          level: 3
+          start_line: 576
+          end_line: 598
+          summary: null
+          token_est: 80
+        - id: setup
+          title: 'Setup'
+          level: 3
+          start_line: 599
+          end_line: 613
+          summary: null
+          token_est: 60
+        - id: result
+          title: 'Result'
+          level: 3
+          start_line: 614
+          end_line: 618
+          summary: null
+          token_est: 32

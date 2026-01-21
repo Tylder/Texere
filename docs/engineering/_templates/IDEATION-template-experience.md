@@ -24,6 +24,8 @@ drives: []
 
 ## Document Relationships
 
+Summary: Grounds user-centric Requirements; paired with Problems and Unknowns ideation docs.
+
 **Upstream (context):**
 
 - IDEATION-pagination-problems.md (problems this experience addresses)
@@ -46,6 +48,9 @@ drives: []
 
 ## TLDR
 
+Summary: Two personas (data analyst, API consumer); key invariants (always show progress, consistent
+errors); journeys: browse, jump-to-page, handle errors.
+
 **What:** Define how users and operators will interact with pagination
 
 **Why:** Ensure requirements are grounded in real usage patterns, not assumptions
@@ -59,6 +64,9 @@ drives: []
 ---
 
 ## Scope
+
+Summary: Personas, happy-path journeys, invariants, failure recovery. Not technical design or
+implementation details.
 
 **Includes:**
 
@@ -94,6 +102,9 @@ clarity, predictability, and efficiency."
 ---
 
 ## Persona 1: Alice (Data Analyst)
+
+Summary: Data analyst who needs fast pagination, clear progress feedback, and helpful error messages
+for large queries.
 
 **Role / Context:**
 
@@ -132,6 +143,9 @@ What would make their experience better?
 ---
 
 ## Persona 2: Bob (API Consumer / Engineer)
+
+Summary: Engineer building on API who needs predictable pagination contract, clear error codes, and
+consistent behavior across endpoints.
 
 **Role / Context:**
 

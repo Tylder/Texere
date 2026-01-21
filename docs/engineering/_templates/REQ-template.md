@@ -1,6 +1,3 @@
-# REQ-<feature>
-
-```yaml
 ---
 type: REQ
 status: draft
@@ -15,9 +12,13 @@ summary_long:
   supported ranges, response metadata, error handling, and <100ms performance target. One
   Requirement implemented by multiple Specs (search, users, timeline) coordinated by one Plan.'
 ---
-```
+
+# REQ-<feature>
 
 ## Document Relationships
+
+Summary: Driven by ideation docs; implemented by three Specs (search, users, timeline); coordinates
+one IMPL-PLAN.
 
 **Upstream (depends on):**
 
@@ -41,6 +42,9 @@ summary_long:
 
 ## TLDR
 
+Summary: Offset/limit pagination required on all list endpoints; <100ms target; metadata in
+response; 100-result max.
+
 **What:** System-wide pagination requirements via offset/limit
 
 **Why:** Users need to browse large result sets efficiently; API consumers need predictable
@@ -59,6 +63,9 @@ coordinate in IMPL-PLAN
 ---
 
 ## Scope
+
+Summary: Offset/limit parameters, valid ranges, response metadata, error handling, <100ms
+performance. Excludes cursor, export, scheduling.
 
 **Includes:**
 
@@ -83,6 +90,9 @@ coordinate in IMPL-PLAN
 ---
 
 ## REQ-001: <Title>
+
+Summary: Normative obligation describing what MUST/SHOULD/MAY be true; includes statement,
+rationale, and fit criteria.
 
 **Statement:**
 
@@ -120,6 +130,9 @@ How will we prove conformance?
 
 ## REQ-002: <Title>
 
+Summary: Pagination responses MUST include metadata fields (total, offset, limit) to help clients
+calculate page navigation.
+
 **Statement:**
 
 Example: "Pagination responses MUST include total count, current offset, and per-page limit in
@@ -144,13 +157,17 @@ Helps clients calculate remaining pages and show progress.
 
 ## REQ-003: <Title>
 
+Summary: (Concise statement of what this requirement specifies)
+
+**Statement:**
+
 [Repeat structure above]
 
 ---
 
 ## Related Requirements
 
-Other requirements that interact with these.
+Summary: Performance target <100ms is binding; error handling for invalid offset/limit is critical.
 
 - REQ-performance (response times must be < 100ms)
 - REQ-error-handling (invalid offset/limit must return clear errors)

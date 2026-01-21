@@ -23,6 +23,9 @@ drives: []
 
 ## Document Relationships
 
+Summary: Discovery phase; identifies problems that drive Requirements; paired with Experience and
+Unknowns docs.
+
 **Upstream (context):**
 
 - (None; ideation is discovery)
@@ -45,6 +48,9 @@ drives: []
 
 ## TLDR
 
+Summary: Timeouts on large datasets; no pagination UI; inconsistent behavior across endpoints. Users
+need to browse efficiently.
+
 **What:** Identify and document problems with current pagination/lack thereof
 
 **Why:** Understand what's broken before designing solutions
@@ -62,6 +68,8 @@ drives: []
 ---
 
 ## Scope
+
+Summary: Real failure modes and user frustrations; not solutions or design details.
 
 **Includes:**
 
@@ -99,6 +107,9 @@ Example: "Users can't browse large result sets efficiently. This doc captures wh
 List each problem discovered. Include failure modes, scenarios, and success signals.
 
 ### Problem 1: Search Results Timeout on Large Datasets
+
+Summary: Large queries (>100k rows) timeout because system processes everything in memory before
+responding; users see blank screen 30+ seconds then timeout.
 
 **Problem Statement:**
 

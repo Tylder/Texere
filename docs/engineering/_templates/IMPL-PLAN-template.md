@@ -25,6 +25,9 @@ blocks: []
 
 ## Document Relationships
 
+Summary: Coordinates three Specs; depends on shared library and all Requirement implementations;
+6-milestone delivery plan.
+
 **Upstream (depends on):**
 
 - REQ-pagination-system.md (Requirements this implements)
@@ -48,6 +51,9 @@ blocks: []
 
 ## TLDR
 
+Summary: Build shared lib (week 1), implement search (week 2-3), users (week 4), timeline (week
+5-6); test & deploy week 7-8.
+
 **What:** Coordinate implementation of pagination across three endpoints (search, users, timeline)
 
 **Why:** All three endpoints implement the same Requirements; need coordinated delivery to ensure
@@ -70,6 +76,9 @@ consistency and share learnings
 ---
 
 ## Scope
+
+Summary: Covers shared lib build, three endpoint implementations, testing, and canary rollout.
+Excludes detailed design (in Specs) and cursor pagination.
 
 **Includes:**
 
@@ -116,6 +125,9 @@ Deliverable-oriented checkpoints. Each must have clear completion criteria.
 
 ### Milestone 1: Shared Pagination Library (Week 1)
 
+Summary: Build reusable library with offset/limit logic, parameter validation, metadata calculation,
+and error handling.
+
 **Goal:** Build reusable pagination logic usable by all three Specs.
 
 **Deliverables:**
@@ -143,6 +155,9 @@ Deliverable-oriented checkpoints. Each must have clear completion criteria.
 ---
 
 ### Milestone 2: Search Results Pagination (Week 2–3)
+
+Summary: Implement GET /search with offset/limit, integrate shared library, add pagination metadata
+to responses.
 
 **Goal:** First endpoint implementation; serves as reference pattern.
 

@@ -1,6 +1,3 @@
-# SPEC-<area>-<topic>
-
-```yaml
 ---
 type: SPEC
 status: draft
@@ -20,9 +17,13 @@ implements:
 depends_on: [SPEC-shared-pagination-lib]
 blocks: [IMPL-PLAN-pagination-system]
 ---
-```
+
+# SPEC-<area>-<topic>
 
 ## Document Relationships
+
+Summary: Implements REQ-pagination-system; depends on SPEC-shared-pagination-lib; drives
+IMPL-PLAN-pagination-system.
 
 **Upstream (depends on):**
 
@@ -47,6 +48,9 @@ blocks: [IMPL-PLAN-pagination-system]
 
 ## TLDR
 
+Summary: GET /search endpoint with offset/limit pagination; metadata in response; <100ms performance
+target; shared lib in progress.
+
 **What:** Pagination API for search results via offset/limit with metadata
 
 **Why:** Implement REQ-pagination-system for search endpoint; serve as reference pattern for other
@@ -68,6 +72,9 @@ endpoints
 ---
 
 ## Scope
+
+Summary: Covers offset/limit API contract and error handling; excludes cursor-based pagination,
+frontend UI, export pagination, and result ranking.
 
 **Includes:**
 
@@ -96,8 +103,8 @@ endpoints
 
 ## Implements
 
-Note: One Spec can implement multiple Requirements. One Requirement can be implemented by multiple
-Specs.
+Summary: Fulfills REQ-001 (offset/limit pagination), REQ-002 (metadata), REQ-003 (error handling).
+One of three Specs implementing REQ-pagination-system.
 
 - REQ-pagination-system.md#REQ-001 (Pagination via offset/limit)
 - REQ-pagination-system.md#REQ-002 (Metadata in response)
@@ -106,6 +113,9 @@ Specs.
 ---
 
 ## Interfaces & Observable Behavior
+
+Summary: GET /search accepts offset/limit; returns results array + pagination metadata (total,
+offset, limit, remaining, has_next, has_prev); error responses for invalid params.
 
 ### API Endpoint: GET /search
 
