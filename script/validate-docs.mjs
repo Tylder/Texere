@@ -332,7 +332,7 @@ function formatFiles(filePaths) {
   if (filePaths.length === 0) return;
 
   try {
-    execSync(`prettier ${filePaths.map((f) => `"${f}"`).join(' ')} --write`, {
+    execSync(`npx prettier ${filePaths.map((f) => `"${f}"`).join(' ')} --write`, {
       encoding: 'utf-8',
     });
   } catch (err) {
@@ -520,14 +520,8 @@ function wrapLine(line) {
     if (wrapped) return wrapped;
   }
 
-  const headingMatch = line.match(/^(\s*)(#{2,3}\s+)(.*)$/);
-  if (headingMatch) {
-    const [_, indent, hashes, text] = headingMatch;
-    const prefix = `${indent}${hashes}`;
-    const trimmedText = text.trim();
-    const wrapped = wrapLineWithPrefix(indent, prefix, trimmedText);
-    if (wrapped) return wrapped;
-  }
+  // DO NOT wrap headings - they need to stay on one line for proper extraction
+  // Only summaries are wrapped for accurate line counting
 
   return null;
 }
@@ -719,11 +713,24 @@ index:
   }
 
   // Create temporary document to measure frontmatter + index size (up to closing ---)
-  const tempFrontmatter = `---
-${cleanFrontmatterYaml}${skeletonIndexYaml}
----`;
-  // Count lines: the closing --- is on line N, so content starts on line N+1
-  const allLines = tempFrontmatter.split('\n');
+  const tempFrontmatter = `---\n${cleanFrontmatterYaml}${skeletonIndexYaml}\n---`;
+
+  // CRITICAL: Format temp frontmatter with Prettier to get real line count
+  // Long titles and summaries will be wrapped, adding extra lines
+  const tempPath = path.join(process.cwd(), `.temp-frontmatter-${Date.now()}.md`);
+  fs.writeFileSync(tempPath, tempFrontmatter, 'utf-8');
+
+  try {
+    execSync(`npx prettier "${tempPath}" --write`, { stdio: 'pipe' });
+  } catch (err) {
+    // Ignore formatting errors for temp file
+  }
+
+  const formattedTempFrontmatter = fs.readFileSync(tempPath, 'utf-8');
+  fs.unlinkSync(tempPath);
+
+  // Count lines in the FORMATTED version (accounts for Prettier's line wrapping)
+  const allLines = formattedTempFrontmatter.split('\n');
   const closingDashIndex = allLines.indexOf('---', 1); // Array index of closing ---
   const indexLineOffset = closingDashIndex; // Number of lines before the content block (used as offset)
 
