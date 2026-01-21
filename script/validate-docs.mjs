@@ -18,10 +18,9 @@ const INDEXING_CONFIG = {
   min_level: 2,
   max_level: 3,
   subsection_token_threshold: 300, // Skip subsections if parent section < this many tokens
+  token_estimate_multiplier: 1.3, // Token estimation (word count × multiplier)
+  section_line_wrap_limit: 80, // Prettier print width for Markdown + margin for prefix when wrapping
 };
-
-// Token estimation (word count × multiplier)
-const TOKEN_ESTIMATE_MULTIPLIER = 1.3;
 
 const DOC_FOLDERS = {
   ideation: '00-ideation',
@@ -467,7 +466,87 @@ function updateFolderReadme(type, allDocs) {
 function estimateTokens(text) {
   if (!text) return 0;
   const words = text.trim().split(/\s+/).length;
-  return Math.ceil(words * TOKEN_ESTIMATE_MULTIPLIER);
+  return Math.ceil(words * INDEXING_CONFIG.token_estimate_multiplier);
+}
+
+function wrapWords(words, firstLimit, continuationLimit) {
+  if (words.length === 0) return [];
+
+  const lines = [];
+  let current = words[0];
+  let limit = firstLimit;
+
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    if (current.length + 1 + word.length <= limit) {
+      current = `${current} ${word}`;
+    } else {
+      lines.push(current);
+      current = word;
+      limit = continuationLimit;
+    }
+  }
+
+  if (current) {
+    lines.push(current);
+  }
+
+  return lines;
+}
+
+function wrapLineWithPrefix(indent, prefix, text) {
+  if (!text) return null;
+
+  const prefixLength = prefix.length;
+  const firstLimit = Math.max(INDEXING_CONFIG.section_line_wrap_limit - prefixLength, 20);
+  const continuationLimit = Math.max(INDEXING_CONFIG.section_line_wrap_limit - indent.length, 20);
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length <= 1) return null;
+
+  const segments = wrapWords(words, firstLimit, continuationLimit);
+  if (segments.length <= 1) return null;
+
+  return segments.map((segment, index) =>
+    index === 0 ? `${prefix}${segment}` : `${indent}${segment}`,
+  );
+}
+
+function wrapLine(line) {
+  const summaryMatch = line.match(/^(\s*)(Summary:)\s*(.*)$/);
+  if (summaryMatch) {
+    const [_, indent, label, text] = summaryMatch;
+    const prefix = `${indent}${label} `;
+    const wrapped = wrapLineWithPrefix(indent, prefix, text);
+    if (wrapped) return wrapped;
+  }
+
+  const headingMatch = line.match(/^(\s*)(#{2,3}\s+)(.*)$/);
+  if (headingMatch) {
+    const [_, indent, hashes, text] = headingMatch;
+    const prefix = `${indent}${hashes}`;
+    const trimmedText = text.trim();
+    const wrapped = wrapLineWithPrefix(indent, prefix, trimmedText);
+    if (wrapped) return wrapped;
+  }
+
+  return null;
+}
+
+function normalizeContentForIndexing(content) {
+  const lines = content.split('\n');
+  const normalized = [];
+
+  for (const line of lines) {
+    const wrapped = wrapLine(line);
+    if (wrapped) {
+      normalized.push(...wrapped);
+      continue;
+    }
+
+    normalized.push(line);
+  }
+
+  return normalized.join('\n');
 }
 
 /**
@@ -475,7 +554,8 @@ function estimateTokens(text) {
  * Returns array of section objects with H2/H3 hierarchy.
  */
 function extractSections(content, errors, docRelativePath) {
-  const lines = content.split('\n');
+  const normalizedContent = normalizeContentForIndexing(content);
+  const lines = normalizedContent.split('\n');
   const sections = [];
   const stack = []; // Track nesting: [{level, section}]
 
@@ -505,7 +585,17 @@ function extractSections(content, errors, docRelativePath) {
     if (summaryLineNum < lines.length) {
       const summaryLine = lines[summaryLineNum];
       if (summaryLine.startsWith('Summary:')) {
-        summary = summaryLine.replace(/^Summary:\s*/, '').trim();
+        const summaryParts = [];
+        summaryParts.push(summaryLine.replace(/^Summary:\s*/, '').trim());
+
+        let nextLine = summaryLineNum + 1;
+        while (nextLine < lines.length && lines[nextLine].trim()) {
+          if (lines[nextLine].match(/^(#{2,3})\s+/)) break;
+          summaryParts.push(lines[nextLine].trim());
+          nextLine++;
+        }
+
+        summary = summaryParts.join(' ');
       } else if (INDEXING_CONFIG.summary_mode === 'error') {
         errors.push(
           `${docRelativePath}: Missing summary after heading "${title}" (line ${lineNum + 1})`,
