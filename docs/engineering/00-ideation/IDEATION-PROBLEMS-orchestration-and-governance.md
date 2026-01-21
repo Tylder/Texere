@@ -25,69 +25,85 @@ drives: []
 index:
   sections:
     - title: "Document Relationships"
-      lines: [90, 114]
-      token_est: 88
+      lines: [103, 130]
+      summary: "Foundation for all other systems; orchestration discipline enforces phase boundaries, quality control, and reliable multi-agent coordination."
+      token_est: 110
     - title: "TLDR"
-      lines: [116, 144]
+      lines: [132, 160]
+      summary: "Orchestration is opaque, multi-agent conflicts are invisible, phases blur together, quality control is missing or overridable, scope boundaries are ambiguous, and the system cannot diagnose or improve itself."
       token_est: 224
     - title: "Scope"
-      lines: [146, 175]
-      token_est: 173
+      lines: [162, 194]
+      summary: "Phase discipline, multi-agent coordination, quality control, scope clarity, operational health testing, and observable diagnosability—not specific frameworks or rule engines."
+      token_est: 199
     - title: "Overview"
-      lines: [177, 191]
+      lines: [196, 210]
       token_est: 141
     - title: "Problems"
-      lines: [193, 677]
-      token_est: 3598
+      lines: [212, 727]
+      token_est: 3881
       subsections:
         - title: "Problem 1: PROB-011 — Discovery, requirements, and implementation blur together"
-          lines: [195, 242]
-          token_est: 318
+          lines: [214, 264]
+          summary: "Agents frequently blur discovery, requirements, architecture, and implementation, leading to premature solutioning, unstable scopes, and wasted rework."
+          token_est: 341
         - title: "Problem 2: PROB-014 — Poor support for weakness hunting and critical review"
-          lines: [244, 286]
-          token_est: 299
+          lines: [266, 311]
+          summary: "Most assistants optimize for helpfulness and forward momentum, failing to proactively surface weaknesses, ambiguity, and risks that should block or reshape decisions."
+          token_est: 329
         - title: "Problem 3: PROB-015 — Scope confusion and autonomy expectations derail usefulness"
-          lines: [288, 332]
-          token_est: 336
+          lines: [313, 360]
+          summary: "Users and agents diverge on what the system is supposed to do (assist vs autonomously decide/ship); scope boundaries unclear leads to overreach or underdelivery."
+          token_est: 368
         - title: "Problem 4: PROB-016 — No operationally testable definition of "healthy" behavior"
-          lines: [334, 377]
-          token_est: 324
+          lines: [362, 408]
+          summary: "System lacks stable, testable notion of what \"good\" looks like end-to-end, making it hard to debug regressions, measure progress, or detect drift."
+          token_est: 354
         - title: "Problem 5: PROB-017 — System reliability depends on agent compliance (tools, policies, phase discipline)"
-          lines: [379, 429]
-          token_est: 432
+          lines: [410, 463]
+          summary: "Correctness, safety, cost control, and workflow integrity are brittle because they depend on agent self-discipline rather than systematic mechanisms enforcing expectations."
+          token_est: 461
         - title: "Problem 6: PROB-020 — Multi-agent coordination failures create inconsistency and redundancy"
-          lines: [431, 477]
-          token_est: 335
+          lines: [465, 514]
+          summary: "Multiple agents in parallel or sequence produce inconsistent beliefs, duplicate work, or deadlocks because shared state and conflict resolution are weak."
+          token_est: 363
         - title: "Problem 7: PROB-024 — No composable quality-control layer to intercept and challenge outputs"
-          lines: [479, 526]
-          token_est: 409
+          lines: [516, 566]
+          summary: "Agent outputs reach users or trigger actions without independent scrutiny; hallucinations and obvious mistakes propagate downstream unchecked."
+          token_est: 432
         - title: "Problem 8: PROB-031 — Orchestration is a black box (insufficient observability for diagnosis)"
-          lines: [528, 578]
-          token_est: 407
+          lines: [568, 622]
+          summary: "When outcomes are poor, user and system cannot reliably determine what happened: agent execution order, evidence usage, tool invocations, model choices, and boundary violations are implicit."
+          token_est: 442
         - title: "Problem 9: PROB-032 — No evidence-backed self-improvement loop for orchestration configuration"
-          lines: [580, 628]
-          token_est: 374
+          lines: [624, 675]
+          summary: "System cannot reliably diagnose weaknesses in its own orchestration and recommend researched, testable changes; improvements are ad-hoc and cannot be validated."
+          token_est: 402
         - title: "Problem 10: PROB-036 — Unbounded retries and unpredictable degradation under quotas/timeouts/outages"
-          lines: [630, 677]
-          token_est: 366
+          lines: [677, 727]
+          summary: "Under external constraints, system degrades unpredictably—thrashing, retrying excessively, silently proceeding with weaker substitutes, or guessing without evidence."
+          token_est: 389
     - title: "Success Signals (System Level)"
-      lines: [679, 695]
+      lines: [729, 745]
       token_est: 138
     - title: "Assumptions"
-      lines: [697, 708]
+      lines: [747, 758]
       token_est: 89
     - title: "Unknowns"
-      lines: [710, 721]
+      lines: [760, 771]
       token_est: 94
     - title: "Related Problems"
-      lines: [723, 733]
+      lines: [773, 783]
       token_est: 71
     - title: "Document Metadata"
-      lines: [735, 767]
+      lines: [785, 817]
       token_est: 68
 ---
 
 ## Document Relationships
+
+Summary: Foundation for all other systems; orchestration discipline enforces phase boundaries,
+quality control, and reliable multi-agent coordination.
 
 **Upstream (context):**
 
@@ -115,9 +131,9 @@ index:
 
 ## TLDR
 
-**Summary:** Orchestration is opaque, multi-agent conflicts are invisible, phases blur together,
-quality control is missing or overridable, scope boundaries are ambiguous, and the system cannot
-diagnose or improve itself.
+Summary: Orchestration is opaque, multi-agent conflicts are invisible, phases blur together, quality
+control is missing or overridable, scope boundaries are ambiguous, and the system cannot diagnose or
+improve itself.
 
 **What:** Design orchestration as a visible, disciplined, multi-layered system where phases are
 enforced, agents are coordinated, quality control is mandatory, scope is explicit, and failures are
@@ -144,6 +160,9 @@ for diagnosis and improvement.
 ---
 
 ## Scope
+
+Summary: Phase discipline, multi-agent coordination, quality control, scope clarity, operational
+health testing, and observable diagnosability—not specific frameworks or rule engines.
 
 **Includes:**
 
@@ -194,6 +213,9 @@ expectations, and inability to observe/diagnose prevents improvement.
 
 ### Problem 1: PROB-011 — Discovery, requirements, and implementation blur together
 
+Summary: Agents frequently blur discovery, requirements, architecture, and implementation, leading
+to premature solutioning, unstable scopes, and wasted rework.
+
 **Tags:** [Governance] [Epistemic] [Traceability]
 
 **Classification:** Frequency: High · Impact: Medium · Cost sensitivity: Medium · Blast radius:
@@ -243,6 +265,9 @@ premature solutioning and unstable scopes.
 
 ### Problem 2: PROB-014 — Poor support for weakness hunting and critical review
 
+Summary: Most assistants optimize for helpfulness and forward momentum, failing to proactively
+surface weaknesses, ambiguity, and risks that should block or reshape decisions.
+
 **Tags:** [Governance] [Epistemic] [Traceability]
 
 **Classification:** Frequency: Medium · Impact: High · Cost sensitivity: Low · Blast radius: Repo
@@ -286,6 +311,9 @@ instead optimise for helpfulness and forward momentum.
 ---
 
 ### Problem 3: PROB-015 — Scope confusion and autonomy expectations derail usefulness
+
+Summary: Users and agents diverge on what the system is supposed to do (assist vs autonomously
+decide/ship); scope boundaries unclear leads to overreach or underdelivery.
 
 **Tags:** [Governance] [Traceability] [Evaluation]
 
@@ -333,6 +361,9 @@ decide/ship). When scope boundaries are unclear, the system either overreaches o
 
 ### Problem 4: PROB-016 — No operationally testable definition of "healthy" behavior
 
+Summary: System lacks stable, testable notion of what "good" looks like end-to-end, making it hard
+to debug regressions, measure progress, or detect drift.
+
 **Tags:** [Evaluation] [Governance] [Continuity]
 
 **Classification:** Frequency: Medium · Impact: High · Cost sensitivity: Medium · Blast radius: Repo
@@ -377,6 +408,9 @@ or detect drift.
 ---
 
 ### Problem 5: PROB-017 — System reliability depends on agent compliance (tools, policies, phase discipline)
+
+Summary: Correctness, safety, cost control, and workflow integrity are brittle because they depend
+on agent self-discipline rather than systematic mechanisms enforcing expectations.
 
 **Tags:** [Governance] [Tools] [Epistemic] [Continuity] [Orchestration]
 
@@ -430,6 +464,9 @@ consistently maintaining and enforcing those expectations.
 
 ### Problem 6: PROB-020 — Multi-agent coordination failures create inconsistency and redundancy
 
+Summary: Multiple agents in parallel or sequence produce inconsistent beliefs, duplicate work, or
+deadlocks because shared state and conflict resolution are weak.
+
 **Tags:** [Orchestration] [Epistemic] [Cost]
 
 **Classification:** Frequency: Medium · Impact: High · Cost sensitivity: High · Blast radius: Repo
@@ -477,6 +514,9 @@ resolution are weak.
 ---
 
 ### Problem 7: PROB-024 — No composable quality-control layer to intercept and challenge outputs
+
+Summary: Agent outputs reach users or trigger actions without independent scrutiny; hallucinations
+and obvious mistakes propagate downstream unchecked.
 
 **Tags:** [Evaluation] [Epistemic] [Orchestration] [Governance]
 
@@ -526,6 +566,10 @@ critics/checkers, hallucinations and obvious mistakes propagate downstream.
 ---
 
 ### Problem 8: PROB-031 — Orchestration is a black box (insufficient observability for diagnosis)
+
+Summary: When outcomes are poor, user and system cannot reliably determine what happened: agent
+execution order, evidence usage, tool invocations, model choices, and boundary violations are
+implicit.
 
 **Tags:** [Orchestration] [Evaluation] [Traceability] [UXClarity]
 
@@ -579,6 +623,9 @@ violations are largely implicit and non-inspectable.
 
 ### Problem 9: PROB-032 — No evidence-backed self-improvement loop for orchestration configuration
 
+Summary: System cannot reliably diagnose weaknesses in its own orchestration and recommend
+researched, testable changes; improvements are ad-hoc and cannot be validated.
+
 **Tags:** [Orchestration] [Evaluation] [Governance] [Traceability]
 
 **Classification:** Frequency: High · Impact: High · Cost sensitivity: High · Blast radius:
@@ -628,6 +675,9 @@ policies). Improvements are ad-hoc and cannot be validated against observed outc
 ---
 
 ### Problem 10: PROB-036 — Unbounded retries and unpredictable degradation under quotas/timeouts/outages
+
+Summary: Under external constraints, system degrades unpredictably—thrashing, retrying excessively,
+silently proceeding with weaker substitutes, or guessing without evidence.
 
 **Tags:** [Budgeting] [Tools] [Execution] [Cost] [Orchestration]
 

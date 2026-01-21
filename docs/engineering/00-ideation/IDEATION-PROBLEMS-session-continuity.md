@@ -23,54 +23,79 @@ drives: []
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [73, 94]
-      token_est: 68
+      lines: [95, 119]
+      summary:
+        'Continuity enables multi-day and multi-week projects; depends on durable state
+        infrastructure and requires managing knowledge staleness and schema evolution.'
+      token_est: 94
     - title: 'TLDR'
-      lines: [96, 119]
+      lines: [121, 143]
+      summary:
+        'Every new session forces the agent to rediscover repo facts, forget decisions, lose task
+        context, and reinterpret knowledge from a moving schema. This wastes time and creates
+        inconsistency.'
       token_est: 182
     - title: 'Scope'
-      lines: [121, 143]
-      token_est: 121
+      lines: [145, 170]
+      summary:
+        'Session re-entry, decision recovery, task resumability, and schema evolution—not specific
+        storage mechanisms, cache invalidation, or conversation history preservation.'
+      token_est: 146
     - title: 'Overview'
-      lines: [145, 155]
+      lines: [172, 182]
       token_est: 102
     - title: 'Problems'
-      lines: [157, 366]
-      token_est: 1631
+      lines: [184, 405]
+      token_est: 1739
       subsections:
         - title: 'Problem 1: PROB-001 — Session resets force repo research from scratch'
-          lines: [159, 208]
-          token_est: 387
+          lines: [186, 238]
+          summary:
+            'New session behaves as though system has never seen the repo; agent must re-establish
+            repo facts, patterns, invariants, and prior investigations repeatedly.'
+          token_est: 416
         - title:
             'Problem 2: PROB-004 — The agent cannot behave like it has deep, accurate historical
             knowledge'
-          lines: [210, 259]
-          token_est: 385
+          lines: [240, 292]
+          summary:
+            'Productive long-running assistant must remember prior decisions and operate correctly
+            on that history; repeats rejected ideas and forgets established constraints.'
+          token_est: 413
         - title: 'Problem 3: PROB-022 — Knowledge schema evolution breaks long-lived continuity'
-          lines: [261, 310]
-          token_est: 379
+          lines: [294, 346]
+          summary:
+            'Durable knowledge accumulates over time; when structure changes, older knowledge
+            becomes hard to interpret, causing continuity breaks and subtle corruption.'
+          token_est: 406
         - title:
             'Problem 4: PROB-034 — Task interruption and resumability failures cause repeated work'
-          lines: [312, 366]
-          token_est: 479
+          lines: [348, 405]
+          summary:
+            'Long-running or multi-step tasks cannot be paused and resumed without losing
+            intermediate progress, findings, and execution context.'
+          token_est: 502
     - title: 'Success Signals (System Level)'
-      lines: [368, 379]
+      lines: [407, 418]
       token_est: 98
     - title: 'Assumptions'
-      lines: [381, 390]
+      lines: [420, 429]
       token_est: 76
     - title: 'Unknowns'
-      lines: [392, 402]
+      lines: [431, 441]
       token_est: 82
     - title: 'Related Problems'
-      lines: [404, 414]
+      lines: [443, 453]
       token_est: 82
     - title: 'Document Metadata'
-      lines: [416, 442]
+      lines: [455, 481]
       token_est: 62
 ---
 
 ## Document Relationships
+
+Summary: Continuity enables multi-day and multi-week projects; depends on durable state
+infrastructure and requires managing knowledge staleness and schema evolution.
 
 **Upstream (context):**
 
@@ -95,9 +120,8 @@ index:
 
 ## TLDR
 
-**Summary:** Every new session forces the agent to rediscover repo facts, forget decisions, lose
-task context, and reinterpret knowledge from a moving schema. This wastes time and creates
-inconsistency.
+Summary: Every new session forces the agent to rediscover repo facts, forget decisions, lose task
+context, and reinterpret knowledge from a moving schema. This wastes time and creates inconsistency.
 
 **What:** Enable the system to retain and accurately use knowledge across session boundaries without
 requiring expensive re-ingestion or re-research.
@@ -119,6 +143,9 @@ versioning that survives sessions reliably.
 ---
 
 ## Scope
+
+Summary: Session re-entry, decision recovery, task resumability, and schema evolution—not specific
+storage mechanisms, cache invalidation, or conversation history preservation.
 
 **Includes:**
 
@@ -157,6 +184,9 @@ loses decisions, each decision loss forces rework, and inconsistent knowledge cr
 ## Problems
 
 ### Problem 1: PROB-001 — Session resets force repo research from scratch
+
+Summary: New session behaves as though system has never seen the repo; agent must re-establish repo
+facts, patterns, invariants, and prior investigations repeatedly.
 
 **Tags:** [Continuity] [Cost] [Traceability]
 
@@ -209,6 +239,9 @@ repo facts, patterns, invariants, and prior investigations repeatedly.
 
 ### Problem 2: PROB-004 — The agent cannot behave like it has deep, accurate historical knowledge
 
+Summary: Productive long-running assistant must remember prior decisions and operate correctly on
+that history; repeats rejected ideas and forgets established constraints.
+
 **Tags:** [Continuity] [Traceability] [Epistemic]
 
 **Classification:** Frequency: High · Impact: High · Cost sensitivity: Medium · Blast radius: Repo
@@ -260,6 +293,9 @@ but more importantly, it must **operate correctly** on that history.
 
 ### Problem 3: PROB-022 — Knowledge schema evolution breaks long-lived continuity
 
+Summary: Durable knowledge accumulates over time; when structure changes, older knowledge becomes
+hard to interpret, causing continuity breaks and subtle corruption.
+
 **Tags:** [Continuity] [Traceability] [Epistemic]
 
 **Classification:** Frequency: Medium · Impact: Medium · Cost sensitivity: Medium · Blast radius:
@@ -310,6 +346,9 @@ breaks and subtle corruption.
 ---
 
 ### Problem 4: PROB-034 — Task interruption and resumability failures cause repeated work
+
+Summary: Long-running or multi-step tasks cannot be paused and resumed without losing intermediate
+progress, findings, and execution context.
 
 **Tags:** [Continuity] [Execution] [Traceability] [UXClarity]
 

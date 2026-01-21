@@ -24,55 +24,84 @@ drives: []
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [75, 98]
-      token_est: 77
+      lines: [101, 127]
+      summary:
+        'Execution quality determines whether system reduces or increases workload; tight feedback
+        loops and safe repo mutations are essential.'
+      token_est: 102
     - title: 'TLDR'
-      lines: [100, 125]
+      lines: [129, 154]
+      summary:
+        'Generated code violates repo constraints, execution results are ignored or misinterpreted,
+        environments are uncontrolled, repo mutations are unsafe, and changes are too large to
+        review effectively.'
       token_est: 203
     - title: 'Scope'
-      lines: [127, 149]
-      token_est: 124
+      lines: [156, 182]
+      summary:
+        'Code generation alignment, execution feedback incorporation, environment reproducibility,
+        safe repo state management, and human-granularity reviewability—not specific frameworks or
+        detailed style enforcement.'
+      token_est: 153
     - title: 'Overview'
-      lines: [151, 164]
+      lines: [184, 197]
       token_est: 142
     - title: 'Problems'
-      lines: [166, 414]
-      token_est: 1928
+      lines: [199, 462]
+      token_est: 2084
       subsections:
         - title:
             'Problem 1: PROB-007 — Code writing is slow, error-prone, and not integration-aware'
-          lines: [168, 214]
-          token_est: 368
+          lines: [201, 250]
+          summary:
+            'Generating code is not hard; integrating it correctly into evolving codebase is. Agents
+            write plausible code that fails local constraints and violates repo architecture.'
+          token_est: 401
         - title: 'Problem 2: PROB-013 — Execution results are not reliably incorporated'
-          lines: [216, 265]
-          token_est: 396
+          lines: [252, 304]
+          summary:
+            'Coding system must incorporate real execution results (tests, builds); many workflows
+            cannot run commands reliably or fail to interpret and apply results.'
+          token_est: 426
         - title: 'Problem 3: PROB-018 — Environment and dependency drift breaks reproducibility'
-          lines: [267, 313]
-          token_est: 354
+          lines: [306, 355]
+          summary:
+            'Results are not reliably reproducible across sessions or machines because environment
+            state drifts or is ambiguous, leading to spurious failures and wasted debugging.'
+          token_est: 385
         - title: 'Problem 4: PROB-033 — Repo mutation and workspace state are not managed safely'
-          lines: [315, 365]
-          token_est: 458
+          lines: [357, 410]
+          summary:
+            'System cannot reliably manage repo state transitions and mutations; changes may apply
+            to wrong baseline, apply incompletely, or leave repo in unrecoverable state.'
+          token_est: 489
         - title: 'Problem 5: PROB-021 — Work products are not reviewable at human granularity'
-          lines: [367, 414]
-          token_est: 351
+          lines: [412, 462]
+          summary:
+            'Even when code compiles, work is hard to review: changes are too large, rationale is
+            missing, human cannot easily assess risk and correctness.'
+          token_est: 383
     - title: 'Success Signals (System Level)'
-      lines: [416, 428]
+      lines: [464, 476]
       token_est: 108
     - title: 'Assumptions'
-      lines: [430, 440]
+      lines: [478, 488]
       token_est: 78
     - title: 'Unknowns'
-      lines: [442, 455]
+      lines: [490, 503]
       token_est: 103
     - title: 'Related Problems'
-      lines: [457, 467]
+      lines: [505, 515]
       token_est: 85
     - title: 'Document Metadata'
-      lines: [469, 500]
+      lines: [517, 548]
       token_est: 67
 ---
 
 ## Document Relationships
+
+Summary: Execution quality determines whether system reduces or increases workload; tight feedback
+loops and safe repo mutations are essential.
 
 **Upstream (context):**
 
@@ -99,9 +128,9 @@ index:
 
 ## TLDR
 
-**Summary:** Generated code violates repo constraints, execution results are ignored or
-misinterpreted, environments are uncontrolled, repo mutations are unsafe, and changes are too large
-to review effectively.
+Summary: Generated code violates repo constraints, execution results are ignored or misinterpreted,
+environments are uncontrolled, repo mutations are unsafe, and changes are too large to review
+effectively.
 
 **What:** Ensure generated code respects architecture, execution results update system beliefs,
 environment is reproducible, repo state is managed safely, and changes are reviewable at human
@@ -125,6 +154,10 @@ repo state snapshots, and change isolation strategies.
 ---
 
 ## Scope
+
+Summary: Code generation alignment, execution feedback incorporation, environment reproducibility,
+safe repo state management, and human-granularity reviewability—not specific frameworks or detailed
+style enforcement.
 
 **Includes:**
 
@@ -166,6 +199,9 @@ increases time cost, which makes rework more likely.
 ## Problems
 
 ### Problem 1: PROB-007 — Code writing is slow, error-prone, and not integration-aware
+
+Summary: Generating code is not hard; integrating it correctly into evolving codebase is. Agents
+write plausible code that fails local constraints and violates repo architecture.
 
 **Tags:** [Integration] [Execution] [Reviewability]
 
@@ -214,6 +250,9 @@ often write plausible code that fails local constraints.
 ---
 
 ### Problem 2: PROB-013 — Execution results are not reliably incorporated
+
+Summary: Coding system must incorporate real execution results (tests, builds); many workflows
+cannot run commands reliably or fail to interpret and apply results.
 
 **Tags:** [Execution] [Integration] [Epistemic]
 
@@ -266,6 +305,9 @@ agentic workflows either cannot run commands reliably or fail to interpret and a
 
 ### Problem 3: PROB-018 — Environment and dependency drift breaks reproducibility
 
+Summary: Results are not reliably reproducible across sessions or machines because environment state
+drifts or is ambiguous, leading to spurious failures and wasted debugging.
+
 **Tags:** [Environment] [Execution] [Traceability]
 
 **Classification:** Frequency: Medium · Impact: High · Cost sensitivity: Medium · Blast radius: Repo
@@ -313,6 +355,9 @@ ambiguous.
 ---
 
 ### Problem 4: PROB-033 — Repo mutation and workspace state are not managed safely
+
+Summary: System cannot reliably manage repo state transitions and mutations; changes may apply to
+wrong baseline, apply incompletely, or leave repo in unrecoverable state.
 
 **Tags:** [Integration] [Execution] [Traceability] [Reviewability]
 
@@ -365,6 +410,9 @@ unrecoverable state.
 ---
 
 ### Problem 5: PROB-021 — Work products are not reviewable at human granularity
+
+Summary: Even when code compiles, work is hard to review: changes are too large, rationale is
+missing, human cannot easily assess risk and correctness.
 
 **Tags:** [Reviewability] [Traceability] [Integration]
 

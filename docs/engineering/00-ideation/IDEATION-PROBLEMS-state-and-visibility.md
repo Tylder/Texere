@@ -27,57 +27,69 @@ drives: []
 index:
   sections:
     - title: "Document Relationships"
-      lines: [80, 102]
-      token_est: 107
+      lines: [89, 114]
+      summary: "Foundational infrastructure for all other systems; without visible epistemic state, all continuity, orchestration, and trust improvements fail."
+      token_est: 130
     - title: "TLDR"
-      lines: [104, 129]
+      lines: [116, 141]
+      summary: "The system cannot tell the user (or itself) what it currently believes to be true, what is uncertain, what is still open, or why. State is buried in chat narratives, making it invisible, non-inspectable, and vulnerable to drift."
       token_est: 210
     - title: "Scope"
-      lines: [131, 155]
-      token_est: 142
+      lines: [143, 170]
+      summary: "Current state visibility, epistemic clarity, baseline vs history separation, open work tracking, and session-to-session deltas—not storage engines, UI design, or full audit trails."
+      token_est: 173
     - title: "Overview"
-      lines: [157, 168]
+      lines: [172, 183]
       token_est: 116
     - title: "Problems"
-      lines: [170, 471]
-      token_est: 2230
+      lines: [185, 505]
+      token_est: 2400
       subsections:
         - title: "Problem 1: PROB-003 — No durable epistemic state (facts, hypotheses, unknowns)"
-          lines: [172, 226]
-          token_est: 361
+          lines: [187, 244]
+          summary: "Agent sessions maintain undifferentiated narrative; do not reliably separate confirmed facts, hypotheses, assumptions, unknowns, constraints, and decisions."
+          token_est: 384
         - title: "Problem 2: PROB-010 — No safe separation between "current baseline" and historical record"
-          lines: [228, 278]
-          token_est: 403
+          lines: [246, 300]
+          summary: "Developers need coherent latest state, but losing/corrupting history destroys correctness; many systems keep only summaries (truth loss) or everything but cannot produce coherent \"current\" view."
+          token_est: 437
         - title: "Problem 3: PROB-025 — Current system state is not externally visible or inspectable"
-          lines: [280, 325]
-          token_est: 393
+          lines: [302, 350]
+          summary: "User cannot reliably see what system believes the current state is; state is implicit in chat flow rather than explicit and inspectable."
+          token_est: 423
         - title: "Problem 4: PROB-026 — No canonical, user-visible "current understanding" baseline"
-          lines: [327, 377]
-          token_est: 380
+          lines: [352, 405]
+          summary: "No single, authoritative, user-visible representation of what system currently believes to be true, assumed, constrained, and decided."
+          token_est: 403
         - title: "Problem 5: PROB-027 — Open work (todos, unknowns, decisions) is not continuously visible"
-          lines: [379, 425]
-          token_est: 357
+          lines: [407, 456]
+          summary: "Items still open (unknowns, pending decisions, risks, planned actions) are not persistently visible and are easily forgotten by both user and system."
+          token_est: 387
         - title: "Problem 6: PROB-030 — State changes across sessions are not clearly surfaced to the user"
-          lines: [427, 471]
-          token_est: 336
+          lines: [458, 505]
+          summary: "When user returns after time away, changes in understanding, decisions, risks, and open items are not clearly summarized, forcing re-orientation from scratch."
+          token_est: 366
     - title: "Success Signals (System Level)"
-      lines: [473, 485]
+      lines: [507, 519]
       token_est: 125
     - title: "Assumptions"
-      lines: [487, 497]
+      lines: [521, 531]
       token_est: 85
     - title: "Unknowns"
-      lines: [499, 510]
+      lines: [533, 544]
       token_est: 110
     - title: "Related Problems"
-      lines: [512, 525]
+      lines: [546, 559]
       token_est: 93
     - title: "Document Metadata"
-      lines: [527, 559]
+      lines: [561, 593]
       token_est: 68
 ---
 
 ## Document Relationships
+
+Summary: Foundational infrastructure for all other systems; without visible epistemic state, all
+continuity, orchestration, and trust improvements fail.
 
 **Upstream (context):**
 
@@ -103,8 +115,8 @@ index:
 
 ## TLDR
 
-**Summary:** The system cannot tell the user (or itself) what it currently believes to be true, what
-is uncertain, what is still open, or why. State is buried in chat narratives, making it invisible,
+Summary: The system cannot tell the user (or itself) what it currently believes to be true, what is
+uncertain, what is still open, or why. State is buried in chat narratives, making it invisible,
 non-inspectable, and vulnerable to drift.
 
 **What:** Establish durable, inspectable, externally visible state management as the foundation for
@@ -129,6 +141,9 @@ systems.
 ---
 
 ## Scope
+
+Summary: Current state visibility, epistemic clarity, baseline vs history separation, open work
+tracking, and session-to-session deltas—not storage engines, UI design, or full audit trails.
 
 **Includes:**
 
@@ -170,6 +185,9 @@ trust depend.
 ## Problems
 
 ### Problem 1: PROB-003 — No durable epistemic state (facts, hypotheses, unknowns)
+
+Summary: Agent sessions maintain undifferentiated narrative; do not reliably separate confirmed
+facts, hypotheses, assumptions, unknowns, constraints, and decisions.
 
 **Tags:** [Epistemic] [Continuity] [Traceability]
 
@@ -227,6 +245,10 @@ Agent sessions typically maintain an undifferentiated narrative. They do not rel
 
 ### Problem 2: PROB-010 — No safe separation between "current baseline" and historical record
 
+Summary: Developers need coherent latest state, but losing/corrupting history destroys correctness;
+many systems keep only summaries (truth loss) or everything but cannot produce coherent "current"
+view.
+
 **Tags:** [Continuity] [Traceability] [Epistemic]
 
 **Classification:** Frequency: Medium · Impact: High · Cost sensitivity: Medium · Blast radius: Repo
@@ -279,6 +301,9 @@ correctness and accountability. Many systems either:
 
 ### Problem 3: PROB-025 — Current system state is not externally visible or inspectable
 
+Summary: User cannot reliably see what system believes the current state is; state is implicit in
+chat flow rather than explicit and inspectable.
+
 **Tags:** [StateVisibility] [UXClarity] [Governance]
 
 **Classification:** Frequency: High · Impact: High · Cost sensitivity: Medium · Blast radius: Repo
@@ -325,6 +350,9 @@ inspectable.
 ---
 
 ### Problem 4: PROB-026 — No canonical, user-visible "current understanding" baseline
+
+Summary: No single, authoritative, user-visible representation of what system currently believes to
+be true, assumed, constrained, and decided.
 
 **Tags:** [StateVisibility] [Epistemic] [UXClarity]
 
@@ -378,6 +406,9 @@ to be true, assumed, constrained, and decided.
 
 ### Problem 5: PROB-027 — Open work (todos, unknowns, decisions) is not continuously visible
 
+Summary: Items still open (unknowns, pending decisions, risks, planned actions) are not persistently
+visible and are easily forgotten by both user and system.
+
 **Tags:** [StateVisibility] [UXClarity] [Governance]
 
 **Classification:** Frequency: High · Impact: Medium · Cost sensitivity: Low · Blast radius: Repo
@@ -425,6 +456,9 @@ visible and are easily forgotten by both user and system.
 ---
 
 ### Problem 6: PROB-030 — State changes across sessions are not clearly surfaced to the user
+
+Summary: When user returns after time away, changes in understanding, decisions, risks, and open
+items are not clearly summarized, forcing re-orientation from scratch.
 
 **Tags:** [SessionDelta] [StateVisibility] [Continuity]
 

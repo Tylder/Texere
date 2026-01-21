@@ -23,62 +23,96 @@ drives: []
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [81, 107]
-      token_est: 112
+      lines: [112, 141]
+      summary:
+        'Infrastructure provides the substrate for all agent operations; weak tools, model lock-in,
+        cost bloat, security gaps, and brittleness undermine all other improvements.'
+      token_est: 142
     - title: 'TLDR'
-      lines: [109, 134]
+      lines: [143, 168]
+      summary:
+        'Tools exist but are unreliably used; models are swapped casually despite tight coupling;
+        token bloat from re-ingestion; secrets leak; cross-repo dependencies are hidden; prompts are
+        brittle and require constant tweaking.'
       token_est: 199
     - title: 'Scope'
-      lines: [136, 159]
-      token_est: 112
+      lines: [170, 197]
+      summary:
+        'Tool integration reliability, model portability, token budgeting, security boundaries,
+        dependency visibility, and resilient instruction mechanisms—not specific tools, cost
+        accounting, or MCP details.'
+      token_est: 142
     - title: 'Overview'
-      lines: [161, 174]
+      lines: [199, 212]
       token_est: 137
     - title: 'Problems'
-      lines: [176, 469]
-      token_est: 2178
+      lines: [214, 525]
+      token_est: 2363
       subsections:
         - title:
             'Problem 1: PROB-005 — Tooling interoperability is unreliable (MCP tools and beyond)'
-          lines: [178, 229]
-          token_est: 409
+          lines: [216, 270]
+          summary:
+            'Even when tools exist, agents misuse them, forget them, or cannot predictably chain
+            them, remaining "text-only" and unable to ground work in reality.'
+          token_est: 440
         - title: 'Problem 2: PROB-006 — Model portability and model-mismatch failures'
-          lines: [231, 278]
-          token_est: 355
+          lines: [272, 322]
+          summary:
+            'Different tasks require different model strengths; a system tied to one model becomes
+            fragile and expensive; model changes break previously working workflows.'
+          token_est: 385
         - title: 'Problem 3: PROB-012 — Cost blow-ups from context bloat and repeated ingestion'
-          lines: [280, 324]
-          token_est: 335
+          lines: [324, 371]
+          summary:
+            'Workflows rely on stuffing large context windows with raw text repeatedly, which is
+            expensive, slow, and scales poorly as projects grow.'
+          token_est: 363
         - title:
             'Problem 4: PROB-019 — Security boundary failures compromise integrity (secrets,
             untrusted inputs)'
-          lines: [326, 370]
-          token_est: 333
+          lines: [373, 420]
+          summary:
+            'System inevitably handles sensitive data (tokens, keys) and untrusted content (repo
+            text, issues); without clear security boundaries, secrets leak and malicious
+            instructions propagate.'
+          token_est: 364
         - title:
             'Problem 5: PROB-023 — Cross-repo and dependency graph blind spots cause incomplete
             reasoning'
-          lines: [372, 415]
-          token_est: 314
+          lines: [422, 468]
+          summary:
+            'Modern systems rely on multiple repos and packages; if agent only understands local
+            slice, it misses constraints and integration points, causing cascading failures.'
+          token_est: 345
         - title: 'Problem 6: PROB-037 — Prompt brittleness undermines consistent agent behavior'
-          lines: [417, 469]
-          token_est: 432
+          lines: [470, 525]
+          summary:
+            'System guidance (prompts, roles, instructions) is fragile; small changes in wording or
+            model choice cause disproportionate shifts in agent behavior, requiring constant prompt
+            tuning.'
+          token_est: 465
     - title: 'Success Signals (System Level)'
-      lines: [471, 482]
+      lines: [527, 538]
       token_est: 99
     - title: 'Assumptions'
-      lines: [484, 494]
+      lines: [540, 550]
       token_est: 88
     - title: 'Unknowns'
-      lines: [496, 506]
+      lines: [552, 562]
       token_est: 80
     - title: 'Related Problems'
-      lines: [508, 518]
+      lines: [564, 574]
       token_est: 73
     - title: 'Document Metadata'
-      lines: [520, 547]
+      lines: [576, 603]
       token_est: 63
 ---
 
 ## Document Relationships
+
+Summary: Infrastructure provides the substrate for all agent operations; weak tools, model lock-in,
+cost bloat, security gaps, and brittleness undermine all other improvements.
 
 **Upstream (context):**
 
@@ -108,9 +142,9 @@ index:
 
 ## TLDR
 
-**Summary:** Tools exist but are unreliably used; models are swapped casually despite tight
-coupling; token bloat from re-ingestion; secrets leak; cross-repo dependencies are hidden; prompts
-are brittle and require constant tweaking.
+Summary: Tools exist but are unreliably used; models are swapped casually despite tight coupling;
+token bloat from re-ingestion; secrets leak; cross-repo dependencies are hidden; prompts are brittle
+and require constant tweaking.
 
 **What:** Build reliable tool integration, model-agnostic workflows, cost-aware token budgeting,
 security boundaries, dependency visibility, and resilient prompt instruction mechanisms.
@@ -134,6 +168,10 @@ instruction from fragile prompts.
 ---
 
 ## Scope
+
+Summary: Tool integration reliability, model portability, token budgeting, security boundaries,
+dependency visibility, and resilient instruction mechanisms—not specific tools, cost accounting, or
+MCP details.
 
 **Includes:**
 
@@ -176,6 +214,9 @@ problems compound: each one increases cost, reduces reliability, or limits porta
 ## Problems
 
 ### Problem 1: PROB-005 — Tooling interoperability is unreliable (MCP tools and beyond)
+
+Summary: Even when tools exist, agents misuse them, forget them, or cannot predictably chain them,
+remaining "text-only" and unable to ground work in reality.
 
 **Tags:** [Tools] [Continuity] [Epistemic]
 
@@ -230,6 +271,9 @@ misuse them, forget them, or cannot predictably chain them.
 
 ### Problem 2: PROB-006 — Model portability and model-mismatch failures
 
+Summary: Different tasks require different model strengths; a system tied to one model becomes
+fragile and expensive; model changes break previously working workflows.
+
 **Tags:** [Models] [Cost] [Continuity]
 
 **Classification:** Frequency: Medium · Impact: High · Cost sensitivity: High · Blast radius: Repo
@@ -279,6 +323,9 @@ fragile and expensive.
 
 ### Problem 3: PROB-012 — Cost blow-ups from context bloat and repeated ingestion
 
+Summary: Workflows rely on stuffing large context windows with raw text repeatedly, which is
+expensive, slow, and scales poorly as projects grow.
+
 **Tags:** [Cost] [Continuity] [Tools]
 
 **Classification:** Frequency: High · Impact: High · Cost sensitivity: High · Blast radius: Repo
@@ -324,6 +371,9 @@ is expensive and slow.
 ---
 
 ### Problem 4: PROB-019 — Security boundary failures compromise integrity (secrets, untrusted inputs)
+
+Summary: System inevitably handles sensitive data (tokens, keys) and untrusted content (repo text,
+issues); without clear security boundaries, secrets leak and malicious instructions propagate.
 
 **Tags:** [Security] [Tools] [Traceability]
 
@@ -371,6 +421,9 @@ instructions, or corrupt outputs.
 
 ### Problem 5: PROB-023 — Cross-repo and dependency graph blind spots cause incomplete reasoning
 
+Summary: Modern systems rely on multiple repos and packages; if agent only understands local slice,
+it misses constraints and integration points, causing cascading failures.
+
 **Tags:** [Topology] [Freshness] [Integration]
 
 **Classification:** Frequency: Medium · Impact: High · Cost sensitivity: Medium · Blast radius:
@@ -415,6 +468,9 @@ understands the local repo slice, it misses constraints and integration points t
 ---
 
 ### Problem 6: PROB-037 — Prompt brittleness undermines consistent agent behavior
+
+Summary: System guidance (prompts, roles, instructions) is fragile; small changes in wording or
+model choice cause disproportionate shifts in agent behavior, requiring constant prompt tuning.
 
 **Tags:** [Orchestration] [Models] [Continuity]
 

@@ -23,50 +23,74 @@ drives: []
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [69, 93]
-      token_est: 88
+      lines: [90, 117]
+      summary:
+        'User-facing problems that determine whether the system is trusted and adopted; depend on
+        state visibility, orchestration quality, and accurate grounding.'
+      token_est: 115
     - title: 'TLDR'
-      lines: [95, 119]
+      lines: [119, 143]
+      summary:
+        'Users cannot tell when to trust the agent; feedback vanishes; no learning from past
+        mistakes or preferences. Users oscillate between blind trust (leading to bugs) and blanket
+        distrust (defeating the purpose).'
       token_est: 195
     - title: 'Scope'
-      lines: [121, 144]
-      token_est: 119
+      lines: [145, 171]
+      summary:
+        'Uncertainty communication, user feedback accumulation, and systematic trust calibration—not
+        specific ML algorithms, formal quantification, or UI design details.'
+      token_est: 143
     - title: 'Overview'
-      lines: [146, 159]
+      lines: [173, 186]
       token_est: 138
     - title: 'Problems'
-      lines: [161, 330]
-      token_est: 1532
+      lines: [188, 366]
+      token_est: 1635
       subsections:
         - title:
             'Problem 1: PROB-035 — Uncertainty and confidence are not communicated in a
             decision-usable way'
-          lines: [163, 212]
-          token_est: 403
+          lines: [190, 242]
+          summary:
+            'System cannot reliably communicate uncertainty and confidence in a way users can use to
+            decide when to trust, verify, or block actions; tone masks weak grounding.'
+          token_est: 439
         - title: 'Problem 2: PROB-038 — No accumulation of user feedback or learned preferences'
-          lines: [214, 270]
-          token_est: 531
+          lines: [244, 303]
+          summary:
+            'System does not learn from user feedback, corrections, or preferences over time; each
+            session starts fresh, repeating mistakes and style violations that were previously
+            corrected.'
+          token_est: 565
         - title: 'Problem 3: PROB-040 — No systematic trust calibration for agent outputs'
-          lines: [272, 330]
-          token_est: 596
+          lines: [305, 366]
+          summary:
+            'System provides no consistent way to gauge how much to trust its outputs; users
+            oscillate between over-trust (accepting bad advice) and under-trust (rejecting good
+            advice).'
+          token_est: 630
     - title: 'Success Signals (System Level)'
-      lines: [332, 343]
+      lines: [368, 379]
       token_est: 95
     - title: 'Assumptions'
-      lines: [345, 356]
+      lines: [381, 392]
       token_est: 89
     - title: 'Unknowns'
-      lines: [358, 371]
+      lines: [394, 407]
       token_est: 102
     - title: 'Related Problems'
-      lines: [373, 383]
+      lines: [409, 419]
       token_est: 71
     - title: 'Document Metadata'
-      lines: [385, 416]
+      lines: [421, 452]
       token_est: 67
 ---
 
 ## Document Relationships
+
+Summary: User-facing problems that determine whether the system is trusted and adopted; depend on
+state visibility, orchestration quality, and accurate grounding.
 
 **Upstream (context):**
 
@@ -94,7 +118,7 @@ index:
 
 ## TLDR
 
-**Summary:** Users cannot tell when to trust the agent; feedback vanishes; no learning from past
+Summary: Users cannot tell when to trust the agent; feedback vanishes; no learning from past
 mistakes or preferences. Users oscillate between blind trust (leading to bugs) and blanket distrust
 (defeating the purpose).
 
@@ -119,6 +143,9 @@ prediction outcomes; allow users to see and adjust confidence thresholds.
 ---
 
 ## Scope
+
+Summary: Uncertainty communication, user feedback accumulation, and systematic trust calibration—not
+specific ML algorithms, formal quantification, or UI design details.
 
 **Includes:**
 
@@ -161,6 +188,9 @@ forming.
 ## Problems
 
 ### Problem 1: PROB-035 — Uncertainty and confidence are not communicated in a decision-usable way
+
+Summary: System cannot reliably communicate uncertainty and confidence in a way users can use to
+decide when to trust, verify, or block actions; tone masks weak grounding.
 
 **Tags:** [UXClarity] [Epistemic] [StateVisibility]
 
@@ -212,6 +242,9 @@ uncertainty handling varies across models and sessions.
 ---
 
 ### Problem 2: PROB-038 — No accumulation of user feedback or learned preferences
+
+Summary: System does not learn from user feedback, corrections, or preferences over time; each
+session starts fresh, repeating mistakes and style violations that were previously corrected.
 
 **Tags:** [Continuity] [Evaluation] [Orchestration]
 
@@ -270,6 +303,9 @@ developer interacts with the assistant.
 ---
 
 ### Problem 3: PROB-040 — No systematic trust calibration for agent outputs
+
+Summary: System provides no consistent way to gauge how much to trust its outputs; users oscillate
+between over-trust (accepting bad advice) and under-trust (rejecting good advice).
 
 **Tags:** [UXClarity] [Evaluation] [Traceability]
 

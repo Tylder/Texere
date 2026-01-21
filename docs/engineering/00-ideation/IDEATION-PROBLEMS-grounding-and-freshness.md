@@ -21,49 +21,71 @@ drives: []
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [66, 89]
-      token_est: 76
+      lines: [85, 111]
+      summary:
+        'Grounding and freshness enable accurate decisions and prevent silent failures; validation
+        must be cheap and automated, provenance must be tracked.'
+      token_est: 103
     - title: 'TLDR'
-      lines: [91, 116]
+      lines: [113, 138]
+      summary:
+        'The system silently operates on outdated information, treats unvalidated assumptions as
+        facts, and forgets why decisions were made. Stale research, hallucination, and lost
+        provenance compound over time.'
       token_est: 208
     - title: 'Scope'
-      lines: [118, 140]
-      token_est: 123
+      lines: [140, 165]
+      summary:
+        'Staleness detection, assumption tracking, auditable provenance, and epistemic
+        discipline—not specific validation engines, external API monitoring, or deep analysis.'
+      token_est: 147
     - title: 'Overview'
-      lines: [142, 153]
+      lines: [167, 178]
       token_est: 103
     - title: 'Problems'
-      lines: [155, 319]
-      token_est: 1359
+      lines: [180, 353]
+      token_est: 1455
       subsections:
         - title: 'Problem 1: PROB-002 — Research becomes stale with no cheap upkeep mechanism'
-          lines: [157, 209]
-          token_est: 431
+          lines: [182, 237]
+          summary:
+            'Research about repo, dependencies, standards, or APIs goes out of date; workflows treat
+            it as static or rely on manual re-checking, causing silent correctness failures.'
+          token_est: 465
         - title:
             'Problem 2: PROB-008 — Hallucination and assumption drift are not mechanically prevented'
-          lines: [211, 265]
-          token_est: 467
+          lines: [239, 296]
+          summary:
+            'Agent workflows reward forward progress even on invalid baselines; assumptions made
+            silently and become invisible facts without validation or explicit tracking.'
+          token_est: 496
         - title: 'Problem 3: PROB-009 — Lack of auditable history and decision traceability'
-          lines: [267, 319]
-          token_est: 459
+          lines: [298, 353]
+          summary:
+            'System needs to explain "why" something is the way it is, not just "what"; without
+            traceability, decisions cannot be revisited and constraints cannot be understood.'
+          token_est: 493
     - title: 'Success Signals (System Level)'
-      lines: [321, 332]
+      lines: [355, 366]
       token_est: 103
     - title: 'Assumptions'
-      lines: [334, 345]
+      lines: [368, 379]
       token_est: 91
     - title: 'Unknowns'
-      lines: [347, 357]
+      lines: [381, 391]
       token_est: 82
     - title: 'Related Problems'
-      lines: [359, 369]
+      lines: [393, 403]
       token_est: 68
     - title: 'Document Metadata'
-      lines: [371, 401]
+      lines: [405, 435]
       token_est: 65
 ---
 
 ## Document Relationships
+
+Summary: Grounding and freshness enable accurate decisions and prevent silent failures; validation
+must be cheap and automated, provenance must be tracked.
 
 **Upstream (context):**
 
@@ -90,7 +112,7 @@ index:
 
 ## TLDR
 
-**Summary:** The system silently operates on outdated information, treats unvalidated assumptions as
+Summary: The system silently operates on outdated information, treats unvalidated assumptions as
 facts, and forgets why decisions were made. Stale research, hallucination, and lost provenance
 compound over time.
 
@@ -116,6 +138,9 @@ work.
 ---
 
 ## Scope
+
+Summary: Staleness detection, assumption tracking, auditable provenance, and epistemic
+discipline—not specific validation engines, external API monitoring, or deep analysis.
 
 **Includes:**
 
@@ -155,6 +180,9 @@ prevent validation, and lost provenance makes recovery impossible.
 ## Problems
 
 ### Problem 1: PROB-002 — Research becomes stale with no cheap upkeep mechanism
+
+Summary: Research about repo, dependencies, standards, or APIs goes out of date; workflows treat it
+as static or rely on manual re-checking, causing silent correctness failures.
 
 **Tags:** [Freshness] [Traceability] [Cost]
 
@@ -209,6 +237,9 @@ most workflows treat it as static or rely on manual re-checking.
 ---
 
 ### Problem 2: PROB-008 — Hallucination and assumption drift are not mechanically prevented
+
+Summary: Agent workflows reward forward progress even on invalid baselines; assumptions made
+silently and become invisible facts without validation or explicit tracking.
 
 **Tags:** [Epistemic] [Freshness] [Traceability]
 
@@ -265,6 +296,9 @@ anyone noticing.
 ---
 
 ### Problem 3: PROB-009 — Lack of auditable history and decision traceability
+
+Summary: System needs to explain "why" something is the way it is, not just "what"; without
+traceability, decisions cannot be revisited and constraints cannot be understood.
 
 **Tags:** [Traceability] [Continuity] [Epistemic]
 
