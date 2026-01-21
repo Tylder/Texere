@@ -7,7 +7,8 @@ immutable by ID—if intent changes, deprecate and create a new requirement ID.
 
 ## Active Requirements
 
-(None yet)
+- [`REQ-generate-doc-indices`](REQ-generate-doc-indices.md) (section-indexing)
+- [`REQ-validate-docs`](REQ-validate-docs.md) (validation-system)
 
 ## Archived / Deprecated
 
