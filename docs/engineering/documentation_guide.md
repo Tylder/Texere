@@ -443,3 +443,66 @@ system and reduces maintenance burden.
 If you need to track narrative status or retrospectives for a feature, use a status/retrospective
 section in a README or create a lightweight tracking doc as needed—but don't create a mandatory INIT
 for every feature.
+
+---
+
+## Automation: Keeping Indices in Sync
+
+To eliminate manual bookkeeping and ensure indices never drift, this system includes **automated
+validation and index updating.**
+
+### What Gets Automated
+
+When you commit documentation changes:
+
+1. ✅ **DOCUMENT-REGISTRY.md is regenerated** from document YAML frontmatter
+2. ✅ **Folder README lists are updated** (Active/Archived sections)
+3. ✅ **YAML frontmatter is validated** (all required fields present)
+4. ✅ **Naming conventions are verified** (SPEC-, REQ-, etc.)
+5. ✅ **Cross-references are checked** (links point to real documents)
+
+If validation fails, the commit is blocked with clear error messages.
+
+### How to Use
+
+**Automatic (on every commit):**
+
+Simply commit your documentation changes normally. The pre-commit hook runs automatically:
+
+```bash
+git add docs/engineering/02-specifications/SPEC-my-feature.md
+git commit -m "Add spec for my feature"
+
+# Output:
+# ✨ AUTO-FIXES APPLIED:
+#   ✅ Updated DOCUMENT-REGISTRY.md
+#   ✅ Updated all folder READMEs
+# ✅ Documentation validation passed!
+```
+
+**Manual check (anytime):**
+
+```bash
+pnpm check:docs
+```
+
+### Setup
+
+The automation uses **lint-staged** + **husky** pre-commit hooks. If not already set up:
+
+```bash
+# Install husky
+pnpm install husky --save-dev
+npx husky install
+
+# Add pre-commit hook
+npx husky add .husky/pre-commit "pnpm lint-staged"
+```
+
+See **[DOC-VALIDATION-SETUP.md](./DOC-VALIDATION-SETUP.md)** for complete setup instructions,
+troubleshooting, and CI/CD integration.
+
+### Result
+
+**You never manually update DOCUMENT-REGISTRY.md or index README sections again.** The system
+handles it automatically. Focus on content; the automation handles bookkeeping.
