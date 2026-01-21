@@ -303,11 +303,11 @@ function validateLinks(doc, errors) {
 }
 
 function updateLastUpdated(doc) {
-  const todayDate = new Date().toISOString().split('T')[0];
+  const now = new Date().toISOString();
 
   const updatedContent = doc.content.replace(
-    /last_updated: \d{4}-\d{2}-\d{2}/,
-    `last_updated: ${todayDate}`,
+    /last_updated: \d{4}-\d{2}-\d{2}(?:T[\d:\.Z]+)?/,
+    `last_updated: ${now}`,
   );
 
   if (updatedContent !== doc.content) {
@@ -570,6 +570,17 @@ function embedSectionIndex(doc, sections) {
   let frontmatterYaml = frontmatterMatch[1];
   const contentAfterFrontmatter = doc.content.substring(frontmatterMatch[0].length);
 
+  // Update last_updated with full ISO timestamp
+  const now = new Date().toISOString();
+  frontmatterYaml = frontmatterYaml.replace(
+    /last_updated: \d{4}-\d{2}-\d{2}(?:T[\d:\.Z]+)?/,
+    `last_updated: ${now}`,
+  );
+
+  // Remove any existing index by stripping from first indented "generated_at:" or "index:" to end
+  // This handles index that accidentally got embedded in summary_long
+  frontmatterYaml = frontmatterYaml.replace(/\s+(generated_at|index):[\s\S]*$/m, '');
+
   // Ensure frontmatter_auto_updated_by fields exist
   if (!frontmatterYaml.includes('frontmatter_auto_updated_by:')) {
     // Insert after feature field (or area if feature doesn't exist)
@@ -585,11 +596,8 @@ function embedSectionIndex(doc, sections) {
   }
 
   // Build index YAML
-  const now = new Date().toISOString();
   let indexYaml = `
 index:
-  generated_at: "${now}"
-  generator: script/validate-docs.mjs
   sections:`;
 
   for (const section of sections) {

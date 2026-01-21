@@ -14,7 +14,7 @@ by multiple Specifications.
 
 ## Archived
 
-- [`SPEC-test-indexing-full`](SPEC-test-indexing-full.md) (draft) - indexing
+- [`SPEC-test-indexing`](SPEC-test-indexing.md) (draft) - indexing
 
 ---
 

@@ -3,7 +3,7 @@ type: META
 status: active
 stability: stable
 created: 2026-01-21
-last_updated: 2026-01-21
+last_updated: 2026-01-21T12:45:28.111Z
 area: documentation
 feature: system
 frontmatter_auto_updated_by: script/validate-docs.mjs
@@ -15,356 +15,9 @@ summary_long:
   Scope, etc.), naming conventions, linking rules, and automation system. Includes examples for each
   doc type, design decision rationale, and instructions for humans and LLMs.'
 index:
-  generated_at: '2026-01-21T12:36:53.613Z'
-  generator: script/validate-docs.mjs
   sections:
     - id: critical_keeping_indices_in_sync
       title: 'Critical: Keeping Indices in Sync'
-      level: 2
-      start_line: 24
-      end_line: 50
-      summary: null
-      token_est: 198
-      subsections: []
-    - id: overview
-      title: 'Overview'
-      level: 2
-      start_line: 51
-      end_line: 73
-      summary: null
-      token_est: 192
-      subsections: []
-    - id: document_format_yaml_frontmatter_structured_sections
-      title: 'Document Format: YAML Frontmatter + Structured Sections'
-      level: 2
-      start_line: 74
-      end_line: 117
-      summary: null
-      token_est: 254
-      subsections:
-        - id: yaml_frontmatter_required
-          title: 'YAML Frontmatter (Required)'
-          level: 3
-          start_line: 78
-          end_line: 101
-          summary: null
-          token_est: 116
-        - id: mandatory_sections
-          title: 'Mandatory Sections'
-          level: 3
-          start_line: 102
-          end_line: 114
-          summary: null
-          token_est: 104
-        - id: 1_document_relationships
-          title: '1. Document Relationships'
-          level: 3
-          start_line: 115
-          end_line: 117
-          summary: null
-          token_est: 7
-    - id: document_relationships
-      title: 'Document Relationships'
-      level: 2
-      start_line: 118
-      end_line: 142
-      summary: null
-      token_est: 65
-      subsections:
-        - id: 2_tldr
-          title: '2. TLDR'
-          level: 3
-          start_line: 140
-          end_line: 142
-          summary: null
-          token_est: 6
-    - id: tldr
-      title: 'TLDR'
-      level: 2
-      start_line: 143
-      end_line: 167
-      summary: null
-      token_est: 110
-      subsections:
-        - id: 3_scope
-          title: '3. Scope'
-          level: 3
-          start_line: 165
-          end_line: 167
-          summary: null
-          token_est: 6
-    - id: scope
-      title: 'Scope'
-      level: 2
-      start_line: 168
-      end_line: 199
-      summary: null
-      token_est: 123
-      subsections:
-        - id: 4_main_content
-          title: '4. Main Content'
-          level: 3
-          start_line: 191
-          end_line: 194
-          summary: null
-          token_est: 21
-        - id: 5_design_decisions
-          title: '5. Design Decisions'
-          level: 3
-          start_line: 195
-          end_line: 199
-          summary: null
-          token_est: 16
-    - id: design_decisions
-      title: 'Design Decisions'
-      level: 2
-      start_line: 200
-      end_line: 219
-      summary: null
-      token_est: 175
-      subsections:
-        - id: 6_blockers_7_assumptions_unknowns
-          title: '6. Blockers & 7. Assumptions & Unknowns'
-          level: 3
-          start_line: 213
-          end_line: 216
-          summary: null
-          token_est: 20
-        - id: 8_document_metadata
-          title: '8. Document Metadata'
-          level: 3
-          start_line: 217
-          end_line: 219
-          summary: null
-          token_est: 7
-    - id: document_metadata
-      title: 'Document Metadata'
-      level: 2
-      start_line: 220
-      end_line: 232
-      summary: null
-      token_est: 30
-      subsections: []
-    - id: when_to_write_each
-      title: 'When to Write Each'
-      level: 2
-      start_line: 233
-      end_line: 294
-      summary: null
-      token_est: 227
-      subsections:
-        - id: ideation
-          title: 'Ideation'
-          level: 3
-          start_line: 235
-          end_line: 250
-          summary: null
-          token_est: 47
-        - id: requirements
-          title: 'Requirements'
-          level: 3
-          start_line: 251
-          end_line: 260
-          summary: null
-          token_est: 45
-        - id: specification
-          title: 'Specification'
-          level: 3
-          start_line: 261
-          end_line: 271
-          summary: null
-          token_est: 49
-        - id: implementation_plan
-          title: 'Implementation Plan'
-          level: 3
-          start_line: 272
-          end_line: 281
-          summary: null
-          token_est: 39
-        - id: meta
-          title: 'Meta'
-          level: 3
-          start_line: 282
-          end_line: 294
-          summary: null
-          token_est: 42
-    - id: manytomany_relationships
-      title: 'Many-to-Many Relationships'
-      level: 2
-      start_line: 295
-      end_line: 303
-      summary: null
-      token_est: 34
-      subsections: []
-    - id: folder_structure
-      title: 'Folder Structure'
-      level: 2
-      start_line: 304
-      end_line: 340
-      summary: null
-      token_est: 58
-      subsections: []
-    - id: file_naming
-      title: 'File Naming'
-      level: 2
-      start_line: 341
-      end_line: 376
-      summary: null
-      token_est: 42
-      subsections:
-        - id: ideation
-          title: 'Ideation'
-          level: 3
-          start_line: 343
-          end_line: 350
-          summary: null
-          token_est: 10
-        - id: requirements
-          title: 'Requirements'
-          level: 3
-          start_line: 351
-          end_line: 356
-          summary: null
-          token_est: 7
-        - id: specification
-          title: 'Specification'
-          level: 3
-          start_line: 357
-          end_line: 362
-          summary: null
-          token_est: 7
-        - id: implementation_plan
-          title: 'Implementation Plan'
-          level: 3
-          start_line: 363
-          end_line: 368
-          summary: null
-          token_est: 8
-        - id: meta
-          title: 'Meta'
-          level: 3
-          start_line: 369
-          end_line: 376
-          summary: null
-          token_est: 8
-    - id: crosslinking_rules
-      title: 'Cross-Linking Rules'
-      level: 2
-      start_line: 377
-      end_line: 395
-      summary: null
-      token_est: 112
-      subsections: []
-    - id: key_principles
-      title: 'Key Principles'
-      level: 2
-      start_line: 396
-      end_line: 422
-      summary: null
-      token_est: 160
-      subsections: []
-    - id: getting_started
-      title: 'Getting Started'
-      level: 2
-      start_line: 423
-      end_line: 445
-      summary: null
-      token_est: 181
-      subsections: []
-    - id: for_llms_and_agents
-      title: 'For LLMs and Agents'
-      level: 2
-      start_line: 446
-      end_line: 471
-      summary: null
-      token_est: 112
-      subsections: []
-    - id: section_indexing_structure_for_llm_parsing
-      title: 'Section Indexing: Structure for LLM Parsing'
-      level: 2
-      start_line: 472
-      end_line: 488
-      summary: null
-      token_est: 114
-      subsections:
-        - id: how_section_indexing_works
-          title: 'How Section Indexing Works'
-          level: 3
-          start_line: 477
-          end_line: 488
-          summary: null
-          token_est: 78
-    - id: scope
-      title: 'Scope'
-      level: 2
-      start_line: 489
-      end_line: 559
-      summary: 'API covers offset/limit pagination; excludes cursor-based and export pagination.'
-      token_est: 297
-      subsections:
-        - id: summary_format
-          title: 'Summary Format'
-          level: 3
-          start_line: 500
-          end_line: 508
-          summary: null
-          token_est: 62
-        - id: generated_index_files
-          title: 'Generated Index Files'
-          level: 3
-          start_line: 509
-          end_line: 541
-          summary: null
-          token_est: 91
-        - id: what_llms_do_with_this_index
-          title: 'What LLMs Do With This Index'
-          level: 3
-          start_line: 542
-          end_line: 559
-          summary: null
-          token_est: 114
-    - id: automation_keeping_indices_in_sync
-      title: 'Automation: Keeping Indices in Sync'
-      level: 2
-      start_line: 560
-      end_line: 619
-      summary: null
-      token_est: 289
-      subsections:
-        - id: what_gets_automated
-          title: 'What Gets Automated'
-          level: 3
-          start_line: 565
-          end_line: 576
-          summary: null
-          token_est: 89
-        - id: how_to_use
-          title: 'How to Use'
-          level: 3
-          start_line: 577
-          end_line: 599
-          summary: null
-          token_est: 80
-        - id: setup
-          title: 'Setup'
-          level: 3
-          start_line: 600
-          end_line: 614
-          summary: null
-          token_est: 60
-        - id: result
-          title: 'Result'
-          level: 3
-          start_line: 615
-          end_line: 619
-          summary: null
-          token_est: 32
-index:
-  generated_at: "2026-01-21T12:37:07.694Z"
-  generator: script/validate-docs.mjs
-  sections:
-    - id: critical_keeping_indices_in_sync
-      title: "Critical: Keeping Indices in Sync"
       level: 2
       start_line: 369
       end_line: 395
@@ -372,7 +25,7 @@ index:
       token_est: 198
       subsections: []
     - id: overview
-      title: "Overview"
+      title: 'Overview'
       level: 2
       start_line: 396
       end_line: 418
@@ -380,7 +33,7 @@ index:
       token_est: 192
       subsections: []
     - id: document_format_yaml_frontmatter_structured_sections
-      title: "Document Format: YAML Frontmatter + Structured Sections"
+      title: 'Document Format: YAML Frontmatter + Structured Sections'
       level: 2
       start_line: 419
       end_line: 462
@@ -388,28 +41,28 @@ index:
       token_est: 254
       subsections:
         - id: yaml_frontmatter_required
-          title: "YAML Frontmatter (Required)"
+          title: 'YAML Frontmatter (Required)'
           level: 3
           start_line: 423
           end_line: 446
           summary: null
           token_est: 116
         - id: mandatory_sections
-          title: "Mandatory Sections"
+          title: 'Mandatory Sections'
           level: 3
           start_line: 447
           end_line: 459
           summary: null
           token_est: 104
         - id: 1_document_relationships
-          title: "1. Document Relationships"
+          title: '1. Document Relationships'
           level: 3
           start_line: 460
           end_line: 462
           summary: null
           token_est: 7
     - id: document_relationships
-      title: "Document Relationships"
+      title: 'Document Relationships'
       level: 2
       start_line: 463
       end_line: 487
@@ -417,14 +70,14 @@ index:
       token_est: 65
       subsections:
         - id: 2_tldr
-          title: "2. TLDR"
+          title: '2. TLDR'
           level: 3
           start_line: 485
           end_line: 487
           summary: null
           token_est: 6
     - id: tldr
-      title: "TLDR"
+      title: 'TLDR'
       level: 2
       start_line: 488
       end_line: 512
@@ -432,14 +85,14 @@ index:
       token_est: 110
       subsections:
         - id: 3_scope
-          title: "3. Scope"
+          title: '3. Scope'
           level: 3
           start_line: 510
           end_line: 512
           summary: null
           token_est: 6
     - id: scope
-      title: "Scope"
+      title: 'Scope'
       level: 2
       start_line: 513
       end_line: 544
@@ -447,21 +100,21 @@ index:
       token_est: 123
       subsections:
         - id: 4_main_content
-          title: "4. Main Content"
+          title: '4. Main Content'
           level: 3
           start_line: 536
           end_line: 539
           summary: null
           token_est: 21
         - id: 5_design_decisions
-          title: "5. Design Decisions"
+          title: '5. Design Decisions'
           level: 3
           start_line: 540
           end_line: 544
           summary: null
           token_est: 16
     - id: design_decisions
-      title: "Design Decisions"
+      title: 'Design Decisions'
       level: 2
       start_line: 545
       end_line: 564
@@ -469,21 +122,21 @@ index:
       token_est: 175
       subsections:
         - id: 6_blockers_7_assumptions_unknowns
-          title: "6. Blockers & 7. Assumptions & Unknowns"
+          title: '6. Blockers & 7. Assumptions & Unknowns'
           level: 3
           start_line: 558
           end_line: 561
           summary: null
           token_est: 20
         - id: 8_document_metadata
-          title: "8. Document Metadata"
+          title: '8. Document Metadata'
           level: 3
           start_line: 562
           end_line: 564
           summary: null
           token_est: 7
     - id: document_metadata
-      title: "Document Metadata"
+      title: 'Document Metadata'
       level: 2
       start_line: 565
       end_line: 577
@@ -491,7 +144,7 @@ index:
       token_est: 30
       subsections: []
     - id: when_to_write_each
-      title: "When to Write Each"
+      title: 'When to Write Each'
       level: 2
       start_line: 578
       end_line: 639
@@ -499,42 +152,42 @@ index:
       token_est: 227
       subsections:
         - id: ideation
-          title: "Ideation"
+          title: 'Ideation'
           level: 3
           start_line: 580
           end_line: 595
           summary: null
           token_est: 47
         - id: requirements
-          title: "Requirements"
+          title: 'Requirements'
           level: 3
           start_line: 596
           end_line: 605
           summary: null
           token_est: 45
         - id: specification
-          title: "Specification"
+          title: 'Specification'
           level: 3
           start_line: 606
           end_line: 616
           summary: null
           token_est: 49
         - id: implementation_plan
-          title: "Implementation Plan"
+          title: 'Implementation Plan'
           level: 3
           start_line: 617
           end_line: 626
           summary: null
           token_est: 39
         - id: meta
-          title: "Meta"
+          title: 'Meta'
           level: 3
           start_line: 627
           end_line: 639
           summary: null
           token_est: 42
     - id: manytomany_relationships
-      title: "Many-to-Many Relationships"
+      title: 'Many-to-Many Relationships'
       level: 2
       start_line: 640
       end_line: 648
@@ -542,7 +195,7 @@ index:
       token_est: 34
       subsections: []
     - id: folder_structure
-      title: "Folder Structure"
+      title: 'Folder Structure'
       level: 2
       start_line: 649
       end_line: 685
@@ -550,7 +203,7 @@ index:
       token_est: 58
       subsections: []
     - id: file_naming
-      title: "File Naming"
+      title: 'File Naming'
       level: 2
       start_line: 686
       end_line: 721
@@ -558,42 +211,42 @@ index:
       token_est: 42
       subsections:
         - id: ideation
-          title: "Ideation"
+          title: 'Ideation'
           level: 3
           start_line: 688
           end_line: 695
           summary: null
           token_est: 10
         - id: requirements
-          title: "Requirements"
+          title: 'Requirements'
           level: 3
           start_line: 696
           end_line: 701
           summary: null
           token_est: 7
         - id: specification
-          title: "Specification"
+          title: 'Specification'
           level: 3
           start_line: 702
           end_line: 707
           summary: null
           token_est: 7
         - id: implementation_plan
-          title: "Implementation Plan"
+          title: 'Implementation Plan'
           level: 3
           start_line: 708
           end_line: 713
           summary: null
           token_est: 8
         - id: meta
-          title: "Meta"
+          title: 'Meta'
           level: 3
           start_line: 714
           end_line: 721
           summary: null
           token_est: 8
     - id: crosslinking_rules
-      title: "Cross-Linking Rules"
+      title: 'Cross-Linking Rules'
       level: 2
       start_line: 722
       end_line: 740
@@ -601,7 +254,7 @@ index:
       token_est: 112
       subsections: []
     - id: key_principles
-      title: "Key Principles"
+      title: 'Key Principles'
       level: 2
       start_line: 741
       end_line: 767
@@ -609,7 +262,7 @@ index:
       token_est: 160
       subsections: []
     - id: getting_started
-      title: "Getting Started"
+      title: 'Getting Started'
       level: 2
       start_line: 768
       end_line: 790
@@ -617,7 +270,7 @@ index:
       token_est: 181
       subsections: []
     - id: for_llms_and_agents
-      title: "For LLMs and Agents"
+      title: 'For LLMs and Agents'
       level: 2
       start_line: 791
       end_line: 816
@@ -625,7 +278,7 @@ index:
       token_est: 112
       subsections: []
     - id: section_indexing_structure_for_llm_parsing
-      title: "Section Indexing: Structure for LLM Parsing"
+      title: 'Section Indexing: Structure for LLM Parsing'
       level: 2
       start_line: 817
       end_line: 833
@@ -633,43 +286,43 @@ index:
       token_est: 114
       subsections:
         - id: how_section_indexing_works
-          title: "How Section Indexing Works"
+          title: 'How Section Indexing Works'
           level: 3
           start_line: 822
           end_line: 833
           summary: null
           token_est: 78
     - id: scope
-      title: "Scope"
+      title: 'Scope'
       level: 2
       start_line: 834
       end_line: 904
-      summary: "API covers offset/limit pagination; excludes cursor-based and export pagination."
+      summary: 'API covers offset/limit pagination; excludes cursor-based and export pagination.'
       token_est: 297
       subsections:
         - id: summary_format
-          title: "Summary Format"
+          title: 'Summary Format'
           level: 3
           start_line: 845
           end_line: 853
           summary: null
           token_est: 62
         - id: generated_index_files
-          title: "Generated Index Files"
+          title: 'Generated Index Files'
           level: 3
           start_line: 854
           end_line: 886
           summary: null
           token_est: 91
         - id: what_llms_do_with_this_index
-          title: "What LLMs Do With This Index"
+          title: 'What LLMs Do With This Index'
           level: 3
           start_line: 887
           end_line: 904
           summary: null
           token_est: 114
     - id: automation_keeping_indices_in_sync
-      title: "Automation: Keeping Indices in Sync"
+      title: 'Automation: Keeping Indices in Sync'
       level: 2
       start_line: 905
       end_line: 964
@@ -677,376 +330,31 @@ index:
       token_est: 289
       subsections:
         - id: what_gets_automated
-          title: "What Gets Automated"
+          title: 'What Gets Automated'
           level: 3
           start_line: 910
           end_line: 921
           summary: null
           token_est: 89
         - id: how_to_use
-          title: "How to Use"
+          title: 'How to Use'
           level: 3
           start_line: 922
           end_line: 944
           summary: null
           token_est: 80
         - id: setup
-          title: "Setup"
+          title: 'Setup'
           level: 3
           start_line: 945
           end_line: 959
           summary: null
           token_est: 60
         - id: result
-          title: "Result"
+          title: 'Result'
           level: 3
           start_line: 960
           end_line: 964
-          summary: null
-          token_est: 32
-index:
-  generated_at: "2026-01-21T12:37:34.668Z"
-  generator: script/validate-docs.mjs
-  sections:
-    - id: critical_keeping_indices_in_sync
-      title: "Critical: Keeping Indices in Sync"
-      level: 2
-      start_line: 716
-      end_line: 742
-      summary: null
-      token_est: 198
-      subsections: []
-    - id: overview
-      title: "Overview"
-      level: 2
-      start_line: 743
-      end_line: 765
-      summary: null
-      token_est: 192
-      subsections: []
-    - id: document_format_yaml_frontmatter_structured_sections
-      title: "Document Format: YAML Frontmatter + Structured Sections"
-      level: 2
-      start_line: 766
-      end_line: 809
-      summary: null
-      token_est: 254
-      subsections:
-        - id: yaml_frontmatter_required
-          title: "YAML Frontmatter (Required)"
-          level: 3
-          start_line: 770
-          end_line: 793
-          summary: null
-          token_est: 116
-        - id: mandatory_sections
-          title: "Mandatory Sections"
-          level: 3
-          start_line: 794
-          end_line: 806
-          summary: null
-          token_est: 104
-        - id: 1_document_relationships
-          title: "1. Document Relationships"
-          level: 3
-          start_line: 807
-          end_line: 809
-          summary: null
-          token_est: 7
-    - id: document_relationships
-      title: "Document Relationships"
-      level: 2
-      start_line: 810
-      end_line: 834
-      summary: null
-      token_est: 65
-      subsections:
-        - id: 2_tldr
-          title: "2. TLDR"
-          level: 3
-          start_line: 832
-          end_line: 834
-          summary: null
-          token_est: 6
-    - id: tldr
-      title: "TLDR"
-      level: 2
-      start_line: 835
-      end_line: 859
-      summary: null
-      token_est: 110
-      subsections:
-        - id: 3_scope
-          title: "3. Scope"
-          level: 3
-          start_line: 857
-          end_line: 859
-          summary: null
-          token_est: 6
-    - id: scope
-      title: "Scope"
-      level: 2
-      start_line: 860
-      end_line: 891
-      summary: null
-      token_est: 123
-      subsections:
-        - id: 4_main_content
-          title: "4. Main Content"
-          level: 3
-          start_line: 883
-          end_line: 886
-          summary: null
-          token_est: 21
-        - id: 5_design_decisions
-          title: "5. Design Decisions"
-          level: 3
-          start_line: 887
-          end_line: 891
-          summary: null
-          token_est: 16
-    - id: design_decisions
-      title: "Design Decisions"
-      level: 2
-      start_line: 892
-      end_line: 911
-      summary: null
-      token_est: 175
-      subsections:
-        - id: 6_blockers_7_assumptions_unknowns
-          title: "6. Blockers & 7. Assumptions & Unknowns"
-          level: 3
-          start_line: 905
-          end_line: 908
-          summary: null
-          token_est: 20
-        - id: 8_document_metadata
-          title: "8. Document Metadata"
-          level: 3
-          start_line: 909
-          end_line: 911
-          summary: null
-          token_est: 7
-    - id: document_metadata
-      title: "Document Metadata"
-      level: 2
-      start_line: 912
-      end_line: 924
-      summary: null
-      token_est: 30
-      subsections: []
-    - id: when_to_write_each
-      title: "When to Write Each"
-      level: 2
-      start_line: 925
-      end_line: 986
-      summary: null
-      token_est: 227
-      subsections:
-        - id: ideation
-          title: "Ideation"
-          level: 3
-          start_line: 927
-          end_line: 942
-          summary: null
-          token_est: 47
-        - id: requirements
-          title: "Requirements"
-          level: 3
-          start_line: 943
-          end_line: 952
-          summary: null
-          token_est: 45
-        - id: specification
-          title: "Specification"
-          level: 3
-          start_line: 953
-          end_line: 963
-          summary: null
-          token_est: 49
-        - id: implementation_plan
-          title: "Implementation Plan"
-          level: 3
-          start_line: 964
-          end_line: 973
-          summary: null
-          token_est: 39
-        - id: meta
-          title: "Meta"
-          level: 3
-          start_line: 974
-          end_line: 986
-          summary: null
-          token_est: 42
-    - id: manytomany_relationships
-      title: "Many-to-Many Relationships"
-      level: 2
-      start_line: 987
-      end_line: 995
-      summary: null
-      token_est: 34
-      subsections: []
-    - id: folder_structure
-      title: "Folder Structure"
-      level: 2
-      start_line: 996
-      end_line: 1032
-      summary: null
-      token_est: 58
-      subsections: []
-    - id: file_naming
-      title: "File Naming"
-      level: 2
-      start_line: 1033
-      end_line: 1068
-      summary: null
-      token_est: 42
-      subsections:
-        - id: ideation
-          title: "Ideation"
-          level: 3
-          start_line: 1035
-          end_line: 1042
-          summary: null
-          token_est: 10
-        - id: requirements
-          title: "Requirements"
-          level: 3
-          start_line: 1043
-          end_line: 1048
-          summary: null
-          token_est: 7
-        - id: specification
-          title: "Specification"
-          level: 3
-          start_line: 1049
-          end_line: 1054
-          summary: null
-          token_est: 7
-        - id: implementation_plan
-          title: "Implementation Plan"
-          level: 3
-          start_line: 1055
-          end_line: 1060
-          summary: null
-          token_est: 8
-        - id: meta
-          title: "Meta"
-          level: 3
-          start_line: 1061
-          end_line: 1068
-          summary: null
-          token_est: 8
-    - id: crosslinking_rules
-      title: "Cross-Linking Rules"
-      level: 2
-      start_line: 1069
-      end_line: 1087
-      summary: null
-      token_est: 112
-      subsections: []
-    - id: key_principles
-      title: "Key Principles"
-      level: 2
-      start_line: 1088
-      end_line: 1114
-      summary: null
-      token_est: 160
-      subsections: []
-    - id: getting_started
-      title: "Getting Started"
-      level: 2
-      start_line: 1115
-      end_line: 1137
-      summary: null
-      token_est: 181
-      subsections: []
-    - id: for_llms_and_agents
-      title: "For LLMs and Agents"
-      level: 2
-      start_line: 1138
-      end_line: 1163
-      summary: null
-      token_est: 112
-      subsections: []
-    - id: section_indexing_structure_for_llm_parsing
-      title: "Section Indexing: Structure for LLM Parsing"
-      level: 2
-      start_line: 1164
-      end_line: 1180
-      summary: null
-      token_est: 114
-      subsections:
-        - id: how_section_indexing_works
-          title: "How Section Indexing Works"
-          level: 3
-          start_line: 1169
-          end_line: 1180
-          summary: null
-          token_est: 78
-    - id: scope
-      title: "Scope"
-      level: 2
-      start_line: 1181
-      end_line: 1251
-      summary: "API covers offset/limit pagination; excludes cursor-based and export pagination."
-      token_est: 297
-      subsections:
-        - id: summary_format
-          title: "Summary Format"
-          level: 3
-          start_line: 1192
-          end_line: 1200
-          summary: null
-          token_est: 62
-        - id: generated_index_files
-          title: "Generated Index Files"
-          level: 3
-          start_line: 1201
-          end_line: 1233
-          summary: null
-          token_est: 91
-        - id: what_llms_do_with_this_index
-          title: "What LLMs Do With This Index"
-          level: 3
-          start_line: 1234
-          end_line: 1251
-          summary: null
-          token_est: 114
-    - id: automation_keeping_indices_in_sync
-      title: "Automation: Keeping Indices in Sync"
-      level: 2
-      start_line: 1252
-      end_line: 1311
-      summary: null
-      token_est: 289
-      subsections:
-        - id: what_gets_automated
-          title: "What Gets Automated"
-          level: 3
-          start_line: 1257
-          end_line: 1268
-          summary: null
-          token_est: 89
-        - id: how_to_use
-          title: "How to Use"
-          level: 3
-          start_line: 1269
-          end_line: 1291
-          summary: null
-          token_est: 80
-        - id: setup
-          title: "Setup"
-          level: 3
-          start_line: 1292
-          end_line: 1306
-          summary: null
-          token_est: 60
-        - id: result
-          title: "Result"
-          level: 3
-          start_line: 1307
-          end_line: 1311
           summary: null
           token_est: 32
 ---

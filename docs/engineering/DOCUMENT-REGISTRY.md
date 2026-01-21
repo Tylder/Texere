@@ -22,7 +22,7 @@ grep "| SPEC.*active" below
 
 | ID                          | Type | Status | Stability    | Area          | Feature  | Summary                                                                                           |
 | --------------------------- | ---- | ------ | ------------ | ------------- | -------- | ------------------------------------------------------------------------------------------------- |
-| `SPEC-test-indexing-full`   | SPEC | draft  | experimental | testing       | indexing | Test specification for LLM-first section indexing                                                 |
+| `SPEC-test-indexing`        | SPEC | draft  | experimental | testing       | indexing | Test doc                                                                                          |
 | `META-documentation-system` | META | active | stable       | documentation | system   | 'Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META' |
 
 _Auto-generated: 2026-01-21_
