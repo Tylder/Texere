@@ -1,8 +1,81 @@
 # IDEATION-<feature>-experience
 
-**Status:** Draft
+```yaml
+---
+type: IDEATION-experience
+status: draft # draft, active, archived
+stability: experimental
+created: YYYY-MM-DD
+last_updated: YYYY-MM-DD
+next_review: YYYY-MM-DD
+area: search
+feature: pagination-system
+personas_count: 2
+journeys_count: 2
+related_ideation: [IDEATION-pagination-problems, IDEATION-pagination-unknowns]
+drives: [] # Will link to Requirements once created
+---
+```
 
-**Date Started:** YYYY-MM-DD
+## Document Relationships
+
+**Upstream (context):**
+
+- IDEATION-pagination-problems.md (problems this experience addresses)
+
+**Downstream (informs):**
+
+- Requirements (drives user-centric REQs)
+- INIT-<feature>.md
+
+**Siblings (other ideation docs):**
+
+- IDEATION-pagination-problems.md (what's wrong?)
+- IDEATION-pagination-unknowns.md (what's uncertain?)
+
+**Related:**
+
+- (None yet)
+
+---
+
+## TLDR
+
+**What:** Define how users and operators will interact with pagination
+
+**Why:** Ensure requirements are grounded in real usage patterns, not assumptions
+
+**How:** Create personas, map journeys, define invariants (always/never rules)
+
+**Status:** Draft (discovery in progress)
+
+**Critical journeys:** Browsing search results, navigating to specific page, handling errors
+
+---
+
+## Scope
+
+**Includes:**
+
+- Persona definitions (who uses this?)
+- Primary usage journeys (happy paths)
+- Experience invariants (always/never rules)
+- Failure and recovery expectations
+- Success signals (time, clarity, error visibility)
+
+**Excludes:**
+
+- Implementation details (API specifics, technical architecture)
+- Design choices (UI/UX mockups; belongs in Spec)
+- Problems being solved (belongs in Problems doc)
+- Open questions (belongs in Unknowns doc)
+
+**In separate docs:**
+
+- Problems being solved: IDEATION-pagination-problems.md
+- Questions needing research: IDEATION-pagination-unknowns.md
+- UI/UX specifications: SPEC-search-results-ui.md (future)
+- API requirements: REQ-pagination-system.md
 
 ---
 
@@ -10,54 +83,112 @@
 
 Brief description of who will use this and what we want their experience to be like.
 
-Example: "Define how data analysts and engineers will export data, focusing on clarity, progress
-visibility, and error handling."
+Example: "Define how data analysts and API consumers will browse large result sets. Focus on
+clarity, predictability, and efficiency."
 
 ---
 
-## Persona 1: <Name>
+## Persona 1: Alice (Data Analyst)
 
-**Role / Context:** Who is this person and why do they use the system?
+**Role / Context:**
 
-Example: "Alice is a data analyst. She runs regular reports and exports data for stakeholders. She
-values speed and clear feedback."
+Who is this person and why do they use the system?
 
-**Goals:** What does this persona want to achieve?
+Alice is a data analyst. She runs regular queries and exports data for stakeholders. She values
+speed and clear feedback. She's frustrated when the system is slow or silent.
 
-- Export datasets for reporting
-- Get results quickly
+**Goals:**
+
+What does this persona want to achieve?
+
+- Browse query results efficiently
+- Find specific results (jump to page 50 of 100)
+- Export data without timeout
 - Understand what's happening if something goes wrong
 
-**Pain Points:** What frustrates them today?
+**Pain Points:**
 
-- Exports timeout on large datasets
-- No visibility into progress
-- Generic error messages don't help debugging
+What frustrates them today?
+
+- Searches timeout on large datasets
+- No way to paginate results
+- Error messages don't explain what went wrong
+- System is slow and unpredictable
+
+**Needs:**
+
+What would make their experience better?
+
+- Fast pagination through results
+- Clear progress indication for long operations
+- Predictable performance
+- Helpful error messages
 
 ---
 
-## Primary Journey 1: <Happy Path>
+## Persona 2: Bob (API Consumer / Engineer)
+
+**Role / Context:**
+
+Bob integrates our API into his client application. He builds features that depend on predictable,
+consistent behavior. He's frustrated by inconsistencies and undocumented limitations.
+
+**Goals:**
+
+- Integrate search pagination into his app
+- Use same pagination pattern across all endpoints
+- Predict API response times
+- Handle errors gracefully
+
+**Pain Points:**
+
+- Each endpoint has different pagination behavior
+- Error messages are inconsistent
+- No documentation on limitations (max results, etc.)
+- Performance is unpredictable
+
+**Needs:**
+
+- Consistent pagination across all endpoints
+- Clear API contract (what to expect)
+- Predictable error codes and messages
+- Performance guarantees
+
+---
+
+## Primary Journey 1: Alice Browses Search Results
 
 Step-by-step workflow for the happy path (everything works).
 
 **Steps:**
 
-1. Alice navigates to the export dialog
-2. She selects data range (Q1 2025) and format (CSV)
-3. She clicks Export
-4. She sees progress: "Preparing data... (40%)"
-5. Within 30 seconds, she sees "Download" button
-6. She downloads the file and opens it in Excel
+1. Alice searches for "Q1 2025 transactions"
+2. System returns first 50 results in <2 seconds
+3. Alice sees: "Showing 1–50 of 5,000 results" + page numbers
+4. Alice clicks "Page 50" to jump to later results
+5. System returns page 50 (2401–2450) in <2 seconds
+6. Alice finds what she's looking for and exports
 
-**Success Signal:** Alice can export data and start analyzing in < 2 minutes.
+**Success Signals:**
+
+Alice can browse and find data without frustration in <5 minutes.
 
 ---
 
-## Primary Journey 2: <Alternate Happy Path>
+## Primary Journey 2: Bob Integrates Pagination into His Client
 
-[Repeat structure if a second journey is important]
+**Steps:**
 
-Example: "Bob (engineer) integrates exports via API and needs to poll for results."
+1. Bob reads API documentation for pagination
+2. Documentation shows: offset, limit parameters; example; error codes
+3. Bob writes client code: `GET /search?offset=0&limit=50`
+4. Client receives: results + metadata (total, offset, limit, has_next)
+5. Bob uses same pattern on /users endpoint
+6. Both work identically; Bob's code works everywhere
+
+**Success Signals:**
+
+Bob can implement pagination in <2 hours using consistent patterns.
 
 ---
 
@@ -65,9 +196,17 @@ Example: "Bob (engineer) integrates exports via API and needs to poll for result
 
 Rules that should **always** be true.
 
-- Users should always see progress (never a blank screen for >2 seconds)
-- Errors should always explain what went wrong (never generic 500 errors)
-- Users should always know if an export is running, queued, or complete
+- Users should always see progress/pagination info (never a blank screen for >2 seconds)
+- Error messages should always explain what went wrong (never generic "500 error")
+- Pagination limits should always be enforced consistently (same limits on all endpoints)
+- Response times should always be predictable (<2 seconds for typical page)
+
+**Never:**
+
+- Leave users wondering what's happening
+- Show generic errors
+- Change pagination behavior between endpoints
+- Take >10 seconds for any page
 
 ---
 
@@ -75,17 +214,44 @@ Rules that should **always** be true.
 
 What happens when things go wrong? How do users recover?
 
-### Scenario: Export Fails Midway
+### Scenario: Search Returns Too Many Results
 
-- User sees: "Export failed at 60%. Retry?" with error details
-- User can: Retry, cancel, download partial results, contact support
-- System records: Why it failed (memory, timeout, invalid data?)
+**Expected Behavior:**
 
-### Scenario: Network Drops
+- System returns first page (results 1–50)
+- Shows: "Showing 1–50 of 100,000 results"
+- User can navigate to specific page or adjust limit
 
-- User sees: "Connection lost. Your export is still running. Check back in 5 minutes."
-- User can: Close the tab and return later; status is preserved
-- System records: Export state so retry can resume
+**User Recovery:**
+
+- Narrow search (add more filters)
+- Navigate to later pages
+- Export in batches
+
+### Scenario: Request Timeout
+
+**Expected Behavior:**
+
+- System returns error: "Request timeout. Try narrowing your search."
+- User sees: Error message + retry button + help link
+
+**User Recovery:**
+
+- Retry with narrower search
+- Try later
+- Contact support with error code
+
+### Scenario: Invalid Pagination Parameter
+
+**Expected Behavior:**
+
+- System returns error: "Limit must be 1–100; you requested 500"
+- User sees: Clear message explaining what went wrong
+
+**User Recovery:**
+
+- Adjust limit to valid range
+- Retry
 
 ---
 
@@ -93,10 +259,13 @@ What happens when things go wrong? How do users recover?
 
 Concrete, measurable signs that the experience is good.
 
-- Alice exports data and starts analysis in < 2 minutes
-- Bob polls the API and receives results within 30 seconds for typical datasets
-- Both see clear error messages when something goes wrong (not generic 500s)
-- No export is lost due to page refresh or network hiccup
+| Signal           | Alice                                  | Bob                           |
+| ---------------- | -------------------------------------- | ----------------------------- |
+| Browse time      | <5 min to find data                    | —                             |
+| Integration time | —                                      | <2 hours to add pagination    |
+| Error clarity    | Understands error immediately          | Understands error code + docs |
+| Consistency      | Pagination works same on all endpoints | Same code works everywhere    |
+| Performance      | Pages load <2 seconds                  | API response <100ms           |
 
 ---
 
@@ -104,9 +273,12 @@ Concrete, measurable signs that the experience is good.
 
 Beliefs about what will make users happy (to validate later).
 
-- Users prefer async exports with email/download link over waiting on a page
-- Users tolerate a slight delay if they see progress
-- Users will retry exports if the error is clear
+| Assumption                                               | How to Validate            | Confidence |
+| -------------------------------------------------------- | -------------------------- | ---------- |
+| Users prefer fast pagination to waiting for full results | User testing with mock UI  | High       |
+| Consistent pagination across endpoints matters           | Survey API users           | Medium     |
+| 50 results per page is a good default                    | Analytics on result clicks | Medium     |
+| Error clarity reduces support tickets                    | Track support tickets      | High       |
 
 ---
 
@@ -114,6 +286,29 @@ Beliefs about what will make users happy (to validate later).
 
 Things to clarify with users / stakeholders.
 
-- Should we support export scheduling (e.g., "export every Monday")?
-- Do users need export history / audit trail?
-- What's an acceptable wait time before showing progress?
+| Question                                            | Impact              | Resolution Method        |
+| --------------------------------------------------- | ------------------- | ------------------------ |
+| Should pagination be configurable (per-user limit)? | Scope, complexity   | User survey              |
+| Do users need cursor-based pagination?              | Architecture choice | Monitor feature requests |
+| What's an acceptable max result set?                | Design choice       | Stakeholder decision     |
+
+---
+
+## Document Metadata
+
+```yaml
+id: IDEATION-pagination-experience
+type: IDEATION-experience
+status: draft
+stability: experimental
+created: 2025-01-21
+last_updated: 2025-01-21
+next_review: 2025-02-01
+area: search
+feature: pagination-system
+personas_count: 2
+journeys_count: 2
+related_ideation: [IDEATION-pagination-problems, IDEATION-pagination-unknowns]
+drives_to: REQ-pagination-system
+keywords: [experience, persona, journey, ux, user, api-consumer, pagination, browsing]
+```

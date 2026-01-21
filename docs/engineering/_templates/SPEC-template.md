@@ -1,94 +1,146 @@
 # SPEC-<area>-<topic>
 
-**Status:** Draft | Active | Revised
+```yaml
+---
+type: SPEC
+status: draft # draft, active, deprecated
+stability: experimental # experimental, beta, stable
+created: YYYY-MM-DD
+last_updated: YYYY-MM-DD
+next_review: YYYY-MM-DD
+area: api
+feature: pagination-system
+implements:
+  [REQ-pagination-system#REQ-001, REQ-pagination-system#REQ-002, REQ-pagination-system#REQ-003]
+depends_on: [SPEC-shared-pagination-lib]
+blocks: [IMPL-PLAN-pagination-system]
+---
+```
+
+## Document Relationships
+
+**Upstream (depends on):**
+
+- REQ-pagination-system.md (Requirements this implements)
+- SPEC-shared-pagination-lib.md (shared code dependency)
+- IDEATION-pagination-experience.md (user context)
+
+**Downstream (depends on this):**
+
+- IMPL-PLAN-pagination-system.md (implements this Spec)
+
+**Siblings (related Specs at same level):**
+
+- SPEC-user-list-pagination.md (same Requirement, different domain)
+- SPEC-timeline-pagination.md (same Requirement, different domain)
+
+**Related (cross-cutting):**
+
+- INIT-pagination.md
 
 ---
 
-## Overview
+## TLDR
 
-Brief description of what this spec defines and why.
+**What:** Pagination API for search results via offset/limit with metadata
 
-Example: "The export service API contract: endpoints, request/response schemas, error handling, and
-rate limits for exporting data in various formats."
+**Why:** Implement REQ-pagination-system for search endpoint; serve as reference pattern for other
+endpoints
+
+**How:**
+
+- Use shared pagination library (from SPEC-shared-pagination-lib)
+- Add offset/limit parameters to search endpoint
+- Return metadata in response (total, offset, limit)
+- Handle edge cases (negative offset, limit >100, etc.)
+
+**Status:** Draft (design in progress)
+
+**Critical path:** Shared lib → this Spec → implementation → IMPL-PLAN starts
+
+**Risk:** Performance doesn't meet <100ms target; database indexes may not be ready
 
 ---
 
 ## Scope
 
-What is included in this spec?
+**Includes:**
 
-- Export API endpoints (GET, POST)
-- Request/response schemas
-- Error codes and handling
-- Rate limiting and quotas
-- CSV format specification
+- GET /search API endpoint contract
+- Request parameters (query, offset, limit, filters)
+- Response schema with pagination metadata
+- Error codes for invalid parameters
+- Edge case handling (empty results, offset beyond data, invalid types)
+- Performance targets (<100ms typical query)
 
-**Non-Scope:**
+**Excludes:**
 
-What is explicitly NOT included?
+- Cursor-based pagination (see DECISION-001)
+- Frontend UI/UX for pagination controls (see SPEC-search-results-ui.md)
+- Export pagination (separate feature)
+- Query result ranking (see other Specs)
 
-- Frontend UI/UX (covered in separate spec)
-- Job queue implementation (internal detail)
-- Long-term storage/archival
-- Export scheduling
+**In separate docs:**
+
+- Requirements: REQ-pagination-system.md
+- Shared library: SPEC-shared-pagination-lib.md
+- User experience: IDEATION-pagination-experience.md
+- Execution plan: IMPL-PLAN-pagination-system.md
 
 ---
 
 ## Implements
 
-Which Requirements does this Specification implement?
-
 Note: One Spec can implement multiple Requirements. One Requirement can be implemented by multiple
 Specs.
 
-- REQ-<feature>.md#REQ-001
-- REQ-<feature>.md#REQ-002
-- REQ-<feature>.md#REQ-003
-
-Example (pagination in search results):
-
-- REQ-pagination-system.md#REQ-001 (offset/limit support)
-- REQ-pagination-system.md#REQ-002 (metadata in response)
-- REQ-pagination-system.md#REQ-003 (error handling)
+- REQ-pagination-system.md#REQ-001 (Pagination via offset/limit)
+- REQ-pagination-system.md#REQ-002 (Metadata in response)
+- REQ-pagination-system.md#REQ-003 (Error handling for invalid parameters)
 
 ---
 
 ## Interfaces & Observable Behavior
 
-Exact APIs, state changes, or interactions.
-
-### API Endpoint: POST /api/exports
+### API Endpoint: GET /search
 
 **Request:**
 
 ```json
 {
-  "data_source": "string (required)",
-  "format": "csv | json | parquet (required)",
-  "filters": { "date_range": "...", ... },
-  "timeout_seconds": 30
+  "query": "string (required)",
+  "offset": "integer (optional, default 0, min 0)",
+  "limit": "integer (optional, default 20, min 1, max 100)",
+  "filters": { "date_range": "...", "author": "..." }
 }
 ```
 
-**Response (Success):**
+**Response (Success, 200):**
 
 ```json
 {
-  "export_id": "uuid",
-  "status": "completed | queued | in_progress",
-  "download_url": "string or null",
-  "progress_percent": 0-100,
-  "estimated_seconds_remaining": 15
+  "results": [
+    { "id": "...", "title": "...", "snippet": "..." },
+    ...
+  ],
+  "pagination": {
+    "offset": 0,
+    "limit": 20,
+    "total": 1500,
+    "remaining": 1480,
+    "has_next": true,
+    "has_prev": false
+  }
 }
 ```
 
-**Response (Error):**
+**Response (Error, 400):**
 
 ```json
 {
-  "error_code": "TIMEOUT | INVALID_FORMAT | TOO_LARGE",
-  "message": "Human-readable explanation",
-  "retry_after_seconds": 30
+  "error_code": "INVALID_LIMIT",
+  "message": "Limit must be between 1 and 100",
+  "received": 150
 }
 ```
 
@@ -96,43 +148,42 @@ Exact APIs, state changes, or interactions.
 
 ## Data Models
 
-Schemas for persistent or significant transient data.
-
-### Export Record
+### SearchResult
 
 ```
 {
-  export_id: UUID (immutable)
-  user_id: UUID
-  data_source: string
-  format: enum (CSV, JSON, Parquet)
-  filters: JSON object
-  status: enum (PENDING, RUNNING, COMPLETED, FAILED)
-  created_at: timestamp
-  completed_at: timestamp or null
-  file_size_bytes: integer or null
-  error_code: string or null
-  error_message: string or null
+  id: UUID
+  title: string
+  snippet: string (first 200 chars of result)
+  url: string
+  relevance_score: float (0-1)
 }
 ```
 
-### State Transitions
+### PaginationMetadata
 
 ```
-PENDING → RUNNING → COMPLETED (or FAILED)
-PENDING → RUNNING → FAILED (with error details)
+{
+  offset: integer (current page start position)
+  limit: integer (results per page)
+  total: integer (total results matching query)
+  remaining: integer (total - offset - limit)
+  has_next: boolean (remaining > 0)
+  has_prev: boolean (offset > 0)
+}
 ```
 
 ---
 
 ## Invariants
 
-Rules that must always be true.
+Rules that must always be true:
 
-- Export status is immutable once COMPLETED or FAILED (no retries on the same record; user creates
-  new export)
-- File size is recorded only for COMPLETED exports
-- Error message is recorded only for FAILED exports
+- Response length <= limit (never return more results than requested)
+- offset is never negative (validated in request handling)
+- total is immutable for a given query during pagination
+- If offset >= total, return empty results (not error)
+- Pagination metadata is always present
 
 ---
 
@@ -140,73 +191,124 @@ Rules that must always be true.
 
 Explicit error handling and failure modes.
 
-| Error Code     | HTTP Status | Meaning                        | User Action                    |
-| -------------- | ----------- | ------------------------------ | ------------------------------ |
-| INVALID_FORMAT | 400         | Format not supported           | Choose different format        |
-| TOO_LARGE      | 413         | Dataset exceeds limits         | Filter data or contact support |
-| TIMEOUT        | 504         | Export didn't complete in time | Retry or use async option      |
-| RATE_LIMIT     | 429         | Too many exports               | Wait and retry                 |
-| INTERNAL_ERROR | 500         | Unexpected failure             | Contact support with export_id |
+| Error Code     | HTTP Status | Meaning                            | User Action                    | Retryable |
+| -------------- | ----------- | ---------------------------------- | ------------------------------ | --------- |
+| INVALID_LIMIT  | 400         | Limit outside valid range (1-100)  | Adjust limit parameter         | No        |
+| INVALID_OFFSET | 400         | Offset is negative                 | Use offset >= 0                | No        |
+| INVALID_QUERY  | 400         | Query string is empty or malformed | Fix query syntax               | No        |
+| RATE_LIMIT     | 429         | Too many requests                  | Wait and retry                 | Yes       |
+| INTERNAL_ERROR | 500         | Server error during query          | Retry with exponential backoff | Yes       |
 
 ---
 
-## Validation Approach
+## Design Decisions
+
+| Field                  | Decision 001                                                      | Decision 002                                                        |
+| ---------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Title**              | Pagination Approach                                               | Response Format for Metadata                                        |
+| **Options Considered** | A) Offset/limit (chosen) B) Cursor-based C) Both                  | A) Flat metadata (chosen) B) Nested object C) Headers only          |
+| **Chosen**             | Option A: Offset/limit                                            | Option A: Nested object in response                                 |
+| **Rationale**          | Familiar pattern; works for search results; simplest to implement | Keeps response structured; metadata grouped together; easy to parse |
+| **Tradeoffs**          | Can't handle real-time data well; offset drifts with insertions   | Slightly larger response payload but clearer contract               |
+| **Blocked**            | None                                                              | None                                                                |
+| **Expires**            | When result sets >10M rows OR real-time requirements              | If API consumers prefer headers (feedback loop)                     |
+| **Decision Date**      | 2025-01-21                                                        | 2025-01-21                                                          |
+
+---
+
+## Verification Approach
 
 How conformance is verified (testing strategy).
 
 **Unit Tests:**
 
-- CSV formatter produces valid output
-- Schema validation rejects invalid requests
-- State machine enforces correct transitions
+- Pagination math: offset/limit calculations correct
+- Parameter validation: rejects invalid offset/limit
+- Metadata generation: total/remaining/has_next calculated correctly
 
 **Integration Tests:**
 
-- Export completes within timeout for 1M rows
-- Error handling returns correct error codes
-- Concurrent exports don't interfere
+- Full query pipeline with pagination
+- Edge cases: empty results, offset beyond end, boundary values
+- Concurrent requests don't interfere
+
+**Performance Tests:**
+
+- Typical query (1000 results, offset=0, limit=20): <50ms
+- Large offset (10k results, offset=5000): <100ms
+- Slow query without pagination baseline: no degradation
 
 **E2E Tests:**
 
-- User can export, download, and open file
-- Error scenarios show appropriate messages
+- User can page through results using offset/limit
+- Metadata guides client to next/prev pages correctly
 
 ---
 
 ## Performance Constraints
 
-If applicable, explicit performance requirements.
-
-- Export must complete within 30 seconds for datasets up to 1M rows
-- API response time < 100ms (excluding export processing)
-- Support 10 concurrent exports without queueing
+- Response time < 100ms for typical queries (1000 results)
+- Response time < 200ms for large result sets (100k+ results)
+- Pagination metadata generation < 5% of total query time
+- No additional database queries per page (pagination done in query layer)
 
 ---
 
-## Q&A
+## Blockers
 
-**Q: Should streaming exports be supported to reduce memory use?**
+| Blocker                                                | Status                      | Unblocks When                       | Impact                                             |
+| ------------------------------------------------------ | --------------------------- | ----------------------------------- | -------------------------------------------------- |
+| Database indexing on search tables                     | In progress, ETA 2025-02-01 | Indexes deployed + perf validated   | Blocks this Spec; blocks IMPL-PLAN; blocks testing |
+| Shared pagination library (SPEC-shared-pagination-lib) | Draft                       | Library approved and code available | Blocks implementation                              |
+| API documentation templates                            | Not started                 | Design review 2025-01-24            | Blocks final approval                              |
 
-- Streaming response (server sends rows as processed): lower memory, but complex
-- Buffering (fetch all, then respond): simpler, higher memory
-- Hybrid (buffer up to 100MB, then stream): balanced
+**Blocked By:**
 
-A: Buffering for now. Implement lazy-loading for the frontend instead. Revisit if we see memory
-pressure on large datasets.
+- REQ-pagination-system.md (waiting for approved REQ) → **Resolved 2025-01-21**
 
-**Q: How do we handle very large datasets (100M+ rows)?**
+**Blocks:**
 
-- Option A: Reject with INVALID_FORMAT or TOO_LARGE error
-- Option B: Recommend user to contact support for data pipeline
-- Option C: Async export with background job
+- IMPL-PLAN-pagination-system.md (can't start implementation until Spec approved)
 
-A: Reject with TOO_LARGE. Document in help. Async exports (Option C) are a future REQ if demand
-justifies.
+---
 
-**Q: What if export is requested while one is already running?**
+## Assumptions
 
-- Queue the request (FIFO)
-- Reject with "already running" error
-- Allow multiple concurrent exports
+| Assumption                                           | Validation Method               | Confidence | Impact if Wrong                                          |
+| ---------------------------------------------------- | ------------------------------- | ---------- | -------------------------------------------------------- |
+| Database queries are fast enough without new indexes | Perf testing on staging         | Medium     | May need indexes; delays timeline 1 week                 |
+| Most searches return <10k results                    | Production query analysis       | High       | Offset pagination becomes problematic; need cursor-based |
+| Clients can handle pagination metadata in response   | User survey/compatibility check | Medium     | May need headers-only fallback                           |
 
-A: Allow multiple concurrent exports. Implement rate limiting (max 10 per user) to prevent abuse.
+---
+
+## Unknowns
+
+| Question                                                           | Impact                        | Resolution Criteria                                           | Owner        | ETA        |
+| ------------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------- | ------------ | ---------- |
+| Should we support `sort_by` parameter with pagination?             | Scope, complexity             | Product decision on sort feature priority                     | Product      | 2025-02-01 |
+| What happens if search results change between pagination requests? | Correctness, user expectation | Decide on "best effort" vs. "snapshot" semantics              | Product Lead | 2025-01-24 |
+| Do we need cursor-based pagination for this endpoint?              | Architecture, performance     | Monitor production usage; decide if offset limitation appears | Product      | 2025-06-01 |
+
+---
+
+## Document Metadata
+
+```yaml
+id: SPEC-search-results-pagination
+type: SPEC
+status: draft
+stability: experimental
+created: 2025-01-21
+last_updated: 2025-01-21
+next_review: 2025-02-21
+area: search
+feature: pagination-system
+implements:
+  [REQ-pagination-system#REQ-001, REQ-pagination-system#REQ-002, REQ-pagination-system#REQ-003]
+implemented_by: [IMPL-PLAN-pagination-system]
+depends_on: [SPEC-shared-pagination-lib, REQ-pagination-system]
+blocks: [IMPL-PLAN-pagination-system]
+related: [SPEC-user-list-pagination, SPEC-timeline-pagination, INIT-pagination]
+keywords: [pagination, search, api, offset, limit, performance]
+```
