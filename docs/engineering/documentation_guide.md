@@ -29,76 +29,37 @@ execution.
 - You are brainstorming options, unknowns, and tradeoffs
 - Your understanding is shifting day-to-day
 
-**What belongs here:**
+**Ideation consists of three document types, each with its own template:**
 
-**1. Problems & Discovery**
+1. **IDEATION-<feature>-problems.md**
+   - Problems and failure modes (what's broken or insufficient)
+   - Raw ideas and alternative framings
+   - Scenarios and examples
+   - Success signals (what does "better" look like?)
+   - Non-goals (what is explicitly not being solved)
+   - See template: `_templates/IDEATION-template-problems.md`
 
-- Raw ideas and alternative framings
-- Half-formed workflows and scenarios
-- Unresolved contradictions
-- Problems and failure modes (what's broken or insufficient)
-- Unknowns and assumptions
-- Success signals (what does "better" look like?)
+2. **IDEATION-<feature>-experience.md**
+   - Personas (who will use this?)
+   - Primary journeys (1–3 happy-path workflows per persona)
+   - Experience invariants (always / never statements)
+   - Failure & recovery (what happens when things go wrong?)
+   - Success signals (time, clarity, error visibility)
+   - See template: `_templates/IDEATION-template-experience.md`
 
-**2. Experience & Usage** (required section)
+3. **IDEATION-<feature>-unknowns.md**
+   - Open questions and uncertainties
+   - Assumptions that need validation
+   - Constraints or dependencies not yet resolved
+   - Closure criteria (what answers these questions?)
+   - See template: `_templates/IDEATION-template-unknowns.md`
 
-- **Personas:** who will use this? (operators, users, system actors)
-- **Primary journeys:** 1–3 happy-path workflows per persona
-  - Example: "Alice (data analyst) wants to export results in CSV format in under 10 seconds"
-- **Experience invariants:** always / never statements
-  - Example: "Users should always see progress; never show a blank screen for >2 seconds"
-- **Failure & recovery:** what happens when things go wrong?
-  - Example: "Export fails midway → show error + option to retry or download partial results"
-- **Success signals:** time, clarity, error visibility
-  - Example: "Export completes in <5 seconds; user sees confirmation with download link"
-
-**What does NOT belong here:**
+**What does NOT belong in Ideation:**
 
 - Finalized obligations using MUST/SHOULD/MAY (those go in Requirements)
 - Implementation details that will become commitments
 - Binding decisions (those go in Specification)
 - Architecture or technology choices
-
-**How to write the Experience section:**
-
-1. Start with **one persona** (e.g., "backend developer integrating our API")
-2. Describe **one primary journey** (the happy path) in 2–4 sentences
-3. Add **one invariant** (something that should always be true)
-4. Add **one failure case** (what do we do if this breaks?)
-5. Add **one success signal** (how do we know it worked?)
-
-Keep it conversational, not formal. The goal is clarity on usage intent, not obligation statements.
-
-**Example:**
-
-```markdown
-## Experience
-
-### Persona: Alice (backend engineer)
-
-Alice integrates third-party APIs into our system. She needs quick feedback and clear error messages
-when integration fails.
-
-### Primary Journey
-
-1. Alice writes a simple connector in our config format
-2. She runs a test command that validates the connector
-3. Within 5 seconds, she sees either "✓ Valid" or specific error details
-4. If valid, she deploys and monitors initial sync
-
-### Invariant
-
-Alice should never see a generic error. Errors must tell her exactly what went wrong.
-
-### Failure Case
-
-If the connector config is malformed, show "Config error at line 12: missing 'auth_type' field" not
-"Invalid config."
-
-### Success Signal
-
-Alice completes a new connector integration in under 30 minutes (including testing).
-```
 
 **Output:** Converges into Requirements and Specification
 
@@ -251,11 +212,21 @@ only if audit trail becomes a hard requirement.
 ```
 /docs
   /engineering
-    README.md                       # entrypoint
-    documentation_guide.md          # this file
+    README.md                                    # entrypoint
+    documentation_guide.md                       # this file
+    /_templates
+      IDEATION-template-problems.md
+      IDEATION-template-experience.md
+      IDEATION-template-unknowns.md
+      REQ-template.md
+      SPEC-template.md
+      IMPL-PLAN-template.md
+      INIT-template.md
     /00-ideation
       README.md
-      IDEATION-<area>-<topic>.md
+      IDEATION-<feature>-problems.md
+      IDEATION-<feature>-experience.md
+      IDEATION-<feature>-unknowns.md
     /01-requirements
       README.md
       REQ-<domain>-<id>.md
@@ -276,12 +247,17 @@ only if audit trail becomes a hard requirement.
 
 ### Ideation
 
+Ideation documents are named by type:
+
 ```
-IDEATION-<area>-<topic>.md
+IDEATION-<feature>-problems.md
+IDEATION-<feature>-experience.md
+IDEATION-<feature>-unknowns.md
 
 Examples:
-  IDEATION-auth-session-strategy.md
-  IDEATION-cache-invalidation.md
+  IDEATION-auth-session-problems.md
+  IDEATION-auth-session-experience.md
+  IDEATION-auth-session-unknowns.md
 ```
 
 ### Requirements
@@ -394,9 +370,9 @@ Covers Requirements:
 4. **Implementation Plan focuses on sequencing.** It does not introduce new decisions; it orders
    work and verifies completion.
 
-5. **One doc per type per feature.** For most features, one Ideation + one Requirements + one
-   Specification + one Implementation Plan.
-   - If a feature is small, skip Ideation.
+5. **One doc per type per feature.** For most features, one Ideation doc per sub-type (Problems,
+   Experience, Unknowns) + one Requirements + one Specification + one Implementation Plan.
+   - If a feature is small, you might skip Problems or Unknowns (but Experience is usually useful).
    - If requirements are obvious, keep them lightweight.
    - Specs and Plans are always needed before building.
 
@@ -440,14 +416,16 @@ ready for implementation and testing.
 
 **Day 1: Ideation**
 
-- Write `IDEATION-user-export-feature.md`
-- Capture: why users need exports, what formats, data scope, open questions
-- Q&A: "Should we support async export?" → discussed and captured
+- Write `IDEATION-export-problems.md`: why users need exports, what's broken, success signals
+- Write `IDEATION-export-experience.md`: personas (data analysts, engineers), their workflows, pain
+  points
+- Write `IDEATION-export-unknowns.md`: async vs sync, format priorities, storage constraints
+- Q&A: "Should we support async export?" → captured in unknowns
 
 **Day 2: Requirements**
 
 - Write `REQ-EXPORT-001.md`, `REQ-EXPORT-002.md`, etc.
-- Link back to Ideation for traceability
+- Link back to Ideation docs for traceability (which problems/experience drove this?)
 - Define: export formats supported, performance limits, error handling
 - Q&A: "Which formats take priority?" → captured with decision
 
@@ -457,7 +435,7 @@ ready for implementation and testing.
 - Implement the Requirements
 - Define: API endpoints, response schemas, rate limits, error codes
 - Include: Q&A about tradeoffs made
-- Link to Requirements and any architectural decisions
+- Link to Requirements
 
 **Day 4: Implementation Plan**
 
@@ -467,7 +445,7 @@ ready for implementation and testing.
 
 **Ongoing:**
 
-- Update `INIT-export-feature.md` to link all four documents
+- Update `INIT-export-feature.md` to link all ideation docs, requirements, spec, and plan
 - Use as a single entry point for understanding the feature
 
 ---
