@@ -28,4 +28,4 @@ See `../_templates/IDEATION-template-*.md` for templates.
 After creating a document:
 
 - [ ] Update this README (add to Active section)
-- [ ] Update the corresponding `INIT-<feature>.md` file in `/04-initiatives`
+- [ ] Update `../DOCUMENT-REGISTRY.md` (add entry)

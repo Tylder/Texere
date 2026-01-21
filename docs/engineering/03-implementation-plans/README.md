@@ -28,7 +28,7 @@ See `../_templates/IMPL-PLAN-template.md` for template.
 After creating a document:
 
 - [ ] Update this README (add to Active section)
-- [ ] Update the corresponding `INIT-<feature>.md` file in `/04-initiatives`
+- [ ] Update `../DOCUMENT-REGISTRY.md` (add entry)
 - [ ] Link to all Specs and Requirements this plan covers
 
 ---

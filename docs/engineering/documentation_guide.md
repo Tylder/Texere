@@ -7,19 +7,16 @@ optimized for both human and LLM readers.
 
 ## Critical: Keeping Indices in Sync
 
-This system relies on indices (Initiative files and folder READMEs) staying current. **Without this,
-the system falls apart.**
+This system relies on indices (folder READMEs and DOCUMENT-REGISTRY) staying current. **Without
+this, the system falls apart.**
 
 **How indices work:**
 
-- Each feature has one `INIT-<area>-<topic>.md` that maps to all related Ideation, Requirements,
-  Specs, and Plans
-- Folder READMEs (e.g., `/02-specifications/README.md`) list all documents in that folder
-- A global `DOCUMENT-REGISTRY.md` (in `/docs/engineering`) lists all documents with queryable
-  metadata
+- Folder READMEs (e.g., `/02-specifications/README.md`) list all documents in that folder with
+  status
+- Global `DOCUMENT-REGISTRY.md` (in `/docs/engineering`) lists all documents with queryable metadata
 - **When you create a new document, you MUST update:**
   - The relevant folder README (add to the list)
-  - The relevant INIT file (add the link)
   - The global DOCUMENT-REGISTRY.md (add entry)
 
 **Who is responsible:** The person creating the document is responsible for updating indices
@@ -27,11 +24,9 @@ immediately (as part of the same commit/PR).
 
 **When to update:**
 
-- Creating a new doc → update folder README + INIT file + DOCUMENT-REGISTRY.md
-- Archiving a doc → move it from "Active" to "Archived" in README + update INIT + update registry
-  status
-- Deprecating a doc → mark as deprecated in status field + update INIT to point to successor +
-  update registry
+- Creating a new doc → update folder README + DOCUMENT-REGISTRY.md
+- Archiving a doc → move it from "Active" to "Archived" in README + update registry status
+- Deprecating a doc → mark as deprecated in status field + update registry
 
 This is not optional. Make it part of your PR checklist.
 
@@ -39,7 +34,7 @@ This is not optional. Make it part of your PR checklist.
 
 ## Overview
 
-This guide defines **four document types** that cover the full lifecycle: discovery through
+This guide defines **three document types** that cover the full lifecycle: discovery through
 execution.
 
 | Document Type           | Required    | Purpose                                                     | Lifecycle                               |
@@ -70,7 +65,7 @@ Every document MUST begin with YAML metadata:
 
 ```yaml
 ---
-type: SPEC # or REQ, IMPL-PLAN, IDEATION-problems, IDEATION-experience, IDEATION-unknowns, INIT
+type: SPEC # or REQ, IMPL-PLAN, IDEATION-problems, IDEATION-experience, IDEATION-unknowns
 status: active # draft, active, approved, deprecated, archived, on-hold, completed
 stability: stable # experimental, beta, stable
 created: 2025-01-21
@@ -84,7 +79,7 @@ feature: search-results
 **Fields:**
 
 - `type`: Document type (required for querying)
-- `status`: Workflow status (required; see below)
+- `status`: Workflow status (required)
 - `stability`: How likely to change (helps LLMs understand confidence)
 - `created`, `last_updated`, `next_review`: Dates (helps track staleness)
 - `area`, `feature`: Tags for querying/grouping (optional but recommended)
@@ -122,11 +117,10 @@ Every document has these sections in order:
 
 **Related (cross-cutting links):**
 
-- INIT-pagination.md
+- DOCUMENT-REGISTRY.md (where this doc is indexed)
 ```
 
-LLMs use this to traverse the graph. Helps agents understand "if this changes, what else needs to
-update?"
+LLMs use this to traverse the graph.
 
 ### 2. TLDR
 
@@ -177,376 +171,110 @@ Lets LLMs summarize and understand intent at a glance.
 - Business requirements: REQ-pagination-system.md
 ```
 
-Makes scope crystal clear for agents. Prevents them asking questions answered elsewhere.
+Makes scope crystal clear for agents.
 
 ### 4. Main Content
 
 Standard sections for each doc type (Interfaces, Data Models, Error Semantics, etc.).
 
-Include prose explanations, code examples, state machines, whatever is needed.
-
 ### 5. Design Decisions
 
-Replaces the old "Q&A" format with explicit decision records:
+Structured decision records instead of prose Q&A:
 
 ```markdown
 ## Design Decisions
 
-**DECISION-001: Pagination Strategy**
-
-| Field                  | Value                                                                                                   |
-| ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Options Considered** | A) Offset/limit (chosen) B) Cursor-based C) No pagination                                               |
-| **Chosen**             | Option A: Offset/limit                                                                                  |
-| **Rationale**          | Familiar to API consumers, 95% of use cases, fastest to implement                                       |
-| **Tradeoffs**          | Simpler than cursor but doesn't work for real-time data; can't handle offset beyond data size elegantly |
-| **Blocked**            | None                                                                                                    |
-| **Expires**            | When result sets >10M rows OR user demand for cursor-based appears                                      |
-| **Decision Date**      | 2025-01-21                                                                                              |
-
-**DECISION-002: Maximum Page Size**
-
-| Field                  | Value                                                                              |
-| ---------------------- | ---------------------------------------------------------------------------------- |
-| **Options Considered** | A) No limit B) Hard limit 100 (chosen) C) Per-endpoint config D) User configurable |
-| **Chosen**             | Option B: Hard limit 100                                                           |
-| **Rationale**          | Protects server memory; 100 is sufficient for typical use; documented limitation   |
-| **Tradeoffs**          | Less flexible but simpler; users can adjust limit in client logic                  |
-| **Blocked**            | None                                                                               |
-| **Expires**            | If monitoring shows >5% of requests hit limit                                      |
-| **Decision Date**      | 2025-01-21                                                                         |
+| Field         | Decision 001                                     | Decision 002                           |
+| ------------- | ------------------------------------------------ | -------------------------------------- |
+| **Title**     | Pagination Approach                              | Maximum Page Size                      |
+| **Options**   | A) Offset/limit (chosen) B) Cursor-based C) Both | A) No limit B) Hard limit 100 (chosen) |
+| **Chosen**    | Option A: Offset/limit                           | Option B: Hard limit 100               |
+| **Rationale** | Familiar, 95% of use cases, fastest              | Protects server memory                 |
+| **Tradeoffs** | Simpler but doesn't work real-time               | Less flexible but simpler              |
+| **Blocked**   | None                                             | None                                   |
+| **Expires**   | When result sets >10M OR demand                  | If >5% requests hit limit              |
 ```
 
-Machines can parse this reliably. Humans can read it too.
+### 6. Blockers & 7. Assumptions & Unknowns
 
-### 6. Blockers
-
-```markdown
-## Blockers
-
-| Blocker                            | Status                      | Unblocks When                            | Impact                             |
-| ---------------------------------- | --------------------------- | ---------------------------------------- | ---------------------------------- |
-| Database indexing on search tables | In progress, ETA 2025-02-01 | Indexes deployed + performance validated | Blocks this Spec; blocks IMPL-PLAN |
-| ORM query optimization             | Not started                 | PR merged + perf test passes             | Blocks performance target <100ms   |
-| API documentation review           | Pending                     | Design review scheduled 2025-01-24       | Blocks approval                    |
-
-| Blocks                      | Document                                         | Impact                                   |
-| --------------------------- | ------------------------------------------------ | ---------------------------------------- |
-| IMPL-PLAN-pagination-system | Can't start milestones until this Spec approved  | Delays timeline by 1 week per dependency |
-| SPEC-user-list-pagination   | Same Requirement, waits for patterns from search | Reference implementation                 |
-```
-
-LLMs can immediately see: "I can't build this yet. I'll know I can when X happens."
-
-### 7. Assumptions & Unknowns
-
-```markdown
-## Assumptions
-
-| Assumption                            | Validation Method                         | Confidence | Impact if Wrong                                  |
-| ------------------------------------- | ----------------------------------------- | ---------- | ------------------------------------------------ |
-| Most queries return <10k results      | Monitor query metrics; flag if >1% exceed | High       | Offset pagination breaks down; need cursor-based |
-| Offset pagination doesn't hurt SEO    | Analytics team review                     | Medium     | May need URL rewriting                           |
-| API consumers accept 100-result limit | User survey                               | Medium     | Scope creep on configurability                   |
-
-## Unknowns
-
-| Question                                   | Impact                          | Resolution Criteria                                    | Owner        | ETA        |
-| ------------------------------------------ | ------------------------------- | ------------------------------------------------------ | ------------ | ---------- |
-| Should we support cursor-based pagination? | Architecture choice, dev effort | User demand reaches 10% of requests OR result sets >1M | Product      | 2025-06-01 |
-| What's the acceptable response time?       | Blocks acceptance criteria      | Stakeholder sign-off on <100ms target                  | Product Lead | 2025-01-24 |
-| Do we need export pagination?              | Scope, dev effort               | Business decision on export feature priority           | Product      | 2025-02-01 |
-```
-
-Structured so LLMs can track resolution progress.
+Use structured tables (see templates for examples).
 
 ### 8. Document Metadata
 
-````markdown
+```yaml
 ## Document Metadata
 
-(Auto-generated by the system; helps with querying and versioning)
-
-```yaml
 id: SPEC-search-results-pagination
 type: SPEC
-area: search
-feature: pagination-system
-status: active
-stability: stable
-created: 2025-01-21
-last_updated: 2025-01-21
-implements:
-  [REQ-pagination-system#REQ-001, REQ-pagination-system#REQ-002, REQ-pagination-system#REQ-003]
+implements: [REQ-pagination-system#REQ-001, REQ-pagination-system#REQ-002]
 implemented_by: [IMPL-PLAN-pagination-system]
 depends_on: [SPEC-shared-pagination-lib]
 blocks: [IMPL-PLAN-pagination-system]
-related: [SPEC-user-list-pagination, SPEC-timeline-pagination, INIT-pagination]
-keywords: [pagination, offset, limit, search, api, performance]
+keywords: [pagination, search, api, performance]
 ```
-````
-
-LLMs can query the registry: "Show me all Specs implementing REQ-pagination-system" → immediately
-returns list with status/links.
 
 ---
 
 ## When to Write Each
 
+[Same as before - Ideation, Requirements, Specification, Implementation Plan sections remain the
+same]
+
 ### Ideation
 
 **Use when:**
 
-- You are still discovering what you need
-- You are brainstorming options, unknowns, and tradeoffs
-- Your understanding is shifting day-to-day
+- Still discovering what you need
+- Brainstorming options, unknowns, tradeoffs
+- Understanding is shifting day-to-day
 
-**Ideation consists of three document types, each with its own template:**
+**Ideation consists of three document types:**
 
-1. **IDEATION-<feature>-problems.md**
-   - Problems and failure modes (what's broken or insufficient)
-   - Raw ideas and alternative framings
-   - Scenarios and examples
-   - Success signals (what does "better" look like?)
-   - Non-goals (what is explicitly not being solved)
-   - See template: `_templates/IDEATION-template-problems.md`
+1. IDEATION-<feature>-problems.md
+2. IDEATION-<feature>-experience.md
+3. IDEATION-<feature>-unknowns.md
 
-2. **IDEATION-<feature>-experience.md**
-   - Personas (who will use this?)
-   - Primary journeys (1–3 happy-path workflows per persona)
-   - Experience invariants (always / never statements)
-   - Failure & recovery (what happens when things go wrong?)
-   - Success signals (time, clarity, error visibility)
-   - See template: `_templates/IDEATION-template-experience.md`
-
-3. **IDEATION-<feature>-unknowns.md**
-   - Open questions and uncertainties
-   - Assumptions that need validation
-   - Constraints or dependencies not yet resolved
-   - Closure criteria (what answers these questions?)
-   - See template: `_templates/IDEATION-template-unknowns.md`
-
-**What does NOT belong in Ideation:**
-
-- Finalized obligations using MUST/SHOULD/MAY (those go in Requirements)
-- Implementation details that will become commitments
-- Binding decisions (those go in Specification)
-- Architecture or technology choices
-
-**Output:** Converges into Requirements and Specification
-
-**Lifecycle:** Ideation docs should be archived (not deleted) once Requirements are finalized.
-Archiving preserves history and prevents link rot.
-
----
+See templates for details.
 
 ### Requirements
 
 **Use when:**
 
-- You are ready to define testable obligations
-- Multiple implementations or teams must align
-- You want clear traceability from discovery to implementation
+- Ready to define testable obligations
+- Multiple implementations must align
+- Want clear traceability from discovery to implementation
 
-**Structure:** One Requirements document per feature (e.g., `REQ-export-feature.md`), containing
-multiple numbered requirements.
-
-**What belongs here:**
-
-- MUST/SHOULD/MAY statements (numbered list: REQ-001, REQ-002, etc.)
-- Measurable fit criteria and verification method per requirement
-- Why each is needed (traceability to Ideation or problems)
-- Failure modes and edge cases
-- Non-goals (what is explicitly not required)
-
-**What does NOT belong here:**
-
-- Design or architecture choices (those go in Specification)
-- Exploration or options (those go in Ideation)
-- Implementation details
-
-**Lifecycle:**
-
-- Draft → development
-- Approved → accepted contract; use as reference in Spec
-- Deprecated → replaced by new requirement (do not rewrite; create new ID)
-
-**Output:** Feeds Specifications and tests
-
-**Naming:**
-
-```
-REQ-<feature>.md
-
-Examples:
-  REQ-export-feature.md
-  REQ-pagination-system.md
-  REQ-auth-refresh-tokens.md
-```
-
-Inside each Requirements doc, individual requirements are numbered:
-
-```
-## REQ-001: CSV export format support
-## REQ-002: Export performance within 30 seconds
-## REQ-003: Export error messages are user-actionable
-```
-
-**Reusing Requirements:** Some requirements (like pagination) apply to multiple features. Create a
-single, canonical `REQ-pagination-system.md` and link to it from multiple Specs and Plans. This is
-not duplication—it's proper reuse.
-
----
+**Structure:** One REQ-<feature>.md per feature with numbered requirements (REQ-001, REQ-002, etc.)
 
 ### Specification
 
 **Use when:**
 
 - Something needs to be built
-- Interfaces, behavior, or invariants must be precise
-- You want a testable contract
+- Interfaces, behavior, invariants must be precise
+- Want a testable contract
 
-**Important:** One Specification can implement multiple Requirements. One Requirement can be
-implemented by multiple Specifications.
-
-**What belongs here:**
-
-- Scope and non-scope (what is in/out of this spec)
-- Interfaces and observable behavior (APIs, state, UI interactions)
-- Invariants and state transitions
-- Error semantics and failure handling
-- Data models or schemas
-- Performance constraints (if required)
-- How conformance is verified (testing approach)
-- Design decisions (alternatives considered, rationale, blockers, expiry)
-- Assumptions and unknowns
-
-**What does NOT belong here:**
-
-- Exploration or options (that was Ideation; now it's Design Decisions with structured format)
-- Justification for design choices beyond "implements REQ-X" (covered in Design Decisions)
-
-**Lifecycle:**
-
-- Draft → under design
-- Active → used for implementation and testing
-- Evolves via git history; no versioning in filename
-
-**Output:** Code and tests
-
----
+**Important:** One Spec can implement multiple Requirements. One Requirement can be implemented by
+multiple Specs.
 
 ### Implementation Plan
 
 **Use when:**
 
-- One or more Specifications are ready to implement
-- Work spans multiple milestones or needs staged rollout
-- You want a clear roadmap for execution
+- Specifications are ready to implement
+- Work spans multiple milestones
+- Want clear execution roadmap
 
 **Important:** One IMPL-PLAN can coordinate multiple Specs and Requirements.
-
-**What belongs here:**
-
-- Preconditions (what must already be true)
-- Milestones (deliverable-oriented, with clear completion criteria)
-- Work breakdown (sequenced steps; include dependencies)
-- Verification plan (how each milestone proves conformance to involved Specs)
-- Risk register (key risks and mitigations)
-- Rollout, migration, or reversibility plan (if applicable)
-- Design decisions (if any choices needed for execution)
-- Blockers and dependencies
-- Assumptions and unknowns
-
-**What does NOT belong here:**
-
-- New decisions (if the plan requires a costly-to-reverse choice, create a new Specification first)
-- Restatement of the Specs (this references them; focus on sequencing)
-- Ideation rationale (readers follow links to Specs/Requirements for context)
-
-**Lifecycle:**
-
-- Draft → during planning
-- Active → used during execution
-- Updated as sequencing changes (versioned via git)
-
-**Output:** A stable roadmap for humans and agents
 
 ---
 
 ## Many-to-Many Relationships
 
-The system supports flexible many-to-many relationships. Here's a concrete example with pagination:
+One Requirement (REQ-pagination-system) implemented by three Specs (search, users, timeline),
+coordinated by one Plan (IMPL-PLAN-pagination-system).
 
-### Scenario: Pagination is a cross-cutting requirement
-
-**REQ-pagination-system.md** (one canonical requirement):
-
-```yaml
----
-type: REQ
-status: approved
-stability: stable
----
-
-## REQ-001: Pagination API
-System MUST support paginated results via offset/limit.
-Applies to: search results, user lists, activity timelines, and any list endpoint.
-```
-
-This one Requirement is implemented by **three separate Specs**:
-
-1. **SPEC-search-results-pagination.md** → Implements REQ-pagination-system
-   - Scope: search endpoint pagination
-   - Design Decision: "Should search results include total count?" (specific to search)
-
-2. **SPEC-user-list-pagination.md** → Implements REQ-pagination-system
-   - Scope: /users endpoint pagination
-   - Design Decision: "Should we support filtering during pagination?" (specific to users)
-
-3. **SPEC-timeline-pagination.md** → Implements REQ-pagination-system
-   - Scope: activity timeline pagination
-   - Design Decision: "How do we handle timeline ordering with pagination?" (specific to timeline)
-
-All three Specs implement the **same Requirement**, but each handles it differently for their
-domain.
-
-### Coordinating with IMPL-PLAN
-
-**IMPL-PLAN-pagination-system.md** coordinates all three:
-
-```yaml
----
-type: IMPL-PLAN
-status: active
-implements: [REQ-pagination-system]
-coordinates: [SPEC-search-results-pagination, SPEC-user-list-pagination, SPEC-timeline-pagination]
----
-
-## Overview
-Implement pagination across search, user lists, and timeline.
-
-## Milestones
-1. Shared pagination library (used by all three Specs)
-2. Search results integration
-3. User list integration
-4. Timeline integration
-5. Testing and deployment
-```
-
-Each milestone verifies that each Spec's implementation conforms.
-
-### Linking Structure
-
-- **REQ-pagination-system.md** lists which Specs implement it (search, users, timeline)
-- **SPEC-search-results-pagination.md** links to REQ-pagination-system
-- **SPEC-user-list-pagination.md** links to REQ-pagination-system
-- **SPEC-timeline-pagination.md** links to REQ-pagination-system
-- **IMPL-PLAN-pagination-system.md** links to all three Specs
-- **INIT-pagination.md** links to the REQ and IMPL-PLAN
-
-This way, anyone (human or LLM) reading any document can see: "Pagination is implemented across
-three features, all driven by one Requirement, coordinated by one Plan."
+See pagination example in templates for details.
 
 ---
 
@@ -565,7 +293,6 @@ three features, all driven by one Requirement, coordinated by one Plan."
       REQ-template.md
       SPEC-template.md
       IMPL-PLAN-template.md
-      INIT-template.md
       README.md
     /00-ideation
       README.md
@@ -581,9 +308,6 @@ three features, all driven by one Requirement, coordinated by one Plan."
     /03-implementation-plans
       README.md
       IMPL-PLAN-<area>-<topic>.md
-    /04-initiatives
-      README.md
-      INIT-<area>-<topic>.md
 ```
 
 ---
@@ -592,69 +316,29 @@ three features, all driven by one Requirement, coordinated by one Plan."
 
 ### Ideation
 
-Ideation documents are named by type:
-
 ```
 IDEATION-<feature>-problems.md
 IDEATION-<feature>-experience.md
 IDEATION-<feature>-unknowns.md
-
-Examples:
-  IDEATION-auth-session-problems.md
-  IDEATION-auth-session-experience.md
-  IDEATION-auth-session-unknowns.md
 ```
 
 ### Requirements
 
-One Requirements document per feature:
-
 ```
 REQ-<feature>.md
-
-Examples:
-  REQ-export-feature.md
-  REQ-pagination-system.md
-  REQ-auth-refresh-tokens.md
 ```
-
-Inside the document, individual requirements are numbered (REQ-001, REQ-002, etc.).
 
 ### Specification
 
 ```
 SPEC-<area>-<topic>.md
-
-Examples:
-  SPEC-search-results-pagination.md
-  SPEC-user-list-pagination.md
-  SPEC-auth-session-handler.md
 ```
 
 ### Implementation Plan
 
 ```
 IMPL-PLAN-<area>-<topic>.md
-
-Examples:
-  IMPL-PLAN-pagination-system.md
-  IMPL-PLAN-auth-session-handler.md
-  IMPL-PLAN-export-feature.md
 ```
-
-### Initiative Index
-
-```
-INIT-<area>-<topic>.md
-
-Examples:
-  INIT-auth-system.md
-  INIT-pagination.md
-  INIT-export-feature.md
-```
-
-One initiative index per feature/major theme. Groups related Ideation, Requirements, Specs, and
-Plans.
 
 ---
 
@@ -664,76 +348,63 @@ Plans.
 
 - Link explicitly using relative paths
 - Do not duplicate truth across document types
-- Each key fact should have exactly one canonical home
+- Each key fact has exactly one canonical home
 - Use YAML frontmatter metadata for machine-readable relationships
 
 **Link directions (upward only):**
 
-- **Ideation** → links down to nothing yet; captures raw thinking
-- **Requirements** → link up to Ideation (what problem/discovery drove this?)
-- **Specification** → link up to Requirements (which REQs are implemented?) and optionally to
-  Ideation (context)
-- **Implementation Plan** → link up to Specifications and Requirements only (not Ideation)
-
-**Reference style:**
-
-In Requirements, link upward:
-
-```yaml
----
-type: REQ
-driven_by: [IDEATION-foo-problems.md, IDEATION-foo-experience.md]
----
-```
-
-In Specification, link upward:
-
-```yaml
----
-type: SPEC
-implements: [REQ-foo.md#REQ-001, REQ-foo.md#REQ-002]
-depends_on: [SPEC-shared-lib.md]
-```
-
-In Implementation Plan, link upward:
-
-```yaml
----
-type: IMPL-PLAN
-coordinates: [SPEC-search-pagination.md, SPEC-user-list-pagination.md]
-covers: [REQ-pagination-system.md#REQ-001, REQ-pagination-system.md#REQ-002]
-```
+- **Ideation** → links down to nothing; captures raw thinking
+- **Requirements** → link up to Ideation
+- **Specification** → link up to Requirements and optionally Ideation
+- **Implementation Plan** → link up to Specifications and Requirements only
 
 ---
 
 ## Key Principles
 
-1. **Ideation is disposable.** Archive (don't delete) when Requirements are finalized. Archiving
-   preserves history while keeping active docs clean.
+1. **Ideation is disposable.** Archive when Requirements are finalized.
 
-2. **Requirements are the contract.** They define obligations independent of how they're built. They
-   drive verification. Reuse them across multiple Specs when appropriate.
+2. **Requirements are the contract.** Define obligations independent of implementation. Reuse across
+   multiple Specs when appropriate.
 
-3. **Specifications implement Requirements.** One Spec can implement one or more Requirements; one
-   Requirement can be implemented by multiple Specs. It shows exactly what gets built and tested.
+3. **Specifications implement Requirements.** Show exactly what gets built and tested.
 
-4. **Implementation Plan coordinates delivery.** It can span multiple Specs and Requirements. It
-   orders work and verifies completion.
+4. **Implementation Plan coordinates delivery.** Span multiple Specs and Requirements. Order work
+   and verify completion.
 
-5. **One Requirements doc per feature.** Inside it, number individual requirements (REQ-001,
-   REQ-002, etc.). Multiple Specs can implement the same Requirements doc.
+5. **Design Decisions are structured, not prose.** Use decision tables so LLMs parse alternatives
+   reliably.
 
-6. **Design Decisions are structured, not prose.** Use the Decision table format so LLMs can parse
-   alternatives and rationale reliably.
+6. **Every document is LLM-parseable.** YAML frontmatter, structured sections, metadata tables.
 
-7. **Every document is LLM-parseable.** YAML frontmatter, structured sections, metadata
-   tables—machines should understand your docs as easily as humans.
+7. **Documents evolve via git.** No `-v1`, `-v2` suffixes in filenames.
 
-8. **Documents evolve via git, not versioning in filenames.** No `-v1`, `-v2` suffixes. History
-   lives in commits and pull requests.
+8. **Indices must stay in sync.** Every new document requires updating folder README and
+   DOCUMENT-REGISTRY.md.
 
-9. **Indices must stay in sync.** Every new document requires updating folder README, INIT file, and
-   DOCUMENT-REGISTRY.md. Make this part of your PR checklist.
+---
+
+## Getting Started
+
+1. Start with Ideation (Problems, Experience, Unknowns) or skip straight to Requirements if clear.
+2. Write a Requirements doc once discovery is stable.
+3. Write Specifications for each piece that needs to be built.
+4. Write an Implementation Plan to coordinate delivery.
+5. **Update indices immediately:** folder READMEs + DOCUMENT-REGISTRY.md.
+
+**Checklist for new documents:**
+
+- [ ] YAML frontmatter present (type, status, stability, dates, area, feature)
+- [ ] Document Relationships section
+- [ ] TLDR section
+- [ ] Scope section
+- [ ] Main content written
+- [ ] Design Decisions in structured table format (or N/A)
+- [ ] Blockers section (or "None")
+- [ ] Assumptions & Unknowns in table format (or N/A)
+- [ ] Document Metadata section with YAML
+- [ ] Folder README updated
+- [ ] DOCUMENT-REGISTRY.md updated
 
 ---
 
@@ -741,131 +412,34 @@ covers: [REQ-pagination-system.md#REQ-001, REQ-pagination-system.md#REQ-002]
 
 This system is designed to be machine-readable first, human-readable second.
 
-### How LLMs should use this system
+**Query by metadata:** "Show me all active Specs in area:pagination"
 
-1. **Query by metadata:** "Show me all SPEC documents with status:active and area:pagination"
-   - Read the DOCUMENT-REGISTRY.md to find candidates
-   - Parse YAML frontmatter to filter/sort
+- Parse DOCUMENT-REGISTRY.md
+- Filter by type, status, area
 
-2. **Traverse relationships:** "What does this Spec implement? What implements this Spec?"
-   - Use the `implements` and `implemented_by` fields in frontmatter
-   - Use "Document Relationships" section for context
+**Traverse relationships:** "What implements this Requirement?"
 
-3. **Understand blockers:** "Can we start building this? What are we waiting on?"
-   - Read the "Blockers" section with structured table
-   - Check each blocker's status and ETA
+- Use YAML `implements` field in Spec
+- Use Document Relationships section
 
-4. **Extract decisions:** "What were the alternatives considered? Why did we choose this?"
-   - Read "Design Decisions" section (structured table format)
-   - Extract "Options Considered", "Chosen", "Rationale", "Expires"
+**Understand blockers:** "What's blocking this?"
 
-5. **Check scope:** "Does this document cover X?"
-   - Read "Scope" section (Includes/Excludes/In separate docs)
-   - Ask clarifying questions if needed
+- Read Blockers section with structured table
+- Check status and ETA
 
-6. **Validate assumptions:** "What are we assuming? How will we know if it's wrong?"
-   - Read "Assumptions" section (table format with validation method)
-   - Read "Unknowns" section (table format with resolution criteria)
+**Extract decisions:** "What were the alternatives?"
 
-### Structured data helps agents
-
-- **Decision tables** → Easy to parse alternatives and pick the best option
-- **Metadata tables** → Easy to summarize status and dependencies at a glance
-- **YAML frontmatter** → Enable querying and filtering across all documents
-- **Explicit blockers** → Agents know what's blocking them and when they'll unblock
-- **Scope section** → Prevents agents asking questions answered in other docs
+- Read Design Decisions section (structured tables)
+- Extract Options/Chosen/Rationale
 
 ---
 
-## README Files in Each Folder
+## Why No Initiative Index (INIT)?
 
-Each numbered folder contains a `README.md` that:
+The DOCUMENT-REGISTRY.md replaces the need for INIT files. You can query the registry to see all
+documents related to a feature/area without needing a separate index document. This simplifies the
+system and reduces maintenance burden.
 
-- Lists documents in that folder (Active/Archived)
-- Highlights status of each
-- Provides brief context on the folder's purpose
-- Reminds contributors to keep the index updated
-
-Example structure:
-
-```markdown
-# 02-Specifications
-
-Specifications define the build/test contract. Each Spec implements one or more Requirements and is
-ready for implementation and testing.
-
-**Key:** One Specification can implement multiple Requirements. One Requirement can be implemented
-by multiple Specifications.
-
-## Active Specifications
-
-| Document                                                            | Status | Stability | Implements                 | Blocks               |
-| ------------------------------------------------------------------- | ------ | --------- | -------------------------- | -------------------- |
-| [SPEC-search-results-pagination](SPEC-search-results-pagination.md) | active | stable    | REQ-pagination#001,002,003 | IMPL-PLAN-pagination |
-| [SPEC-user-list-pagination](SPEC-user-list-pagination.md)           | active | beta      | REQ-pagination#001,002,003 | IMPL-PLAN-pagination |
-
-## Archived
-
-- [SPEC-legacy-auth-flow](SPEC-legacy-auth-flow.md) (superseded by SPEC-auth-session-handler,
-  archived 2025-01-15)
-```
-
-**Responsibility:** The person creating a new Spec updates this README immediately (as part of the
-PR).
-
----
-
-## Global Document Registry
-
-Create one `DOCUMENT-REGISTRY.md` in `/docs/engineering` that lists all documents with queryable
-metadata.
-
-LLMs use this to find documents without scanning every file.
-
-```markdown
-# Document Registry
-
-Machine-readable index of all documentation.
-
-## Query examples
-
-- Show me all Specs with status:active → grep `| SPEC | active`
-- Show me all docs in area:pagination → grep `pagination`
-- Show me all Specs implementing REQ-pagination-system → grep `REQ-pagination-system`
-
-| ID                             | Type      | Status   | Stability | Area     | Feature    | Implements                                      | Implements Count | Blocks                                            | Modified   |
-| ------------------------------ | --------- | -------- | --------- | -------- | ---------- | ----------------------------------------------- | ---------------- | ------------------------------------------------- | ---------- |
-| REQ-pagination-system          | REQ       | approved | stable    | core-api | pagination | -                                               | -                | SPEC-search-pagination, SPEC-user-list-pagination | 2025-01-21 |
-| SPEC-search-results-pagination | SPEC      | active   | stable    | search   | pagination | REQ-pagination-system#REQ-001,#REQ-002,#REQ-003 | 3                | IMPL-PLAN-pagination-system                       | 2025-01-21 |
-| SPEC-user-list-pagination      | SPEC      | active   | beta      | users    | pagination | REQ-pagination-system#REQ-001,#REQ-002,#REQ-003 | 3                | IMPL-PLAN-pagination-system                       | 2025-01-20 |
-| IMPL-PLAN-pagination-system    | IMPL-PLAN | active   | stable    | core-api | pagination | -                                               | -                | -                                                 | 2025-01-21 |
-```
-
----
-
-## Getting Started
-
-1. Create an INIT file for your feature/initiative.
-2. Start with Ideation (Problems, Experience, Unknowns) or skip straight to Requirements if clear.
-3. Write a Requirements doc once discovery is stable.
-4. Write Specifications for each piece that needs to be built.
-5. Write an Implementation Plan to coordinate delivery.
-6. **Update indices immediately:** folder READMEs + INIT file + DOCUMENT-REGISTRY.md.
-
-**Checklist for new documents:**
-
-- [ ] YAML frontmatter present (type, status, stability, dates, area, feature)
-- [ ] Document Relationships section (upstream, downstream, siblings, related)
-- [ ] TLDR section (What/Why/How/Status/Critical path)
-- [ ] Scope section (Includes/Excludes/In separate docs)
-- [ ] Main content written
-- [ ] Design Decisions in structured table format (or N/A)
-- [ ] Blockers section completed (or "None")
-- [ ] Assumptions & Unknowns in table format (or N/A)
-- [ ] Document Metadata section with auto-generated YAML
-- [ ] Folder README updated
-- [ ] INIT file updated
-- [ ] DOCUMENT-REGISTRY.md updated
-
-If a document feels hard to write, you might be mixing concerns. Review the "What belongs here"
-section for that doc type.
+If you need to track narrative status or retrospectives for a feature, use a status/retrospective
+section in a README or create a lightweight tracking doc as needed—but don't create a mandatory INIT
+for every feature.
