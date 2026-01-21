@@ -14,7 +14,7 @@ by multiple Specifications.
 
 ## Archived
 
-(None yet)
+- [`SPEC-new-test`](SPEC-new-test.md) (draft) - new-test
 
 ---
 

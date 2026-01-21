@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "nx run-many --target=build --all --parallel",
-    "check:docs": "node script/validate-docs.mjs",
+    "check:docs": "node script/validate-docs.mjs && prettier docs/engineering/DOCUMENT-REGISTRY.md --write",
     "check:fast": "pnpm lint:fast && pnpm typecheck",
     "clean": "rm -rf dist .nx .cache node_modules/.vite node_modules/.esbuild tmp && find . -path '*/node_modules' -prune -o -type d -name '.cache' -exec rm -rf {} + 2>/dev/null && find . -type f -name 'tsconfig*.tsbuildinfo' ! -path '*/node_modules/*' -delete && find . -type d -name 'dist' ! -path '*/node_modules/*' -exec rm -rf {} + 2>/dev/null && find . -type d -name 'coverage' ! -path '*/node_modules/*' -exec rm -rf {} + 2>/dev/null; echo 'Cleaned artifacts, caches, and build outputs'",
     "format": "prettier . --write --cache",

@@ -7,7 +7,6 @@ status: draft # draft, active, deprecated
 stability: experimental # experimental, beta, stable
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
-next_review: YYYY-MM-DD
 area: api
 feature: pagination-system
 implements:
@@ -301,7 +300,6 @@ status: draft
 stability: experimental
 created: 2025-01-21
 last_updated: 2025-01-21
-next_review: 2025-02-21
 area: search
 feature: pagination-system
 implements:

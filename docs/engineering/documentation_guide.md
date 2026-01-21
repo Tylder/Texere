@@ -70,7 +70,6 @@ status: active # draft, active, approved, deprecated, archived, on-hold, complet
 stability: stable # experimental, beta, stable
 created: 2025-01-21
 last_updated: 2025-01-21
-next_review: 2025-02-21
 area: pagination
 feature: search-results
 ---
@@ -81,7 +80,7 @@ feature: search-results
 - `type`: Document type (required for querying)
 - `status`: Workflow status (required)
 - `stability`: How likely to change (helps LLMs understand confidence)
-- `created`, `last_updated`, `next_review`: Dates (helps track staleness)
+- `created`, `last_updated`: Dates for tracking document lifecycle
 - `area`, `feature`: Tags for querying/grouping (optional but recommended)
 
 ### Mandatory Sections

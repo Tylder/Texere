@@ -7,7 +7,6 @@ status: draft # draft, active, archived
 stability: experimental
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
-next_review: YYYY-MM-DD
 area: search
 feature: pagination-system
 related_ideation: [IDEATION-pagination-experience, IDEATION-pagination-unknowns]
@@ -263,7 +262,6 @@ status: draft
 stability: experimental
 created: 2025-01-21
 last_updated: 2025-01-21
-next_review: 2025-02-01
 area: search
 feature: pagination-system
 problems_count: 3

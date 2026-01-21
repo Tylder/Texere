@@ -7,7 +7,6 @@ status: draft # draft, approved, deprecated
 stability: experimental # experimental, beta, stable
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
-next_review: YYYY-MM-DD
 area: feature-area
 feature: feature-name
 ---
@@ -217,7 +216,6 @@ status: approved
 stability: stable
 created: 2025-01-21
 last_updated: 2025-01-21
-next_review: 2025-02-21
 area: core-api
 feature: pagination-system
 driven_by: [IDEATION-pagination-problems.md, IDEATION-pagination-experience.md]

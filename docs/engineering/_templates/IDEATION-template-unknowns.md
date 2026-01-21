@@ -7,7 +7,6 @@ status: draft # draft, active, archived
 stability: experimental
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
-next_review: YYYY-MM-DD
 area: search
 feature: pagination-system
 unknowns_count: 5
@@ -276,7 +275,7 @@ posts coming in)
 
 - [ ] Open (no decision yet)
 - [ ] In progress (Product review scheduled 2025-02-01)
-- [ ] Resolved: ******\_******
+- [ ] Resolved: **\*\***\_**\*\***
 
 **Owner:** Product Manager (Alice)
 
@@ -366,7 +365,6 @@ status: draft
 stability: experimental
 created: 2025-01-21
 last_updated: 2025-01-21
-next_review: 2025-02-01
 area: search
 feature: pagination-system
 unknowns_count: 5

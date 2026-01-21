@@ -7,7 +7,6 @@ status: draft # draft, active, completed, on-hold
 stability: experimental # experimental, beta, stable
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
-next_review: YYYY-MM-DD
 area: core-api
 feature: pagination-system
 coordinates: [SPEC-search-results-pagination, SPEC-user-list-pagination, SPEC-timeline-pagination]
@@ -419,7 +418,6 @@ status: draft
 stability: experimental
 created: 2025-01-21
 last_updated: 2025-01-21
-next_review: 2025-02-21
 area: core-api
 feature: pagination-system
 coordinates: [SPEC-search-results-pagination, SPEC-user-list-pagination, SPEC-timeline-pagination]

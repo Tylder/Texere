@@ -83,6 +83,21 @@ function getAllDocFiles() {
   return docs;
 }
 
+function getChangedDocFiles() {
+  try {
+    const output = execSync('git diff --cached --name-only --diff-filter=ACM docs/engineering/', {
+      encoding: 'utf-8',
+    });
+    return output
+      .split('\n')
+      .filter(
+        (f) => f.endsWith('.md') && !f.includes('README.md') && !f.includes('DOCUMENT-REGISTRY.md'),
+      );
+  } catch {
+    return [];
+  }
+}
+
 function validateFrontmatter(doc, errors) {
   if (!doc.frontmatter) {
     errors.push(`${doc.relativePath}: Missing YAML frontmatter`);
@@ -194,6 +209,33 @@ function validateLinks(doc, errors) {
         `${doc.relativePath}: Broken link "[${link.text}](${link.url})" - file not found`,
       );
     }
+  }
+}
+
+function updateLastUpdated(doc) {
+  const todayDate = new Date().toISOString().split('T')[0];
+
+  const updatedContent = doc.content.replace(
+    /last_updated: \d{4}-\d{2}-\d{2}/,
+    `last_updated: ${todayDate}`,
+  );
+
+  if (updatedContent !== doc.content) {
+    fs.writeFileSync(doc.path, updatedContent, 'utf-8');
+    return true;
+  }
+  return false;
+}
+
+function formatFiles(filePaths) {
+  if (filePaths.length === 0) return;
+
+  try {
+    execSync(`prettier ${filePaths.map((f) => `"${f}"`).join(' ')} --write`, {
+      stdio: 'pipe',
+    });
+  } catch {
+    // Prettier errors are non-critical
   }
 }
 
@@ -311,12 +353,32 @@ function main() {
   console.log('\n📋 Validating documentation...\n');
 
   const allDocs = getAllDocFiles();
+  const changedFiles = getChangedDocFiles();
+
+  // Auto-update last_updated for changed documents
+  const changedDocsMap = new Set(changedFiles.map((f) => f.replace('docs/engineering/', '')));
+  const updatedDocPaths = [];
+  for (const doc of allDocs) {
+    const normalizedPath = doc.relativePath.replace(/\\/g, '/');
+    if (changedDocsMap.has(normalizedPath)) {
+      if (updateLastUpdated(doc)) {
+        updatedDocPaths.push(doc.path);
+        fixes.push(`✅ Updated last_updated in ${doc.relativePath}`);
+      }
+    }
+  }
+  if (updatedDocPaths.length > 0) {
+    formatFiles(updatedDocPaths);
+  }
 
   if (allDocs.length > 0) {
-    for (const doc of allDocs) {
+    // Re-read docs after updating last_updated
+    const updatedDocs = getAllDocFiles();
+
+    for (const doc of updatedDocs) {
       validateFrontmatter(doc, errors);
       validateNaming(doc, errors);
-      validateCrossReferences(doc, allDocs, errors);
+      validateCrossReferences(doc, updatedDocs, errors);
       validateLinks(doc, errors);
     }
   }
