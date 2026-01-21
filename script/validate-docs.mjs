@@ -462,18 +462,6 @@ function updateFolderReadme(type, allDocs) {
 }
 
 /**
- * Slugify a title to create a section ID.
- * Example: "Document Relationships" → "document_relationships"
- */
-function slugify(title) {
-  return title
-    .toLowerCase()
-    .replace(/\s+/g, '_')
-    .replace(/[^\w_]/g, '')
-    .replace(/_+/g, '_');
-}
-
-/**
  * Estimate tokens in text (word count * 1.3).
  */
 function estimateTokens(text) {
@@ -546,7 +534,6 @@ function extractSections(content, errors, docRelativePath) {
     const tokenEst = estimateTokens(sectionContent);
 
     const section = {
-      id: slugify(title),
       title,
       lines: [lineNum + 1, endLine + 1], // 1-based
       summary,
@@ -605,45 +592,6 @@ function embedSectionIndex(doc) {
       frontmatterYaml.substring(insertPosition);
   }
 
-  // Build index YAML (with placeholder line numbers; will offset after measuring)
-  let indexYaml = `
-index:
-  sections:`;
-
-  for (const section of sections) {
-    indexYaml += `
-    - id: ${section.id}
-      title: "${section.title}"
-      lines: [${section.lines[0]}, ${section.lines[1]}]`;
-
-    if (section.summary) {
-      indexYaml += `\n      summary: "${section.summary.replace(/"/g, '\\"')}"`;
-    }
-
-    indexYaml += `\n      token_est: ${section.token_est}`;
-
-    // Only include subsections if parent section exceeds token threshold
-    if (
-      section.subsections &&
-      section.subsections.length > 0 &&
-      section.token_est >= INDEXING_CONFIG.subsection_token_threshold
-    ) {
-      indexYaml += '\n      subsections:';
-      for (const sub of section.subsections) {
-        indexYaml += `
-        - id: ${sub.id}
-          title: "${sub.title}"
-          lines: [${sub.lines[0]}, ${sub.lines[1]}]`;
-
-        if (sub.summary) {
-          indexYaml += `\n          summary: "${sub.summary.replace(/"/g, '\\"')}"`;
-        }
-
-        indexYaml += `\n          token_est: ${sub.token_est}`;
-      }
-    }
-  }
-
   // Build a skeleton index first to measure its size
   let skeletonIndexYaml = `
 index:
@@ -651,8 +599,7 @@ index:
 
   for (const section of sections) {
     skeletonIndexYaml += `
-    - id: ${section.id}
-      title: "${section.title}"
+    - title: "${section.title}"
       lines: [0, 0]`;
 
     if (section.summary) {
@@ -670,8 +617,7 @@ index:
       skeletonIndexYaml += '\n      subsections:';
       for (const sub of section.subsections) {
         skeletonIndexYaml += `
-        - id: ${sub.id}
-          title: "${sub.title}"
+        - title: "${sub.title}"
           lines: [0, 0]`;
 
         if (sub.summary) {
@@ -697,10 +643,10 @@ ${cleanFrontmatterYaml}${skeletonIndexYaml}
   console.log(`  closing --- at array index ${closingDashIndex}`);
   console.log(`  indexLineOffset = ${indexLineOffset}`);
   console.log(
-    `  Section before offset: ${sections[0]?.id} at [${sections[0]?.lines[0]}, ${sections[0]?.lines[1]}]`,
+    `  Section before offset: ${sections[0]?.title} at [${sections[0]?.lines[0]}, ${sections[0]?.lines[1]}]`,
   );
   console.log(
-    `  Section after offset: ${sections[0]?.id} at [${sections[0]?.lines[0] + indexLineOffset}, ${sections[0]?.lines[1] + indexLineOffset}]`,
+    `  Section after offset: ${sections[0]?.title} at [${sections[0]?.lines[0] + indexLineOffset}, ${sections[0]?.lines[1] + indexLineOffset}]`,
   );
 
   // Now build the final index with correct line numbers (offset the extracted ones)
@@ -710,8 +656,7 @@ index:
 
   for (const section of sections) {
     finalIndexYaml += `
-    - id: ${section.id}
-      title: "${section.title}"
+    - title: "${section.title}"
       lines: [${section.lines[0] + indexLineOffset}, ${section.lines[1] + indexLineOffset}]`;
 
     if (section.summary) {
@@ -729,8 +674,7 @@ index:
       finalIndexYaml += '\n      subsections:';
       for (const sub of section.subsections) {
         finalIndexYaml += `
-        - id: ${sub.id}
-          title: "${sub.title}"
+        - title: "${sub.title}"
           lines: [${sub.lines[0] + indexLineOffset}, ${sub.lines[1] + indexLineOffset}]`;
 
         if (sub.summary) {
