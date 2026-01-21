@@ -20,8 +20,7 @@ grep "| SPEC.*active" below
 
 ## Documents
 
-| ID              | Type | Status | Stability    | Area | Feature  |
-| --------------- | ---- | ------ | ------------ | ---- | -------- |
-| `SPEC-new-test` | SPEC | draft  | experimental | test | new-test |
+| ID  | Type | Status | Stability | Area | Feature |
+| --- | ---- | ------ | --------- | ---- | ------- |
 
 _Auto-generated: 2026-01-21_
