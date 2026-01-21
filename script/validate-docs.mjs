@@ -495,16 +495,13 @@ function main() {
   const changedDocsMap = new Set(changedFiles.map((f) => f.replace('docs/engineering/', '')));
   const updatedDocPaths = [];
   for (const doc of allDocs) {
-    const normalizedPath = doc.relativePath.replace(/\\/g, '/');
+    const normalizedPath = doc.relativePath.replace(/\\\\/g, '/');
     if (changedDocsMap.has(normalizedPath)) {
       if (updateLastUpdated(doc)) {
         updatedDocPaths.push(doc.path);
         fixes.push(`✅ Updated last_updated in ${doc.relativePath}`);
       }
     }
-  }
-  if (updatedDocPaths.length > 0) {
-    formatFiles(updatedDocPaths);
   }
 
   if (allDocs.length > 0) {
@@ -528,15 +525,18 @@ function main() {
         }
         fixes.push('✅ Updated folder READMEs');
 
-        // PATCH 1: Re-stage generated files
-        const filesToRestage = [
+        // Format all modified files
+        const filesToFormat = [
           REGISTRY_FILE,
           ...Object.values(DOC_FOLDERS).map((folderName) =>
             path.join(DOCS_DIR, folderName, 'README.md'),
           ),
           ...updatedDocPaths,
         ];
-        restageModifiedFiles(filesToRestage);
+        formatFiles(filesToFormat);
+
+        // PATCH 1: Re-stage formatted files
+        restageModifiedFiles(filesToFormat);
       } catch (e) {
         errors.push(`Failed to update registry or re-stage files: ${e.message}`);
       }
@@ -561,5 +561,7 @@ function main() {
 
   console.log('\n✅ Documentation validation passed!\n');
 }
+
+main();
 
 main();
