@@ -3,7 +3,7 @@ type: META
 status: active
 stability: stable
 created: 2026-01-21
-last_updated: 2026-01-21T12:55:31.051Z
+last_updated: 2026-01-21T13:03:26.425Z
 area: documentation
 feature: system
 frontmatter_auto_updated_by: script/validate-docs.mjs
@@ -18,80 +18,80 @@ index:
   sections:
     - id: critical_keeping_indices_in_sync
       title: 'Critical: Keeping Indices in Sync'
-      lines: [223, 249]
+      lines: [106, 132]
       token_est: 198
     - id: overview
       title: 'Overview'
-      lines: [250, 272]
+      lines: [133, 155]
       token_est: 192
     - id: document_format_yaml_frontmatter_structured_sections
       title: 'Document Format: YAML Frontmatter + Structured Sections'
-      lines: [273, 316]
+      lines: [156, 199]
       token_est: 254
     - id: document_relationships
       title: 'Document Relationships'
-      lines: [317, 341]
+      lines: [200, 224]
       token_est: 65
     - id: tldr
       title: 'TLDR'
-      lines: [342, 366]
+      lines: [225, 249]
       token_est: 110
     - id: scope
       title: 'Scope'
-      lines: [367, 398]
+      lines: [250, 281]
       token_est: 123
     - id: design_decisions
       title: 'Design Decisions'
-      lines: [399, 418]
+      lines: [282, 301]
       token_est: 175
     - id: document_metadata
       title: 'Document Metadata'
-      lines: [419, 431]
+      lines: [302, 314]
       token_est: 30
     - id: when_to_write_each
       title: 'When to Write Each'
-      lines: [432, 493]
+      lines: [315, 376]
       token_est: 227
     - id: manytomany_relationships
       title: 'Many-to-Many Relationships'
-      lines: [494, 502]
+      lines: [377, 385]
       token_est: 34
     - id: folder_structure
       title: 'Folder Structure'
-      lines: [503, 539]
+      lines: [386, 422]
       token_est: 58
     - id: file_naming
       title: 'File Naming'
-      lines: [540, 575]
+      lines: [423, 458]
       token_est: 42
     - id: crosslinking_rules
       title: 'Cross-Linking Rules'
-      lines: [576, 594]
+      lines: [459, 477]
       token_est: 112
     - id: key_principles
       title: 'Key Principles'
-      lines: [595, 621]
+      lines: [478, 504]
       token_est: 160
     - id: getting_started
       title: 'Getting Started'
-      lines: [622, 644]
+      lines: [505, 527]
       token_est: 181
     - id: for_llms_and_agents
       title: 'For LLMs and Agents'
-      lines: [645, 670]
+      lines: [528, 553]
       token_est: 112
     - id: section_indexing_structure_for_llm_parsing
       title: 'Section Indexing: Structure for LLM Parsing'
-      lines: [671, 687]
+      lines: [554, 570]
       token_est: 114
     - id: scope
       title: 'Scope'
-      lines: [688, 758]
+      lines: [571, 641]
       summary: 'API covers offset/limit pagination; excludes cursor-based and export pagination.'
       token_est: 297
     - id: automation_keeping_indices_in_sync
       title: 'Automation: Keeping Indices in Sync'
-      lines: [759, 818]
+      lines: [642, 701]
       token_est: 289
 ---
 

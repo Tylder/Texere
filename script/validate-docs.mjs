@@ -569,12 +569,20 @@ function extractSections(content, errors, docRelativePath) {
 /**
  * Embed section index in document frontmatter.
  */
-function embedSectionIndex(doc, sections) {
+function embedSectionIndex(doc) {
   const frontmatterMatch = doc.content.match(/^---\n([\s\S]*?)\n---/);
   if (!frontmatterMatch) return; // No frontmatter, skip
 
   let frontmatterYaml = frontmatterMatch[1];
   const contentAfterFrontmatter = doc.content.substring(frontmatterMatch[0].length);
+
+  // Remove any existing index from frontmatter to get clean base
+  const cleanFrontmatterYaml = frontmatterYaml.replace(/\s+(generated_at|index):[\s\S]*$/m, '');
+
+  // Extract sections fresh from the raw content (after removing frontmatter)
+  const errors = [];
+  let sections = extractSections(contentAfterFrontmatter, errors, doc.relativePath);
+  if (errors.length > 0 || sections.length === 0) return; // Error or no sections, skip
 
   // Update last_updated with full ISO timestamp
   const now = new Date().toISOString();
@@ -582,10 +590,6 @@ function embedSectionIndex(doc, sections) {
     /last_updated: \d{4}-\d{2}-\d{2}(?:T[\d:\.Z]+)?/,
     `last_updated: ${now}`,
   );
-
-  // Remove any existing index by stripping from first indented "generated_at:" or "index:" to end
-  // This handles index that accidentally got embedded in summary_long
-  frontmatterYaml = frontmatterYaml.replace(/\s+(generated_at|index):[\s\S]*$/m, '');
 
   // Ensure frontmatter_auto_updated_by fields exist
   if (!frontmatterYaml.includes('frontmatter_auto_updated_by:')) {
@@ -601,7 +605,7 @@ function embedSectionIndex(doc, sections) {
       frontmatterYaml.substring(insertPosition);
   }
 
-  // Build index YAML
+  // Build index YAML (with placeholder line numbers; will offset after measuring)
   let indexYaml = `
 index:
   sections:`;
@@ -640,9 +644,110 @@ index:
     }
   }
 
+  // Build a skeleton index first to measure its size
+  let skeletonIndexYaml = `
+index:
+  sections:`;
+
+  for (const section of sections) {
+    skeletonIndexYaml += `
+    - id: ${section.id}
+      title: "${section.title}"
+      lines: [0, 0]`;
+
+    if (section.summary) {
+      skeletonIndexYaml += `\n      summary: "${section.summary.replace(/"/g, '\\"')}"`;
+    }
+
+    skeletonIndexYaml += `\n      token_est: ${section.token_est}`;
+
+    // Only include subsections if parent section exceeds token threshold
+    if (
+      section.subsections &&
+      section.subsections.length > 0 &&
+      section.token_est >= INDEXING_CONFIG.subsection_token_threshold
+    ) {
+      skeletonIndexYaml += '\n      subsections:';
+      for (const sub of section.subsections) {
+        skeletonIndexYaml += `
+        - id: ${sub.id}
+          title: "${sub.title}"
+          lines: [0, 0]`;
+
+        if (sub.summary) {
+          skeletonIndexYaml += `\n          summary: "${sub.summary.replace(/"/g, '\\"')}"`;
+        }
+
+        skeletonIndexYaml += `\n          token_est: ${sub.token_est}`;
+      }
+    }
+  }
+
+  // Create temporary document to measure frontmatter + index size (up to closing ---)
+  const tempFrontmatter = `---
+${cleanFrontmatterYaml}${skeletonIndexYaml}
+---`;
+  // Count lines: the closing --- is on line N, so content starts on line N+1
+  const allLines = tempFrontmatter.split('\n');
+  const closingDashIndex = allLines.indexOf('---', 1); // Array index of closing ---
+  const indexLineOffset = closingDashIndex + 1; // Line number of first content line (1-indexed)
+
+  console.log(`[DEBUG] ${doc.relativePath}:`);
+  console.log(`  tempFrontmatter has ${allLines.length} lines`);
+  console.log(`  closing --- at array index ${closingDashIndex}`);
+  console.log(`  indexLineOffset = ${indexLineOffset}`);
+  console.log(
+    `  Section before offset: ${sections[0]?.id} at [${sections[0]?.lines[0]}, ${sections[0]?.lines[1]}]`,
+  );
+  console.log(
+    `  Section after offset: ${sections[0]?.id} at [${sections[0]?.lines[0] + indexLineOffset}, ${sections[0]?.lines[1] + indexLineOffset}]`,
+  );
+
+  // Now build the final index with correct line numbers (offset the extracted ones)
+  let finalIndexYaml = `
+index:
+  sections:`;
+
+  for (const section of sections) {
+    finalIndexYaml += `
+    - id: ${section.id}
+      title: "${section.title}"
+      lines: [${section.lines[0] + indexLineOffset}, ${section.lines[1] + indexLineOffset}]`;
+
+    if (section.summary) {
+      finalIndexYaml += `\n      summary: "${section.summary.replace(/"/g, '\\"')}"`;
+    }
+
+    finalIndexYaml += `\n      token_est: ${section.token_est}`;
+
+    // Only include subsections if parent section exceeds token threshold
+    if (
+      section.subsections &&
+      section.subsections.length > 0 &&
+      section.token_est >= INDEXING_CONFIG.subsection_token_threshold
+    ) {
+      finalIndexYaml += '\n      subsections:';
+      for (const sub of section.subsections) {
+        finalIndexYaml += `
+        - id: ${sub.id}
+          title: "${sub.title}"
+          lines: [${sub.lines[0] + indexLineOffset}, ${sub.lines[1] + indexLineOffset}]`;
+
+        if (sub.summary) {
+          finalIndexYaml += `\n          summary: "${sub.summary.replace(/"/g, '\\"')}"`;
+        }
+
+        finalIndexYaml += `\n          token_est: ${sub.token_est}`;
+      }
+    }
+  }
+
+  // Use clean frontmatter for embedding
+  frontmatterYaml = cleanFrontmatterYaml;
+
   // Combine frontmatter + index + content
   const newFrontmatter = `---
-${frontmatterYaml}${indexYaml}
+${frontmatterYaml}${finalIndexYaml}
 ---`;
 
   const newContent = newFrontmatter + contentAfterFrontmatter;
@@ -722,12 +827,8 @@ function main() {
         if (INDEXING_CONFIG.enabled) {
           let indexedCount = 0;
           for (const doc of updatedDocs) {
-            const sections = extractSections(doc.content, errors, doc.relativePath);
-            if (errors.length > 0) break; // Stop if indexing errors
-            if (sections.length > 0) {
-              if (embedSectionIndex(doc, sections)) {
-                indexedCount++;
-              }
+            if (embedSectionIndex(doc)) {
+              indexedCount++;
             }
           }
           if (indexedCount > 0) {

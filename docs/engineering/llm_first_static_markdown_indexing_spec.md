@@ -97,14 +97,22 @@ Summary behavior is configurable:
 
 ## 5. Index Location
 
-Index is stored as a **sidecar file**:
+Index is stored **embedded in document frontmatter** (YAML):
 
 ```
-docs/engineering/02-specifications/SPEC-my-feature.md
-docs/engineering/02-specifications/SPEC-my-feature.llm-index.yaml
+---
+type: SPEC
+status: draft
+...
+index:
+  sections:
+    - id: scope
+      ...
+---
 ```
 
-The index is **never embedded** in the document.
+Line numbers in the index account for the index's own size, so they reference content in the final
+document (after the index is embedded).
 
 ---
 
@@ -112,40 +120,26 @@ The index is **never embedded** in the document.
 
 ```yaml
 index:
-  generated_at: 2026-01-21T12:42:11Z
-  generator: script/validate-docs.mjs
   sections:
     - id: scope
       title: Scope
-      level: 2
-      start_line: 45
-      end_line: 78
+      lines: [45, 78]
       summary: Defines what this document covers and what it excludes.
       token_est: 420
       subsections:
         - id: includes
           title: Includes
-          level: 3
-          start_line: 47
-          end_line: 56
-          summary: null
+          lines: [47, 56]
           token_est: 180
         - id: excludes
           title: Excludes
-          level: 3
-          start_line: 58
-          end_line: 78
-          summary: null
+          lines: [58, 78]
           token_est: 240
 
     - id: main_content
       title: Main Content
-      level: 2
-      start_line: 80
-      end_line: 140
-      summary: null
+      lines: [80, 140]
       token_est: 1320
-      subsections: []
 ```
 
 ### 6.1 Required Fields
@@ -154,18 +148,10 @@ Per section:
 
 - `id` – slugified title (e.g., "scope" from "## Scope")
 - `title` – copied verbatim from heading
-- `level` – heading level (2 or 3)
-- `start_line`, `end_line` – inclusive, 1-based
-- `summary` – extracted summary line (or null)
+- `lines` – `[start_line, end_line]` inclusive, 1-based; **accounts for index offset**
+- `summary` – extracted summary line (omitted if null)
 - `token_est` – approximate token count in section
-- `subsections` – array of H3 subsections (empty if none)
-
-Per index:
-
-- `schema`
-- `generated_at`
-- `generator`
-- `document_path`
+- `subsections` – array of H3 subsections (omitted if below token threshold or empty)
 
 ---
 
