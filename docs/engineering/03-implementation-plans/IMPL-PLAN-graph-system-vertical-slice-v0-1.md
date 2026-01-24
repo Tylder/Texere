@@ -135,6 +135,22 @@ Summary: Implementation of the v0.1 vertical slice with inspection outputs and t
 
 ---
 
+## Execution Default
+
+Summary: Unless explicitly scoped down, the default execution scope is the full v0.1 end-to-end
+slice.
+
+**Default scope includes:**
+
+- All v0.1 packages in "Packages to Create (v0.1)"
+- Ingestion CLI + SCIP-TS connector
+- In-memory store, policies, projection, JSON dumps
+- Required test suite (unit, integration, determinism)
+
+**Scoping down requires explicit agreement** (e.g., "Milestones 1-2 only").
+
+---
+
 ## Preconditions
 
 - [ ] SPEC-graph-system-vertical-slice-v0-1 approved

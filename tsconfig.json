@@ -12,6 +12,21 @@
     },
     {
       "path": "./packages/typescript-config"
+    },
+    {
+      "path": "./packages/graph-core"
+    },
+    {
+      "path": "./packages/graph-store"
+    },
+    {
+      "path": "./packages/graph-ingest"
+    },
+    {
+      "path": "./packages/graph-ingest-connector-scip-ts"
+    },
+    {
+      "path": "./packages/graph-projection"
     }
   ]
 }

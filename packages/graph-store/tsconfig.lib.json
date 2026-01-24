@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"],
+    "noEmitOnError": true,
+    "tsBuildInfoFile": ".cache/tsconfig.lib.tsbuildinfo"
+  },
+  "references": [
+    {
+      "path": "../graph-core/tsconfig.lib.json"
+    }
+  ],
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"]
+}

@@ -12,7 +12,7 @@ const DOCS_DIR = 'docs/engineering';
 const REGISTRY_FILE = path.join(DOCS_DIR, 'DOCUMENT-REGISTRY.md');
 
 // Indexing configuration
-const INDEXING_CONFIG = {
+const _INDEXING_CONFIG = {
   enabled: true,
   summary_mode: 'skip', // 'error' or 'skip'
   min_level: 2,
@@ -141,7 +141,7 @@ function parseFrontmatter(content) {
       else if (value.match(/^[|>][-+]?$/)) {
         // Block scalar: consume indented lines until unindented or end
         const blockLines = [];
-        const baseIndent = line.match(/^(\s*)/)[1].length;
+        const _baseIndent = line.match(/^(\s*)/)[1].length;
 
         while (i < lines.length - 1) {
           i++;
