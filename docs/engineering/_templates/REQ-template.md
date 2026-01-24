@@ -1,18 +1,35 @@
 ---
-type: REQ
-status: draft
-stability: experimental
-created: YYYY-MM-DD
-last_updated: YYYY-MM-DD
-area: feature-area
-feature: feature-name
-frontmatter_auto_updated_by: script/validate-docs.mjs
-frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short: 'Offset/limit pagination required across all list endpoints'
-summary_long:
-  'Defines normative Requirements for system-wide pagination via offset/limit parameters. Specifies
-  supported ranges, response metadata, error handling, and <100ms performance target. One
-  Requirement implemented by multiple Specs (search, users, timeline) coordinated by one Plan.'
+# REQUIRED FIELDS — DO NOT REMOVE ANY OF THESE
+type: REQ                           # Always "REQ" for this document type
+status: draft                       # Current status: draft | active | stable | deprecated
+stability: experimental             # Maturity level: experimental | beta | stable
+created: YYYY-MM-DD                 # ISO format (YYYY-MM-DD). Set once, never change.
+last_updated: YYYY-MM-DD            # AUTO-UPDATED on commit. DO NOT manually edit.
+area: feature-area                  # System area (e.g., api, database, auth, service)
+feature: feature-name               # Feature/initiative name (e.g., pagination, auth-v2)
+                                    # Use kebab-case, match across IDEATION, SPEC, IMPL-PLAN docs
+summary_short: >-                   # 1-2 sentences for document registry tables
+  Offset/limit pagination required across all list endpoints
+summary_long: >-                    # 3-5 sentences: what this requires, why it matters, scope
+  Defines normative Requirements for system-wide pagination via offset/limit parameters.
+  Specifies supported ranges, response metadata, error handling, and <100ms performance
+  target. One Requirement implemented by multiple Specs (search, users, timeline)
+  coordinated by one Plan.
+
+# OPTIONAL FIELDS — safe to omit if not applicable
+keywords:                           # Search keywords (2-3 recommended). Omit field if not needed.
+  - requirements
+  - feature
+
+# DOCUMENT RELATIONSHIPS — omit sections with no entries
+implements:                         # Ideation docs this requirement addresses (Problems, Experience)
+  - IDEATION-feature-problems
+  - IDEATION-feature-experience
+implemented_by:                     # Specs that implement this Requirement
+  - SPEC-search-results-pagination
+  - SPEC-user-list-pagination
+related:                            # Cross-cutting related documents
+  - INIT-feature
 ---
 
 # REQ-<feature>
@@ -230,22 +247,3 @@ Summary: Performance target <100ms is binding; error handling for invalid offset
 | Do we need export pagination?                       | Scope decision, separate feature work                      | Business decision on export feature priority                | Product      | 2025-02-01 |
 
 ---
-
-## Document Metadata
-
-```yaml
-id: REQ-pagination-system
-type: REQ
-status: approved
-stability: stable
-created: 2025-01-21
-last_updated: 2025-01-21
-area: core-api
-feature: pagination-system
-driven_by: [IDEATION-PROBLEMS-pagination.md, IDEATION-EXPERIENCE-pagination.md]
-implemented_by:
-  [SPEC-search-results-pagination.md, SPEC-user-list-pagination.md, SPEC-timeline-pagination.md]
-blocks: [SPEC-search-results-pagination, SPEC-user-list-pagination, SPEC-timeline-pagination]
-related: [INIT-pagination.md]
-keywords: [pagination, offset, limit, api, performance, cursoring]
-```

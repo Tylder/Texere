@@ -1,22 +1,33 @@
 ---
-type: IDEATION-PROBLEMS
-status: draft
-stability: experimental
-created: YYYY-MM-DD
-last_updated: YYYY-MM-DD
-area: search
-feature: pagination-system
-frontmatter_auto_updated_by: script/validate-docs.mjs
-frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Problems discovered when browsing large result sets: timeouts, no pagination, inconsistent
-  behavior'
-summary_long:
-  'Identifies 3 key problems: timeouts on large datasets, inability to browse results efficiently,
-  and inconsistent pagination behavior across endpoints. Includes failure modes, real scenarios,
-  resolution indicators, and open questions. Drives Requirements once validated.'
-related_ideation: [IDEATION-EXPERIENCE-pagination, IDEATION-UNKNOWNS-pagination]
-drives: []
+# REQUIRED FIELDS — DO NOT REMOVE ANY OF THESE
+type: IDEATION-PROBLEMS             # Always "IDEATION-PROBLEMS" for this document type
+status: draft                       # Current status: draft | active | stable | deprecated
+stability: experimental             # Maturity level: experimental | beta | stable
+created: YYYY-MM-DD                 # ISO format (YYYY-MM-DD). Set once, never change.
+last_updated: YYYY-MM-DD            # AUTO-UPDATED on commit. DO NOT manually edit.
+area: search                        # System area (e.g., search, api, auth, database)
+feature: pagination-system          # Feature/initiative name (e.g., pagination, auth-v2)
+                                    # Use kebab-case, match across IDEATION-EXPERIENCE, IDEATION-UNKNOWNS
+summary_short: >-                   # 1-2 sentences for document registry tables
+  Problems discovered when browsing large result sets: timeouts, no pagination,
+  inconsistent behavior
+summary_long: >-                    # 3-5 sentences: what problems exist, impact, why they matter
+  Identifies 3 key problems: timeouts on large datasets, inability to browse results
+  efficiently, and inconsistent pagination behavior across endpoints. Includes failure
+  modes, real scenarios, resolution indicators, and open questions. Drives Requirements
+  once validated.
+
+# OPTIONAL FIELDS — safe to omit if not applicable
+keywords:                           # Search keywords (2-3 recommended). Omit field if not needed.
+  - ideation
+  - problems
+
+# DOCUMENT RELATIONSHIPS — omit sections with no entries
+related_ideation:                   # Other ideation docs on this feature (Experience, Unknowns)
+  - IDEATION-EXPERIENCE-pagination
+  - IDEATION-UNKNOWNS-pagination
+drives:                             # Requirements this drives (fill after REQ-* created)
+  - REQ-feature-name
 ---
 
 ## Document Relationships
@@ -268,20 +279,3 @@ Other problems that interact with these.
 - Export functionality (separate feature)
 
 ---
-
-## Document Metadata
-
-```yaml
-id: IDEATION-PROBLEMS-pagination
-type: IDEATION-PROBLEMS
-status: draft
-stability: experimental
-created: 2025-01-21
-last_updated: 2025-01-21
-area: search
-feature: pagination-system
-problems_count: 3
-related_ideation: [IDEATION-EXPERIENCE-pagination, IDEATION-UNKNOWNS-pagination]
-drives_to: REQ-pagination-system # Will be filled in after Requirements created
-keywords: [pagination, search, timeout, performance, ux, browsing, results]
-```
