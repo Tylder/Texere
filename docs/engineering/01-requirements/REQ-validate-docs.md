@@ -17,118 +17,89 @@ summary_long: |
   (DOCUMENT-REGISTRY.md and folder READMEs). The validation runs as a pre-commit hook via lint-staged.
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [110, 133]
-      summary:
-        'Driven by META-documentation-system; implements the validation layer of the documentation
-        lifecycle.'
-      token_est: 91
     - title: 'TLDR'
-      lines: [135, 154]
+      lines: [106, 125]
       summary:
         'Every document must have valid frontmatter, correct naming, valid links, and indices must
         stay synchronized.'
       token_est: 134
     - title: 'Scope'
-      lines: [156, 187]
+      lines: [127, 158]
       summary:
         'Covers frontmatter validation, naming conventions, link checking, and index generation/sync
         for all documents in docs/engineering.'
       token_est: 189
     - title: 'REQ-001: Frontmatter Validation'
-      lines: [189, 220]
+      lines: [160, 191]
       summary:
         'Every document MUST have YAML frontmatter with nine required fields: type, status,
         stability, created, last_updated, area, feature, summary_short, summary_long.'
       token_est: 244
     - title: 'REQ-002: Type and Folder Consistency'
-      lines: [222, 255]
+      lines: [193, 226]
       summary:
         'Document type in frontmatter MUST match the folder it resides in; ideation docs MUST have
         IDEATION-(PROBLEMS|EXPERIENCE|UNKNOWNS) type.'
       token_est: 238
     - title: 'REQ-003: Naming Convention Enforcement'
-      lines: [257, 290]
+      lines: [228, 261]
       summary:
         'Files MUST follow naming patterns: IDEATION-(PROBLEMS|EXPERIENCE|UNKNOWNS)-_, REQ-_,
         SPEC-_, IMPL-PLAN-_, META-\*.'
       token_est: 201
     - title: 'REQ-004: Link Validation'
-      lines: [292, 333]
+      lines: [263, 304]
       summary:
         'All markdown links in document content MUST be validated; broken links MUST be reported
         with file path and link text.'
       token_est: 341
     - title: 'REQ-005: Auto-Update Last Updated Timestamp'
-      lines: [335, 370]
+      lines: [306, 341]
       summary:
         'Documents staged for commit MUST have last_updated field automatically updated to current
         ISO datetime.'
       token_est: 275
     - title: 'REQ-006: Generate and Sync DOCUMENT-REGISTRY.md'
-      lines: [372, 411]
+      lines: [343, 382]
       summary:
         'DOCUMENT-REGISTRY.md MUST be regenerated from all document frontmatter, sorted
         deterministically, with table showing ID, Type, Status, Stability, Area, Feature, Summary.'
       token_est: 333
     - title: 'REQ-007: Update Folder READMEs'
-      lines: [413, 451]
+      lines: [384, 422]
       summary:
         'Each folder README MUST maintain active and archived/deprecated lists of documents, sorted
         deterministically.'
       token_est: 290
     - title: 'REQ-008: Code Formatting'
-      lines: [453, 485]
+      lines: [424, 456]
       summary:
         'All modified documentation files (registry, folder READMEs, updated docs) MUST be formatted
         with Prettier before re-staging.'
       token_est: 218
     - title: 'REQ-009: Re-stage Modified Files'
-      lines: [487, 522]
+      lines: [458, 493]
       summary:
         'Files modified by validation/auto-update steps MUST be re-staged via git add so they are
         included in the commit.'
       token_est: 250
     - title: 'Design Decisions'
-      lines: [524, 537]
+      lines: [495, 508]
       token_est: 245
     - title: 'Blockers'
-      lines: [539, 547]
+      lines: [510, 518]
       summary:
         'No active blockers; script is production-deployed via pre-commit hooks and lint-staged.'
       token_est: 56
     - title: 'Assumptions & Unknowns'
-      lines: [549, 563]
+      lines: [520, 534]
       token_est: 251
     - title: 'Document Metadata'
-      lines: [565, 581]
+      lines: [536, 552]
       token_est: 47
 ---
 
 # REQ-validate-docs
-
-## Document Relationships
-
-Summary: Driven by META-documentation-system; implements the validation layer of the documentation
-lifecycle.
-
-**Upstream (depends on):**
-
-- docs/engineering/meta/META-documentation-system.md (defines the system this validates)
-
-**Downstream (depends on this):**
-
-- script/validate-docs.mjs (implements this requirement)
-- DOCUMENT-REGISTRY.md (generated and kept in sync by this requirement)
-- docs/engineering/\*/README.md (folder READMEs kept in sync)
-
-**Siblings (related Requirements):**
-
-- REQ-generate-doc-indices.md (generates section indices; runs independently)
-
-**Related (cross-cutting):**
-
-- docs/engineering/meta/META-documentation-system.md (defines what this validates)
 
 ---
 

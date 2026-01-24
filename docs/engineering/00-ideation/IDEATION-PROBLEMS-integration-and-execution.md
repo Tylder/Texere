@@ -23,106 +23,74 @@ related_ideation:
 drives: []
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [101, 127]
-      summary:
-        'Execution quality determines whether system reduces or increases workload; tight feedback
-        loops and safe repo mutations are essential.'
-      token_est: 102
     - title: 'TLDR'
-      lines: [129, 154]
+      lines: [97, 122]
       summary:
         'Generated code violates repo constraints, execution results are ignored or misinterpreted,
         environments are uncontrolled, repo mutations are unsafe, and changes are too large to
         review effectively.'
       token_est: 203
     - title: 'Scope'
-      lines: [156, 182]
+      lines: [124, 150]
       summary:
         'Code generation alignment, execution feedback incorporation, environment reproducibility,
         safe repo state management, and human-granularity reviewability—not specific frameworks or
         detailed style enforcement.'
       token_est: 153
     - title: 'Overview'
-      lines: [184, 197]
+      lines: [152, 165]
       token_est: 142
     - title: 'Problems'
-      lines: [199, 462]
+      lines: [167, 430]
       token_est: 2084
       subsections:
         - title:
             'Problem 1: PROB-007 — Code writing is slow, error-prone, and not integration-aware'
-          lines: [201, 250]
+          lines: [169, 218]
           summary:
             'Generating code is not hard; integrating it correctly into evolving codebase is. Agents
             write plausible code that fails local constraints and violates repo architecture.'
           token_est: 401
         - title: 'Problem 2: PROB-013 — Execution results are not reliably incorporated'
-          lines: [252, 304]
+          lines: [220, 272]
           summary:
             'Coding system must incorporate real execution results (tests, builds); many workflows
             cannot run commands reliably or fail to interpret and apply results.'
           token_est: 426
         - title: 'Problem 3: PROB-018 — Environment and dependency drift breaks reproducibility'
-          lines: [306, 355]
+          lines: [274, 323]
           summary:
             'Results are not reliably reproducible across sessions or machines because environment
             state drifts or is ambiguous, leading to spurious failures and wasted debugging.'
           token_est: 385
         - title: 'Problem 4: PROB-033 — Repo mutation and workspace state are not managed safely'
-          lines: [357, 410]
+          lines: [325, 378]
           summary:
             'System cannot reliably manage repo state transitions and mutations; changes may apply
             to wrong baseline, apply incompletely, or leave repo in unrecoverable state.'
           token_est: 489
         - title: 'Problem 5: PROB-021 — Work products are not reviewable at human granularity'
-          lines: [412, 462]
+          lines: [380, 430]
           summary:
             'Even when code compiles, work is hard to review: changes are too large, rationale is
             missing, human cannot easily assess risk and correctness.'
           token_est: 383
     - title: 'Success Signals (System Level)'
-      lines: [464, 476]
+      lines: [432, 444]
       token_est: 108
     - title: 'Assumptions'
-      lines: [478, 488]
+      lines: [446, 456]
       token_est: 78
     - title: 'Unknowns'
-      lines: [490, 503]
+      lines: [458, 471]
       token_est: 103
     - title: 'Related Problems'
-      lines: [505, 515]
+      lines: [473, 483]
       token_est: 85
     - title: 'Document Metadata'
-      lines: [517, 548]
+      lines: [485, 516]
       token_est: 67
 ---
-
-## Document Relationships
-
-Summary: Execution quality determines whether system reduces or increases workload; tight feedback
-loops and safe repo mutations are essential.
-
-**Upstream (context):**
-
-- IDEATION-PROBLEMS-grounding-and-freshness.md (execution validates grounding)
-- IDEATION-PROBLEMS-state-and-visibility.md (execution results must update state)
-
-**Downstream (informs):**
-
-- Code generation engine design
-- Test/build integration architecture
-- Change review and adoption workflows
-
-**Siblings:**
-
-- IDEATION-PROBLEMS-orchestration-and-governance.md (orchestration drives execution)
-- IDEATION-PROBLEMS-tooling-models-and-infrastructure.md (execution uses tools and models)
-
-**Related:**
-
-- Quality control layer design
-- Repo state management systems
 
 ---
 

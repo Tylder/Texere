@@ -29,27 +29,6 @@ related_ideation: # Other ideation docs on this feature (Problems, Experience)
   - IDEATION-EXPERIENCE-pagination
 ---
 
-## Document Relationships
-
-**Upstream (context):**
-
-- IDEATION-PROBLEMS-pagination.md (problems driving these questions)
-- IDEATION-EXPERIENCE-pagination.md (user expectations)
-
-**Downstream (informs):**
-
-- Requirements (uncertainties become design decisions)
-- INIT-<feature>.md
-
-**Siblings (other ideation docs):**
-
-- IDEATION-PROBLEMS-pagination.md (what's wrong?)
-- IDEATION-EXPERIENCE-pagination.md (how is it used?)
-
-**Related:**
-
-- IDEATION-UNKNOWNS-pagination.md (open questions)
-
 ---
 
 ## TLDR

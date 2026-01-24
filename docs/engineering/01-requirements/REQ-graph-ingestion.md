@@ -22,59 +22,35 @@ related:
   - REQ-graph-system-graph-knowledge-system
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [59, 79]
-      summary: 'High-level Requirements for ingestion pipelines and connectors.'
-      token_est: 51
     - title: 'TLDR'
-      lines: [81, 99]
+      lines: [57, 75]
       summary:
         'Ingestion MUST create canonical Artifact nodes with deterministic provenance and retention
         handling; connectors are pluggable and source-specific.'
       token_est: 101
     - title: 'Scope'
-      lines: [101, 125]
+      lines: [77, 101]
       summary:
         'Ingestion pipelines, connector contracts, provenance, and retention modes. Excludes
         lifecycle semantics or projection rules.'
       token_est: 84
     - title: 'REQ-001: Connector Contract'
-      lines: [127, 150]
+      lines: [103, 126]
       summary: 'All ingestion connectors MUST implement a shared contract.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [152, 159]
+      lines: [128, 135]
       summary: 'Ingestion must align with architecture and graph model constraints.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [161, 174]
+      lines: [137, 150]
       token_est: 85
     - title: 'Blockers'
-      lines: [176, 180]
+      lines: [152, 156]
       token_est: 39
 ---
 
 # REQ-graph-ingestion
-
-## Document Relationships
-
-Summary: High-level Requirements for ingestion pipelines and connectors.
-
-**Upstream (depends on):**
-
-- REQ-graph-system-graph-system-architecture.md
-- REQ-graph-system-graph-knowledge-system.md
-
-**Downstream (depends on this):**
-
-- REQ-graph-ingestion-repo-scip-ts.md (planned)
-- REQ-graph-ingestion-web-docs.md (planned)
-- REQ-graph-ingestion-forum.md (planned)
-
-**Siblings (related Requirements):**
-
-- REQ-graph-store.md
-- REQ-graph-projection.md
 
 ---
 

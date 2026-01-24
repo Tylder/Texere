@@ -39,30 +39,6 @@ related: # Cross-cutting related documents
   - INIT-pagination
 ---
 
-## Document Relationships
-
-Summary: Coordinates three Specs; depends on shared library and all Requirement implementations;
-6-milestone delivery plan.
-
-**Upstream (depends on):**
-
-- REQ-pagination-system.md (Requirements this implements)
-- SPEC-search-results-pagination.md (first Spec to implement)
-- SPEC-user-list-pagination.md (second Spec to implement)
-- SPEC-timeline-pagination.md (third Spec to implement)
-
-**Downstream (depends on this):**
-
-- (None; this is the execution plan)
-
-**Siblings (related Plans):**
-
-- (None; unique plan for this feature)
-
-**Related (cross-cutting):**
-
-- INIT-pagination.md
-
 ---
 
 ## TLDR

@@ -24,108 +24,77 @@ related_ideation:
 drives: []
 index:
   sections:
-    - title: "Document Relationships"
-      lines: [103, 130]
-      summary: 'Foundation for all other systems; orchestration discipline enforces phase boundaries, quality control, and reliable multi-agent coordination.'
-      token_est: 110
     - title: "TLDR"
-      lines: [132, 160]
+      lines: [101, 129]
       summary: 'Orchestration is opaque, multi-agent conflicts are invisible, phases blur together, quality control is missing or overridable, scope boundaries are ambiguous, and the system cannot diagnose or improve itself.'
       token_est: 224
     - title: "Scope"
-      lines: [162, 194]
+      lines: [131, 163]
       summary: 'Phase discipline, multi-agent coordination, quality control, scope clarity, operational health testing, and observable diagnosability—not specific frameworks or rule engines.'
       token_est: 199
     - title: "Overview"
-      lines: [196, 210]
+      lines: [165, 179]
       token_est: 141
     - title: "Problems"
-      lines: [212, 727]
+      lines: [181, 696]
       token_est: 3881
       subsections:
         - title: "Problem 1: PROB-011 — Discovery, requirements, and implementation blur together"
-          lines: [214, 264]
+          lines: [183, 233]
           summary: 'Agents frequently blur discovery, requirements, architecture, and implementation, leading to premature solutioning, unstable scopes, and wasted rework.'
           token_est: 341
         - title: "Problem 2: PROB-014 — Poor support for weakness hunting and critical review"
-          lines: [266, 311]
+          lines: [235, 280]
           summary: 'Most assistants optimize for helpfulness and forward momentum, failing to proactively surface weaknesses, ambiguity, and risks that should block or reshape decisions.'
           token_est: 329
         - title: "Problem 3: PROB-015 — Scope confusion and autonomy expectations derail usefulness"
-          lines: [313, 360]
+          lines: [282, 329]
           summary: 'Users and agents diverge on what the system is supposed to do (assist vs autonomously decide/ship); scope boundaries unclear leads to overreach or underdelivery.'
           token_est: 368
         - title: "Problem 4: PROB-016 — No operationally testable definition of "healthy" behavior"
-          lines: [362, 408]
+          lines: [331, 377]
           summary: 'System lacks stable, testable notion of what "good" looks like end-to-end, making it hard to debug regressions, measure progress, or detect drift.'
           token_est: 354
         - title: "Problem 5: PROB-017 — System reliability depends on agent compliance (tools, policies, phase discipline)"
-          lines: [410, 463]
+          lines: [379, 432]
           summary: 'Correctness, safety, cost control, and workflow integrity are brittle because they depend on agent self-discipline rather than systematic mechanisms enforcing expectations.'
           token_est: 461
         - title: "Problem 6: PROB-020 — Multi-agent coordination failures create inconsistency and redundancy"
-          lines: [465, 514]
+          lines: [434, 483]
           summary: 'Multiple agents in parallel or sequence produce inconsistent beliefs, duplicate work, or deadlocks because shared state and conflict resolution are weak.'
           token_est: 363
         - title: "Problem 7: PROB-024 — No composable quality-control layer to intercept and challenge outputs"
-          lines: [516, 566]
+          lines: [485, 535]
           summary: 'Agent outputs reach users or trigger actions without independent scrutiny; hallucinations and obvious mistakes propagate downstream unchecked.'
           token_est: 432
         - title: "Problem 8: PROB-031 — Orchestration is a black box (insufficient observability for diagnosis)"
-          lines: [568, 622]
+          lines: [537, 591]
           summary: 'When outcomes are poor, user and system cannot reliably determine what happened: agent execution order, evidence usage, tool invocations, model choices, and boundary violations are implicit.'
           token_est: 442
         - title: "Problem 9: PROB-032 — No evidence-backed self-improvement loop for orchestration configuration"
-          lines: [624, 675]
+          lines: [593, 644]
           summary: 'System cannot reliably diagnose weaknesses in its own orchestration and recommend researched, testable changes; improvements are ad-hoc and cannot be validated.'
           token_est: 402
         - title: "Problem 10: PROB-036 — Unbounded retries and unpredictable degradation under quotas/timeouts/outages"
-          lines: [677, 727]
+          lines: [646, 696]
           summary: 'Under external constraints, system degrades unpredictably—thrashing, retrying excessively, silently proceeding with weaker substitutes, or guessing without evidence.'
           token_est: 389
     - title: "Success Signals (System Level)"
-      lines: [729, 745]
+      lines: [698, 714]
       token_est: 138
     - title: "Assumptions"
-      lines: [747, 758]
+      lines: [716, 727]
       token_est: 89
     - title: "Unknowns"
-      lines: [760, 771]
+      lines: [729, 740]
       token_est: 94
     - title: "Related Problems"
-      lines: [773, 783]
+      lines: [742, 752]
       token_est: 71
     - title: "Document Metadata"
-      lines: [785, 817]
+      lines: [754, 786]
       token_est: 68
 ---
-
-## Document Relationships
-
-Summary: Foundation for all other systems; orchestration discipline enforces phase boundaries,
-quality control, and reliable multi-agent coordination.
-
-**Upstream (context):**
-
-- IDEATION-PROBLEMS-state-and-visibility.md (orchestration requires visible state to enforce)
-- IDEATION-PROBLEMS-integration-and-execution.md (orchestration directs execution)
-
-**Downstream (informs):**
-
-- Multi-agent orchestration architecture
-- Quality control framework design
-- Governance policy and phase models
-- Observability and metrics infrastructure
-
-**Siblings:**
-
-- IDEATION-PROBLEMS-tooling-models-and-infrastructure.md (orchestration uses tools and models)
-- IDEATION-PROBLEMS-user-trust-and-feedback.md (orchestration affects user trust)
-
-**Related:**
-
-- System health and reliability monitoring
-- Self-improvement and diagnostic systems
 
 ---
 

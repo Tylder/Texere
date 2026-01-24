@@ -22,48 +22,42 @@ related_ideation:
 drives: []
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [112, 141]
-      summary:
-        'Infrastructure provides the substrate for all agent operations; weak tools, model lock-in,
-        cost bloat, security gaps, and brittleness undermine all other improvements.'
-      token_est: 142
     - title: 'TLDR'
-      lines: [143, 168]
+      lines: [108, 133]
       summary:
         'Tools exist but are unreliably used; models are swapped casually despite tight coupling;
         token bloat from re-ingestion; secrets leak; cross-repo dependencies are hidden; prompts are
         brittle and require constant tweaking.'
       token_est: 199
     - title: 'Scope'
-      lines: [170, 197]
+      lines: [135, 162]
       summary:
         'Tool integration reliability, model portability, token budgeting, security boundaries,
         dependency visibility, and resilient instruction mechanisms—not specific tools, cost
         accounting, or MCP details.'
       token_est: 142
     - title: 'Overview'
-      lines: [199, 212]
+      lines: [164, 177]
       token_est: 137
     - title: 'Problems'
-      lines: [214, 525]
+      lines: [179, 490]
       token_est: 2363
       subsections:
         - title:
             'Problem 1: PROB-005 — Tooling interoperability is unreliable (MCP tools and beyond)'
-          lines: [216, 270]
+          lines: [181, 235]
           summary:
             'Even when tools exist, agents misuse them, forget them, or cannot predictably chain
             them, remaining "text-only" and unable to ground work in reality.'
           token_est: 440
         - title: 'Problem 2: PROB-006 — Model portability and model-mismatch failures'
-          lines: [272, 322]
+          lines: [237, 287]
           summary:
             'Different tasks require different model strengths; a system tied to one model becomes
             fragile and expensive; model changes break previously working workflows.'
           token_est: 385
         - title: 'Problem 3: PROB-012 — Cost blow-ups from context bloat and repeated ingestion'
-          lines: [324, 371]
+          lines: [289, 336]
           summary:
             'Workflows rely on stuffing large context windows with raw text repeatedly, which is
             expensive, slow, and scales poorly as projects grow.'
@@ -71,7 +65,7 @@ index:
         - title:
             'Problem 4: PROB-019 — Security boundary failures compromise integrity (secrets,
             untrusted inputs)'
-          lines: [373, 420]
+          lines: [338, 385]
           summary:
             'System inevitably handles sensitive data (tokens, keys) and untrusted content (repo
             text, issues); without clear security boundaries, secrets leak and malicious
@@ -80,63 +74,34 @@ index:
         - title:
             'Problem 5: PROB-023 — Cross-repo and dependency graph blind spots cause incomplete
             reasoning'
-          lines: [422, 468]
+          lines: [387, 433]
           summary:
             'Modern systems rely on multiple repos and packages; if agent only understands local
             slice, it misses constraints and integration points, causing cascading failures.'
           token_est: 345
         - title: 'Problem 6: PROB-037 — Prompt brittleness undermines consistent agent behavior'
-          lines: [470, 525]
+          lines: [435, 490]
           summary:
             'System guidance (prompts, roles, instructions) is fragile; small changes in wording or
             model choice cause disproportionate shifts in agent behavior, requiring constant prompt
             tuning.'
           token_est: 465
     - title: 'Success Signals (System Level)'
-      lines: [527, 538]
+      lines: [492, 503]
       token_est: 99
     - title: 'Assumptions'
-      lines: [540, 550]
+      lines: [505, 515]
       token_est: 88
     - title: 'Unknowns'
-      lines: [552, 562]
+      lines: [517, 527]
       token_est: 80
     - title: 'Related Problems'
-      lines: [564, 574]
+      lines: [529, 539]
       token_est: 73
     - title: 'Document Metadata'
-      lines: [576, 603]
+      lines: [541, 568]
       token_est: 63
 ---
-
-## Document Relationships
-
-Summary: Infrastructure provides the substrate for all agent operations; weak tools, model lock-in,
-cost bloat, security gaps, and brittleness undermine all other improvements.
-
-**Upstream (context):**
-
-- IDEATION-PROBLEMS-orchestration-and-governance.md (orchestration directs tool and model use)
-- IDEATION-PROBLEMS-integration-and-execution.md (tools are used in execution)
-
-**Downstream (informs):**
-
-- Tool integration and MCP architecture
-- Model selection and provider management
-- Cost optimization and token budgeting
-- Security and secrets management infrastructure
-- Dependency tracking and visibility systems
-
-**Siblings:**
-
-- IDEATION-PROBLEMS-state-and-visibility.md (tool outputs must update state)
-- IDEATION-PROBLEMS-orchestration-and-governance.md (tool compliance is orchestrated)
-
-**Related:**
-
-- Tool provider ecosystem (MCP, custom tools)
-- Model provider relationships and costs
-- Security and secrets management
 
 ---
 

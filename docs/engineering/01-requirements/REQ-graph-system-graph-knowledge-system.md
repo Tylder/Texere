@@ -17,314 +17,287 @@ summary_long:
   sources, deterministic projections, and validation invariants for auditable decision history.'
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [308, 329]
-      summary:
-        'Converts prior Problems-only canvas content into actionable, testable requirements for a
-        lifecycle-traceable graph-based knowledge system.'
-      token_est: 65
     - title: 'TLDR'
-      lines: [331, 352]
+      lines: [304, 325]
       summary:
         'Lifecycle-traceable graph memory with append-only canonical nodes, deterministic truth
         selection, provenance, time lenses, and ingest-to-graph parity for code and external
         sources.'
       token_est: 140
     - title: 'Scope'
-      lines: [354, 379]
+      lines: [327, 352]
       summary:
         'Lifecycle traceability, graph model, provenance, ingestion parity, time-lens queries,
         projections, and validation invariants. Excludes document-genre ontology, legal advice, full
         PM suite, and valid-time semantics.'
       token_est: 151
     - title: '1. Purpose'
-      lines: [381, 389]
+      lines: [354, 362]
       token_est: 91
     - title: '2. Non-goals'
-      lines: [391, 401]
+      lines: [364, 374]
       token_est: 81
     - title: '3. Key Definitions (Actionable)'
-      lines: [403, 679]
+      lines: [376, 652]
       token_est: 1479
       subsections:
         - title: '3.1 Node Category'
-          lines: [409, 420]
+          lines: [382, 393]
           token_est: 85
         - title: '3.1a Project (workspace / tenant)'
-          lines: [422, 447]
+          lines: [395, 420]
           token_est: 136
         - title: '3.2 Subject (canonical thing)'
-          lines: [449, 481]
+          lines: [422, 454]
           token_est: 175
         - title: '3.3 Artifact (verifiable source material)'
-          lines: [483, 563]
+          lines: [456, 536]
           token_est: 388
         - title: '3.4 Assertion (lifecycle statement)'
-          lines: [565, 590]
+          lines: [538, 563]
           token_est: 141
         - title: '3.5 Epistemic Type'
-          lines: [592, 601]
+          lines: [565, 574]
           token_est: 64
         - title: '3.6 Evidence (as an Assertion)'
-          lines: [603, 625]
+          lines: [576, 598]
           token_est: 129
         - title: '3.7 Agent'
-          lines: [627, 637]
+          lines: [600, 610]
           token_est: 62
         - title: '3.8 Activity'
-          lines: [639, 649]
+          lines: [612, 622]
           token_est: 67
         - title: '3.9 Supersession'
-          lines: [651, 658]
+          lines: [624, 631]
           token_est: 41
         - title: '3.10 Transaction-time “as-of” lens'
-          lines: [660, 665]
+          lines: [633, 638]
           token_est: 32
         - title: '3.11 Projection (non-canonical)'
-          lines: [667, 679]
+          lines: [640, 652]
           token_est: 101
     - title: '4. Design Principles (Normative)'
-      lines: [681, 697]
+      lines: [654, 670]
       token_est: 164
     - title: '5. Node Categories and Minimum Properties (Normative)'
-      lines: [699, 727]
+      lines: [672, 700]
       token_est: 163
     - title: '6. Core Relationships (Normative)'
-      lines: [729, 813]
+      lines: [702, 786]
       token_est: 640
       subsections:
         - title: 'REQ-REL-001 — Supersession'
-          lines: [731, 742]
+          lines: [704, 715]
           token_est: 59
         - title: 'REQ-REL-002 — Evidence as anchor + interpretation'
-          lines: [744, 755]
+          lines: [717, 728]
           token_est: 78
         - title: 'REQ-REL-003 — Lifecycle trace spine'
-          lines: [757, 768]
+          lines: [730, 741]
           token_est: 77
         - title: 'REQ-REL-004 — Relationship vocabulary (minimum)'
-          lines: [770, 813]
+          lines: [743, 786]
           token_est: 420
     - title: '7. Invariants and Validation (Normative)'
-      lines: [815, 883]
+      lines: [788, 856]
       token_est: 340
       subsections:
         - title: 'REQ-INV-001 — Decision completeness'
-          lines: [817, 827]
+          lines: [790, 800]
           token_est: 72
         - title: 'REQ-INV-002 — Requirement derivation'
-          lines: [829, 838]
+          lines: [802, 811]
           token_est: 46
         - title: 'REQ-INV-003 — SpecClause refinement'
-          lines: [840, 848]
+          lines: [813, 821]
           token_est: 34
         - title: 'REQ-INV-004 — PlanStep grounding and dependencies'
-          lines: [850, 861]
+          lines: [823, 834]
           token_est: 68
         - title: 'REQ-INV-005 — Verification linkage'
-          lines: [863, 872]
+          lines: [836, 845]
           token_est: 50
         - title: 'REQ-INV-006 — Deterministic current truth selection'
-          lines: [874, 883]
+          lines: [847, 856]
           token_est: 64
     - title: '8. Time Lens and Query Contract (Normative)'
-      lines: [885, 926]
+      lines: [858, 899]
       token_est: 189
     - title: '9. Projections (Derived Views) (Normative)'
-      lines: [928, 985]
+      lines: [901, 958]
       token_est: 332
       subsections:
         - title: 'REQ-PROJ-001 — Projection registry'
-          lines: [930, 940]
+          lines: [903, 913]
           token_est: 59
         - title: 'REQ-PROJ-001a — Projection explainability'
-          lines: [942, 954]
+          lines: [915, 927]
           token_est: 90
         - title: 'REQ-PROJ-002 — Who computes projections'
-          lines: [956, 966]
+          lines: [929, 939]
           token_est: 62
         - title: 'REQ-PROJ-003 — Minimum projections (v1)'
-          lines: [968, 985]
+          lines: [941, 958]
           token_est: 115
     - title: '10. Ingestion (Web + Code) to Graph (Normative)'
-      lines: [987, 1144]
+      lines: [960, 1117]
       token_est: 965
       subsections:
         - title: 'REQ-ING-001 — Ingest-to-graph parity'
-          lines: [989, 1001]
+          lines: [962, 974]
           token_est: 89
         - title: 'REQ-ING-001a — Ingestion depth configuration'
-          lines: [1003, 1020]
+          lines: [976, 993]
           token_est: 110
         - title: 'REQ-ING-002 — External source decomposition'
-          lines: [1022, 1031]
+          lines: [995, 1004]
           token_est: 49
         - title: 'REQ-ING-003 — Two-tier ingestion and evidence promotion'
-          lines: [1033, 1058]
+          lines: [1006, 1031]
           token_est: 184
         - title: 'REQ-ING-004 — Retention policy as queryable facts'
-          lines: [1060, 1080]
+          lines: [1033, 1053]
           token_est: 155
         - title: 'REQ-ING-005 — Code ingestion decomposition'
-          lines: [1082, 1098]
+          lines: [1055, 1071]
           token_est: 112
         - title: 'REQ-ING-006 — External sources: forums/issues/threaded discussions'
-          lines: [1100, 1128]
+          lines: [1073, 1101]
           token_est: 164
         - title: 'REQ-ING-007 — Promotion triggers (Tier 2)'
-          lines: [1130, 1144]
+          lines: [1103, 1117]
           token_est: 94
     - title: '11. Graph Scale and “Active vs Historical” (Normative)'
-      lines: [1146, 1203]
+      lines: [1119, 1176]
       token_est: 348
       subsections:
         - title: 'REQ-SCALE-001 — Active vs historical separation'
-          lines: [1148, 1167]
+          lines: [1121, 1140]
           token_est: 149
         - title: 'REQ-SCALE-001a — Archival/retirement semantics'
-          lines: [1169, 1178]
+          lines: [1142, 1151]
           token_est: 50
         - title: 'REQ-SCALE-002 — Write-hot state via projections'
-          lines: [1180, 1190]
+          lines: [1153, 1163]
           token_est: 62
         - title: 'REQ-SCALE-002a — Deterministic ActiveWork rules'
-          lines: [1192, 1203]
+          lines: [1165, 1176]
           token_est: 77
     - title: '12. Required Query Capabilities (Normative)'
-      lines: [1205, 1243]
+      lines: [1178, 1216]
       token_est: 228
     - title: '13. Notes on Database Choice (Informational)'
-      lines: [1245, 1251]
+      lines: [1218, 1224]
       token_est: 63
     - title: '14. Traceability to Former Problem Areas (Informational)'
-      lines: [1253, 1265]
+      lines: [1226, 1238]
       token_est: 91
     - title: '15. Normative Schemas and Contracts (Normative)'
-      lines: [1267, 1425]
+      lines: [1240, 1398]
       token_est: 624
       subsections:
         - title: 'REQ-SCHEMA-001 — Assertion schema registry'
-          lines: [1272, 1282]
+          lines: [1245, 1255]
           token_est: 67
         - title: 'REQ-SCHEMA-002 — Minimum required fields per Assertion kind (v1)'
-          lines: [1284, 1409]
+          lines: [1257, 1382]
           token_est: 437
         - title: 'REQ-SCHEMA-003 — Normalization rules'
-          lines: [1411, 1425]
+          lines: [1384, 1398]
           token_est: 93
     - title: '16. Conflict Model and Contradiction Handling (Normative)'
-      lines: [1427, 1482]
+      lines: [1400, 1455]
       token_est: 272
     - title: '17. Plans and Work Execution Model (Normative)'
-      lines: [1484, 1560]
+      lines: [1457, 1533]
       token_est: 375
       subsections:
         - title: 'REQ-PLAN-001 — Plan identity and versioning'
-          lines: [1486, 1497]
+          lines: [1459, 1470]
           token_est: 86
         - title: 'REQ-PLAN-003 — PlanStep membership'
-          lines: [1499, 1509]
+          lines: [1472, 1482]
           token_est: 52
         - title: 'REQ-PLAN-002 — PlanStep ordering'
-          lines: [1511, 1525]
+          lines: [1484, 1498]
           token_est: 59
         - title: 'REQ-WORK-001 — Progress and status via WorkEvents'
-          lines: [1527, 1538]
+          lines: [1500, 1511]
           token_est: 63
         - title: 'REQ-WORK-002 — Blocking semantics'
-          lines: [1540, 1549]
+          lines: [1513, 1522]
           token_est: 54
         - title: 'REQ-ARCH-001 — Archival/retirement representation'
-          lines: [1551, 1560]
+          lines: [1524, 1533]
           token_est: 52
     - title: '18. Evidence Strength Model (Normative)'
-      lines: [1562, 1596]
+      lines: [1535, 1569]
       token_est: 153
     - title: '19. Retention Boundaries and Raw-Input Prohibition (Normative)'
-      lines: [1598, 1646]
+      lines: [1571, 1619]
       token_est: 258
     - title: '20. Subject Equivalence and Merge Workflow (Normative)'
-      lines: [1648, 1682]
+      lines: [1621, 1655]
       token_est: 154
     - title: '21. Ingestion Idempotency and Deduplication (Normative)'
-      lines: [1684, 1721]
+      lines: [1657, 1694]
       token_est: 179
     - title: '22. Locator Specification (Normative)'
-      lines: [1723, 1751]
+      lines: [1696, 1724]
       token_est: 104
     - title: '23. Projection Output Envelope (Normative)'
-      lines: [1753, 1784]
+      lines: [1726, 1757]
       token_est: 127
     - title: '24. Validation Enforcement, Staging, and Waivers (Normative)'
-      lines: [1786, 1829]
+      lines: [1759, 1802]
       token_est: 202
     - title: '25. Project Scoping and Multi-Project Operation (Normative)'
-      lines: [1831, 1843]
+      lines: [1804, 1816]
       token_est: 65
     - title: '26. Supersession Semantics and Visibility (Normative)'
-      lines: [1845, 1879]
+      lines: [1818, 1852]
       token_est: 202
     - title: '27. Scope Model (Normative)'
-      lines: [1881, 1911]
+      lines: [1854, 1884]
       token_est: 128
     - title: '28. Deterministic Canonicalization and Idempotency (Normative)'
-      lines: [1913, 1964]
+      lines: [1886, 1937]
       token_est: 232
     - title: '29. Waivers and Exceptional Paths (Normative)'
-      lines: [1966, 1984]
+      lines: [1939, 1957]
       token_est: 85
     - title: '30. Projections, Explanations, and GraphHealth (Normative)'
-      lines: [1986, 2037]
+      lines: [1959, 2010]
       token_est: 236
     - title: '31. External Source Rights and Metadata (Normative)'
-      lines: [2039, 2056]
+      lines: [2012, 2029]
       token_est: 68
     - title: '32. Locator Mapping Across Versions (Normative)'
-      lines: [2058, 2069]
+      lines: [2031, 2042]
       token_est: 67
     - title: '33. Activity Atomicity and Transactions (Normative)'
-      lines: [2071, 2082]
+      lines: [2044, 2055]
       token_est: 63
     - title: '34. Additional Tightening (Normative)'
-      lines: [2084, 2136]
+      lines: [2057, 2109]
       token_est: 232
     - title: '35. Open Questions (Remaining)'
-      lines: [2138, 2151]
+      lines: [2111, 2124]
       token_est: 114
     - title: 'Related Requirements'
-      lines: [2153, 2159]
+      lines: [2126, 2132]
       summary: 'No explicit cross-document requirements listed in this document.'
       token_est: 21
     - title: 'Design Decisions'
-      lines: [2161, 2174]
+      lines: [2134, 2147]
       token_est: 85
     - title: 'Blockers'
-      lines: [2176, 2180]
+      lines: [2149, 2153]
       token_est: 39
 ---
 
 # REQ-graph-knowledge-system
-
-## Document Relationships
-
-Summary: Converts prior Problems-only canvas content into actionable, testable requirements for a
-lifecycle-traceable graph-based knowledge system.
-
-**Upstream (depends on):**
-
-- None specified (replaces prior Problems-only canvas content)
-
-**Downstream (depends on this):**
-
-- None specified yet
-
-**Siblings (related Requirements):**
-
-- None specified
-
-**Related (cross-cutting):**
-
-- None specified
 
 ---
 

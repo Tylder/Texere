@@ -30,28 +30,6 @@ drives: # Requirements this drives (fill after REQ-* created)
   - REQ-feature-name
 ---
 
-## Document Relationships
-
-Summary: Grounds user-centric Requirements; paired with Problems and Unknowns ideation docs.
-
-**Upstream (context):**
-
-- IDEATION-PROBLEMS-pagination.md (problems this experience addresses)
-
-**Downstream (informs):**
-
-- Requirements (drives user-centric REQs)
-- INIT-<feature>.md
-
-**Siblings (other ideation docs):**
-
-- IDEATION-PROBLEMS-pagination.md (what's wrong?)
-- IDEATION-UNKNOWNS-pagination.md (what's uncertain?)
-
-**Related:**
-
-- (None yet)
-
 ---
 
 ## TLDR

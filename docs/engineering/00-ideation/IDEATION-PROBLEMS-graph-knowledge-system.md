@@ -21,14 +21,8 @@ related_ideation: []
 drives: []
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [162, 185]
-      summary:
-        'Discovery phase; identifies problems that drive Requirements; paired with Experience and
-        Unknowns docs.'
-      token_est: 65
     - title: 'TLDR'
-      lines: [187, 210]
+      lines: [158, 181]
       summary:
         'Decisions and rationale decay because information fragments across docs, chats, and code. A
         graph-based approach can fix this only if it avoids taxonomy sprawl, enforces epistemic
@@ -36,44 +30,44 @@ index:
         multi-step plans with dependencies and provenance.'
       token_est: 188
     - title: 'Scope'
-      lines: [212, 238]
+      lines: [183, 209]
       summary: 'Real failure modes and user frustrations; not solutions or design details.'
       token_est: 154
     - title: 'Overview'
-      lines: [240, 340]
+      lines: [211, 311]
       token_est: 1020
       subsections:
         - title: 'Node Categories (Justification, Not Schema)'
-          lines: [242, 267]
+          lines: [213, 238]
           token_est: 303
         - title: 'System Goal'
-          lines: [269, 280]
+          lines: [240, 251]
           token_est: 146
         - title: 'Resolved Decisions and Constraints'
-          lines: [282, 314]
+          lines: [253, 285]
           token_est: 316
         - title: 'Running Example: Todo List Feature (Lifecycle Trace)'
-          lines: [316, 340]
+          lines: [287, 311]
           token_est: 253
     - title: 'Problems'
-      lines: [342, 1040]
+      lines: [313, 1011]
       token_est: 6178
       subsections:
         - title: 'Problem 1: Epistemic Drift and Decision Loss'
-          lines: [346, 393]
+          lines: [317, 364]
           summary:
             'Decisions, rationale, and open uncertainties decay over time because they are not
             consistently captured, linked, and updated as the project changes.'
           token_est: 436
         - title: 'Problem 2: Graph Becomes an Unqueryable Dump (Bloat, Duplication, Noise)'
-          lines: [395, 455]
+          lines: [366, 426]
           summary:
             'If nodes for desires/uncertainties/options/evidence are created freely (and are
             immutable), the graph can grow without bound and become too large and inconsistent to
             query, causing the same decay as document sprawl.'
           token_est: 562
         - title: 'Problem 3: External Sources vs Internal Code Are Not First-Class Equals'
-          lines: [457, 529]
+          lines: [428, 500]
           summary:
             'Traditional systems treat code as “real” and external research as “notes,” making it
             impossible to query decisions across both uniformly. This includes ingestion asymmetry:
@@ -83,32 +77,32 @@ index:
         - title:
             'Problem 4: Implementation Plans Are Hard to Represent as Executable, Queryable Graph
             Objects'
-          lines: [531, 577]
+          lines: [502, 548]
           summary:
             'Multi-step implementation plans require dependencies, sequencing, partial completion,
             and revision history; document-based plans become stale and cannot be reliably queried.'
           token_est: 374
         - title: 'Problem 5: Weak Invariants Allow Inconsistent Graph States'
-          lines: [579, 623]
+          lines: [550, 594]
           summary:
             'Without enforceable invariants, the graph will contain broken lineage (e.g., decisions
             that resolve nothing), making “traceability” claims false.'
           token_est: 381
         - title: 'Problem 6: Temporal Validity and “As-Of” Truth'
-          lines: [625, 693]
+          lines: [596, 664]
           summary:
             'Even with preserved history, the system becomes misleading if it cannot distinguish
             what was believed when a decision was made versus what is believed now.'
           token_est: 693
         - title: 'Problem 7: Legal/IP Constraints and Retention Limits Undermine Provenance'
-          lines: [695, 749]
+          lines: [666, 720]
           summary:
             'A traceable graph needs durable provenance, but retaining external content can create
             legal/IP risk. Conservative retention reduces risk but can reduce auditability if not
             explicitly modeled.'
           token_est: 478
         - title: 'Problem 8: Multi-Writer Concurrency Causes Conflicts and Divergent Truth'
-          lines: [751, 800]
+          lines: [722, 771]
           summary:
             'With multiple agents writing (controller, researcher, planner, executor) across
             sessions, the graph will diverge unless conflict and concurrency are treated as
@@ -117,70 +111,47 @@ index:
         - title:
             'Problem 9: Lifecycle Coverage Fragmentation (Ideation → Decisions → Requirements → Spec
             → Plan → Code)'
-          lines: [802, 864]
+          lines: [773, 835]
           summary:
             'Even if the graph handles decisions, evidence, and code, the system fails if it cannot
             preserve continuity across the full lifecycle of intent → commitment → execution.'
           token_est: 624
         - title: 'Problem 10: Specification Drift, Ambiguity, and Under-Specification'
-          lines: [866, 923]
+          lines: [837, 894]
           summary:
             'Requirements and decisions are insufficient to prevent rework and divergence unless
             specification-level commitments (interfaces, invariants, edge cases) are captured in a
             queryable, maintainable way.'
           token_est: 481
         - title: 'Problem 11: Verification and Acceptance Evidence Is Missing or Unlinked'
-          lines: [925, 977]
+          lines: [896, 948]
           summary:
             'Without explicit verification/acceptance evidence linked to requirements/spec clauses,
             the graph cannot prove that commitments are satisfied, and “done” becomes narrative.'
           token_est: 415
         - title: 'Problem 12: Query Usability, Explainability, and Stable Views Without Doc-Types'
-          lines: [979, 1040]
+          lines: [950, 1011]
           summary:
             'A graph can be theoretically queryable but practically unusable if users cannot
             reliably ask, interpret, and trust the answers — especially when replacing familiar
             document genres with graph-native views.'
           token_est: 597
     - title: 'Success Signals (System Level)'
-      lines: [1042, 1066]
+      lines: [1013, 1037]
       token_est: 305
     - title: 'Assumptions'
-      lines: [1068, 1089]
+      lines: [1039, 1060]
       token_est: 224
     - title: 'Unknowns'
-      lines: [1091, 1125]
+      lines: [1062, 1096]
       token_est: 393
     - title: 'Related Problems'
-      lines: [1127, 1136]
+      lines: [1098, 1107]
       token_est: 64
     - title: 'Document Metadata'
-      lines: [1138, 1155]
+      lines: [1109, 1126]
       token_est: 60
 ---
-
-## Document Relationships
-
-Summary: Discovery phase; identifies problems that drive Requirements; paired with Experience and
-Unknowns docs.
-
-**Upstream (context):**
-
-- (None; ideation is discovery)
-
-**Downstream (informs):**
-
-- Requirements (drives REQ creation)
-- INIT-graph-knowledge-system.md
-
-**Siblings (other ideation docs):**
-
-- IDEATION-EXPERIENCE-graph-knowledge-system.md (usage patterns)
-- IDEATION-UNKNOWNS-graph-knowledge-system.md (open questions)
-
-**Related:**
-
-- (None yet)
 
 ---
 

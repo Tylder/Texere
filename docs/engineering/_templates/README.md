@@ -11,8 +11,11 @@ Template files for each document type. Use these as starting points when creatin
 5. **Delete sections that don't apply** to your specific document
 6. **Include Q&A sections** where decisions were made with alternatives
 
-**Important:** Do NOT include a "Document Metadata" section at the bottom. All metadata belongs in
-the YAML frontmatter at the top. The script auto-updates `last_updated` on every commit.
+**Important:**
+
+- All metadata belongs in YAML frontmatter at the top (no "Document Metadata" section at bottom)
+- Do NOT include "Document Relationships" sections in the body; use frontmatter fields instead
+- The script auto-updates `last_updated` on every commit
 
 ## Frontmatter Structure
 

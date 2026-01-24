@@ -21,57 +21,32 @@ related:
   - REQ-graph-system-graph-knowledge-system
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [55, 76]
-      summary: 'High-level Requirements for deterministic projections.'
-      token_est: 51
     - title: 'TLDR'
-      lines: [78, 95]
+      lines: [53, 70]
       summary:
         'Projections MUST be deterministic, explainable, and derived only from canonical nodes.'
       token_est: 73
     - title: 'Scope'
-      lines: [97, 119]
+      lines: [72, 94]
       summary: 'Projection contracts and determinism. Excludes ingestion and storage decisions.'
       token_est: 64
     - title: 'REQ-001: Projection Determinism'
-      lines: [121, 143]
+      lines: [96, 118]
       summary: 'Projections MUST be deterministic functions of canonical graph data.'
       token_est: 88
     - title: 'Related Requirements'
-      lines: [145, 152]
+      lines: [120, 127]
       summary: 'Projections must align with architecture and graph model.'
       token_est: 23
     - title: 'Design Decisions'
-      lines: [154, 167]
+      lines: [129, 142]
       token_est: 85
     - title: 'Blockers'
-      lines: [169, 173]
+      lines: [144, 148]
       token_est: 39
 ---
 
 # REQ-graph-projection
-
-## Document Relationships
-
-Summary: High-level Requirements for deterministic projections.
-
-**Upstream (depends on):**
-
-- REQ-graph-system-graph-system-architecture.md
-- REQ-graph-system-graph-knowledge-system.md
-
-**Downstream (depends on this):**
-
-- REQ-graph-projection-current-truth.md (planned)
-- REQ-graph-projection-active-work.md (planned)
-- REQ-graph-projection-graph-health.md (planned)
-
-**Siblings (related Requirements):**
-
-- REQ-graph-ingestion.md
-- REQ-graph-lifecycle.md
-- REQ-graph-store.md
 
 ---
 

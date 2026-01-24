@@ -20,93 +20,61 @@ related_ideation: [IDEATION-PROBLEMS-session-continuity]
 drives: []
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [85, 111]
-      summary:
-        'Grounding and freshness enable accurate decisions and prevent silent failures; validation
-        must be cheap and automated, provenance must be tracked.'
-      token_est: 103
     - title: 'TLDR'
-      lines: [113, 138]
+      lines: [81, 106]
       summary:
         'The system silently operates on outdated information, treats unvalidated assumptions as
         facts, and forgets why decisions were made. Stale research, hallucination, and lost
         provenance compound over time.'
       token_est: 208
     - title: 'Scope'
-      lines: [140, 165]
+      lines: [108, 133]
       summary:
         'Staleness detection, assumption tracking, auditable provenance, and epistemic
         discipline—not specific validation engines, external API monitoring, or deep analysis.'
       token_est: 147
     - title: 'Overview'
-      lines: [167, 178]
+      lines: [135, 146]
       token_est: 103
     - title: 'Problems'
-      lines: [180, 353]
+      lines: [148, 321]
       token_est: 1455
       subsections:
         - title: 'Problem 1: PROB-002 — Research becomes stale with no cheap upkeep mechanism'
-          lines: [182, 237]
+          lines: [150, 205]
           summary:
             'Research about repo, dependencies, standards, or APIs goes out of date; workflows treat
             it as static or rely on manual re-checking, causing silent correctness failures.'
           token_est: 465
         - title:
             'Problem 2: PROB-008 — Hallucination and assumption drift are not mechanically prevented'
-          lines: [239, 296]
+          lines: [207, 264]
           summary:
             'Agent workflows reward forward progress even on invalid baselines; assumptions made
             silently and become invisible facts without validation or explicit tracking.'
           token_est: 496
         - title: 'Problem 3: PROB-009 — Lack of auditable history and decision traceability'
-          lines: [298, 353]
+          lines: [266, 321]
           summary:
             'System needs to explain "why" something is the way it is, not just "what"; without
             traceability, decisions cannot be revisited and constraints cannot be understood.'
           token_est: 493
     - title: 'Success Signals (System Level)'
-      lines: [355, 366]
+      lines: [323, 334]
       token_est: 103
     - title: 'Assumptions'
-      lines: [368, 379]
+      lines: [336, 347]
       token_est: 91
     - title: 'Unknowns'
-      lines: [381, 391]
+      lines: [349, 359]
       token_est: 82
     - title: 'Related Problems'
-      lines: [393, 403]
+      lines: [361, 371]
       token_est: 68
     - title: 'Document Metadata'
-      lines: [405, 435]
+      lines: [373, 403]
       token_est: 65
 ---
-
-## Document Relationships
-
-Summary: Grounding and freshness enable accurate decisions and prevent silent failures; validation
-must be cheap and automated, provenance must be tracked.
-
-**Upstream (context):**
-
-- IDEATION-PROBLEMS-state-and-visibility.md (requires visible epistemic state)
-- IDEATION-PROBLEMS-session-continuity.md (requires durable knowledge)
-
-**Downstream (informs):**
-
-- Requirement specifications for research validation and knowledge refresh
-- Execution engine design (test/build feedback incorporation)
-
-**Siblings:**
-
-- IDEATION-PROBLEMS-integration-and-execution.md (execution validates grounding)
-- IDEATION-PROBLEMS-orchestration-and-governance.md (orchestration discipline prevents assumption
-  drift)
-
-**Related:**
-
-- Quality control systems
-- Evidence and traceability infrastructure
 
 ---
 

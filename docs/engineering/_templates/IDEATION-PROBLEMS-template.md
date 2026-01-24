@@ -30,29 +30,6 @@ drives: # Requirements this drives (fill after REQ-* created)
   - REQ-feature-name
 ---
 
-## Document Relationships
-
-Summary: Discovery phase; identifies problems that drive Requirements; paired with Experience and
-Unknowns docs.
-
-**Upstream (context):**
-
-- (None; ideation is discovery)
-
-**Downstream (informs):**
-
-- Requirements (drives REQ creation)
-- INIT-<feature>.md
-
-**Siblings (other ideation docs):**
-
-- IDEATION-EXPERIENCE-pagination.md (usage patterns)
-- IDEATION-UNKNOWNS-pagination.md (open questions)
-
-**Related:**
-
-- (None yet)
-
 ---
 
 ## TLDR

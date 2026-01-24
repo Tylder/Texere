@@ -21,34 +21,28 @@ related_ideation: [IDEATION-PROBLEMS-grounding-and-freshness]
 drives: []
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [94, 118]
-      summary:
-        'Continuity enables multi-day and multi-week projects; depends on durable state
-        infrastructure and requires managing knowledge staleness and schema evolution.'
-      token_est: 94
     - title: 'TLDR'
-      lines: [120, 142]
+      lines: [90, 112]
       summary:
         'Every new session forces the agent to rediscover repo facts, forget decisions, lose task
         context, and reinterpret knowledge from a moving schema. This wastes time and creates
         inconsistency.'
       token_est: 182
     - title: 'Scope'
-      lines: [144, 169]
+      lines: [114, 139]
       summary:
         'Session re-entry, decision recovery, task resumability, and schema evolution—not specific
         storage mechanisms, cache invalidation, or conversation history preservation.'
       token_est: 146
     - title: 'Overview'
-      lines: [171, 181]
+      lines: [141, 151]
       token_est: 102
     - title: 'Problems'
-      lines: [183, 404]
+      lines: [153, 374]
       token_est: 1739
       subsections:
         - title: 'Problem 1: PROB-001 — Session resets force repo research from scratch'
-          lines: [185, 237]
+          lines: [155, 207]
           summary:
             'New session behaves as though system has never seen the repo; agent must re-establish
             repo facts, patterns, invariants, and prior investigations repeatedly.'
@@ -56,64 +50,40 @@ index:
         - title:
             'Problem 2: PROB-004 — The agent cannot behave like it has deep, accurate historical
             knowledge'
-          lines: [239, 291]
+          lines: [209, 261]
           summary:
             'Productive long-running assistant must remember prior decisions and operate correctly
             on that history; repeats rejected ideas and forgets established constraints.'
           token_est: 413
         - title: 'Problem 3: PROB-022 — Knowledge schema evolution breaks long-lived continuity'
-          lines: [293, 345]
+          lines: [263, 315]
           summary:
             'Durable knowledge accumulates over time; when structure changes, older knowledge
             becomes hard to interpret, causing continuity breaks and subtle corruption.'
           token_est: 406
         - title:
             'Problem 4: PROB-034 — Task interruption and resumability failures cause repeated work'
-          lines: [347, 404]
+          lines: [317, 374]
           summary:
             'Long-running or multi-step tasks cannot be paused and resumed without losing
             intermediate progress, findings, and execution context.'
           token_est: 502
     - title: 'Success Signals (System Level)'
-      lines: [406, 417]
+      lines: [376, 387]
       token_est: 98
     - title: 'Assumptions'
-      lines: [419, 428]
+      lines: [389, 398]
       token_est: 76
     - title: 'Unknowns'
-      lines: [430, 440]
+      lines: [400, 410]
       token_est: 82
     - title: 'Related Problems'
-      lines: [442, 452]
+      lines: [412, 422]
       token_est: 82
     - title: 'Document Metadata'
-      lines: [454, 480]
+      lines: [424, 450]
       token_est: 62
 ---
-
-## Document Relationships
-
-Summary: Continuity enables multi-day and multi-week projects; depends on durable state
-infrastructure and requires managing knowledge staleness and schema evolution.
-
-**Upstream (context):**
-
-- IDEATION-PROBLEMS-state-and-visibility.md (state structure must be in place first)
-
-**Downstream (informs):**
-
-- Requirements for durable session storage
-- INIT-<feature>.md documents
-
-**Siblings (other ideation docs):**
-
-- IDEATION-PROBLEMS-state-and-visibility.md (what to persist)
-- IDEATION-PROBLEMS-grounding-and-freshness.md (keeping persisted knowledge fresh)
-
-**Related:**
-
-- Session management architecture
-- Knowledge storage and retrieval systems
 
 ---
 

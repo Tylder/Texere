@@ -21,60 +21,35 @@ related:
   - REQ-graph-system-graph-knowledge-system
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [58, 79]
-      summary: 'High-level Requirements for graph storage interfaces and adapters.'
-      token_est: 55
     - title: 'TLDR'
-      lines: [81, 98]
+      lines: [56, 73]
       summary:
         'Graph storage MUST expose a consistent interface and transactional guarantees for canonical
         graph operations.'
       token_est: 88
     - title: 'Scope'
-      lines: [100, 123]
+      lines: [75, 98]
       summary:
         'Storage interfaces, adapters, and transactional semantics. Excludes ingestion and lifecycle
         behavior.'
       token_est: 71
     - title: 'REQ-001: Store Interface Stability'
-      lines: [125, 147]
+      lines: [100, 122]
       summary: 'The system MUST define a stable graph store interface.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [149, 156]
+      lines: [124, 131]
       summary: 'Storage requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [158, 171]
+      lines: [133, 146]
       token_est: 85
     - title: 'Blockers'
-      lines: [173, 177]
+      lines: [148, 152]
       token_est: 39
 ---
 
 # REQ-graph-store
-
-## Document Relationships
-
-Summary: High-level Requirements for graph storage interfaces and adapters.
-
-**Upstream (depends on):**
-
-- REQ-graph-system-graph-system-architecture.md
-- REQ-graph-system-graph-knowledge-system.md
-
-**Downstream (depends on this):**
-
-- REQ-graph-store-inmemory.md (planned)
-- REQ-graph-store-neo4j.md (planned)
-- REQ-graph-store-sql.md (planned)
-
-**Siblings (related Requirements):**
-
-- REQ-graph-ingestion.md
-- REQ-graph-lifecycle.md
-- REQ-graph-projection.md
 
 ---
 

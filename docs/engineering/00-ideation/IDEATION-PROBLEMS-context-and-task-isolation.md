@@ -21,34 +21,28 @@ related_ideation: [IDEATION-PROBLEMS-user-trust-and-feedback]
 drives: []
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [87, 113]
-      summary:
-        'Context management directly affects communication clarity, task isolation, and suggestion
-        relevance; depend on state visibility and reference anchoring mechanisms.'
-      token_est: 107
     - title: 'TLDR'
-      lines: [115, 140]
+      lines: [83, 108]
       summary:
         'Users cannot see what context the agent is using; cannot point precisely to items they
         mean; and context bleeds across tasks, causing cross-contamination.'
       token_est: 193
     - title: 'Scope'
-      lines: [142, 167]
+      lines: [110, 135]
       summary:
         'Context visibility, stable references and anchoring, context isolation per task,
         intentional context bridging, and context freshness—not specific data structures or search
         algorithms.'
       token_est: 150
     - title: 'Overview'
-      lines: [169, 180]
+      lines: [137, 148]
       token_est: 107
     - title: 'Problems'
-      lines: [182, 342]
+      lines: [150, 310]
       token_est: 1229
       subsections:
         - title: 'Problem 1: PROB-028 — Context selection is implicit and opaque to the user'
-          lines: [184, 231]
+          lines: [152, 199]
           summary:
             'User cannot see or control what information agent is actively conditioning on, leading
             to misunderstandings and incorrect references.'
@@ -56,59 +50,33 @@ index:
         - title:
             'Problem 2: PROB-029 — Users cannot reliably anchor references when communicating with
             agents'
-          lines: [233, 279]
+          lines: [201, 247]
           summary:
             'Users lack stable ways to reference specific decisions, assumptions, files, or open
             items, causing ambiguity when communicating with the system.'
           token_est: 323
         - title: 'Problem 3: PROB-039 — Context spillage across tasks leads to cross-contamination'
-          lines: [281, 342]
+          lines: [249, 310]
           summary:
             'System lacks strict context isolation for different tasks or projects; knowledge and
             assumptions bleed across without clear intent, causing agent to mix contexts.'
           token_est: 569
     - title: 'Success Signals (System Level)'
-      lines: [344, 355]
+      lines: [312, 323]
       token_est: 99
     - title: 'Assumptions'
-      lines: [357, 366]
+      lines: [325, 334]
       token_est: 72
     - title: 'Unknowns'
-      lines: [368, 382]
+      lines: [336, 350]
       token_est: 95
     - title: 'Related Problems'
-      lines: [384, 393]
+      lines: [352, 361]
       token_est: 67
     - title: 'Document Metadata'
-      lines: [395, 425]
+      lines: [363, 393]
       token_est: 65
 ---
-
-## Document Relationships
-
-Summary: Context management directly affects communication clarity, task isolation, and suggestion
-relevance; depend on state visibility and reference anchoring mechanisms.
-
-**Upstream (context):**
-
-- IDEATION-PROBLEMS-state-and-visibility.md (requires visible state to show context)
-- IDEATION-PROBLEMS-orchestration-and-governance.md (orchestration manages context scope)
-
-**Downstream (informs):**
-
-- Context management and scoping mechanisms
-- Reference and anchoring systems
-- Multi-task and multi-project management
-
-**Siblings:**
-
-- IDEATION-PROBLEMS-user-trust-and-feedback.md (context affects trust calibration)
-- IDEATION-PROBLEMS-orchestration-and-governance.md (context scope is governed)
-
-**Related:**
-
-- Session and task boundary management
-- Reference resolution systems
 
 ---
 

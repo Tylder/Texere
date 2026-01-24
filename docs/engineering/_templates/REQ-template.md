@@ -34,29 +34,6 @@ related: # Cross-cutting related documents
 
 # REQ-<feature>
 
-## Document Relationships
-
-Summary: Driven by ideation docs; implemented by three Specs (search, users, timeline); coordinates
-one IMPL-PLAN.
-
-**Upstream (depends on):**
-
-- IDEATION-<feature>-problems.md
-- IDEATION-<feature>-experience.md
-
-**Downstream (depends on this):**
-
-- SPEC-<area>-<topic>.md (implements this)
-- SPEC-<area>-<topic>-2.md (implements this)
-
-**Siblings (related Requirements):**
-
-- REQ-auth-system.md (authentication context)
-
-**Related (cross-cutting):**
-
-- INIT-<feature>.md
-
 ---
 
 ## TLDR

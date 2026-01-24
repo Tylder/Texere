@@ -16,96 +16,90 @@ summary_long: |
   doc type, design decision rationale, and instructions for humans and LLMs.
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [119, 142]
-      summary:
-        'Places this meta doc within the documentation indices and template references that other
-        docs rely on.'
-      token_est: 120
     - title: 'TLDR'
-      lines: [144, 161]
+      lines: [115, 132]
       summary:
         'Establishes the five-document lifecycle plus the formatting, linking, and automation rules
         that make it predictable and LLM-friendly.'
       token_est: 133
     - title: 'Scope'
-      lines: [418, 463]
+      lines: [389, 434]
       summary:
         'Covers the documentation lifecycle conventions, metadata expectations, linking rules, and
         the automation that keeps indices current.'
       token_est: 159
     - title: 'Main Content'
-      lines: [190, 417]
+      lines: [161, 388]
       summary:
         'Covers the critical workflows, formatting rules, automation, and agent guidance that make
         this system cohesive.'
       token_est: 1472
       subsections:
         - title: 'Critical: Keeping Indices in Sync'
-          lines: [195, 220]
+          lines: [166, 191]
           summary:
             'Every document creation or status change must immediately touch the folder README and
             the document registry, because downstream tooling and LLMs read those indices.'
           token_est: 220
         - title: 'Overview'
-          lines: [222, 246]
+          lines: [193, 217]
           summary:
             'Defines the five document types and the many-to-many relationships across the
             lifecycle.'
           token_est: 244
         - title: 'Document Format: YAML Frontmatter + Structured Sections'
-          lines: [248, 285]
+          lines: [219, 256]
           summary:
             'Every document is structured for LLM readability via strict frontmatter and section
             expectations.'
           token_est: 246
         - title: 'Lifecycle Roles'
-          lines: [287, 305]
+          lines: [258, 276]
           summary:
             'Explains when to write each doc type and how Meta documents tie the system together.'
           token_est: 145
         - title: 'Naming, Linking & Key Principles'
-          lines: [307, 378]
+          lines: [278, 349]
           summary:
             'Provides the folder/file naming, cross-linking rules, and core principles that keep
             documents consistent and machine-readable.'
           token_est: 297
         - title: 'Getting Started'
-          lines: [380, 403]
+          lines: [351, 374]
           summary: 'Lists the author flow and checklist for creating a compliant document.'
           token_est: 218
         - title: 'Section Indexing: Structure for LLM Parsing'
-          lines: [405, 417]
+          lines: [376, 388]
           summary: 'Section-first summaries let LLMs read just what they need.'
           token_est: 81
     - title: 'Scope'
-      lines: [418, 463]
+      lines: [389, 434]
       summary:
         'API covers offset/limit pagination; excludes cursor-based and export pagination. ```'
       token_est: 322
       subsections:
         - title: 'For LLMs and Agents'
-          lines: [428, 440]
+          lines: [399, 411]
           summary: 'Instructions on how automated agents should interpret the documentation system.'
           token_est: 112
         - title: 'Automation: Keeping Indices in Sync'
-          lines: [442, 463]
+          lines: [413, 434]
           summary: 'Automation re-generates indices and validates metadata on every commit.'
           token_est: 159
     - title: 'Blockers'
-      lines: [465, 473]
+      lines: [436, 444]
       summary:
         'No active blockers; automation/human workflow currently handles indexing and validation.'
       token_est: 56
     - title: 'Design Decisions'
-      lines: [475, 487]
+      lines: [446, 458]
       token_est: 198
     - title: 'Assumptions & Unknowns'
-      lines: [489, 498]
+      lines: [460, 469]
       summary: 'Tracks open questions about the documentation system.'
       token_est: 120
     - title: 'Document Metadata'
-      lines: [500, 518]
+      lines: [471, 489]
       summary:
         'Mirrors the frontmatter for machine consumption so downstream tools can confirm metadata.'
       token_est: 98
@@ -115,29 +109,6 @@ index:
 
 This meta document codifies how the documentation lifecycle works, how indices stay accurate, and
 how automation keeps everything in sync for both humans and LLM agents.
-
-## Document Relationships
-
-Summary: Places this meta doc within the documentation indices and template references that other
-docs rely on.
-
-**Upstream (this doc depends on):**
-
-- docs/engineering/meta/README.md (central index for meta documentation topics)
-
-**Downstream (documents that depend on this):**
-
-- docs/engineering/DOCUMENT-REGISTRY.md (indexes this document and enforces metadata consistency)
-- docs/engineering/\_templates/META-template.md (template that mirrors this system definition)
-
-**Siblings (related meta docs):**
-
-- None yet—this is the primary META doc beyond the meta README today.
-
-**Related (cross-cutting links):**
-
-- docs/engineering/\_templates/REQ-template.md (for requirements that trigger this system)
-- docs/engineering/DOCUMENT-REGISTRY.md (machine-readable index and query surface)
 
 ---
 

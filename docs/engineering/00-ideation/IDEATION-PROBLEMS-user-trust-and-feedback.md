@@ -21,97 +21,64 @@ related_ideation: [IDEATION-PROBLEMS-orchestration-and-governance]
 drives: []
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [89, 116]
-      summary:
-        'User-facing problems that determine whether the system is trusted and adopted; depend on
-        state visibility, orchestration quality, and accurate grounding.'
-      token_est: 115
     - title: 'TLDR'
-      lines: [118, 142]
+      lines: [85, 109]
       summary:
         'Users cannot tell when to trust the agent; feedback vanishes; no learning from past
         mistakes or preferences. Users oscillate between blind trust (leading to bugs) and blanket
         distrust (defeating the purpose).'
       token_est: 195
     - title: 'Scope'
-      lines: [144, 170]
+      lines: [111, 137]
       summary:
         'Uncertainty communication, user feedback accumulation, and systematic trust calibration—not
         specific ML algorithms, formal quantification, or UI design details.'
       token_est: 143
     - title: 'Overview'
-      lines: [172, 185]
+      lines: [139, 152]
       token_est: 138
     - title: 'Problems'
-      lines: [187, 365]
+      lines: [154, 332]
       token_est: 1635
       subsections:
         - title:
             'Problem 1: PROB-035 — Uncertainty and confidence are not communicated in a
             decision-usable way'
-          lines: [189, 241]
+          lines: [156, 208]
           summary:
             'System cannot reliably communicate uncertainty and confidence in a way users can use to
             decide when to trust, verify, or block actions; tone masks weak grounding.'
           token_est: 439
         - title: 'Problem 2: PROB-038 — No accumulation of user feedback or learned preferences'
-          lines: [243, 302]
+          lines: [210, 269]
           summary:
             'System does not learn from user feedback, corrections, or preferences over time; each
             session starts fresh, repeating mistakes and style violations that were previously
             corrected.'
           token_est: 565
         - title: 'Problem 3: PROB-040 — No systematic trust calibration for agent outputs'
-          lines: [304, 365]
+          lines: [271, 332]
           summary:
             'System provides no consistent way to gauge how much to trust its outputs; users
             oscillate between over-trust (accepting bad advice) and under-trust (rejecting good
             advice).'
           token_est: 630
     - title: 'Success Signals (System Level)'
-      lines: [367, 378]
+      lines: [334, 345]
       token_est: 95
     - title: 'Assumptions'
-      lines: [380, 391]
+      lines: [347, 358]
       token_est: 89
     - title: 'Unknowns'
-      lines: [393, 406]
+      lines: [360, 373]
       token_est: 102
     - title: 'Related Problems'
-      lines: [408, 418]
+      lines: [375, 385]
       token_est: 71
     - title: 'Document Metadata'
-      lines: [420, 451]
+      lines: [387, 418]
       token_est: 67
 ---
-
-## Document Relationships
-
-Summary: User-facing problems that determine whether the system is trusted and adopted; depend on
-state visibility, orchestration quality, and accurate grounding.
-
-**Upstream (context):**
-
-- IDEATION-PROBLEMS-state-and-visibility.md (requires visible state for feedback tracking)
-- IDEATION-PROBLEMS-orchestration-and-governance.md (quality control affects user trust)
-
-**Downstream (informs):**
-
-- User interface and feedback mechanisms
-- System observability for trust calibration
-- Preference learning and adaptation systems
-
-**Siblings:**
-
-- IDEATION-PROBLEMS-context-and-task-isolation.md (context affects trust calibration)
-- IDEATION-PROBLEMS-grounding-and-freshness.md (grounding affects confidence)
-
-**Related:**
-
-- User feedback collection systems
-- Historical reliability tracking
-- Uncertainty quantification mechanisms
 
 ---
 

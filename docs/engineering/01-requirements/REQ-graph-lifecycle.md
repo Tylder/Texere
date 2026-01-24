@@ -22,62 +22,35 @@ related:
   - REQ-graph-system-graph-knowledge-system
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [59, 82]
-      summary: 'High-level Requirements for lifecycle assertions and invariants.'
-      token_est: 62
     - title: 'TLDR'
-      lines: [84, 101]
+      lines: [57, 74]
       summary:
         'Lifecycle assertions MUST be modeled as canonical graph nodes with explicit supersession,
         provenance, and validation invariants.'
       token_est: 89
     - title: 'Scope'
-      lines: [103, 126]
+      lines: [76, 99]
       summary:
         'Lifecycle assertion kinds and invariants. Excludes ingestion mechanics and storage
         selection.'
       token_est: 71
     - title: 'REQ-001: Lifecycle Assertion Catalog'
-      lines: [128, 150]
+      lines: [101, 123]
       summary: 'The system MUST define a canonical set of lifecycle assertion kinds.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [152, 159]
+      lines: [125, 132]
       summary: 'Lifecycle requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [161, 174]
+      lines: [134, 147]
       token_est: 85
     - title: 'Blockers'
-      lines: [176, 180]
+      lines: [149, 153]
       token_est: 39
 ---
 
 # REQ-graph-lifecycle
-
-## Document Relationships
-
-Summary: High-level Requirements for lifecycle assertions and invariants.
-
-**Upstream (depends on):**
-
-- REQ-graph-system-graph-system-architecture.md
-- REQ-graph-system-graph-knowledge-system.md
-
-**Downstream (depends on this):**
-
-- REQ-graph-decisions.md (planned)
-- REQ-graph-requirements.md (planned)
-- REQ-graph-spec-clauses.md (planned)
-- REQ-graph-plans.md (planned)
-- REQ-graph-verification.md (planned)
-
-**Siblings (related Requirements):**
-
-- REQ-graph-ingestion.md
-- REQ-graph-projection.md
-- REQ-graph-store.md
 
 ---
 

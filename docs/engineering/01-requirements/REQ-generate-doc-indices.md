@@ -17,104 +17,76 @@ summary_long: |
   LLMs to quickly identify relevant sections without reading entire documents.
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [97, 119]
-      summary:
-        'Driven by META-documentation-system; complements REQ-validate-docs with content-level
-        indexing.'
-      token_est: 80
     - title: 'TLDR'
-      lines: [121, 140]
+      lines: [93, 112]
       summary:
         'Extract H2/H3 heading hierarchy with summaries and token estimates; embed in frontmatter as
         machine-readable index.'
       token_est: 150
     - title: 'Scope'
-      lines: [142, 172]
+      lines: [114, 144]
       summary:
         'Covers heading extraction, summary collection, token estimation, subsection inclusion
         logic, and frontmatter embedding.'
       token_est: 185
     - title: 'REQ-001: Extract H2 and H3 Headings'
-      lines: [174, 209]
+      lines: [146, 181]
       summary:
         'Extract all H2 and H3 headings from document content (after frontmatter); build hierarchy
         with H3 as subsections of H2.'
       token_est: 272
     - title: 'REQ-002: Collect Section Summaries'
-      lines: [211, 249]
+      lines: [183, 221]
       summary:
         'Immediately after each heading, extract the "Summary: ..." line; if missing and
         summary_mode=error, report error.'
       token_est: 294
     - title: 'REQ-003: Token Estimation'
-      lines: [251, 284]
+      lines: [223, 256]
       summary:
         'Estimate tokens for each section as word_count \* 1.3 multiplier; use for subsection
         inclusion filtering.'
       token_est: 228
     - title: 'REQ-004: Subsection Filtering'
-      lines: [286, 319]
+      lines: [258, 291]
       summary:
         'Only include H3 subsections in index if parent H2 section has ≥300 tokens; skip smaller
         sections to avoid clutter.'
       token_est: 263
     - title: 'REQ-005: Embed Index in Frontmatter'
-      lines: [321, 370]
+      lines: [293, 342]
       summary:
         'Add index field to document frontmatter with sections array; each section includes title,
         lines, summary, token_est, subsections.'
       token_est: 303
     - title: 'REQ-006: Determine Accurate Line Numbers'
-      lines: [372, 411]
+      lines: [344, 383]
       summary:
         'Generate dummy index, format with Prettier, then replace line numbers with real 1-based
         line positions from formatted content.'
       token_est: 315
     - title: 'REQ-007: Format Document with Prettier'
-      lines: [413, 447]
+      lines: [385, 419]
       summary:
         'Format documents with Prettier after embedding dummy index and before extracting real line
         numbers.'
       token_est: 242
     - title: 'Design Decisions'
-      lines: [449, 462]
+      lines: [421, 434]
       token_est: 245
     - title: 'Blockers'
-      lines: [464, 472]
+      lines: [436, 444]
       summary: 'No active blockers; script runs independently and modifies documents in-place.'
       token_est: 55
     - title: 'Assumptions & Unknowns'
-      lines: [474, 489]
+      lines: [446, 461]
       token_est: 292
     - title: 'Document Metadata'
-      lines: [491, 507]
+      lines: [463, 479]
       token_est: 47
 ---
 
 # REQ-generate-doc-indices
-
-## Document Relationships
-
-Summary: Driven by META-documentation-system; complements REQ-validate-docs with content-level
-indexing.
-
-**Upstream (depends on):**
-
-- docs/engineering/meta/META-documentation-system.md (defines section structure with summaries)
-
-**Downstream (depends on this):**
-
-- script/generate-indices.mjs (implements this requirement)
-- Document frontmatter `index` fields (populated by this requirement)
-
-**Siblings (related Requirements):**
-
-- REQ-validate-docs.md (runs before or alongside this; handles metadata validation)
-
-**Related (cross-cutting):**
-
-- docs/engineering/meta/META-documentation-system.md (mandates section summaries)
 
 ---
 

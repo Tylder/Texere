@@ -21,26 +21,6 @@ keywords: # Search keywords (2-3 recommended). Omit field if not needed.
 
 # META-<topic>
 
-## Document Relationships
-
-Summary: System documentation for documentation itself; referenced by all document types.
-
-**Upstream (this doc depends on):**
-
-- (None or list related docs)
-
-**Downstream (documents that depend on this):**
-
-- (None or list docs that reference this)
-
-**Siblings (related meta docs):**
-
-- (Other related meta docs)
-
-**Related (cross-cutting links):**
-
-- DOCUMENT-REGISTRY.md (where this doc is indexed)
-
 ---
 
 ## TLDR

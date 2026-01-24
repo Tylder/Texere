@@ -40,30 +40,6 @@ related: # Cross-cutting related documents
 
 # SPEC-<area>-<topic>
 
-## Document Relationships
-
-Summary: Implements REQ-pagination-system; depends on SPEC-shared-pagination-lib; drives
-IMPL-PLAN-pagination-system.
-
-**Upstream (depends on):**
-
-- REQ-pagination-system.md (Requirements this implements)
-- SPEC-shared-pagination-lib.md (shared code dependency)
-- IDEATION-EXPERIENCE-pagination.md (user context)
-
-**Downstream (depends on this):**
-
-- IMPL-PLAN-pagination-system.md (implements this Spec)
-
-**Siblings (related Specs at same level):**
-
-- SPEC-user-list-pagination.md (same Requirement, different domain)
-- SPEC-timeline-pagination.md (same Requirement, different domain)
-
-**Related (cross-cutting):**
-
-- INIT-pagination.md
-
 ---
 
 ## TLDR

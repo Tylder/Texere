@@ -22,68 +22,46 @@ related:
   - REQ-graph-system-graph-knowledge-system
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [72, 88]
-      summary:
-        'High-level architectural Requirements for Nx package boundaries and dependency rules across
-        graph system code.'
-      token_est: 56
     - title: 'TLDR'
-      lines: [90, 107]
+      lines: [68, 85]
       summary:
         'Separate ingestion, lifecycle, projections, and storage into distinct Nx packages with
         clean dependency rules; shared core types live in a foundational package.'
       token_est: 112
     - title: 'Scope'
-      lines: [109, 135]
+      lines: [87, 113]
       summary:
         'High-level Nx package roles and dependency rules. Excludes detailed pipeline behavior,
         query semantics, or database choices.'
       token_est: 98
     - title: 'REQ-001: Package Boundary Definition'
-      lines: [137, 169]
+      lines: [115, 147]
       summary:
         'The Nx monorepo MUST define distinct packages for core types, storage, ingestion,
         projections, and lifecycle logic.'
       token_est: 145
     - title: 'REQ-002: Dependency Direction Rules'
-      lines: [171, 202]
+      lines: [149, 180]
       summary:
         'Package dependencies MUST follow a strict directionality to prevent cyclic coupling.'
       token_est: 166
     - title: 'REQ-003: Ingestion and Lifecycle Separation'
-      lines: [204, 227]
+      lines: [182, 205]
       summary: 'Ingestion packages MUST NOT depend on lifecycle packages, and vice versa.'
       token_est: 98
     - title: 'Related Requirements'
-      lines: [229, 239]
+      lines: [207, 217]
       summary: 'This REQ establishes architectural boundaries referenced by all detailed REQs.'
       token_est: 38
     - title: 'Design Decisions'
-      lines: [241, 254]
+      lines: [219, 232]
       token_est: 85
     - title: 'Blockers'
-      lines: [256, 260]
+      lines: [234, 238]
       token_est: 39
 ---
 
 # REQ-graph-system-architecture
-
-## Document Relationships
-
-Summary: High-level architectural Requirements for Nx package boundaries and dependency rules across
-graph system code.
-
-**Downstream (depends on this):**
-
-- REQ-graph-ingestion.md (planned)
-- REQ-graph-lifecycle.md (planned)
-- REQ-graph-projection.md (planned)
-- REQ-graph-store.md (planned)
-
-**Siblings (related Requirements):**
-
-- REQ-graph-knowledge-system.md (graph model semantics)
 
 ---
 
