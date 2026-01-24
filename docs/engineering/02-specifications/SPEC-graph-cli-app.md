@@ -37,156 +37,158 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [197, 218]
+      lines: [199, 220]
       summary:
         'Build a composable testing app organized around reusable Scenarios that validate graph
         features as they are developed; Scenarios compose Fixtures; Inspectors provide debugging;
         E2E tests validate real repos and complex workflows.'
       token_est: 158
     - title: 'Scope'
-      lines: [220, 243]
+      lines: [222, 245]
       summary:
         'App architecture, Scenario design, Fixture patterns, Inspector tools, and E2E testing.'
       token_est: 138
     - title: 'Output Model'
-      lines: [245, 285]
-      summary: 'JSON dumps are primary output; database persistence deferred to v2.0+.'
-      token_est: 250
+      lines: [247, 291]
+      summary:
+        'JSON dumps are primary data output; Ink+Pastel renders beautiful terminal UI; database
+        persistence deferred to v2.0+.'
+      token_est: 292
     - title: 'Package Boundaries'
-      lines: [287, 322]
+      lines: [293, 328]
       summary: 'App respects library package boundaries and depends on core graph packages only.'
       token_est: 207
     - title: 'Scenario Model'
-      lines: [324, 428]
+      lines: [330, 434]
       summary:
         'Scenarios are reusable, composable workflows with name, version, tags, and execution
         contract.'
       token_est: 461
     - title: 'Fixture Model'
-      lines: [430, 544]
+      lines: [436, 550]
       summary: 'Fixtures are factory functions that build deterministic nodes and policies.'
       token_est: 368
       subsections:
         - title: '1. Policy Fixtures'
-          lines: [436, 464]
+          lines: [442, 470]
           token_est: 82
         - title: '2. Artifact Fixtures'
-          lines: [466, 498]
+          lines: [472, 504]
           token_est: 107
         - title: '3. Assertion Fixtures (v1.0+)'
-          lines: [500, 519]
+          lines: [506, 525]
           token_est: 68
         - title: '4. Evidence Fixtures (v1.0+)'
-          lines: [521, 544]
+          lines: [527, 550]
           token_est: 91
     - title: 'GraphApp Orchestrator'
-      lines: [546, 655]
+      lines: [552, 661]
       summary:
         'Main context and orchestrator providing fluent API for graph operations and introspection.'
       token_est: 393
       subsections:
         - title: '`withPolicy(kind, scope, fields)`'
-          lines: [614, 616]
+          lines: [620, 622]
           token_est: 24
         - title: '`ingestRepo(options)`'
-          lines: [618, 620]
+          lines: [624, 626]
           token_est: 13
         - title: '`createAssertion(kind, fields)`'
-          lines: [622, 625]
+          lines: [628, 631]
           token_est: 26
         - title: '`runProjection(name, selection?)`'
-          lines: [627, 630]
+          lines: [633, 636]
           token_est: 20
         - title: '`explain(node_id)`'
-          lines: [632, 635]
+          lines: [638, 641]
           token_est: 24
         - title: '`trace(start_id, depth?)`'
-          lines: [637, 640]
+          lines: [643, 646]
           token_est: 21
         - title: '`dump(options?)`'
-          lines: [642, 644]
+          lines: [648, 650]
           token_est: 17
         - title: '`validate()`'
-          lines: [646, 648]
+          lines: [652, 654]
           token_est: 15
         - title: '`checkInvariants()`'
-          lines: [650, 655]
+          lines: [656, 661]
           token_est: 25
     - title: 'Scenario Registry and Organization'
-      lines: [657, 780]
+      lines: [663, 786]
       summary: 'Scenarios organized by version (v0.1, v1.0, v2.0+) and functionality domain.'
       token_est: 615
       subsections:
         - title: 'v0.1 Scenarios (Ready Now)'
-          lines: [661, 698]
+          lines: [667, 704]
           token_est: 219
         - title: 'v1.0 Scenarios (Future)'
-          lines: [700, 742]
+          lines: [706, 748]
           token_est: 271
         - title: 'v2.0+ Scenarios'
-          lines: [744, 780]
+          lines: [750, 786]
           token_est: 106
     - title: 'Inspector Tools'
-      lines: [782, 882]
+      lines: [788, 888]
       summary: 'Debugging and visualization tools for graph state inspection and analysis.'
       token_est: 371
       subsections:
         - title: 'Dumper'
-          lines: [809, 830]
+          lines: [815, 836]
           token_est: 91
         - title: 'Tracer'
-          lines: [832, 843]
+          lines: [838, 849]
           token_est: 54
         - title: 'Differ'
-          lines: [845, 858]
+          lines: [851, 864]
           token_est: 47
         - title: 'Explainer'
-          lines: [860, 882]
+          lines: [866, 888]
           token_est: 84
     - title: 'Testing Strategy'
-      lines: [884, 1097]
+      lines: [890, 1103]
       summary: 'Unit, integration, and E2E testing modes aligned with scenario versions.'
       token_est: 808
       subsections:
         - title: 'Unit Tests (Fast, Isolated)'
-          lines: [888, 946]
+          lines: [894, 952]
           token_est: 211
         - title: 'Integration Tests (Medium, Multi-Step)'
-          lines: [948, 998]
+          lines: [954, 1004]
           token_est: 189
         - title: 'E2E Tests (Slow, Real Data)'
-          lines: [1000, 1097]
+          lines: [1006, 1103]
           token_est: 390
     - title: 'Execution Modes'
-      lines: [1099, 1215]
+      lines: [1105, 1275]
       summary: 'Single scenario, batch, E2E, and interactive modes for different use cases.'
-      token_est: 539
+      token_est: 887
       subsections:
         - title: 'Mode 1: Single Scenario (Local Development)'
-          lines: [1103, 1144]
-          token_est: 186
+          lines: [1109, 1159]
+          token_est: 258
         - title: 'Mode 2: Batch Scenarios (CI/CD)'
-          lines: [1146, 1178]
-          token_est: 175
+          lines: [1161, 1199]
+          token_est: 215
         - title: 'Mode 3: E2E Tests'
-          lines: [1180, 1195]
-          token_est: 84
-        - title: 'Mode 4: Interactive Inspector'
-          lines: [1197, 1215]
-          token_est: 76
+          lines: [1201, 1222]
+          token_est: 114
+        - title: 'Mode 4: Interactive Inspector (Ink TUI)'
+          lines: [1224, 1275]
+          token_est: 283
     - title: 'Extensibility Contract'
-      lines: [1217, 1256]
+      lines: [1277, 1316]
       summary: 'New graph features add Scenarios and E2E tests; libraries remain unchanged.'
       token_est: 212
     - title: 'Non-Throwaway Guarantees'
-      lines: [1258, 1290]
+      lines: [1318, 1350]
       summary: 'App designed to grow with system without architectural rewrites.'
       token_est: 199
     - title: 'Open Questions'
-      lines: [1292, 1299]
+      lines: [1352, 1359]
       token_est: 55
     - title: 'Related Documents'
-      lines: [1301, 1308]
+      lines: [1361, 1368]
       token_est: 20
 ---
 
@@ -244,21 +246,25 @@ Summary: App architecture, Scenario design, Fixture patterns, Inspector tools, a
 
 ## Output Model
 
-Summary: JSON dumps are primary output; database persistence deferred to v2.0+.
+Summary: JSON dumps are primary data output; Ink+Pastel renders beautiful terminal UI; database
+persistence deferred to v2.0+.
 
 **v0.1 Output:**
 
 - JSON files (always): `./tmp/graph-dump/artifacts.json`, `policies.json`, `projection.json`,
   `graph_dump_summary.json`
-- Human-readable console output (always): Scenario progress, test results, inspector dumps
-- Optional: `--json` flag for all output as JSON (scenario results, test reports)
-- Optional: `--quiet` flag to suppress console output (files only)
+- Terminal UI (always, unless --json or --quiet): Ink React components with Pastel styling for
+  progress, results, graph inspection
+- Optional: `--json` flag for JSON-only output (files + JSON report to stdout)
+- Optional: `--quiet` flag to suppress UI (files only, silent)
+- Tech Stack: Ink for React-in-terminal rendering, Pastel for styled text/colors, Commander for CLI
+  scaffolding
 
 **Future Output (v2.0+):**
 
 - Database persistence: Scenarios can write directly to PostgreSQL/Neo4j/other graph DB
 - Configuration via `.env`: `GRAPH_DB_URL`, `GRAPH_DB_TYPE`
-- Backward compatible: v0.1 scenarios keep using in-memory store + JSON dumps
+- Backward compatible: v0.1 scenarios keep using in-memory store + JSON dumps + Terminal UI
 
 **Usage Examples:**
 
@@ -1103,15 +1109,24 @@ Summary: Single scenario, batch, E2E, and interactive modes for different use ca
 ### Mode 1: Single Scenario (Local Development)
 
 ```bash
-# Run one scenario, print human-readable output + JSON files
+# Run one scenario with beautiful Ink UI + JSON files
 pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base
 
-# Console Output:
-# ✓ Scenario: repo-ingestion-base (v0.1)
-# ✓ Artifacts created: 1 root, 1 state, 45 parts
-# ✓ Symbols indexed: 156
-# ✓ Duration: 12.3s
-# ✓ Dump: ./tmp/graph-dump
+# Terminal Output (Ink+Pastel UI):
+# ┌─────────────────────────────────────┐
+# │  repo-ingestion-base (v0.1)         │
+# ├─────────────────────────────────────┤
+# │ ⏳ Cloning repo...                   │
+# │ ✓ Installed dependencies            │
+# │ ⏳ Running scip-typescript...        │
+# │   Indexed: 156 symbols in 42 files  │
+# │ ✓ Created artifact nodes            │
+# │   Root: 1 | State: 1 | Parts: 45    │
+# │ ✓ Generated JSON dumps              │
+# ├─────────────────────────────────────┤
+# │ Success (12.3s)                     │
+# │ Dump: ./tmp/graph-dump              │
+# └─────────────────────────────────────┘
 
 # Files Created:
 # ./tmp/graph-dump/artifacts.json (47 nodes, 52 edges)
@@ -1123,10 +1138,10 @@ pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base
 **With flags:**
 
 ```bash
-# JSON output only (for CI/CD)
+# JSON output only (for CI/CD automation)
 pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --json
 
-# Console output is JSON report:
+# Console output is JSON (no UI):
 # {
 #   "scenario": "repo-ingestion-base",
 #   "version": "v0.1",
@@ -1138,30 +1153,36 @@ pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --json
 #   "dump_path": "./tmp/graph-dump"
 # }
 
-# Suppress console, files only
+# Suppress UI, files only (for headless execution)
 pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --quiet
-# No console output, files written to ./tmp/graph-dump/
+# No terminal output, files written to ./tmp/graph-dump/
 ```
 
 ### Mode 2: Batch Scenarios (CI/CD)
 
 ```bash
-# Run all v0.1 scenarios, human-readable report + JSON
+# Run all v0.1 scenarios with live progress UI (Ink)
 pnpm -C apps/graph-app run-scenarios v0.1/* --report
 
-# Console Output:
-# v0.1 Scenarios: 5/5 passed
-# ├── repo-ingestion-base ✓ (2.1s)
-# ├── repo-ingestion-determinism ✓ (4.2s)
-# ├── json-dumps-format ✓ (1.8s)
-# ├── projection-current-truth-basic ✓ (0.8s)
-# └── toolchain-provenance ✓ (0.5s)
-# Total: 9.4s | Artifacts: 224 | Assertions: 0 | Conflicts: 0
+# Terminal Output (Ink+Pastel live UI):
+# ┌──────────────────────────────────────────┐
+# │ Running v0.1 Scenarios (5/5)             │
+# ├──────────────────────────────────────────┤
+# │ ✓ repo-ingestion-base (2.1s)             │
+# │ ✓ repo-ingestion-determinism (4.2s)      │
+# │ ✓ json-dumps-format (1.8s)               │
+# │ ⏳ projection-current-truth-basic...      │
+# │   projection-current-truth-basic (0.8s)  │
+# │ ⏳ toolchain-provenance...               │
+# ├──────────────────────────────────────────┤
+# │ Passed: 5/5  |  Duration: 9.4s           │
+# │ Artifacts: 224  |  Conflicts: 0          │
+# └──────────────────────────────────────────┘
 
-# For CI/CD parsing, use JSON flag
+# For CI/CD parsing, use JSON flag (no UI)
 pnpm -C apps/graph-app run-scenarios v0.1/* --report --json
 
-# Console Output (JSON):
+# Console Output (JSON, no Ink UI):
 # {
 #   "batch_name": "v0.1",
 #   "total_scenarios": 5,
@@ -1180,36 +1201,75 @@ pnpm -C apps/graph-app run-scenarios v0.1/* --report --json
 ### Mode 3: E2E Tests
 
 ```bash
-# Run full test suite (unit + integration + e2e)
+# Run full test suite with Ink progress UI
 pnpm -C apps/graph-app test
+
+# Terminal Output (Ink+Pastel):
+# ┌────────────────────────────┐
+# │ Running Test Suite          │
+# ├────────────────────────────┤
+# │ Unit Tests: 12/12 ✓        │
+# │ Integration: 8/8 ✓         │
+# │ E2E (v0.1): 5/5 ✓          │
+# │ E2E (v1.0): 8/8 ✓          │
+# ├────────────────────────────┤
+# │ Total: 33 ✓  |  45.2s      │
+# │ Pass Rate: 100%            │
+# └────────────────────────────┘
 
 # Or just e2e
 pnpm -C apps/graph-app test:e2e
-
-# Output:
-# ✓ Unit: 12 tests
-# ✓ Integration: 8 tests
-# ✓ E2E (v0.1): 5 tests
-# ✓ E2E (v1.0): 8 tests
-# Total: 33 tests | Pass rate: 100% | Duration: 45s
 ```
 
-### Mode 4: Interactive Inspector
+### Mode 4: Interactive Inspector (Ink TUI)
 
 ```bash
-# Start REPL with app context
+# Start interactive Ink-based TUI with app context
 pnpm -C apps/graph-app inspect
 
-# Interactive:
-# > await ingestRepo({ url: 'https://github.com/...', commit: '...' })
-# Ingestion complete: 47 nodes, 52 edges
+# Terminal UI (Ink+Pastel interactive):
+# ┌──────────────────────────────────────┐
+# │ Graph Inspector (Interactive Mode)   │
+# ├──────────────────────────────────────┤
+# │                                      │
+# │ > _                                  │
+# │                                      │
+# │ Commands: ingest, dump, trace,       │
+# │           diff, project, exit        │
+# │ Help: type 'help' for all commands   │
+# └──────────────────────────────────────┘
+
+# Interactive commands:
+# > ingest({ url: 'https://github.com/...', commit: '...' })
+#
+# ┌──────────────────────────────────────┐
+# │ ⏳ Ingesting repository...            │
+# │ ✓ Ingestion complete                 │
+# │   Nodes: 47 | Edges: 52              │
+# └──────────────────────────────────────┘
+
 # > dump()
-# [pretty-printed graph]
-# > trace('node-id')
-# [relationship chains]
-# > diff(snapshot1, snapshot2)
-# [change summary]
-# > exit()
+#
+# ┌──────────────────────────────────────┐
+# │ Graph State                          │
+# ├──────────────────────────────────────┤
+# │ Nodes (47 total)                    │
+# │ ├── ArtifactRoot: 1                  │
+# │ ├── ArtifactState: 1                 │
+# │ ├── ArtifactPart (file): 28          │
+# │ ├── ArtifactPart (symbol): 17        │
+# │ └── Policy: 2                        │
+# │                                      │
+# │ Edges (52 total)                    │
+# │ ├── HasState: 1                      │
+# │ ├── HasPart: 45                      │
+# │ └── HasPolicy: 2                     │
+# └──────────────────────────────────────┘
+
+# > trace('node-456')  # Follow relationship chains
+# > diff(snap1, snap2)  # Compare graph snapshots
+# > project('CurrentCommittedTruth')  # Run projection
+# > exit()  # Leave interactive mode
 ```
 
 ---

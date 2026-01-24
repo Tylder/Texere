@@ -29,52 +29,77 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [85, 109]
+      lines: [110, 134]
       summary: 'Implement graph testing app in three phases aligned with system versions.'
       token_est: 130
     - title: 'Scope'
-      lines: [111, 128]
+      lines: [136, 153]
       summary: 'Implement app in phases aligned with graph versions (v0.1, v1.0, v2.0+).'
       token_est: 101
     - title: 'Preconditions'
-      lines: [130, 139]
+      lines: [155, 164]
       token_est: 67
     - title: 'Milestones'
-      lines: [141, 411]
+      lines: [166, 436]
       token_est: 1112
       subsections:
         - title: 'Phase 1: v0.1 App Infrastructure (Now)'
-          lines: [143, 304]
+          lines: [168, 329]
           token_est: 804
         - title: 'Phase 2: v1.0 Lifecycle Scenarios (Future)'
-          lines: [306, 379]
+          lines: [331, 404]
           token_est: 238
         - title: 'Phase 3: v2.0+ Features (Future)'
-          lines: [381, 411]
+          lines: [406, 436]
           token_est: 68
     - title: 'Risk Register'
-      lines: [413, 423]
+      lines: [438, 448]
       token_est: 173
     - title: 'Verification Plan'
-      lines: [425, 450]
+      lines: [450, 475]
       token_est: 162
     - title: 'Exit Criteria'
-      lines: [452, 471]
+      lines: [477, 496]
       token_est: 153
     - title: 'Assumptions'
-      lines: [473, 483]
+      lines: [498, 508]
       token_est: 179
     - title: 'Unknowns'
-      lines: [485, 494]
+      lines: [510, 519]
       token_est: 134
+    - title: 'CLI Technology Stack'
+      lines: [521, 558]
+      token_est: 257
     - title: 'Implementation Notes'
-      lines: [496, 566]
+      lines: [560, 630]
       token_est: 268
     - title: 'Success Metrics'
-      lines: [568, 590]
+      lines: [632, 654]
       token_est: 123
+    - title: 'Known Gaps'
+      lines: [656, 841]
+      summary:
+        'Issues and incompleteness in this plan that must be addressed before or during Phase 1
+        implementation.'
+      token_est: 1445
+      subsections:
+        - title: 'Critical Gaps (Must Fix Before Starting Phase 1)'
+          lines: [661, 693]
+          token_est: 249
+        - title: 'High Priority Gaps'
+          lines: [695, 725]
+          token_est: 201
+        - title: 'Medium Priority Gaps'
+          lines: [727, 810]
+          token_est: 717
+        - title: 'Low Priority Gaps'
+          lines: [812, 841]
+          token_est: 254
+    - title: 'Gap Summary Table'
+      lines: [843, 866]
+      token_est: 332
     - title: 'Related Documents'
-      lines: [592, 596]
+      lines: [868, 872]
       token_est: 16
 ---
 
@@ -493,6 +518,45 @@ Phase 1 (v0.1) complete when:
 
 ---
 
+## CLI Technology Stack
+
+**Libraries:**
+
+- **Ink** (React for terminal): Terminal UI rendering with components (progress, boxes, text)
+- **Pastel** (styling): Colors, bold, underline for Ink components
+- **Commander.js** (CLI framework): Command parsing, subcommands, flags
+- **Enquirer** (interactive prompts): For interactive mode input/validation (Mode 4)
+
+**Structure:**
+
+```
+src/cli/
+├── commands/
+│   ├── run-scenario.ts       # Commander subcommand
+│   ├── run-scenarios.ts
+│   ├── test.ts
+│   └── inspect.ts            # Interactive Ink TUI
+├── components/               # Ink React components
+│   ├── ScenarioBox.tsx       # Progress box for single scenario
+│   ├── BatchBox.tsx          # Live progress for batch scenarios
+│   ├── TestBox.tsx           # Test progress
+│   ├── InspectorPrompt.tsx   # Ink prompt for interactive mode
+│   └── GraphDumper.tsx       # Pretty graph visualization
+└── index.ts                  # CLI entry point (Commander setup)
+```
+
+**Design:**
+
+- Commander.js parses `run-scenario`, `run-scenarios`, `test:e2e`, `inspect` commands
+- Flags: `--json` (JSON output, no UI), `--quiet` (no UI, files only), `--report` (batch summary)
+- Ink components render terminal boxes with live updates during scenario execution
+- Mode 4 (inspect) uses Enquirer for interactive prompt + Ink for output rendering
+- Default: Beautiful Ink UI with Pastel styling
+- With `--json`: No Ink, JSON to stdout
+- With `--quiet`: No Ink, silent
+
+---
+
 ## Implementation Notes
 
 ### Determinism Requirements
@@ -586,6 +650,218 @@ Tests verify actual outputs match snapshots exactly.
 - ✓ v2.0 scenarios pass
 - ✓ All prior scenarios still pass
 - ✓ App serves as reference implementation for graph system
+
+---
+
+## Known Gaps
+
+Summary: Issues and incompleteness in this plan that must be addressed before or during Phase 1
+implementation.
+
+### Critical Gaps (Must Fix Before Starting Phase 1)
+
+**1. CLI Commands & Entry Points Not Defined**
+
+- **Status:** Missing
+- **Impact:** High - Developers won't know how to run the app
+- **Current State:** Milestones describe internal app structure (GraphApp, Fixtures, Scenarios) but
+  do NOT specify CLI commands
+- **Fix Required:**
+  - Add new milestone (M1.5 or in M2): "CLI Commands & Entry Points"
+  - Define subcommands: `run-scenario <name>`, `run-scenarios <pattern>`, `test`, `inspect`
+  - Specify Commander.js setup with command routing
+  - Deliverables: `src/cli/index.ts`, `src/cli/commands/*.ts`
+  - Effort: 2-3 hours
+
+**2. Ink + Pastel Components Not in Milestones**
+
+- **Status:** Missing
+- **Impact:** High - SPEC promises beautiful Ink UI, but plan doesn't allocate effort/deliverables
+  for it
+- **Current State:** Ink rendering completely absent from milestone deliverables
+- **Fix Required:**
+  - Add to M2: Ink component deliverables
+    - `ScenarioBox.tsx` — Progress box for single scenario
+    - `BatchBox.tsx` — Live progress for batch scenarios
+    - `TestBox.tsx` — Test results display
+    - `InspectorPrompt.tsx` — Interactive input component
+    - `GraphDumper.tsx` — Pretty graph visualization
+  - Add test coverage for Ink components (snapshot tests)
+  - Allocate effort: 2-3 hours (Ink learning curve)
+  - Deliverables: `src/cli/components/*.tsx`
+
+---
+
+### High Priority Gaps
+
+**3. Work Breakdown Table Missing**
+
+- **Status:** Missing
+- **Impact:** Medium - No task-level sequencing or dependency visibility
+- **Current State:** Milestones have effort estimates but no task breakdown with dependencies
+- **Fix Required:**
+  - Add "Work Breakdown" section (per IMPL-PLAN template) with table:
+    - Task name, owner, duration, dependencies
+    - Example: "M1.1: Setup Nx app (2h, depends on nothing)"
+    - Example: "M2.1: GraphApp class (6h, depends on M1)"
+  - Effort to add: 1 hour
+
+**4. Package Dependencies Not Explicit**
+
+- **Status:** Vague
+- **Impact:** Medium - Developers don't know what npm packages to install
+- **Current State:** M1 mentions "package.json with dependencies" but lists none
+- **Fix Required:**
+  - Add explicit list to M1 or Preconditions:
+    - `@repo/graph-core`, `@repo/graph-store`, `@repo/graph-ingest`,
+      `@repo/graph-ingest-connector-scip-ts`, `@repo/graph-projection`
+    - `ink`, `pastel` (CLI UI)
+    - `commander` (CLI framework)
+    - `enquirer` (interactive prompts)
+    - `react` (for Ink)
+    - `vitest` (testing)
+  - Effort to add: 15 minutes
+
+---
+
+### Medium Priority Gaps
+
+**5. Database Persistence (v2.0+) Not Planned**
+
+- **Status:** Mentioned in SPEC, missing from IMPL-PLAN
+- **Impact:** Medium - v2.0 database output (`--db-write` flag) has no implementation roadmap
+- **Current State:** SPEC says "v2.0+ database write", Phase 3 has no database milestones
+- **Fix Required:**
+  - Add to Phase 3:
+    - M10: Database adapter interface (PostgreSQL, Neo4j, etc.)
+    - M11: Database write integration with scenarios
+    - Deliverables: `src/adapters/database.ts`, env var handling for `GRAPH_DB_URL`
+    - Flag handling: `--db-write`, fallback to JSON if not set
+  - Effort: 2 hours to plan, 8-10 hours to implement
+
+**6. Snapshot Management Strategy Vague**
+
+- **Status:** Mentioned, not detailed
+- **Impact:** Medium - E2E test maintenance unclear (how to update, where to store, CI behavior)
+- **Current State:** M6 mentions "`e2e/v0-1/snapshots/`" and "snapshots committed" but no workflow
+- **Fix Required:**
+  - Add to M6 or Implementation Notes:
+    - Snapshot file location: `e2e/v0-1/snapshots/sindresorhus-ky.json`
+    - Snapshot format: `{ node_counts, edge_counts, symbol_count, content_hash, file_count }`
+    - Update workflow: `pnpm -C apps/graph-app update-snapshots`
+    - CI behavior: Snapshots committed to git, must match exactly in CI
+  - Effort: 30 minutes
+
+**7. Test Infrastructure Setup Assumed, Not Detailed**
+
+- **Status:** Precondition, but app-level details missing
+- **Impact:** Medium - M5 assumes vitest config is ready, but doesn't specify app-level setup
+- **Current State:** Precondition says "Vitest configured", but app's vitest.config.ts not planned
+- **Fix Required:**
+  - Add M1.5: "Test Infrastructure & Vitest Setup"
+  - Deliverables:
+    - `apps/graph-app/vitest.config.ts` with coverage thresholds (80% minimum)
+    - Test directory structure: `unit/`, `integration/`, `e2e/`
+    - Watch mode configuration
+    - Coverage reporter setup
+  - Effort: 1 hour
+
+**8. Interactive Mode (Inspect) Under-Specified**
+
+- **Status:** Vague in plan
+- **Impact:** Medium - Mode 4 is complex (Enquirer + Ink + state management) but no detailed
+  milestone
+- **Current State:** SPEC shows beautiful interactive Ink TUI, IMPL-PLAN just says "inspect mode"
+- **Fix Required:**
+  - Add milestone: "M5b: Interactive Inspector Mode (Ink TUI)"
+  - Deliverables:
+    - Enquirer prompt loop for command input
+    - Command parsing: `ingest()`, `dump()`, `trace()`, `diff()`, `project()`
+    - Ink component rendering for command outputs
+    - State management: Keep graph in memory across commands
+  - Effort: 4-6 hours (includes Enquirer + Ink learning curve)
+
+**9. Backwards Compatibility Not Tested in Phase 2**
+
+- **Status:** Philosophy stated, not verified in tests
+- **Impact:** Medium - Risk: Phase 2 breaks Phase 1 without anyone noticing
+- **Current State:** SPEC says "v0.1 scenarios still pass", but Phase 2 exit gate doesn't verify it
+- **Fix Required:**
+  - Add to Phase 2 exit gate:
+    - `[ ] pnpm -C apps/graph-app test:v0.1` — All v0.1 scenarios still pass (regression check)
+  - This ensures Phase 2 additions (lifecycle assertions, etc.) don't break ingestion scenarios
+  - Effort: 30 minutes to add to plan
+
+**10. Clone & Workspace Lifecycle Vague**
+
+- **Status:** Vague
+- **Impact:** Medium - E2E tests clone sindresorhus/ky, but no plan for cleanup, timeouts, failure
+  modes
+- **Current State:** M6 mentions "real repo e2e tests" but doesn't explain git clone lifecycle
+- **Fix Required:**
+  - Add to M6 verification section:
+    - Clone location: `./tmp/Texere/graph-ingest` (from `GRAPH_INGEST_ROOT` env var)
+    - Cleanup strategy: Delete after test or keep for inspection? (Recommend: delete, check size
+      first)
+    - Timeout policy: Allow 5 minutes for clone + dependencies + SCIP indexing
+    - Network dependency: Mark E2E tests as flaky if offline
+  - Effort: 30 minutes
+
+---
+
+### Low Priority Gaps
+
+**11. Documentation Deliverables Not Planned**
+
+- **Status:** Partially mentioned (E2E README), mostly missing
+- **Impact:** Low - But important for developer onboarding
+- **Current State:** Only E2E README mentioned in M6, no developer guides planned
+- **Fix Required:**
+  - Add to Phase 1:
+    - `README.md` — Getting started, running scenarios, CLI commands
+    - `SCENARIOS.md` — Describe each v0.1 scenario, how to write new scenarios
+    - `ARCHITECTURE.md` — GraphApp design, Fixture patterns, Inspector concepts
+  - Add to Phase 2:
+    - `LIFECYCLE.md` — v1.0 scenario examples (Decision chains, supersession)
+  - Effort: 2 hours to write docs
+
+**12. Error Handling & Logging Strategy Not Defined**
+
+- **Status:** Not mentioned
+- **Impact:** Low - Affects developer debugging experience
+- **Current State:** No mention of how app logs errors, displays failures, handles exceptions
+- **Fix Required:**
+  - Add to Implementation Notes section:
+    - Logger setup: Use `console` for v0.1 (simple), upgrade to `pino` or `winston` in v1.0
+    - Error categories: Ingestion errors, validation errors, scenario errors, Ink render errors
+    - Ink error display: Red boxes with error message + optional stacktrace
+    - Debug flag: `--debug` enables verbose logging and full stacktraces
+  - Effort: 1 hour
+
+---
+
+## Gap Summary Table
+
+| Gap                      | Priority    | Effort  | Recommendation                                               |
+| ------------------------ | ----------- | ------- | ------------------------------------------------------------ |
+| CLI Commands Not Defined | 🔴 CRITICAL | 2-3h    | Add M1.5: CLI Commands & Entry Points                        |
+| Ink Components Missing   | 🔴 CRITICAL | 2-3h    | Add to M2: Ink component deliverables                        |
+| Work Breakdown Missing   | 🟠 HIGH     | 1h      | Add Work Breakdown section with task table                   |
+| Package Dependencies     | 🟠 HIGH     | 15m     | List all npm packages in M1                                  |
+| Database v2.0            | 🟡 MEDIUM   | 2h plan | Add Phase 3 database milestones (M10-M11)                    |
+| Snapshot Strategy        | 🟡 MEDIUM   | 30m     | Define snapshot location/update workflow in M6               |
+| Test Infrastructure      | 🟡 MEDIUM   | 1h      | Add M1.5: Vitest config + coverage setup                     |
+| Interactive Mode         | 🟡 MEDIUM   | 4-6h    | Add M5b: Enquirer + Ink TUI milestone                        |
+| Backwards Compat         | 🟡 MEDIUM   | 30m     | Add regression check to Phase 2 exit gate                    |
+| Clone Lifecycle          | 🟡 MEDIUM   | 30m     | Define E2E clone cleanup/timeouts in M6                      |
+| Documentation            | 🟢 LOW      | 2h      | Add doc deliverables (README, SCENARIOS.md, ARCHITECTURE.md) |
+| Error Handling           | 🟢 LOW      | 1h      | Add logging/error strategy to Implementation Notes           |
+
+**Total Effort to Fix: ~16-20 hours**
+
+**Recommendation:** Address 2 CRITICAL + 2 HIGH gaps before Phase 1 starts (~7-8 hours). Address
+MEDIUM gaps incrementally during Phase 1 implementation. LOW gaps can be deferred to Phase 2 if
+needed.
 
 ---
 
