@@ -14,7 +14,8 @@ by multiple Specifications.
 
 ## Archived
 
-(None yet)
+- [`SPEC-graph-system-vertical-slice-v0-1`](SPEC-graph-system-vertical-slice-v0-1.md) (draft) -
+  graph-vertical-slice-v0-1
 
 ---
 
