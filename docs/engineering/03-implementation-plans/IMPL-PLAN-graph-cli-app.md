@@ -44,50 +44,50 @@ index:
       lines: [154, 161]
       token_est: 55
     - title: 'Milestones'
-      lines: [163, 379]
-      token_est: 875
+      lines: [163, 485]
+      token_est: 1259
       subsections:
         - title: 'Milestone 1: App Scaffolding & Setup'
-          lines: [165, 185]
-          token_est: 95
+          lines: [165, 223]
+          token_est: 197
         - title: 'Milestone 2: REPL Loop & Command Dispatcher'
-          lines: [187, 260]
-          token_est: 281
+          lines: [225, 365]
+          token_est: 543
         - title: 'Milestone 3: Command Implementations'
-          lines: [262, 305]
+          lines: [367, 410]
           token_est: 167
         - title: 'Milestone 4: Ink UI Components'
-          lines: [307, 353]
+          lines: [412, 458]
           token_est: 214
         - title: 'Milestone 5: Integration & Testing'
-          lines: [355, 379]
-          token_est: 117
+          lines: [460, 485]
+          token_est: 138
     - title: 'Total Effort: ~18 hours (2.5 days)'
-      lines: [381, 389]
+      lines: [487, 495]
       token_est: 30
     - title: 'Technology Stack'
-      lines: [391, 409]
-      token_est: 71
+      lines: [497, 517]
+      token_est: 86
     - title: 'Implementation Notes'
-      lines: [411, 464]
-      token_est: 175
+      lines: [519, 602]
+      token_est: 299
     - title: 'Success Metrics'
-      lines: [466, 475]
+      lines: [604, 613]
       token_est: 64
     - title: 'Risk Register'
-      lines: [477, 486]
+      lines: [615, 624]
       token_est: 110
     - title: 'Exit Criteria (Phase 1)'
-      lines: [488, 500]
+      lines: [626, 638]
       token_est: 98
     - title: 'Assumptions'
-      lines: [502, 509]
+      lines: [640, 647]
       token_est: 49
     - title: 'Future Enhancements (v2.0+)'
-      lines: [511, 520]
+      lines: [649, 658]
       token_est: 46
     - title: 'Related Documents'
-      lines: [522, 526]
+      lines: [660, 664]
       token_est: 12
 ---
 
@@ -169,10 +169,48 @@ ingestion.
 **Deliverables:**
 
 - `apps/graph-cli-app/` directory with standard Nx structure
-- `package.json` with dependencies
+- `package.json` with dependencies (see below)
 - `tsconfig.json`, `vitest.config.ts`, `.eslintrc`
 - Entry point: `src/index.ts`, `src/cli.ts`
 - Dev script: `pnpm -C apps/graph-cli-app dev`
+
+**package.json Dependencies:**
+
+```json
+{
+  "name": "@repo/graph-cli-app",
+  "version": "0.1.0",
+  "description": "Interactive CLI for testing graph system features",
+  "type": "module",
+  "scripts": {
+    "dev": "node src/index.ts",
+    "build": "tsc",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "lint": "eslint src",
+    "format": "prettier --write src"
+  },
+  "dependencies": {
+    "@repo/graph-core": "*",
+    "@repo/graph-store": "*",
+    "@repo/graph-ingest": "*",
+    "@repo/graph-projection": "*",
+    "commander": "^14.0.2",
+    "enquirer": "^2.4.1",
+    "ink": "^6.6.0",
+    "pastel": "^4.0.0",
+    "react": "^19.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "eslint": "^9.39.2",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
+```
 
 **Verification:**
 
@@ -230,16 +268,83 @@ class GraphCLI {
   }
 }
 
+// src/dispatcher.ts
+class CommandDispatcher {
+  private commands: Map<string, CommandDefinition> = new Map();
+
+  register(name: string, def: CommandDefinition): void {
+    this.commands.set(name, def);
+  }
+
+  async execute(input: string, cli: GraphCLI): Promise<CommandResult> {
+    const { command, args, flags } = this.parseInput(input);
+    const def = this.commands.get(command);
+
+    if (!def) {
+      return {
+        success: false,
+        message: `Unknown command: ${command}. Type 'help' for available commands.`,
+      };
+    }
+
+    try {
+      return await def.handler.execute(args, flags, cli);
+    } catch (err) {
+      return {
+        success: false,
+        message: `Error: ${err.message}`,
+        error: err,
+      };
+    }
+  }
+
+  private parseInput(input: string): {
+    command: string;
+    args: string[];
+    flags: Record<string, any>;
+  } {
+    const tokens = input.trim().split(/\s+/);
+    const command = tokens.slice(0, 2).join(' '); // Support "ingest repo"
+    const args: string[] = [];
+    const flags: Record<string, any> = {};
+
+    for (let i = 2; i < tokens.length; i++) {
+      if (tokens[i].startsWith('--')) {
+        const key = tokens[i].slice(2);
+        const value = tokens[i + 1]?.startsWith('--') ? true : tokens[++i];
+        flags[key] = value;
+      } else {
+        args.push(tokens[i]);
+      }
+    }
+
+    return { command, args, flags };
+  }
+}
+
 // src/repl.ts
 async function startRepl() {
   const cli = new GraphCLI();
+  const dispatcher = new CommandDispatcher();
+
+  // Register all commands
+  dispatcher.register('ingest repo', {
+    handler: ingestRepoCommand,
+    description: 'Ingest a repository',
+    usage: 'ingest repo <url> [--commit <ref>] [--branch <branch>]',
+  });
+  dispatcher.register('dump', {
+    handler: dumpCommand,
+    description: 'Display current graph state',
+    usage: 'dump [--format json|text]',
+  });
+  // ... register other commands
 
   while (true) {
     const input = await promptUser('> ');
-    const [command, args, flags] = parseInput(input);
 
     try {
-      const result = await dispatcher.execute(command, args, flags, cli);
+      const result = await dispatcher.execute(input, cli);
       renderOutput(result);
     } catch (err) {
       renderError(err);
@@ -364,8 +469,9 @@ export const ProgressBox: React.FC<{
 
 **Test Coverage:**
 
-- [ ] Unit: 80%+ coverage
-- [ ] Integration: Happy path + error cases
+- [ ] Unit: 80%+ coverage for commands, dispatcher, GraphCLI
+- [ ] Integration: Happy path + error cases for workflows
+- [ ] E2E: REPL loop with simulated user input
 - [ ] Manual: Verify REPL feels good to use
 
 **Verification:**
@@ -392,19 +498,21 @@ export const ProgressBox: React.FC<{
 
 **CLI Framework:**
 
-- **Enquirer** v2.4.0 — Interactive prompts
-- **Commander** v12.0.0 — Argument parsing (for --flags)
+- **Enquirer** v2.4.1 — Interactive prompts
+- **Commander** v14.0.2 — Argument parsing (for --flags)
 
 **Terminal UI:**
 
-- **Ink** v5.0.0 — React rendering to terminal
-- **Pastel** v1.0.0 — Terminal colors
-- **React** v18.0.0 — Component framework
+- **Ink** v6.6.0 — React rendering to terminal
+- **Pastel** v4.0.0 — Terminal colors
+- **React** v19.2.3 — Component framework
 
 **Testing:**
 
-- **Vitest** v1.0.0 — Test runner
-- **@testing-library/react** — Component testing
+- **Vitest** v4.0.18 — Test runner
+- **TypeScript** v5.9.3 — Type checking
+- **ESLint** v9.39.2 — Linting
+- **Prettier** v3.8.1 — Code formatting
 
 ---
 
@@ -421,11 +529,41 @@ Validate Arguments
     ↓
 Dispatch to Command Handler
     ↓
-Execute (uses GraphApp)
+Execute (async/await) — await ingestRepo(), runProjection()
     ↓
 Render Output (via Ink)
     ↓
 Loop
+```
+
+**Important:** Commands like `ingestRepo()` and `runProjection()` are async. The REPL loop must use
+`await`:
+
+```typescript
+// src/repl.ts
+async function startRepl() {
+  // ...
+  while (true) {
+    const input = await promptUser('> ');
+
+    try {
+      const result = await dispatcher.execute(input, cli); // MUST await!
+      renderOutput(result);
+    } catch (err) {
+      renderError(err);
+    }
+  }
+}
+```
+
+**Progress Handling:** For long-running commands (ingest, project), show progress indicators via Ink
+while awaiting:
+
+```typescript
+// While awaiting ingestRepo:
+// 1. Show "⏳ Ingesting..." Ink box
+// 2. Await the async operation
+// 3. When complete, show results box
 ```
 
 ### Error Handling Strategy
@@ -437,15 +575,15 @@ Loop
 
 ### State Management
 
-Single GraphApp instance lives for the session:
+Single GraphCLI instance lives for the session:
 
 ```typescript
-const app = new GraphApp(inMemoryStore);
+const cli = new GraphCLI();
 
 // After ingest:
-app.store.nodes.length; // 47
+cli.store.getAllNodes().length; // 47
 
-// Commands query/manipulate same app instance
+// Commands query/manipulate same cli instance
 // On exit: discard all state
 ```
 

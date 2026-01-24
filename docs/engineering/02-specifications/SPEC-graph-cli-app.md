@@ -30,71 +30,89 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [105, 119]
+      lines: [123, 137]
       token_est: 90
     - title: 'Core Design Principle: Extensibility'
-      lines: [121, 143]
+      lines: [139, 161]
       token_est: 177
     - title: 'Scope'
-      lines: [145, 170]
+      lines: [163, 188]
       token_est: 115
     - title: 'Architecture: Extensible Command Pattern'
-      lines: [172, 237]
+      lines: [190, 255]
       token_est: 289
+    - title: 'Command Handler Interface'
+      lines: [257, 334]
+      token_est: 293
+    - title: 'GraphStore Interface'
+      lines: [336, 383]
+      token_est: 169
+    - title: 'Environment Variables'
+      lines: [385, 401]
+      token_est: 93
     - title: 'Entry Point'
-      lines: [239, 250]
+      lines: [403, 414]
       token_est: 28
     - title: 'GraphCLI Class'
-      lines: [252, 292]
+      lines: [416, 456]
       token_est: 199
+    - title: 'v0.1 Node & Edge Schemas'
+      lines: [458, 556]
+      token_est: 467
     - title: 'Command Roadmap: More Commands Coming'
-      lines: [294, 341]
+      lines: [558, 605]
       token_est: 309
+    - title: 'Ingestion Lifecycle'
+      lines: [607, 655]
+      token_est: 258
+    - title: 'Snapshot File Format'
+      lines: [657, 749]
+      token_est: 219
     - title: 'v0.1 Commands (Currently Available)'
-      lines: [343, 733]
+      lines: [751, 1141]
       token_est: 1633
       subsections:
         - title: '1. `ingest repo <url> [options]`'
-          lines: [345, 417]
+          lines: [753, 825]
           token_est: 418
         - title: '2. `dump [--format <format>]`'
-          lines: [419, 492]
+          lines: [827, 900]
           token_est: 271
         - title: '3. `trace <node-id> [--depth <n>]`'
-          lines: [494, 556]
+          lines: [902, 964]
           token_est: 288
         - title: '4. `diff <snap1> <snap2>`'
-          lines: [558, 615]
+          lines: [966, 1023]
           token_est: 247
         - title: '5. `project <name>`'
-          lines: [617, 700]
+          lines: [1025, 1108]
           token_est: 341
         - title: '6. `help [command]`'
-          lines: [702, 721]
+          lines: [1110, 1129]
           token_est: 49
         - title: '7. `exit`'
-          lines: [723, 733]
+          lines: [1131, 1141]
           token_est: 16
     - title: 'Future Commands (v1.0+)'
-      lines: [735, 757]
+      lines: [1143, 1165]
       token_est: 114
     - title: 'State Management'
-      lines: [759, 779]
+      lines: [1167, 1187]
       token_est: 72
     - title: 'Extensibility Example: Adding a v1.0 Command'
-      lines: [781, 833]
+      lines: [1189, 1241]
       token_est: 181
     - title: 'Error Handling'
-      lines: [835, 856]
+      lines: [1243, 1264]
       token_est: 81
     - title: 'Testing'
-      lines: [858, 873]
+      lines: [1266, 1281]
       token_est: 71
     - title: 'Non-Goals'
-      lines: [875, 883]
+      lines: [1283, 1291]
       token_est: 37
     - title: 'Related Documents'
-      lines: [885, 889]
+      lines: [1293, 1297]
       token_est: 12
 ---
 
@@ -236,6 +254,152 @@ const commands = {
 
 ---
 
+## Command Handler Interface
+
+Defines how commands are structured and registered.
+
+**Interfaces:**
+
+```typescript
+interface CommandResult {
+  success: boolean;
+  message: string; // User-facing result message
+  data?: any; // Optional data to render
+  error?: Error; // Optional error if success=false
+}
+
+interface CommandHandler {
+  execute(args: string[], flags: Record<string, any>, cli: GraphCLI): Promise<CommandResult>;
+}
+
+interface CommandDefinition {
+  handler: CommandHandler;
+  description: string; // Short description for help
+  usage: string; // Usage syntax (e.g., "ingest repo <url> [--commit <ref>]")
+  aliases?: string[]; // Alternative command names (optional)
+}
+```
+
+**Example Command Handler:**
+
+```typescript
+// src/commands/ingest-repo.ts
+export const ingestRepoCommand: CommandHandler = {
+  async execute(args, flags, cli) {
+    const url = args[0];
+    const commit = flags.commit;
+    const branch = flags.branch;
+
+    if (!url) {
+      return {
+        success: false,
+        message: 'Missing required argument: <url>',
+      };
+    }
+
+    try {
+      const result = await cli.ingestRepo(url, { commit, branch });
+      return {
+        success: true,
+        message: `Successfully ingested ${result.nodeCount} nodes`,
+        data: result,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Ingestion failed: ${error.message}`,
+        error,
+      };
+    }
+  },
+};
+```
+
+**Usage Pattern:**
+
+Commands are registered in the dispatcher and called with parsed user input:
+
+```typescript
+// Register in dispatcher
+dispatcher.register('ingest repo', {
+  handler: ingestRepoCommand,
+  description: 'Ingest a repository',
+  usage: 'ingest repo <url> [--commit <ref>] [--branch <branch>]',
+});
+
+// Called when user types: > ingest repo https://github.com/...
+const result = await ingestRepoCommand.execute(['https://github.com/...'], { commit: 'v1.0' }, cli);
+```
+
+---
+
+## GraphStore Interface
+
+The in-memory graph store that GraphCLI uses. Minimal interface for v0.1.
+
+**Interface:**
+
+```typescript
+interface Node {
+  id: string;
+  kind: string;
+  [key: string]: any; // Additional properties per node type
+}
+
+interface Edge {
+  source_id: string;
+  target_id: string;
+  kind: string;
+  created_at?: string;
+}
+
+interface GraphStore {
+  // Write operations
+  putNode(node: Node): void;
+  putEdge(edge: Edge): void;
+
+  // Read operations
+  getNode(id: string): Node | undefined;
+  getAllNodes(): Node[];
+  getAllEdges(): Edge[];
+  queryEdges(sourceId?: string, targetId?: string, kind?: string): Edge[];
+
+  // Query helpers
+  getNodesByKind(kind: string): Node[];
+  getEdgesByKind(kind: string): Edge[];
+  getNodeCount(): number;
+  getEdgeCount(): number;
+}
+```
+
+**Key properties:**
+
+- All methods are synchronous
+- In-memory only (no persistence in v0.1)
+- No transaction support required for v0.1
+- All nodes must have unique IDs
+- GraphCLI creates and maintains a single instance per session
+
+---
+
+## Environment Variables
+
+Configuration via environment variables.
+
+| Variable            | Type    | Default                    | Description                                   |
+| ------------------- | ------- | -------------------------- | --------------------------------------------- |
+| `GRAPH_INGEST_ROOT` | string  | `/tmp/Texere/graph-ingest` | Root directory where repos are cloned         |
+| `GRAPH_DEBUG`       | boolean | `false`                    | Enable debug logging (same as `--debug` flag) |
+| `NODE_ENV`          | string  | `development`              | Set to `test` for test mode                   |
+
+**Example:**
+
+```bash
+$ GRAPH_INGEST_ROOT=/custom/path GRAPH_DEBUG=true pnpm -C apps/graph-cli-app dev
+```
+
+---
+
 ## Entry Point
 
 ```bash
@@ -291,6 +455,106 @@ class GraphCLI {
 
 ---
 
+## v0.1 Node & Edge Schemas
+
+Formal definitions of node and edge types created during v0.1 operations.
+
+**ArtifactRoot Node:**
+
+```typescript
+{
+  id: string;                    // Deterministic SHA-256 hash of URL
+  kind: "ArtifactRoot";
+  schema_version: "v0.1";
+  source_kind: "repo";           // Type of source (repo, site, forum, etc.)
+  canonical_ref: string;         // GitHub URL, documentation site URL, etc.
+  labels?: string[];             // Optional tags
+  created_at: string;            // ISO-8601 timestamp
+  generated_in: string;          // Activity ID that created this
+  asserted_by: string;           // Agent ID that created this
+}
+```
+
+**ArtifactState Node:**
+
+```typescript
+{
+  id: string;                    // Deterministic hash of root_id + commit
+  kind: "ArtifactState";
+  schema_version: "v0.1";
+  artifact_root_id: string;      // Reference to ArtifactRoot
+  version_ref: string;           // Commit, tag, or retrieval timestamp
+  content_hash: string;          // SHA-256 of content
+  retrieved_at: string;          // ISO-8601 when snapshot was taken
+  node_version?: string;         // Node.js version that indexed this
+  package_manager?: string;      // npm, yarn, pnpm, etc.
+  package_manager_version?: string;
+  scip_typescript_version?: string;
+  created_at: string;
+  generated_in: string;
+  asserted_by: string;
+}
+```
+
+**ArtifactPart Node:**
+
+```typescript
+{
+  id: string;                    // Deterministic hash of state_id + locator
+  kind: "ArtifactPart";
+  schema_version: "v0.1";
+  part_kind: "file" | "symbol";  // Type of part
+  artifact_state_id: string;     // Reference to ArtifactState
+  locator: string;               // Path (file) or symbol locator (e.g., src/index.ts#MyFunction)
+  text_excerpt?: string;         // Optional: first N characters of content
+  part_hash?: string;            // Optional: hash of this part's content
+  created_at: string;
+  generated_in: string;
+  asserted_by: string;
+}
+```
+
+**Policy Node:**
+
+```typescript
+{
+  id: string;                    // Deterministic hash of policy_kind + scope
+  kind: "Policy";
+  schema_version: "v0.1";
+  policy_kind: "IngestionPolicy" | "ProjectionPolicy";
+  scope: string;                 // Scope of applicability (e.g., "global", "repo-url")
+  // IngestionPolicy fields:
+  retention_mode?: "link-only" | "excerpt" | "hashed";
+  connector_kind?: string;       // "repo", "site", "forum", etc.
+  // ProjectionPolicy fields:
+  rule_version?: string;         // Version of projection rules (e.g., "v0.1")
+  projections?: string[];        // List of projection names (e.g., ["CurrentCommittedTruth"])
+  created_at: string;
+  generated_in: string;
+  asserted_by: string;
+}
+```
+
+**Edge (any type):**
+
+```typescript
+{
+  source_id: string; // ID of source node
+  target_id: string; // ID of target node
+  kind: string; // Type of relationship (HasRoot, HasState, HasPart, HasPolicy)
+  created_at: string; // ISO-8601 timestamp
+}
+```
+
+**Edge kinds in v0.1:**
+
+- `HasRoot` — ArtifactRoot → ArtifactState
+- `HasState` — ArtifactRoot → ArtifactState
+- `HasPart` — ArtifactState → ArtifactPart
+- `HasPolicy` — (node) → Policy
+
+---
+
 ## Command Roadmap: More Commands Coming
 
 **IMPORTANT:** The commands shown below are only v0.1. Many more commands will be added as features
@@ -337,6 +601,150 @@ are implemented.
 - ... and others
 
 **The pattern stays the same:** Add handler → register command → done.
+
+---
+
+## Ingestion Lifecycle
+
+Details of how repository ingestion works operationally.
+
+**Clone Location:**
+
+```
+GRAPH_INGEST_ROOT env var (default: /tmp/Texere/graph-ingest)
+
+Directory structure:
+/tmp/Texere/graph-ingest/
+├── sindresorhus-ky/              # One subdir per repo
+│   ├── .git/
+│   ├── package.json
+│   ├── src/
+│   └── ...
+├── another-repo/
+└── ...
+```
+
+**Storage & Cleanup:**
+
+- Cloned repos are kept on disk for developer inspection
+- Manual cleanup: `pnpm -C apps/graph-cli-app cleanup` (future command)
+- Check disk space: if ingest root >1GB, warn developer
+- Optional: `--cleanup-after` flag to delete clone after ingest (future)
+
+**Timeout Policy:**
+
+- Clone: 2 minutes (network timeout)
+- Install dependencies: 1 minute
+- SCIP indexing: 2 minutes
+- Total per ingest: **5 minutes**
+- If timeout exceeded, operation fails and partial state is rolled back
+
+**Failure Handling:**
+
+- Clone fails → error, no state changes
+- Dependencies fail → error, cleanup clone, no state changes
+- SCIP fails → error, cleanup clone, no state changes
+- Ingestion fails (schema error) → error, partial nodes possible (log which were created)
+
+**Determinism:**
+
+- Same repo + commit → always produces identical node IDs
+- Can safely ingest same repo twice without duplication (nodes have same IDs)
+- Useful for testing reproducibility
+
+---
+
+## Snapshot File Format
+
+Formal specification of snapshot JSON generated by `dump --format json`.
+
+**Format:**
+
+```typescript
+interface GraphSnapshot {
+  version: string; // "0.1"
+  generated_at: string; // ISO-8601 timestamp
+
+  nodes: Array<{
+    id: string;
+    kind: string;
+    [key: string]: any;
+  }>;
+
+  edges: Array<{
+    source_id: string;
+    target_id: string;
+    kind: string;
+    created_at?: string;
+  }>;
+
+  summary: {
+    total_nodes: number;
+    total_edges: number;
+    nodes_by_kind: Record<string, number>;
+    edges_by_kind: Record<string, number>;
+  };
+}
+```
+
+**Example:**
+
+```json
+{
+  "version": "0.1",
+  "generated_at": "2026-01-24T12:00:00Z",
+  "nodes": [
+    {
+      "id": "artifact_root_abc123",
+      "kind": "ArtifactRoot",
+      "source_kind": "repo",
+      "canonical_ref": "https://github.com/sindresorhus/ky"
+    },
+    {
+      "id": "artifact_state_def456",
+      "kind": "ArtifactState",
+      "artifact_root_id": "artifact_root_abc123",
+      "version_ref": "v1.14.2",
+      "content_hash": "sha256:..."
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "artifact_root_abc123",
+      "target_id": "artifact_state_def456",
+      "kind": "HasState"
+    }
+  ],
+  "summary": {
+    "total_nodes": 47,
+    "total_edges": 52,
+    "nodes_by_kind": {
+      "ArtifactRoot": 1,
+      "ArtifactState": 1,
+      "ArtifactPart": 45,
+      "Policy": 2
+    },
+    "edges_by_kind": {
+      "HasState": 1,
+      "HasPart": 45,
+      "HasPolicy": 2
+    }
+  }
+}
+```
+
+**Usage:**
+
+```bash
+# Save snapshot
+> dump --format json > /tmp/snap1.json
+
+# Compare snapshots
+> diff /tmp/snap1.json /tmp/snap2.json
+
+# Use in tests (future)
+# Verify determinism, regression detection, impact analysis
+```
 
 ---
 
