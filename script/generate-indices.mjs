@@ -2,6 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { execSync } from 'child_process';
 
 // ============================================================================
@@ -388,28 +389,82 @@ function embedSectionIndex(doc) {
   return false;
 }
 
+/**
+ * Load cache of file hashes from last successful run.
+ */
+function loadHashCache() {
+  const cacheFile = '.docindex-cache.json';
+  if (fs.existsSync(cacheFile)) {
+    try {
+      return JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+/**
+ * Save cache of file hashes after successful run.
+ */
+function saveHashCache(cache) {
+  fs.writeFileSync('.docindex-cache.json', JSON.stringify(cache, null, 2), 'utf-8');
+}
+
+/**
+ * Compute SHA256 hash of file content.
+ */
+function hashFileContent(content) {
+  return crypto.createHash('sha256').update(content).digest('hex');
+}
+
+/**
+ * Filter docs to only those that have changed since last run.
+ */
+function getChangedDocs(allDocs, hashCache) {
+  return allDocs.filter((doc) => {
+    const currentHash = hashFileContent(doc.content);
+    const cachedHash = hashCache[doc.relativePath];
+    return currentHash !== cachedHash;
+  });
+}
+
 function main() {
   console.log('\n📑 Generating section indices...\n');
 
   const allDocs = getAllDocFiles();
+  const hashCache = loadHashCache();
+  const changedDocs = getChangedDocs(allDocs, hashCache);
 
   if (!INDEXING_CONFIG.enabled) {
     console.log('⏭️  Section indexing is disabled in INDEXING_CONFIG\n');
     return;
   }
 
+  if (changedDocs.length === 0) {
+    console.log(`✅ No documents changed since last run (skipping indexing)\n`);
+    return;
+  }
+
+  console.log(`📝 Processing ${changedDocs.length} changed document(s)...\n`);
+
   let indexedCount = 0;
-  for (const doc of allDocs) {
+  for (const doc of changedDocs) {
     if (embedSectionIndex(doc)) {
       indexedCount++;
       console.log(`  ✅ Generated index for ${doc.relativePath}`);
+      // Update hash cache for this doc
+      hashCache[doc.relativePath] = hashFileContent(doc.content);
     }
   }
 
+  // Save updated cache
+  saveHashCache(hashCache);
+
   if (indexedCount > 0) {
-    console.log(`\n✨ Generated section indices in ${indexedCount} documents\n`);
+    console.log(`\n✨ Generated section indices in ${indexedCount} document(s)\n`);
   } else {
-    console.log(`\n✅ No changes needed\n`);
+    console.log(`\n✅ No index changes needed for changed documents\n`);
   }
 }
 

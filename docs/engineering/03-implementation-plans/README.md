@@ -13,7 +13,8 @@ execution reveals sequencing changes.
 
 ## Archived / Completed
 
-(None yet)
+- [`IMPL-PLAN-graph-system-vertical-slice-v0-1`](IMPL-PLAN-graph-system-vertical-slice-v0-1.md)
+  (draft) - graph-vertical-slice-v0-1
 
 ---
 

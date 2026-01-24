@@ -64,44 +64,44 @@ index:
       summary: 'Implements core ingestion, store, policy, and projection requirements for v0.1.'
       token_est: 127
     - title: 'Interfaces & Observable Behavior'
-      lines: [183, 230]
+      lines: [183, 232]
       summary:
         'CLI-driven ingestion emits JSON dumps; projection output is deterministic and explainable.'
-      token_est: 186
+      token_est: 205
     - title: 'Data Models'
-      lines: [232, 268]
+      lines: [234, 270]
       summary: 'Minimal node set for the slice with deterministic IDs and locators.'
       token_est: 91
     - title: 'Workflows'
-      lines: [270, 282]
+      lines: [272, 284]
       summary: 'Ingestion and projection workflow with explicit policy resolution.'
       token_est: 68
     - title: 'Dump Schema (Stable and LLM-Friendly)'
-      lines: [284, 307]
+      lines: [286, 309]
       summary: 'JSON dumps MUST be stable, versioned, and readable by humans and LLMs.'
       token_est: 107
     - title: 'Error Handling'
-      lines: [309, 317]
+      lines: [311, 319]
       summary: 'Failure is explicit; no partial writes on SCIP failure.'
       token_est: 67
     - title: 'Testing & Verification'
-      lines: [319, 337]
+      lines: [321, 339]
       summary: 'Vitest suite validates determinism and policy-driven behavior.'
       token_est: 73
     - title: 'Observability'
-      lines: [339, 348]
+      lines: [341, 350]
       summary: 'Minimal inspection outputs for debugging and review.'
       token_est: 51
     - title: 'Security & Retention'
-      lines: [350, 357]
+      lines: [352, 359]
       summary: 'Default link-only retention for third-party code.'
       token_est: 32
     - title: 'Non-Throwaway Guarantees'
-      lines: [359, 367]
+      lines: [361, 369]
       summary: 'The slice MUST be extendable without rewrite.'
       token_est: 59
     - title: 'Open Questions'
-      lines: [369, 371]
+      lines: [371, 373]
       token_est: 21
 ---
 

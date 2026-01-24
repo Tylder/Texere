@@ -23,6 +23,9 @@ test-results/
 # Prettier
 .prettier-cache
 
+# Documentation indexing cache
+.docindex-cache.json
+
 # Nx
 .nx
 
