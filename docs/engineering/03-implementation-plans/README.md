@@ -13,6 +13,7 @@ execution reveals sequencing changes.
 
 ## Archived / Completed
 
+- [`IMPL-PLAN-graph-cli-app`](IMPL-PLAN-graph-cli-app.md) (draft) - graph-cli-app
 - [`IMPL-PLAN-graph-system-vertical-slice-v0-1`](IMPL-PLAN-graph-system-vertical-slice-v0-1.md)
   (draft) - graph-vertical-slice-v0-1
 

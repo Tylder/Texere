@@ -50,45 +50,51 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [97, 114]
+      lines: [103, 120]
       summary:
         'Build the v0.1 vertical slice end-to-end with stable interfaces, policy-driven behavior,
         and testable JSON outputs for inspection.'
       token_est: 102
     - title: 'Scope'
-      lines: [116, 136]
+      lines: [122, 142]
       summary: 'Implementation of the v0.1 vertical slice with inspection outputs and tests.'
       token_est: 85
+    - title: 'Execution Default'
+      lines: [144, 158]
+      summary:
+        'Unless explicitly scoped down, the default execution scope is the full v0.1 end-to-end
+        slice.'
+      token_est: 78
     - title: 'Preconditions'
-      lines: [138, 148]
+      lines: [160, 170]
       token_est: 67
     - title: 'Milestones'
-      lines: [150, 257]
+      lines: [172, 279]
       token_est: 388
       subsections:
         - title: 'Milestone 1: Core Interfaces and Node Shapes'
-          lines: [152, 168]
+          lines: [174, 190]
           token_est: 67
         - title: 'Milestone 2: In-Memory Store + Policy Persistence'
-          lines: [170, 185]
+          lines: [192, 207]
           token_est: 64
         - title: 'Milestone 3: Repo Ingestion Pipeline (SCIP-TS)'
-          lines: [187, 205]
+          lines: [209, 227]
           token_est: 90
         - title: 'Milestone 4: JSON Dumps (LLM-Friendly)'
-          lines: [207, 223]
+          lines: [229, 245]
           token_est: 55
         - title: 'Milestone 5: CurrentCommittedTruth Projection'
-          lines: [225, 239]
+          lines: [247, 261]
           token_est: 56
         - title: 'Milestone 6: Test Suite (Vitest)'
-          lines: [241, 257]
+          lines: [263, 279]
           token_est: 55
     - title: 'Risks and Mitigations'
-      lines: [259, 268]
+      lines: [281, 290]
       token_est: 63
     - title: 'Exit Criteria'
-      lines: [270, 275]
+      lines: [292, 297]
       token_est: 49
 ---
 

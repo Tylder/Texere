@@ -25,6 +25,7 @@ by multiple Specifications.
 
 ## Archived
 
+- [`SPEC-graph-cli-app`](SPEC-graph-cli-app.md) (draft) - graph-cli-app
 - [`SPEC-graph-system-vertical-slice-v0-1`](SPEC-graph-system-vertical-slice-v0-1.md) (draft) -
   graph-vertical-slice-v0-1
 

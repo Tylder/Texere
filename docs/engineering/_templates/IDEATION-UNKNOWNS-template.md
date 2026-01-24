@@ -1,35 +1,45 @@
 ---
-# REQUIRED FIELDS — DO NOT REMOVE ANY OF THESE
-type: IDEATION-UNKNOWNS # Always "IDEATION-UNKNOWNS" for this document type
-status: draft # Current status: draft | active | stable | deprecated
-stability: experimental # Maturity level: experimental | beta | stable
-created: YYYY-MM-DD # ISO format (YYYY-MM-DD). Set once, never change.
-last_updated: YYYY-MM-DD # AUTO-UPDATED on commit. DO NOT manually edit.
-area: search # System area (e.g., search, api, auth, database)
-feature:
-  pagination-system # Feature/initiative name (e.g., pagination, auth-v2)
-  # Use kebab-case, match across IDEATION-PROBLEMS, IDEATION-EXPERIENCE
-summary_short: >- # 1-2 sentences for document registry tables
+type: IDEATION-UNKNOWNS
+status: draft
+stability: experimental
+created: YYYY-MM-DD
+last_updated: YYYY-MM-DD
+area: search
+feature: pagination-system
+summary_short: >-
   Open questions blocking Requirements: pagination approach, performance targets, real-time
   requirements
-summary_long: >- # 3-5 sentences: what's uncertain, why it matters, what blocks progress
+summary_long: >-
   Lists 5 key unknowns (pagination type, page size limits, async vs sync, consistency, real-time)
   with possible answers and closure criteria. Identifies 3 blockers that must resolve before REQ
   finalization. Tracks resolved questions for audit trail.
-
-# OPTIONAL FIELDS — safe to omit if not applicable
-keywords: # Search keywords (2-3 recommended). Omit field if not needed.
+keywords:
   - ideation
   - unknowns
   - blockers
-
-# DOCUMENT RELATIONSHIPS — omit sections with no entries
-related_ideation: # Other ideation docs on this feature (Problems, Experience)
+related_ideation:
   - IDEATION-PROBLEMS-pagination
   - IDEATION-EXPERIENCE-pagination
 ---
 
----
+<!-- FRONTMATTER INSTRUCTIONS FOR WRITERS (delete this comment block after filling in values)
+✏️ REQUIRED FIELDS — DO NOT REMOVE ANY OF THESE:
+  - type: Always "IDEATION-UNKNOWNS" for this document type
+  - status: draft | active | stable | deprecated
+  - stability: experimental | beta | stable
+  - created: ISO date (YYYY-MM-DD). Set once, never change.
+  - last_updated: AUTO-UPDATED on commit. DO NOT manually edit.
+  - area: System area (e.g., search, api, auth, database)
+  - feature: Feature/initiative name (kebab-case). Match across IDEATION-PROBLEMS, IDEATION-EXPERIENCE
+  - summary_short: 1-2 sentences for document registry tables
+  - summary_long: 3-5 sentences: what's uncertain, why it matters, what blocks progress
+
+✏️ OPTIONAL FIELDS — safe to omit:
+  - keywords: Search keywords (2-3 recommended). Omit field if not needed.
+
+✏️ DOCUMENT RELATIONSHIPS (link to related docs; omit sections with no entries):
+  - related_ideation: Other ideation docs on this feature (Problems, Experience)
+-->
 
 ## TLDR
 

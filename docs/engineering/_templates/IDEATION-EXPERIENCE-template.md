@@ -1,36 +1,47 @@
 ---
-# REQUIRED FIELDS — DO NOT REMOVE ANY OF THESE
-type: IDEATION-EXPERIENCE # Always "IDEATION-EXPERIENCE" for this document type
-status: draft # Current status: draft | active | stable | deprecated
-stability: experimental # Maturity level: experimental | beta | stable
-created: YYYY-MM-DD # ISO format (YYYY-MM-DD). Set once, never change.
-last_updated: YYYY-MM-DD # AUTO-UPDATED on commit. DO NOT manually edit.
-area: search # System area (e.g., search, api, auth, database)
-feature:
-  pagination-system # Feature/initiative name (e.g., pagination, auth-v2)
-  # Use kebab-case, match across IDEATION-PROBLEMS, IDEATION-UNKNOWNS
-summary_short: >- # 1-2 sentences for document registry tables
+type: IDEATION-EXPERIENCE
+status: draft
+stability: experimental
+created: YYYY-MM-DD
+last_updated: YYYY-MM-DD
+area: search
+feature: pagination-system
+summary_short: >-
   How data analysts and API consumers will experience pagination: journeys, personas, invariants
-summary_long: >- # 3-5 sentences: who uses this, how they use it, what matters to them
+summary_long: >-
   Defines 2 personas (Alice: data analyst, Bob: API consumer) and their primary workflows.
   Establishes experience invariants (always show progress, consistent error messages), failure
   recovery paths, and success signals. Drives user-centric Requirements.
-
-# OPTIONAL FIELDS — safe to omit if not applicable
-keywords: # Search keywords (2-3 recommended). Omit field if not needed.
+keywords:
   - ideation
   - experience
   - user-centric
-
-# DOCUMENT RELATIONSHIPS — omit sections with no entries
-related_ideation: # Other ideation docs on this feature (Problems, Unknowns)
+related_ideation:
   - IDEATION-PROBLEMS-pagination
   - IDEATION-UNKNOWNS-pagination
-drives: # Requirements this drives (fill after REQ-* created)
+drives:
   - REQ-feature-name
 ---
 
----
+<!-- FRONTMATTER INSTRUCTIONS FOR WRITERS (delete this comment block after filling in values)
+✏️ REQUIRED FIELDS — DO NOT REMOVE ANY OF THESE:
+  - type: Always "IDEATION-EXPERIENCE" for this document type
+  - status: draft | active | stable | deprecated
+  - stability: experimental | beta | stable
+  - created: ISO date (YYYY-MM-DD). Set once, never change.
+  - last_updated: AUTO-UPDATED on commit. DO NOT manually edit.
+  - area: System area (e.g., search, api, auth, database)
+  - feature: Feature/initiative name (kebab-case). Match across IDEATION-PROBLEMS, IDEATION-UNKNOWNS
+  - summary_short: 1-2 sentences for document registry tables
+  - summary_long: 3-5 sentences: who uses this, how, what matters to them
+
+✏️ OPTIONAL FIELDS — safe to omit:
+  - keywords: Search keywords (2-3 recommended). Omit field if not needed.
+
+✏️ DOCUMENT RELATIONSHIPS (link to related docs; omit sections with no entries):
+  - related_ideation: Other ideation docs on this feature (Problems, Unknowns)
+  - drives: Requirements this drives (fill after REQ-* created)
+-->
 
 ## TLDR
 
