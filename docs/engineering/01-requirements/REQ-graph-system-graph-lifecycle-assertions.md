@@ -1,0 +1,166 @@
+---
+type: REQ
+status: draft
+stability: experimental
+created: 2026-01-24
+last_updated: 2026-01-24
+area: graph-system
+feature: graph-lifecycle-assertions
+summary_short: >-
+  Requirements for lifecycle assertion kinds and minimum schemas
+summary_long: >-
+  Defines Requirements for the lifecycle assertion catalog and minimum schemas used in v0.1, with a
+  focus on Decisions, Requirements, and SpecClauses. Establishes required fields, provenance, and
+  supersession expectations.
+keywords:
+  - requirements
+  - graph
+  - lifecycle
+related:
+  - REQ-graph-lifecycle
+  - REQ-graph-system-graph-knowledge-system
+index:
+  sections:
+    - title: 'TLDR'
+      lines: [54, 70]
+      summary: 'Define the v0.1 lifecycle assertion catalog and minimum schemas.'
+      token_est: 76
+    - title: 'Scope'
+      lines: [72, 89]
+      summary: 'Assertion kinds and schemas for v0.1. Excludes ingestion and projection rules.'
+      token_est: 69
+    - title: 'REQ-001: Assertion catalog'
+      lines: [91, 112]
+      summary: 'The system MUST define a v0.1 catalog of assertion kinds.'
+      token_est: 88
+    - title: 'REQ-002: Minimum fields'
+      lines: [114, 136]
+      summary: 'Each assertion kind MUST define minimum required fields.'
+      token_est: 98
+    - title: 'Related Requirements'
+      lines: [138, 145]
+      summary: 'Assertion requirements align with lifecycle and graph model requirements.'
+      token_est: 24
+    - title: 'Design Decisions'
+      lines: [147, 160]
+      token_est: 85
+    - title: 'Blockers'
+      lines: [162, 166]
+      token_est: 39
+---
+
+# REQ-graph-lifecycle-assertions
+
+## TLDR
+
+Summary: Define the v0.1 lifecycle assertion catalog and minimum schemas.
+
+**What:** Lifecycle assertion kinds and schemas
+
+**Why:** Consistent assertion structure enables validation and projections
+
+**How:** Declare required fields and provenance rules per kind
+
+**Status:** Draft
+
+**Critical path:** Define assertion kinds -> define schemas -> enforce validation
+
+**Risk:** Ambiguous schemas create drift and invalid graph states
+
+---
+
+## Scope
+
+Summary: Assertion kinds and schemas for v0.1. Excludes ingestion and projection rules.
+
+**Includes:**
+
+- Assertion kinds (Decision, Requirement, SpecClause)
+- Required fields for each kind
+- Provenance requirements (Agent/Activity)
+- Supersession expectations
+
+**Excludes:**
+
+- Ingestion pipelines and source parsing
+- Projection definitions
+- Extended assertion kinds (Plan, Verification) beyond v0.1
+
+---
+
+## REQ-001: Assertion catalog
+
+Summary: The system MUST define a v0.1 catalog of assertion kinds.
+
+**Statement:**
+
+The system MUST support Decision, Requirement, and SpecClause assertion kinds in v0.1.
+
+**Rationale:**
+
+These kinds are the minimum lifecycle spine needed for current truth projections.
+
+**Measurable Fit Criteria:**
+
+- [ ] Each kind has a declared schema
+- [ ] Validation enforces the catalog
+
+**Verification Method:**
+
+- Schema validation tests
+
+---
+
+## REQ-002: Minimum fields
+
+Summary: Each assertion kind MUST define minimum required fields.
+
+**Statement:**
+
+Each supported assertion kind MUST define required fields, including provenance links to Agent and
+Activity, and a deterministic conflict key when applicable.
+
+**Rationale:**
+
+Minimum fields enable invariants, projections, and reproducibility.
+
+**Measurable Fit Criteria:**
+
+- [ ] Schemas define required fields for each kind
+- [ ] Assertions missing required fields are rejected
+
+**Verification Method:**
+
+- Validation tests for required fields
+
+---
+
+## Related Requirements
+
+Summary: Assertion requirements align with lifecycle and graph model requirements.
+
+- REQ-graph-lifecycle.md
+- REQ-graph-system-graph-knowledge-system.md
+
+---
+
+## Design Decisions
+
+| Field                  | Decision 001  |
+| ---------------------- | ------------- |
+| **Title**              | Not specified |
+| **Options Considered** | Not specified |
+| **Chosen**             | Not specified |
+| **Rationale**          | Not specified |
+| **Tradeoffs**          | Not specified |
+| **Blocked**            | Not specified |
+| **Expires**            | Not specified |
+| **Decision Date**      | Not specified |
+
+---
+
+## Blockers
+
+| Blocker | Status | Unblocks When | Impact |
+| ------- | ------ | ------------- | ------ |
+| None    | N/A    | N/A           | N/A    |

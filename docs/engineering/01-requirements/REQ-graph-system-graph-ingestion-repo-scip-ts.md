@@ -24,67 +24,43 @@ related:
   - REQ-graph-system-graph-knowledge-system
 index:
   sections:
-    - title: 'Document Relationships'
-      lines: [70, 87]
-      summary:
-        'Requirements for ingesting a TypeScript repository via SCIP into canonical graph nodes.'
-      token_est: 47
     - title: 'TLDR'
-      lines: [89, 106]
+      lines: [65, 82]
       summary:
         'Clone a repo at a commit, run scip-typescript, and map files/symbols into ArtifactRoot,
         ArtifactState, and ArtifactPart with deterministic provenance.'
       token_est: 99
     - title: 'Scope'
-      lines: [108, 128]
+      lines: [84, 104]
       summary:
         'TypeScript repo ingestion via SCIP into Artifact nodes. Excludes lifecycle assertions,
         projections, and store selection details.'
       token_est: 88
     - title: 'REQ-001: Commit-anchored ingestion'
-      lines: [130, 152]
+      lines: [106, 128]
       summary: 'Ingestion MUST be anchored to an immutable commit hash.'
       token_est: 104
     - title: 'REQ-002: SCIP index generation'
-      lines: [154, 176]
+      lines: [130, 152]
       summary: 'Ingestion MUST generate a SCIP index for the target repo.'
       token_est: 112
     - title: 'REQ-003: ArtifactPart mapping'
-      lines: [178, 204]
+      lines: [154, 180]
       summary: 'Files and symbols MUST be represented as ArtifactParts.'
       token_est: 132
     - title: 'Related Requirements'
-      lines: [206, 213]
+      lines: [182, 189]
       summary: 'Repo ingestion must align with ingestion and graph model requirements.'
       token_est: 25
     - title: 'Design Decisions'
-      lines: [215, 228]
+      lines: [191, 204]
       token_est: 85
     - title: 'Blockers'
-      lines: [230, 234]
+      lines: [206, 210]
       token_est: 39
 ---
 
 # REQ-graph-ingestion-repo-scip-ts
-
-## Document Relationships
-
-Summary: Requirements for ingesting a TypeScript repository via SCIP into canonical graph nodes.
-
-**Upstream (depends on):**
-
-- REQ-graph-ingestion.md
-- REQ-graph-system-graph-knowledge-system.md
-
-**Downstream (depends on this):**
-
-- SPEC-graph-ingestion-repo-scip-ts.md (planned)
-
-**Siblings (related Requirements):**
-
-- REQ-graph-store.md
-
----
 
 ## TLDR
 

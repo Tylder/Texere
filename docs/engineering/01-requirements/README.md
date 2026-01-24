@@ -16,8 +16,14 @@ immutable by ID—if intent changes, deprecate and create a new requirement ID.
 - [`REQ-graph-system-graph-ingestion-repo-scip-ts`](REQ-graph-system-graph-ingestion-repo-scip-ts.md)
   (draft) - graph-ingestion-repo-scip-ts
 - [`REQ-graph-lifecycle`](REQ-graph-lifecycle.md) (draft) - graph-lifecycle
+- [`REQ-graph-system-graph-lifecycle-assertions`](REQ-graph-system-graph-lifecycle-assertions.md)
+  (draft) - graph-lifecycle-assertions
 - [`REQ-graph-projection`](REQ-graph-projection.md) (draft) - graph-projection
+- [`REQ-graph-system-graph-projection-current-truth`](REQ-graph-system-graph-projection-current-truth.md)
+  (draft) - graph-projection-current-truth
 - [`REQ-graph-store`](REQ-graph-store.md) (draft) - graph-store
+- [`REQ-graph-system-graph-store-inmemory`](REQ-graph-system-graph-store-inmemory.md) (draft) -
+  graph-store-inmemory
 - [`REQ-graph-system-graph-system-architecture`](REQ-graph-system-graph-system-architecture.md)
   (draft) - graph-system-architecture
 - [`REQ-graph-system-graph-knowledge-system`](REQ-graph-system-graph-knowledge-system.md) (draft) -
