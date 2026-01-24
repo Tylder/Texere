@@ -36,83 +36,83 @@ index:
       lines: [139, 161]
       token_est: 177
     - title: 'Scope'
-      lines: [163, 188]
-      token_est: 115
+      lines: [163, 190]
+      token_est: 143
     - title: 'Architecture: Extensible Command Pattern'
-      lines: [190, 255]
+      lines: [192, 257]
       token_est: 289
     - title: 'Command Handler Interface'
-      lines: [257, 334]
+      lines: [259, 336]
       token_est: 293
     - title: 'GraphStore Interface'
-      lines: [336, 383]
+      lines: [338, 385]
       token_est: 169
     - title: 'Environment Variables'
-      lines: [385, 401]
+      lines: [387, 403]
       token_est: 103
     - title: 'Entry Point'
-      lines: [403, 414]
+      lines: [405, 416]
       token_est: 28
     - title: 'GraphCLI Class'
-      lines: [416, 456]
+      lines: [418, 458]
       token_est: 199
     - title: 'v0.1 Node & Edge Schemas'
-      lines: [458, 555]
+      lines: [460, 557]
       token_est: 458
     - title: 'Command Roadmap: More Commands Coming'
-      lines: [557, 604]
+      lines: [559, 606]
       token_est: 309
     - title: 'Ingestion Lifecycle'
-      lines: [606, 654]
+      lines: [608, 656]
       token_est: 258
     - title: 'Snapshot File Format'
-      lines: [656, 748]
+      lines: [658, 750]
       token_est: 219
     - title: 'v0.1 Commands (Currently Available)'
-      lines: [750, 1121]
+      lines: [752, 1123]
       token_est: 1584
       subsections:
         - title: '1. `ingest repo <url> [options]`'
-          lines: [752, 824]
+          lines: [754, 826]
           token_est: 418
         - title: '2. `dump [--format <format>]`'
-          lines: [826, 883]
+          lines: [828, 885]
           token_est: 245
         - title: '3. `trace <node-id> [--depth <n>]`'
-          lines: [885, 944]
+          lines: [887, 946]
           token_est: 272
         - title: '4. `diff <snap1> <snap2>`'
-          lines: [946, 1003]
+          lines: [948, 1005]
           token_est: 240
         - title: '5. `project <name>`'
-          lines: [1005, 1088]
+          lines: [1007, 1090]
           token_est: 341
         - title: '6. `help [command]`'
-          lines: [1090, 1109]
+          lines: [1092, 1111]
           token_est: 49
         - title: '7. `exit`'
-          lines: [1111, 1121]
+          lines: [1113, 1123]
           token_est: 16
     - title: 'Future Commands (v1.0+)'
-      lines: [1123, 1145]
+      lines: [1125, 1147]
       token_est: 114
     - title: 'State Management'
-      lines: [1147, 1167]
+      lines: [1149, 1169]
       token_est: 72
     - title: 'Extensibility Example: Adding a v1.0 Command'
-      lines: [1169, 1221]
+      lines: [1171, 1223]
       token_est: 181
     - title: 'Error Handling'
-      lines: [1223, 1244]
+      lines: [1225, 1246]
       token_est: 81
     - title: 'Testing'
-      lines: [1246, 1261]
+      lines: [1248, 1263]
       token_est: 71
     - title: 'Non-Goals'
-      lines: [1263, 1271]
+      lines: [1265, 1273]
       token_est: 37
     - title: 'Related Documents'
-      lines: [1273, 1277]
+      lines: [1275, 1279]
       token_est: 12
 ---
 
@@ -170,12 +170,14 @@ system evolves.
 - Extensible command pattern (how to add new commands)
 - Ink+Pastel terminal UI rendering
 - Error handling and debug mode
+- CLI commands that call ingestion APIs (ingestion logic lives outside the CLI)
 
 **Excludes:**
 
 - Automated test framework or CI/CD workflows
 - Database persistence (deferred to v2.0+)
 - Web API
+- Owning ingestion orchestration logic (provided by graph-ingest packages)
 
 **Future (when features exist):**
 

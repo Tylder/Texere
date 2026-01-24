@@ -56,45 +56,45 @@ index:
         and testable JSON outputs for inspection.'
       token_est: 102
     - title: 'Scope'
-      lines: [122, 142]
+      lines: [122, 143]
       summary: 'Implementation of the v0.1 vertical slice with inspection outputs and tests.'
-      token_est: 90
+      token_est: 104
     - title: 'Execution Default'
-      lines: [144, 158]
+      lines: [145, 159]
       summary:
         'Unless explicitly scoped down, the default execution scope is the full v0.1 end-to-end
         slice.'
       token_est: 78
     - title: 'Preconditions'
-      lines: [160, 170]
+      lines: [161, 171]
       token_est: 67
     - title: 'Milestones'
-      lines: [172, 283]
+      lines: [173, 284]
       token_est: 433
       subsections:
         - title: 'Milestone 1: Core Interfaces and Node Shapes'
-          lines: [174, 190]
+          lines: [175, 191]
           token_est: 67
         - title: 'Milestone 2: In-Memory Store + Policy Persistence'
-          lines: [192, 207]
+          lines: [193, 208]
           token_est: 64
         - title: 'Milestone 3: Repo Ingestion Pipeline (SCIP-TS)'
-          lines: [209, 228]
+          lines: [210, 229]
           token_est: 102
         - title: 'Milestone 4: JSON Dumps (LLM-Friendly)'
-          lines: [230, 247]
+          lines: [231, 248]
           token_est: 69
         - title: 'Milestone 5: CurrentCommittedTruth Projection'
-          lines: [249, 263]
+          lines: [250, 264]
           token_est: 56
         - title: 'Milestone 6: Test Suite (Vitest)'
-          lines: [265, 283]
+          lines: [266, 284]
           token_est: 75
     - title: 'Risks and Mitigations'
-      lines: [285, 294]
+      lines: [286, 295]
       token_est: 63
     - title: 'Exit Criteria'
-      lines: [296, 301]
+      lines: [297, 302]
       token_est: 50
 ---
 
@@ -131,6 +131,7 @@ Summary: Implementation of the v0.1 vertical slice with inspection outputs and t
 - Graph-native policies (ingestion + projection)
 - JSON dump outputs and summary
 - Vitest tests for determinism and policy selection
+- Ingestion orchestration in graph-ingest packages; CLI is a thin wrapper
 
 **Excludes:**
 

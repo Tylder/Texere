@@ -64,44 +64,44 @@ index:
       summary: 'Implements core ingestion, store, policy, and projection requirements for v0.1.'
       token_est: 127
     - title: 'Interfaces & Observable Behavior'
-      lines: [183, 232]
+      lines: [183, 235]
       summary:
         'CLI-driven ingestion emits JSON dumps; projection output is deterministic and explainable.'
-      token_est: 205
+      token_est: 238
     - title: 'Data Models'
-      lines: [234, 270]
+      lines: [237, 273]
       summary: 'Minimal node set for the slice with deterministic IDs and locators.'
       token_est: 91
     - title: 'Workflows'
-      lines: [272, 284]
+      lines: [275, 287]
       summary: 'Ingestion and projection workflow with explicit policy resolution.'
       token_est: 68
     - title: 'Dump Schema (Stable and LLM-Friendly)'
-      lines: [286, 309]
+      lines: [289, 312]
       summary: 'JSON dumps MUST be stable, versioned, and readable by humans and LLMs.'
       token_est: 107
     - title: 'Error Handling'
-      lines: [311, 319]
+      lines: [314, 322]
       summary: 'Failure is explicit; no partial writes on SCIP failure.'
       token_est: 67
     - title: 'Testing & Verification'
-      lines: [321, 339]
+      lines: [324, 342]
       summary: 'Vitest suite validates determinism and policy-driven behavior.'
       token_est: 73
     - title: 'Observability'
-      lines: [341, 350]
+      lines: [344, 353]
       summary: 'Minimal inspection outputs for debugging and review.'
       token_est: 51
     - title: 'Security & Retention'
-      lines: [352, 359]
+      lines: [355, 362]
       summary: 'Default link-only retention for third-party code.'
       token_est: 32
     - title: 'Non-Throwaway Guarantees'
-      lines: [361, 369]
+      lines: [364, 372]
       summary: 'The slice MUST be extendable without rewrite.'
       token_est: 59
     - title: 'Open Questions'
-      lines: [371, 373]
+      lines: [374, 376]
       token_est: 21
 ---
 
@@ -203,6 +203,9 @@ Summary: CLI-driven ingestion emits JSON dumps; projection output is determinist
 - `run(projectionName, input, policy, store)` -> `ProjectionEnvelope`
 
 These interfaces MUST exist even if only a single in-memory implementation is provided in v0.1.
+
+Ingestion orchestration MUST live outside the CLI (e.g., `@repo/graph-ingest`); the CLI is a thin
+wrapper that calls the ingestion API and does not own ingestion logic.
 
 ### CLI: `graph:ingest:repo`
 
