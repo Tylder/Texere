@@ -37,152 +37,156 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [193, 214]
+      lines: [197, 218]
       summary:
         'Build a composable testing app organized around reusable Scenarios that validate graph
         features as they are developed; Scenarios compose Fixtures; Inspectors provide debugging;
         E2E tests validate real repos and complex workflows.'
       token_est: 158
     - title: 'Scope'
-      lines: [216, 239]
+      lines: [220, 243]
       summary:
         'App architecture, Scenario design, Fixture patterns, Inspector tools, and E2E testing.'
       token_est: 138
+    - title: 'Output Model'
+      lines: [245, 285]
+      summary: 'JSON dumps are primary output; database persistence deferred to v2.0+.'
+      token_est: 250
     - title: 'Package Boundaries'
-      lines: [241, 276]
+      lines: [287, 322]
       summary: 'App respects library package boundaries and depends on core graph packages only.'
       token_est: 207
     - title: 'Scenario Model'
-      lines: [278, 382]
+      lines: [324, 428]
       summary:
         'Scenarios are reusable, composable workflows with name, version, tags, and execution
         contract.'
       token_est: 461
     - title: 'Fixture Model'
-      lines: [384, 498]
+      lines: [430, 544]
       summary: 'Fixtures are factory functions that build deterministic nodes and policies.'
       token_est: 368
       subsections:
         - title: '1. Policy Fixtures'
-          lines: [390, 418]
+          lines: [436, 464]
           token_est: 82
         - title: '2. Artifact Fixtures'
-          lines: [420, 452]
+          lines: [466, 498]
           token_est: 107
         - title: '3. Assertion Fixtures (v1.0+)'
-          lines: [454, 473]
+          lines: [500, 519]
           token_est: 68
         - title: '4. Evidence Fixtures (v1.0+)'
-          lines: [475, 498]
+          lines: [521, 544]
           token_est: 91
     - title: 'GraphApp Orchestrator'
-      lines: [500, 609]
+      lines: [546, 655]
       summary:
         'Main context and orchestrator providing fluent API for graph operations and introspection.'
       token_est: 393
       subsections:
         - title: '`withPolicy(kind, scope, fields)`'
-          lines: [568, 570]
+          lines: [614, 616]
           token_est: 24
         - title: '`ingestRepo(options)`'
-          lines: [572, 574]
+          lines: [618, 620]
           token_est: 13
         - title: '`createAssertion(kind, fields)`'
-          lines: [576, 579]
+          lines: [622, 625]
           token_est: 26
         - title: '`runProjection(name, selection?)`'
-          lines: [581, 584]
+          lines: [627, 630]
           token_est: 20
         - title: '`explain(node_id)`'
-          lines: [586, 589]
+          lines: [632, 635]
           token_est: 24
         - title: '`trace(start_id, depth?)`'
-          lines: [591, 594]
+          lines: [637, 640]
           token_est: 21
         - title: '`dump(options?)`'
-          lines: [596, 598]
+          lines: [642, 644]
           token_est: 17
         - title: '`validate()`'
-          lines: [600, 602]
+          lines: [646, 648]
           token_est: 15
         - title: '`checkInvariants()`'
-          lines: [604, 609]
+          lines: [650, 655]
           token_est: 25
     - title: 'Scenario Registry and Organization'
-      lines: [611, 734]
+      lines: [657, 780]
       summary: 'Scenarios organized by version (v0.1, v1.0, v2.0+) and functionality domain.'
       token_est: 615
       subsections:
         - title: 'v0.1 Scenarios (Ready Now)'
-          lines: [615, 652]
+          lines: [661, 698]
           token_est: 219
         - title: 'v1.0 Scenarios (Future)'
-          lines: [654, 696]
+          lines: [700, 742]
           token_est: 271
         - title: 'v2.0+ Scenarios'
-          lines: [698, 734]
+          lines: [744, 780]
           token_est: 106
     - title: 'Inspector Tools'
-      lines: [736, 836]
+      lines: [782, 882]
       summary: 'Debugging and visualization tools for graph state inspection and analysis.'
       token_est: 371
       subsections:
         - title: 'Dumper'
-          lines: [763, 784]
+          lines: [809, 830]
           token_est: 91
         - title: 'Tracer'
-          lines: [786, 797]
+          lines: [832, 843]
           token_est: 54
         - title: 'Differ'
-          lines: [799, 812]
+          lines: [845, 858]
           token_est: 47
         - title: 'Explainer'
-          lines: [814, 836]
+          lines: [860, 882]
           token_est: 84
     - title: 'Testing Strategy'
-      lines: [838, 1051]
+      lines: [884, 1097]
       summary: 'Unit, integration, and E2E testing modes aligned with scenario versions.'
       token_est: 808
       subsections:
         - title: 'Unit Tests (Fast, Isolated)'
-          lines: [842, 900]
+          lines: [888, 946]
           token_est: 211
         - title: 'Integration Tests (Medium, Multi-Step)'
-          lines: [902, 952]
+          lines: [948, 998]
           token_est: 189
         - title: 'E2E Tests (Slow, Real Data)'
-          lines: [954, 1051]
+          lines: [1000, 1097]
           token_est: 390
     - title: 'Execution Modes'
-      lines: [1053, 1122]
+      lines: [1099, 1215]
       summary: 'Single scenario, batch, E2E, and interactive modes for different use cases.'
-      token_est: 331
+      token_est: 539
       subsections:
         - title: 'Mode 1: Single Scenario (Local Development)'
-          lines: [1057, 1069]
-          token_est: 68
+          lines: [1103, 1144]
+          token_est: 186
         - title: 'Mode 2: Batch Scenarios (CI/CD)'
-          lines: [1071, 1085]
-          token_est: 85
+          lines: [1146, 1178]
+          token_est: 175
         - title: 'Mode 3: E2E Tests'
-          lines: [1087, 1102]
+          lines: [1180, 1195]
           token_est: 84
         - title: 'Mode 4: Interactive Inspector'
-          lines: [1104, 1122]
+          lines: [1197, 1215]
           token_est: 76
     - title: 'Extensibility Contract'
-      lines: [1124, 1163]
+      lines: [1217, 1256]
       summary: 'New graph features add Scenarios and E2E tests; libraries remain unchanged.'
       token_est: 212
     - title: 'Non-Throwaway Guarantees'
-      lines: [1165, 1195]
+      lines: [1258, 1290]
       summary: 'App designed to grow with system without architectural rewrites.'
-      token_est: 180
+      token_est: 199
     - title: 'Open Questions'
-      lines: [1197, 1204]
+      lines: [1292, 1299]
       token_est: 55
     - title: 'Related Documents'
-      lines: [1206, 1213]
+      lines: [1301, 1308]
       token_est: 20
 ---
 
@@ -235,6 +239,48 @@ Summary: App architecture, Scenario design, Fixture patterns, Inspector tools, a
 - Lifecycle assertion semantics (those are in REQ-graph-lifecycle-assertions)
 - Projection algorithm details (those are in REQ-graph-projection-current-truth)
 - Database choice and scaling (deferred to v3.0+)
+
+---
+
+## Output Model
+
+Summary: JSON dumps are primary output; database persistence deferred to v2.0+.
+
+**v0.1 Output:**
+
+- JSON files (always): `./tmp/graph-dump/artifacts.json`, `policies.json`, `projection.json`,
+  `graph_dump_summary.json`
+- Human-readable console output (always): Scenario progress, test results, inspector dumps
+- Optional: `--json` flag for all output as JSON (scenario results, test reports)
+- Optional: `--quiet` flag to suppress console output (files only)
+
+**Future Output (v2.0+):**
+
+- Database persistence: Scenarios can write directly to PostgreSQL/Neo4j/other graph DB
+- Configuration via `.env`: `GRAPH_DB_URL`, `GRAPH_DB_TYPE`
+- Backward compatible: v0.1 scenarios keep using in-memory store + JSON dumps
+
+**Usage Examples:**
+
+```bash
+# v0.1: JSON files + human console output
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base
+# Creates: ./tmp/graph-dump/artifacts.json, policies.json, projection.json, summary.json
+# Prints: Scenario progress to stdout
+
+# v0.1: JSON output only (for CI/CD parsing)
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --json
+# Output: JSON report to stdout, files to ./tmp/graph-dump/
+
+# v0.1: Suppress console, keep files
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --quiet
+# Output: Silent, files written to ./tmp/graph-dump/
+
+# v2.0+: Output to database (in-memory store + database write)
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --db-write
+# Requires: GRAPH_DB_URL set in .env
+# Creates: In-memory store, JSON files, database records
+```
 
 ---
 
@@ -1057,24 +1103,53 @@ Summary: Single scenario, batch, E2E, and interactive modes for different use ca
 ### Mode 1: Single Scenario (Local Development)
 
 ```bash
-# Run one scenario, print output to stdout
+# Run one scenario, print human-readable output + JSON files
 pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base
 
-# Output:
+# Console Output:
 # ✓ Scenario: repo-ingestion-base (v0.1)
 # ✓ Artifacts created: 1 root, 1 state, 45 parts
 # ✓ Symbols indexed: 156
 # ✓ Duration: 12.3s
 # ✓ Dump: ./tmp/graph-dump
+
+# Files Created:
+# ./tmp/graph-dump/artifacts.json (47 nodes, 52 edges)
+# ./tmp/graph-dump/policies.json (2 policies)
+# ./tmp/graph-dump/projection.json (CurrentCommittedTruth)
+# ./tmp/graph-dump/graph_dump_summary.json (metadata)
+```
+
+**With flags:**
+
+```bash
+# JSON output only (for CI/CD)
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --json
+
+# Console output is JSON report:
+# {
+#   "scenario": "repo-ingestion-base",
+#   "version": "v0.1",
+#   "success": true,
+#   "duration_ms": 12345,
+#   "node_count": 47,
+#   "edge_count": 52,
+#   "symbols_indexed": 156,
+#   "dump_path": "./tmp/graph-dump"
+# }
+
+# Suppress console, files only
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --quiet
+# No console output, files written to ./tmp/graph-dump/
 ```
 
 ### Mode 2: Batch Scenarios (CI/CD)
 
 ```bash
-# Run all v0.1 scenarios, report pass/fail
+# Run all v0.1 scenarios, human-readable report + JSON
 pnpm -C apps/graph-app run-scenarios v0.1/* --report
 
-# Output:
+# Console Output:
 # v0.1 Scenarios: 5/5 passed
 # ├── repo-ingestion-base ✓ (2.1s)
 # ├── repo-ingestion-determinism ✓ (4.2s)
@@ -1082,6 +1157,24 @@ pnpm -C apps/graph-app run-scenarios v0.1/* --report
 # ├── projection-current-truth-basic ✓ (0.8s)
 # └── toolchain-provenance ✓ (0.5s)
 # Total: 9.4s | Artifacts: 224 | Assertions: 0 | Conflicts: 0
+
+# For CI/CD parsing, use JSON flag
+pnpm -C apps/graph-app run-scenarios v0.1/* --report --json
+
+# Console Output (JSON):
+# {
+#   "batch_name": "v0.1",
+#   "total_scenarios": 5,
+#   "passed": 5,
+#   "failed": 0,
+#   "duration_ms": 9400,
+#   "scenarios": [
+#     {"name": "repo-ingestion-base", "success": true, "duration_ms": 2100},
+#     {"name": "repo-ingestion-determinism", "success": true, "duration_ms": 4200},
+#     ...
+#   ],
+#   "summary": {"artifacts": 224, "assertions": 0, "conflicts": 0}
+# }
 ```
 
 ### Mode 3: E2E Tests
@@ -1172,6 +1265,8 @@ Summary: App designed to grow with system without architectural rewrites.
 - **Fixture model**: Factory functions, never change; new fixtures added
 - **GraphApp API**: Methods only added, never removed
 - **Inspector tools**: Can add new inspectors; existing ones remain stable
+- **Output model**: JSON dumps always available; database persistence added in v2.0+ without
+  breaking v0.1/v1.0
 
 **Version Boundaries:**
 
