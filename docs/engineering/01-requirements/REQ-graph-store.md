@@ -18,7 +18,7 @@ keywords:
   - graph
   - storage
 related:
-  - REQ-graph_knowledge_system
+  - REQ-graph-system-graph-knowledge-system
 index:
   sections:
     - title: 'Document Relationships'
@@ -61,8 +61,8 @@ Summary: High-level Requirements for graph storage interfaces and adapters.
 
 **Upstream (depends on):**
 
-- REQ-graph_system_architecture.md
-- REQ-graph_knowledge_system.md
+- REQ-graph-system-graph-system-architecture.md
+- REQ-graph-system-graph-knowledge-system.md
 
 **Downstream (depends on this):**
 
@@ -150,8 +150,8 @@ A stable interface allows backend substitution without changing graph logic.
 
 Summary: Storage requirements must align with architecture and graph model.
 
-- REQ-graph_system_architecture.md
-- REQ-graph_knowledge_system.md
+- REQ-graph-system-graph-system-architecture.md
+- REQ-graph-system-graph-knowledge-system.md
 
 ---
 

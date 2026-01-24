@@ -16,9 +16,10 @@ immutable by ID—if intent changes, deprecate and create a new requirement ID.
 - [`REQ-graph-lifecycle`](REQ-graph-lifecycle.md) (draft) - graph-lifecycle
 - [`REQ-graph-projection`](REQ-graph-projection.md) (draft) - graph-projection
 - [`REQ-graph-store`](REQ-graph-store.md) (draft) - graph-store
-- [`REQ-graph_system_architecture`](REQ-graph_system_architecture.md) (draft) -
-  graph-system-architecture
-- [`REQ-graph_knowledge_system`](REQ-graph_knowledge_system.md) (draft) - graph-knowledge-system
+- [`REQ-graph-system-graph-system-architecture`](REQ-graph-system-graph-system-architecture.md)
+  (draft) - graph-system-architecture
+- [`REQ-graph-system-graph-knowledge-system`](REQ-graph-system-graph-knowledge-system.md) (draft) -
+  graph-knowledge-system
 
 ---
 

@@ -18,7 +18,7 @@ keywords:
   - graph
   - projection
 related:
-  - REQ-graph_knowledge_system
+  - REQ-graph-system-graph-knowledge-system
 index:
   sections:
     - title: 'Document Relationships'
@@ -58,8 +58,8 @@ Summary: High-level Requirements for deterministic projections.
 
 **Upstream (depends on):**
 
-- REQ-graph_system_architecture.md
-- REQ-graph_knowledge_system.md
+- REQ-graph-system-graph-system-architecture.md
+- REQ-graph-system-graph-knowledge-system.md
 
 **Downstream (depends on this):**
 
@@ -146,8 +146,8 @@ Determinism is required for auditability and repeatable queries.
 
 Summary: Projections must align with architecture and graph model.
 
-- REQ-graph_system_architecture.md
-- REQ-graph_knowledge_system.md
+- REQ-graph-system-graph-system-architecture.md
+- REQ-graph-system-graph-knowledge-system.md
 
 ---
 

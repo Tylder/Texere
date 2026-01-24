@@ -19,7 +19,7 @@ keywords:
   - graph
   - lifecycle
 related:
-  - REQ-graph_knowledge_system
+  - REQ-graph-system-graph-knowledge-system
 index:
   sections:
     - title: 'Document Relationships'
@@ -62,8 +62,8 @@ Summary: High-level Requirements for lifecycle assertions and invariants.
 
 **Upstream (depends on):**
 
-- REQ-graph_system_architecture.md
-- REQ-graph_knowledge_system.md
+- REQ-graph-system-graph-system-architecture.md
+- REQ-graph-system-graph-knowledge-system.md
 
 **Downstream (depends on this):**
 
@@ -153,8 +153,8 @@ A stable catalog prevents semantic drift across agents and tools.
 
 Summary: Lifecycle requirements must align with architecture and graph model.
 
-- REQ-graph_system_architecture.md
-- REQ-graph_knowledge_system.md
+- REQ-graph-system-graph-system-architecture.md
+- REQ-graph-system-graph-knowledge-system.md
 
 ---
 

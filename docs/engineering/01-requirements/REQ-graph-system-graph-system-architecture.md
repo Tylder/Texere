@@ -19,7 +19,7 @@ keywords:
   - graph
   - architecture
 related:
-  - REQ-graph_knowledge_system
+  - REQ-graph-system-graph-knowledge-system
 index:
   sections:
     - title: 'Document Relationships'
