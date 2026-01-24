@@ -44,63 +44,63 @@ index:
       lines: [167, 174]
       token_est: 55
     - title: 'Milestones'
-      lines: [176, 539]
-      token_est: 1433
+      lines: [176, 543]
+      token_est: 1477
       subsections:
         - title: 'Milestone 1: App Scaffolding & Setup'
-          lines: [178, 277]
-          token_est: 366
+          lines: [178, 279]
+          token_est: 385
         - title: 'Milestone 2: REPL Loop & Command Dispatcher'
-          lines: [279, 419]
+          lines: [281, 421]
           token_est: 543
         - title: 'Milestone 3: Command Implementations'
-          lines: [421, 464]
+          lines: [423, 466]
           token_est: 172
         - title: 'Milestone 4: Ink UI Components'
-          lines: [466, 512]
+          lines: [468, 514]
           token_est: 214
         - title: 'Milestone 5: Integration & Testing'
-          lines: [514, 539]
-          token_est: 138
+          lines: [516, 543]
+          token_est: 163
     - title: 'Total Effort: ~18 hours (2.5 days)'
-      lines: [541, 549]
+      lines: [545, 553]
       token_est: 30
     - title: 'Technology Stack'
-      lines: [551, 571]
-      token_est: 86
+      lines: [555, 581]
+      token_est: 97
     - title: 'Implementation Notes'
-      lines: [573, 657]
+      lines: [583, 667]
       token_est: 307
       subsections:
         - title: 'REPL Loop Architecture'
-          lines: [575, 621]
+          lines: [585, 631]
           token_est: 167
         - title: 'Error Handling Strategy'
-          lines: [623, 628]
+          lines: [633, 638]
           token_est: 50
         - title: 'State Management'
-          lines: [630, 642]
+          lines: [640, 652]
           token_est: 46
         - title: 'Command Parsing'
-          lines: [644, 657]
+          lines: [654, 667]
           token_est: 42
     - title: 'Success Metrics'
-      lines: [659, 668]
+      lines: [669, 678]
       token_est: 64
     - title: 'Risk Register'
-      lines: [670, 679]
+      lines: [680, 689]
       token_est: 110
     - title: 'Exit Criteria (Phase 1)'
-      lines: [681, 693]
+      lines: [691, 703]
       token_est: 98
     - title: 'Assumptions'
-      lines: [695, 702]
+      lines: [705, 712]
       token_est: 49
     - title: 'Future Enhancements (v2.0+)'
-      lines: [704, 713]
+      lines: [714, 723]
       token_est: 46
     - title: 'Related Documents'
-      lines: [715, 719]
+      lines: [725, 729]
       token_est: 12
 ---
 
@@ -182,6 +182,7 @@ ingestion.
 **Deliverables:**
 
 - `apps/graph-cli-app/` directory with standard Nx structure
+- Scaffold from `templates/nx/node-app` (CLI app template)
 - `package.json` with dependencies (see below)
 - `tsconfig.json`, `vitest.config.ts`, `.eslintrc`
 - Entry point: `src/index.ts`, `src/cli.ts`
@@ -271,6 +272,7 @@ apps/graph-cli-app/
 - [ ] App compiles without errors
 - [ ] `pnpm -C apps/graph-cli-app dev` starts without crashing
 - [ ] Can import from library packages
+- [ ] App structure matches `templates/nx/node-app` defaults
 
 **Effort estimate:** 2 hours
 
@@ -533,6 +535,8 @@ export const ProgressBox: React.FC<{
 - [ ] `pnpm -C apps/graph-cli-app test` passes
 - [ ] Coverage >80%
 - [ ] REPL is responsive and intuitive
+- [ ] Test layout and tooling align with `SPEC-tooling-testing-implementation-specification`
+- [ ] Test distribution expectations align with `SPEC-tooling-testing-trophy-strategy`
 
 **Effort estimate:** 4 hours
 
@@ -567,6 +571,12 @@ export const ProgressBox: React.FC<{
 - **TypeScript** v5.9.3 — Type checking
 - **ESLint** v9.39.2 — Linting
 - **Prettier** v3.8.1 — Code formatting
+
+**Tooling Alignment:**
+
+- `SPEC-tooling-nx-composite-projects.md`
+- `SPEC-tooling-testing-implementation-specification.md`
+- `SPEC-tooling-testing-trophy-strategy.md`
 
 ---
 
