@@ -7,29 +7,19 @@ rejected.**
 
 **CRITICAL**: After **ANY** prompt that modifies, creates, or deletes code:
 
-1. **IMMEDIATELY** execute project validation commands
+1. **IMMEDIATELY** execute `pnpm post:report:fast` (fast validation)
 2. **VERIFY** all quality gates pass (all checks must succeed)
-3. **INCLUDE** complete validation results in response
+3. **INCLUDE** validation results in response if there are failures
 4. **REPORT** any failures with specific error details
 5. **NEVER** respond to user without validation confirmation
 
-**VALIDATION CHECKLIST:**
+**VALIDATION PROTOCOL:**
 
-**For code changes:**
+**After single code change:**
+- Run `pnpm post:report:fast` (format + lint:fix + typecheck + test)
 
-- [ ] `pnpm format` passed
-- [ ] `pnpm lint:fix` passed
-- [ ] `pnpm typecheck` passed
-- [ ] `pnpm test` passed
-- [ ] No failures hidden or ignored
-- [ ] User informed of validation status
-
-**For docs-only changes (`docs/**` only):\*\*
-
-- [ ] `pnpm format` passed
-- [ ] `check:docs` passed
-- [ ] No failures hidden or ignored
-- [ ] User informed of validation status
+**After major fixes or multiple steps:**
+- Run `pnpm post:report` (full validation: format + lint:fix + typecheck + test:coverage + all checks)
 
 ---
 
