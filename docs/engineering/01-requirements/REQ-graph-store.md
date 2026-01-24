@@ -19,33 +19,34 @@ keywords:
   - storage
 related:
   - REQ-graph-system-graph-knowledge-system
+  - REQ-graph-system-graph-policy-framework
 index:
   sections:
     - title: 'TLDR'
-      lines: [56, 73]
+      lines: [57, 74]
       summary:
         'Graph storage MUST expose a consistent interface and transactional guarantees for canonical
         graph operations.'
       token_est: 88
     - title: 'Scope'
-      lines: [75, 92]
+      lines: [76, 93]
       summary:
         'Storage interfaces, adapters, and transactional semantics. Excludes ingestion, lifecycle,
         and projection behavior.'
       token_est: 63
     - title: 'REQ-001: Store Interface Stability'
-      lines: [94, 116]
+      lines: [95, 117]
       summary: 'The system MUST define a stable graph store interface.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [118, 125]
+      lines: [119, 126]
       summary: 'Storage requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [127, 140]
+      lines: [128, 141]
       token_est: 85
     - title: 'Blockers'
-      lines: [142, 146]
+      lines: [143, 147]
       token_est: 39
 ---
 

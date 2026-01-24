@@ -18,6 +18,8 @@ immutable by ID—if intent changes, deprecate and create a new requirement ID.
 - [`REQ-graph-lifecycle`](REQ-graph-lifecycle.md) (draft) - graph-lifecycle
 - [`REQ-graph-system-graph-lifecycle-assertions`](REQ-graph-system-graph-lifecycle-assertions.md)
   (draft) - graph-lifecycle-assertions
+- [`REQ-graph-system-graph-policy-framework`](REQ-graph-system-graph-policy-framework.md) (draft) -
+  graph-policy-framework
 - [`REQ-graph-projection`](REQ-graph-projection.md) (draft) - graph-projection
 - [`REQ-graph-system-graph-projection-current-truth`](REQ-graph-system-graph-projection-current-truth.md)
   (draft) - graph-projection-current-truth

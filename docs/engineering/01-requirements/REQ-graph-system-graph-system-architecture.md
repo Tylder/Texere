@@ -20,44 +20,45 @@ keywords:
   - architecture
 related:
   - REQ-graph-system-graph-knowledge-system
+  - REQ-graph-system-graph-policy-framework
 index:
   sections:
     - title: 'TLDR'
-      lines: [68, 85]
+      lines: [69, 86]
       summary:
         'Separate ingestion, lifecycle, projections, and storage into distinct Nx packages with
         clean dependency rules; shared core types live in a foundational package.'
       token_est: 112
     - title: 'Scope'
-      lines: [87, 107]
+      lines: [88, 108]
       summary:
         'High-level Nx package roles and dependency rules. Excludes runtime behavior, ingestion
         specifics, projection logic, and storage semantics.'
       token_est: 98
     - title: 'REQ-001: Package Boundary Definition'
-      lines: [109, 141]
+      lines: [110, 142]
       summary:
         'The Nx monorepo MUST define distinct packages for core types, storage, ingestion,
         projections, and lifecycle logic.'
       token_est: 145
     - title: 'REQ-002: Dependency Direction Rules'
-      lines: [143, 174]
+      lines: [144, 175]
       summary:
         'Package dependencies MUST follow a strict directionality to prevent cyclic coupling.'
       token_est: 166
     - title: 'REQ-003: Ingestion and Lifecycle Separation'
-      lines: [176, 199]
+      lines: [177, 200]
       summary: 'Ingestion packages MUST NOT depend on lifecycle packages, and vice versa.'
       token_est: 98
     - title: 'Related Requirements'
-      lines: [201, 211]
+      lines: [202, 212]
       summary: 'This REQ establishes architectural boundaries referenced by all detailed REQs.'
       token_est: 38
     - title: 'Design Decisions'
-      lines: [213, 226]
+      lines: [214, 227]
       token_est: 85
     - title: 'Blockers'
-      lines: [228, 232]
+      lines: [229, 233]
       token_est: 39
 ---
 

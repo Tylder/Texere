@@ -22,41 +22,62 @@ implements:
 related:
   - REQ-graph-ingestion
   - REQ-graph-system-graph-knowledge-system
+  - REQ-graph-system-graph-policy-framework
 index:
   sections:
-    - title: 'TLDR'
-      lines: [65, 82]
-      summary:
-        'Clone a repo at a commit, run scip-typescript, and map files/symbols into ArtifactRoot,
-        ArtifactState, and ArtifactPart with deterministic provenance.'
+    - title: "TLDR"
+      lines: [86, 103]
+      summary: 'Clone a repo at a commit, run scip-typescript, and map files/symbols into ArtifactRoot, ArtifactState, and ArtifactPart with deterministic provenance.'
       token_est: 99
-    - title: 'Scope'
-      lines: [84, 104]
-      summary:
-        'TypeScript repo ingestion via SCIP into Artifact nodes. Excludes lifecycle assertions,
-        projections, and store selection details.'
+    - title: "Scope"
+      lines: [105, 125]
+      summary: 'TypeScript repo ingestion via SCIP into Artifact nodes. Excludes lifecycle assertions, projections, and store selection details.'
       token_est: 88
-    - title: 'REQ-001: Commit-anchored ingestion'
-      lines: [106, 128]
+    - title: "REQ-001: Commit-anchored ingestion"
+      lines: [127, 149]
       summary: 'Ingestion MUST be anchored to an immutable commit hash.'
       token_est: 104
-    - title: 'REQ-002: SCIP index generation'
-      lines: [130, 152]
+    - title: "REQ-002: SCIP index generation"
+      lines: [151, 173]
       summary: 'Ingestion MUST generate a SCIP index for the target repo.'
       token_est: 112
-    - title: 'REQ-003: ArtifactPart mapping'
-      lines: [154, 180]
+    - title: "REQ-003: Install policy"
+      lines: [175, 198]
+      summary: 'Ingestion MUST install dependencies using the repo's declared package manager.'
+      token_est: 123
+    - title: "REQ-004: ArtifactPart mapping"
+      lines: [200, 227]
       summary: 'Files and symbols MUST be represented as ArtifactParts.'
       token_est: 132
-    - title: 'Related Requirements'
-      lines: [182, 189]
+    - title: "REQ-005: Locator format"
+      lines: [229, 251]
+      summary: 'Symbol locators MUST use SCIP identifiers.'
+      token_est: 97
+    - title: "REQ-006: Toolchain provenance"
+      lines: [253, 276]
+      summary: 'The ingestion run MUST record toolchain versions.'
+      token_est: 115
+    - title: "REQ-007: Failure policy"
+      lines: [278, 301]
+      summary: 'SCIP index generation failures MUST fail the ingestion.'
+      token_est: 111
+    - title: "REQ-008: Retention mode for third-party code"
+      lines: [303, 324]
+      summary: 'Retention mode MUST default to link-only for third-party repositories.'
+      token_est: 88
+    - title: "REQ-009: Monorepo coverage"
+      lines: [326, 348]
+      summary: 'Monorepo ingestion MUST index all packages by default.'
+      token_est: 97
+    - title: "Related Requirements"
+      lines: [350, 357]
       summary: 'Repo ingestion must align with ingestion and graph model requirements.'
       token_est: 25
-    - title: 'Design Decisions'
-      lines: [191, 204]
+    - title: "Design Decisions"
+      lines: [359, 372]
       token_est: 85
-    - title: 'Blockers'
-      lines: [206, 210]
+    - title: "Blockers"
+      lines: [374, 378]
       token_est: 39
 ---
 
@@ -151,7 +172,32 @@ SCIP provides symbol-level data necessary for traceability and impact analysis.
 
 ---
 
-## REQ-003: ArtifactPart mapping
+## REQ-003: Install policy
+
+Summary: Ingestion MUST install dependencies using the repo's declared package manager.
+
+**Statement:**
+
+The ingestion pipeline MUST install dependencies using the repo's lockfile and declared package
+manager before running scip-typescript, unless a policy override is explicitly configured.
+
+**Rationale:**
+
+Dependency installation is required for TypeScript to resolve cross-file symbols reliably.
+
+**Measurable Fit Criteria:**
+
+- [ ] The pipeline detects the repo's package manager and lockfile
+- [ ] Dependency install is executed before indexing
+- [ ] Install failures abort ingestion
+
+**Verification Method:**
+
+- Integration tests on repos with external dependencies
+
+---
+
+## REQ-004: ArtifactPart mapping
 
 Summary: Files and symbols MUST be represented as ArtifactParts.
 
@@ -160,8 +206,9 @@ Summary: Files and symbols MUST be represented as ArtifactParts.
 The ingestion pipeline MUST create:
 
 - One ArtifactPart per source file (file-level parts)
-- One ArtifactPart per SCIP symbol (symbol-level parts) Each symbol part MUST link to its file part
-  via a deterministic locator.
+- One ArtifactPart per SCIP symbol (symbol-level parts)
+
+Each symbol part MUST link to its file part via a deterministic locator.
 
 **Rationale:**
 
@@ -176,6 +223,127 @@ File and symbol parts are the minimal addressable units for code traceability.
 **Verification Method:**
 
 - Index-to-graph consistency tests
+
+---
+
+## REQ-005: Locator format
+
+Summary: Symbol locators MUST use SCIP identifiers.
+
+**Statement:**
+
+Symbol ArtifactParts MUST use a locator of the form `path#scip_symbol`, where `scip_symbol` is the
+fully qualified SCIP symbol identifier.
+
+**Rationale:**
+
+SCIP identifiers are stable and unambiguous across files and languages.
+
+**Measurable Fit Criteria:**
+
+- [ ] All symbol ArtifactParts include a `path#scip_symbol` locator
+- [ ] Locator uniqueness holds across files in the repo
+
+**Verification Method:**
+
+- Locator format validation tests
+
+---
+
+## REQ-006: Toolchain provenance
+
+Summary: The ingestion run MUST record toolchain versions.
+
+**Statement:**
+
+The ingestion pipeline MUST record versions for scip-typescript, node, and the package manager used
+to generate the index, and attach them to the Activity metadata.
+
+**Rationale:**
+
+Toolchain versions are required to reproduce and audit ingestion output.
+
+**Measurable Fit Criteria:**
+
+- [ ] Activity metadata includes scip-typescript version
+- [ ] Activity metadata includes node version
+- [ ] Activity metadata includes package manager and version
+
+**Verification Method:**
+
+- Activity metadata inspection in integration tests
+
+---
+
+## REQ-007: Failure policy
+
+Summary: SCIP index generation failures MUST fail the ingestion.
+
+**Statement:**
+
+If scip-typescript fails to produce a valid index for the target commit, the ingestion MUST fail and
+MUST NOT write partial ArtifactParts for that run.
+
+**Rationale:**
+
+Partial ingestion without symbol coverage undermines traceability and produces misleading graph
+state.
+
+**Measurable Fit Criteria:**
+
+- [ ] Failed SCIP runs do not create ArtifactState records
+- [ ] Errors are reported with command output and exit status
+
+**Verification Method:**
+
+- Failure-path integration tests
+
+---
+
+## REQ-008: Retention mode for third-party code
+
+Summary: Retention mode MUST default to link-only for third-party repositories.
+
+**Statement:**
+
+The ingestion pipeline MUST default to link-only retention for third-party repositories unless
+explicitly overridden by policy.
+
+**Rationale:**
+
+Link-only retention minimizes IP risk while preserving provenance for external sources.
+
+**Measurable Fit Criteria:**
+
+- [ ] ArtifactParts from third-party repos have retention_mode=link-only by default
+
+**Verification Method:**
+
+- Retention policy tests
+
+---
+
+## REQ-009: Monorepo coverage
+
+Summary: Monorepo ingestion MUST index all packages by default.
+
+**Statement:**
+
+For repositories with multiple packages, the ingestion pipeline MUST index all packages unless a
+configured allowlist limits scope.
+
+**Rationale:**
+
+Partial indexing can omit symbol definitions and break cross-file queries.
+
+**Measurable Fit Criteria:**
+
+- [ ] All packages with tsconfig entries are indexed by default
+- [ ] Allowlist configuration limits scope when provided
+
+**Verification Method:**
+
+- Monorepo indexing tests
 
 ---
 

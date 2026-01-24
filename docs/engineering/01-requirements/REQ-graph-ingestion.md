@@ -20,34 +20,35 @@ keywords:
   - ingestion
 related:
   - REQ-graph-system-graph-knowledge-system
+  - REQ-graph-system-graph-policy-framework
 index:
   sections:
     - title: 'TLDR'
-      lines: [58, 76]
+      lines: [59, 77]
       summary:
         'Ingestion MUST create canonical Artifact nodes with deterministic provenance and retention
         handling; connectors are pluggable and source-specific.'
       token_est: 101
     - title: 'Scope'
-      lines: [78, 98]
+      lines: [79, 99]
       summary:
         'Source-agnostic ingestion pipeline requirements, connector contracts, provenance, and
         retention modes. Excludes source-specific parsing rules, lifecycle semantics, and projection
         logic.'
       token_est: 98
     - title: 'REQ-001: Connector Contract'
-      lines: [100, 123]
+      lines: [101, 124]
       summary: 'All ingestion connectors MUST implement a shared contract.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [125, 132]
+      lines: [126, 133]
       summary: 'Ingestion must align with architecture and graph model constraints.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [134, 147]
+      lines: [135, 148]
       token_est: 85
     - title: 'Blockers'
-      lines: [149, 153]
+      lines: [150, 154]
       token_est: 39
 ---
 

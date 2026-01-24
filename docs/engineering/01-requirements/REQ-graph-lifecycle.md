@@ -20,33 +20,34 @@ keywords:
   - lifecycle
 related:
   - REQ-graph-system-graph-knowledge-system
+  - REQ-graph-system-graph-policy-framework
 index:
   sections:
     - title: 'TLDR'
-      lines: [57, 74]
+      lines: [58, 75]
       summary:
         'Lifecycle assertions MUST be modeled as canonical graph nodes with explicit supersession,
         provenance, and validation invariants.'
       token_est: 89
     - title: 'Scope'
-      lines: [76, 93]
+      lines: [77, 94]
       summary:
         'Lifecycle assertion kinds, supersession rules, and validation invariants. Excludes
         ingestion mechanics, projection logic, and storage semantics.'
       token_est: 73
     - title: 'REQ-001: Lifecycle Assertion Catalog'
-      lines: [95, 117]
+      lines: [96, 118]
       summary: 'The system MUST define a canonical set of lifecycle assertion kinds.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [119, 126]
+      lines: [120, 127]
       summary: 'Lifecycle requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [128, 141]
+      lines: [129, 142]
       token_est: 85
     - title: 'Blockers'
-      lines: [143, 147]
+      lines: [144, 148]
       token_est: 39
 ---
 
