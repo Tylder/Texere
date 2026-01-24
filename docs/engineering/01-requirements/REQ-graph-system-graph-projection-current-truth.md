@@ -16,6 +16,10 @@ keywords:
   - requirements
   - graph
   - projection
+implements:
+  - IDEATION-PROBLEMS-graph-knowledge-system
+implemented_by:
+  - SPEC-graph-projection-current-truth
 related:
   - REQ-graph-projection
   - REQ-graph-system-graph-knowledge-system
@@ -23,34 +27,34 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [59, 75]
+      lines: [63, 79]
       summary: 'Provide a deterministic projection of the latest committed lifecycle assertions.'
       token_est: 78
     - title: 'Scope'
-      lines: [77, 94]
+      lines: [81, 98]
       summary: 'CurrentCommittedTruth projection rules and outputs. Excludes other projections.'
       token_est: 60
     - title: 'REQ-001: Deterministic selection'
-      lines: [96, 118]
+      lines: [100, 122]
       summary: 'The projection MUST select the latest non-superseded committed assertions.'
       token_est: 90
     - title: 'REQ-002: Explainability'
-      lines: [120, 141]
+      lines: [124, 145]
       summary: 'Each projection item MUST include explainability metadata.'
       token_est: 90
     - title: 'REQ-003: Conflict visibility'
-      lines: [143, 165]
+      lines: [147, 169]
       summary: 'Conflicts MUST be surfaced, not silently resolved.'
       token_est: 99
     - title: 'Related Requirements'
-      lines: [167, 174]
+      lines: [171, 178]
       summary: 'Projection rules align with the projection and graph model requirements.'
       token_est: 25
     - title: 'Design Decisions'
-      lines: [176, 189]
+      lines: [180, 193]
       token_est: 85
     - title: 'Blockers'
-      lines: [191, 195]
+      lines: [195, 199]
       token_est: 39
 ---
 

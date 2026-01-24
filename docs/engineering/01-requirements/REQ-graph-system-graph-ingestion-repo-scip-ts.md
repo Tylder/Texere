@@ -17,6 +17,8 @@ keywords:
   - requirements
   - graph
   - ingestion
+implemented_by:
+  - SPEC-graph-ingestion-repo-scip-ts
 implements:
   - IDEATION-PROBLEMS-graph-knowledge-system
 related:
@@ -26,58 +28,58 @@ related:
 index:
   sections:
     - title: "TLDR"
-      lines: [86, 103]
+      lines: [88, 105]
       summary: 'Clone a repo at a commit, run scip-typescript, and map files/symbols into ArtifactRoot, ArtifactState, and ArtifactPart with deterministic provenance.'
       token_est: 99
     - title: "Scope"
-      lines: [105, 125]
+      lines: [107, 127]
       summary: 'TypeScript repo ingestion via SCIP into Artifact nodes. Excludes lifecycle assertions, projections, and store selection details.'
       token_est: 88
     - title: "REQ-001: Commit-anchored ingestion"
-      lines: [127, 149]
+      lines: [129, 151]
       summary: 'Ingestion MUST be anchored to an immutable commit hash.'
       token_est: 104
     - title: "REQ-002: SCIP index generation"
-      lines: [151, 173]
+      lines: [153, 175]
       summary: 'Ingestion MUST generate a SCIP index for the target repo.'
       token_est: 112
     - title: "REQ-003: Install policy"
-      lines: [175, 198]
+      lines: [177, 200]
       summary: 'Ingestion MUST install dependencies using the repo's declared package manager.'
       token_est: 123
     - title: "REQ-004: ArtifactPart mapping"
-      lines: [200, 227]
+      lines: [202, 229]
       summary: 'Files and symbols MUST be represented as ArtifactParts.'
       token_est: 132
     - title: "REQ-005: Locator format"
-      lines: [229, 251]
+      lines: [231, 253]
       summary: 'Symbol locators MUST use SCIP identifiers.'
       token_est: 97
     - title: "REQ-006: Toolchain provenance"
-      lines: [253, 276]
+      lines: [255, 278]
       summary: 'The ingestion run MUST record toolchain versions.'
       token_est: 115
     - title: "REQ-007: Failure policy"
-      lines: [278, 301]
+      lines: [280, 303]
       summary: 'SCIP index generation failures MUST fail the ingestion.'
       token_est: 111
     - title: "REQ-008: Retention mode for third-party code"
-      lines: [303, 324]
+      lines: [305, 326]
       summary: 'Retention mode MUST default to link-only for third-party repositories.'
       token_est: 88
     - title: "REQ-009: Monorepo coverage"
-      lines: [326, 348]
+      lines: [328, 350]
       summary: 'Monorepo ingestion MUST index all packages by default.'
       token_est: 97
     - title: "Related Requirements"
-      lines: [350, 357]
+      lines: [352, 359]
       summary: 'Repo ingestion must align with ingestion and graph model requirements.'
       token_est: 25
     - title: "Design Decisions"
-      lines: [359, 372]
+      lines: [361, 374]
       token_est: 85
     - title: "Blockers"
-      lines: [374, 378]
+      lines: [376, 380]
       token_est: 39
 ---
 

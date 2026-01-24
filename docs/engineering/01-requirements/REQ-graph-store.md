@@ -17,36 +17,42 @@ keywords:
   - requirements
   - graph
   - storage
+implements:
+  - IDEATION-PROBLEMS-graph-knowledge-system
 related:
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
 index:
   sections:
     - title: 'TLDR'
-      lines: [57, 74]
+      lines: [63, 80]
       summary:
         'Graph storage MUST expose a consistent interface and transactional guarantees for canonical
         graph operations.'
       token_est: 88
     - title: 'Scope'
-      lines: [76, 93]
+      lines: [82, 99]
       summary:
         'Storage interfaces, adapters, and transactional semantics. Excludes ingestion, lifecycle,
         and projection behavior.'
       token_est: 63
     - title: 'REQ-001: Store Interface Stability'
-      lines: [95, 117]
+      lines: [101, 123]
       summary: 'The system MUST define a stable graph store interface.'
       token_est: 103
+    - title: 'REQ-002: Policy data persistence'
+      lines: [125, 147]
+      summary: 'The store MUST persist policy nodes and support policy queries.'
+      token_est: 106
     - title: 'Related Requirements'
-      lines: [119, 126]
+      lines: [149, 156]
       summary: 'Storage requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [128, 141]
+      lines: [158, 171]
       token_est: 85
     - title: 'Blockers'
-      lines: [143, 147]
+      lines: [173, 177]
       token_est: 39
 ---
 
@@ -113,6 +119,30 @@ A stable interface allows backend substitution without changing graph logic.
 
 - Interface conformance tests
 - Integration tests
+
+---
+
+## REQ-002: Policy data persistence
+
+Summary: The store MUST persist policy nodes and support policy queries.
+
+**Statement:**
+
+The graph store MUST persist policy nodes and their relationships, and MUST support queries used to
+resolve current/as-of policy selection.
+
+**Rationale:**
+
+Policy resolution is a core dependency for ingestion, projection, and validation behavior.
+
+**Measurable Fit Criteria:**
+
+- [ ] Policy nodes are stored and retrievable via the store interface
+- [ ] Policy selection queries are supported
+
+**Verification Method:**
+
+- Policy persistence tests
 
 ---
 

@@ -16,6 +16,10 @@ keywords:
   - requirements
   - graph
   - lifecycle
+implements:
+  - IDEATION-PROBLEMS-graph-knowledge-system
+implemented_by:
+  - SPEC-graph-lifecycle-assertions
 related:
   - REQ-graph-lifecycle
   - REQ-graph-system-graph-knowledge-system
@@ -23,34 +27,34 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [59, 75]
+      lines: [63, 79]
       summary: 'Define the v0.1 lifecycle assertion catalog and minimum schemas.'
       token_est: 76
     - title: 'Scope'
-      lines: [77, 94]
+      lines: [81, 98]
       summary: 'Assertion kinds and schemas for v0.1. Excludes ingestion and projection rules.'
       token_est: 69
     - title: 'REQ-001: Assertion catalog'
-      lines: [96, 117]
+      lines: [100, 121]
       summary: 'The system MUST define a v0.1 catalog of assertion kinds.'
       token_est: 88
     - title: 'REQ-002: Minimum fields'
-      lines: [119, 141]
+      lines: [123, 145]
       summary: 'Each assertion kind MUST define minimum required fields.'
       token_est: 98
     - title: 'REQ-003: Supersession eligibility'
-      lines: [143, 165]
+      lines: [147, 169]
       summary: 'Lifecycle assertions MUST support explicit supersession.'
       token_est: 95
     - title: 'Related Requirements'
-      lines: [167, 174]
+      lines: [171, 178]
       summary: 'Assertion requirements align with lifecycle and graph model requirements.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [176, 189]
+      lines: [180, 193]
       token_est: 85
     - title: 'Blockers'
-      lines: [191, 195]
+      lines: [195, 199]
       token_est: 39
 ---
 

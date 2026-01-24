@@ -18,36 +18,42 @@ keywords:
   - requirements
   - graph
   - lifecycle
+implements:
+  - IDEATION-PROBLEMS-graph-knowledge-system
 related:
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
 index:
   sections:
     - title: 'TLDR'
-      lines: [58, 75]
+      lines: [64, 81]
       summary:
         'Lifecycle assertions MUST be modeled as canonical graph nodes with explicit supersession,
         provenance, and validation invariants.'
       token_est: 89
     - title: 'Scope'
-      lines: [77, 94]
+      lines: [83, 100]
       summary:
         'Lifecycle assertion kinds, supersession rules, and validation invariants. Excludes
         ingestion mechanics, projection logic, and storage semantics.'
       token_est: 73
     - title: 'REQ-001: Lifecycle Assertion Catalog'
-      lines: [96, 118]
+      lines: [102, 124]
       summary: 'The system MUST define a canonical set of lifecycle assertion kinds.'
       token_est: 103
+    - title: 'REQ-002: Policy-driven validation'
+      lines: [126, 149]
+      summary: 'Validation and conflict rules MUST be driven by graph-native policy.'
+      token_est: 101
     - title: 'Related Requirements'
-      lines: [120, 127]
+      lines: [151, 158]
       summary: 'Lifecycle requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [129, 142]
+      lines: [160, 173]
       token_est: 85
     - title: 'Blockers'
-      lines: [144, 148]
+      lines: [175, 179]
       token_est: 39
 ---
 
@@ -114,6 +120,31 @@ A stable catalog prevents semantic drift across agents and tools.
 
 - Schema validation tests
 - Linting or build-time checks
+
+---
+
+## REQ-002: Policy-driven validation
+
+Summary: Validation and conflict rules MUST be driven by graph-native policy.
+
+**Statement:**
+
+Validation rules and conflict handling MUST be governed by the current applicable ValidationPolicy
+and ConflictPolicy stored in the graph.
+
+**Rationale:**
+
+Policy-driven validation ensures lifecycle enforcement is auditable and consistent with graph
+governance.
+
+**Measurable Fit Criteria:**
+
+- [ ] Validation thresholds are sourced from ValidationPolicy
+- [ ] Conflict handling rules are sourced from ConflictPolicy
+
+**Verification Method:**
+
+- Policy-driven validation tests
 
 ---
 

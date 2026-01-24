@@ -16,6 +16,10 @@ keywords:
   - requirements
   - graph
   - policy
+implements:
+  - IDEATION-PROBLEMS-graph-knowledge-system
+implemented_by:
+  - SPEC-graph-policy-framework
 related:
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-ingestion
@@ -25,41 +29,41 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [68, 85]
+      lines: [72, 89]
       summary:
         'Policies MUST be represented as canonical graph data with provenance, supersession, and
         queryable scope.'
       token_est: 88
     - title: 'Scope'
-      lines: [87, 104]
+      lines: [91, 108]
       summary: 'Policy representation and selection in the graph. Excludes concrete policy values.'
       token_est: 78
     - title: 'REQ-001: Policy kinds'
-      lines: [106, 133]
+      lines: [110, 137]
       summary: 'The system MUST support a minimal set of policy kinds.'
       token_est: 106
     - title: 'REQ-002: Policy supersession'
-      lines: [135, 156]
+      lines: [139, 160]
       summary: 'Policy changes MUST be append-only and supersession-based.'
       token_est: 86
     - title: 'REQ-003: Policy scope and selection'
-      lines: [158, 180]
+      lines: [162, 184]
       summary: 'Policy applicability MUST be explicit and queryable.'
       token_est: 108
     - title: 'REQ-004: Policy provenance'
-      lines: [182, 202]
+      lines: [186, 206]
       summary: 'Policy changes MUST record Agent and Activity provenance.'
       token_est: 72
     - title: 'Related Requirements'
-      lines: [204, 214]
+      lines: [208, 218]
       summary:
         'Policy framework aligns with ingestion, projection, lifecycle, and store requirements.'
       token_est: 33
     - title: 'Design Decisions'
-      lines: [216, 229]
+      lines: [220, 233]
       token_est: 85
     - title: 'Blockers'
-      lines: [231, 235]
+      lines: [235, 239]
       token_est: 39
 ---
 

@@ -17,35 +17,41 @@ keywords:
   - requirements
   - graph
   - projection
+implements:
+  - IDEATION-PROBLEMS-graph-knowledge-system
 related:
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
 index:
   sections:
     - title: 'TLDR'
-      lines: [56, 73]
+      lines: [62, 79]
       summary:
         'Projections MUST be deterministic, explainable, and derived only from canonical nodes.'
       token_est: 73
     - title: 'Scope'
-      lines: [75, 92]
+      lines: [81, 98]
       summary:
         'Projection contracts, determinism, and explainability. Excludes ingestion, lifecycle
         semantics, and storage decisions.'
       token_est: 62
     - title: 'REQ-001: Projection Determinism'
-      lines: [94, 116]
+      lines: [100, 122]
       summary: 'Projections MUST be deterministic functions of canonical graph data.'
       token_est: 88
+    - title: 'REQ-002: Projection policy governance'
+      lines: [124, 146]
+      summary: 'Projection selection MUST be governed by graph-native ProjectionPolicy.'
+      token_est: 95
     - title: 'Related Requirements'
-      lines: [118, 125]
+      lines: [148, 155]
       summary: 'Projections must align with architecture and graph model.'
       token_est: 23
     - title: 'Design Decisions'
-      lines: [127, 140]
+      lines: [157, 170]
       token_est: 85
     - title: 'Blockers'
-      lines: [142, 146]
+      lines: [172, 176]
       token_est: 39
 ---
 
@@ -112,6 +118,30 @@ Determinism is required for auditability and repeatable queries.
 
 - Reproducibility tests
 - Snapshot-based tests
+
+---
+
+## REQ-002: Projection policy governance
+
+Summary: Projection selection MUST be governed by graph-native ProjectionPolicy.
+
+**Statement:**
+
+Projection definitions and rule versions MUST be selected based on the current applicable
+ProjectionPolicy stored in the graph.
+
+**Rationale:**
+
+Policy-driven projection selection prevents hidden configuration and ensures determinism.
+
+**Measurable Fit Criteria:**
+
+- [ ] Projection rule versions are sourced from ProjectionPolicy
+- [ ] Policy selection is deterministic and explainable
+
+**Verification Method:**
+
+- Policy-driven projection selection tests
 
 ---
 

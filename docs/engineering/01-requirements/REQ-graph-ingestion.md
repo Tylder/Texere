@@ -18,37 +18,43 @@ keywords:
   - requirements
   - graph
   - ingestion
+implements:
+  - IDEATION-PROBLEMS-graph-knowledge-system
 related:
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
 index:
   sections:
     - title: 'TLDR'
-      lines: [59, 77]
+      lines: [65, 83]
       summary:
         'Ingestion MUST create canonical Artifact nodes with deterministic provenance and retention
         handling; connectors are pluggable and source-specific.'
       token_est: 101
     - title: 'Scope'
-      lines: [79, 99]
+      lines: [85, 105]
       summary:
         'Source-agnostic ingestion pipeline requirements, connector contracts, provenance, and
         retention modes. Excludes source-specific parsing rules, lifecycle semantics, and projection
         logic.'
       token_est: 98
     - title: 'REQ-001: Connector Contract'
-      lines: [101, 124]
+      lines: [107, 130]
       summary: 'All ingestion connectors MUST implement a shared contract.'
       token_est: 103
+    - title: 'REQ-002: Ingestion policy as source of truth'
+      lines: [132, 155]
+      summary: 'Ingestion behavior MUST be driven by graph-native IngestionPolicy.'
+      token_est: 111
     - title: 'Related Requirements'
-      lines: [126, 133]
+      lines: [157, 164]
       summary: 'Ingestion must align with architecture and graph model constraints.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [135, 148]
+      lines: [166, 179]
       token_est: 85
     - title: 'Blockers'
-      lines: [150, 154]
+      lines: [181, 185]
       token_est: 39
 ---
 
@@ -120,6 +126,31 @@ A shared contract ensures connectors can be orchestrated uniformly.
 
 - Interface conformance tests
 - Integration tests across at least two connectors
+
+---
+
+## REQ-002: Ingestion policy as source of truth
+
+Summary: Ingestion behavior MUST be driven by graph-native IngestionPolicy.
+
+**Statement:**
+
+The ingestion pipeline MUST resolve depth, retention mode, and connector parameters from the current
+applicable IngestionPolicy (and associated profiles) stored in the graph.
+
+**Rationale:**
+
+Policy-driven ingestion keeps configuration auditable, queryable, and consistent with the graph
+model.
+
+**Measurable Fit Criteria:**
+
+- [ ] Ingestion depth and retention mode are derived from IngestionPolicy
+- [ ] Policy selection is deterministic and explainable
+
+**Verification Method:**
+
+- Policy-driven ingestion tests
 
 ---
 
