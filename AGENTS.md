@@ -7,18 +7,15 @@ rejected.**
 
 **CRITICAL**: After **ANY** prompt that modifies, creates, or deletes code:
 
-1. **IMMEDIATELY** execute project validation commands (e.g., `pnpm format:check`, `pnpm lint`,
-   `pnpm typecheck`, `pnpm test`, `pnpm build`)
+1. **IMMEDIATELY** execute project validation commands
 2. **VERIFY** all quality gates pass (all checks must succeed)
 3. **INCLUDE** complete validation results in response
 4. **REPORT** any failures with specific error details
 5. **NEVER** respond to user without validation confirmation
 
-**Docs-only exception:** If changes are limited to `docs/**` only, run **only** `pnpm format:check`
-and report its result. If **any** non-doc file changes (or a mix of docs + code), run the full suite
-above.
+**VALIDATION CHECKLIST:**
 
-**PROTOCOL ENFORCEMENT CHECKLIST:**
+**For code changes:**
 
 - [ ] `pnpm format:check` passed
 - [ ] `pnpm lint` passed
@@ -28,7 +25,7 @@ above.
 - [ ] No failures hidden or ignored
 - [ ] User informed of validation status
 
-**DOCS-ONLY VALIDATION CHECKLIST (docs/** only):\*\*
+**For docs-only changes (`docs/**` only):\*\*
 
 - [ ] `pnpm format` passed
 - [ ] `check:docs` passed

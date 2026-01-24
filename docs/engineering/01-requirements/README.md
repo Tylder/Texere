@@ -12,6 +12,8 @@ immutable by ID—if intent changes, deprecate and create a new requirement ID.
 
 ## Archived / Deprecated
 
+- [`REQ-graph_system_architecture`](REQ-graph_system_architecture.md) (draft) -
+  graph-system-architecture
 - [`REQ-graph_knowledge_system`](REQ-graph_knowledge_system.md) (draft) - graph-knowledge-system
 
 ---
