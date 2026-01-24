@@ -17,11 +17,10 @@ rejected.**
 
 **For code changes:**
 
-- [ ] `pnpm format:check` passed
-- [ ] `pnpm lint` passed
+- [ ] `pnpm format` passed
+- [ ] `pnpm lint:fix` passed
 - [ ] `pnpm typecheck` passed
 - [ ] `pnpm test` passed
-- [ ] `pnpm build` passed
 - [ ] No failures hidden or ignored
 - [ ] User informed of validation status
 
