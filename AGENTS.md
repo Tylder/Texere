@@ -5,6 +5,9 @@
 **⚠️ VIOLATION CONSEQUENCES: Any code modification without following this protocol will be
 rejected.**
 
+**Override Notice:** The user may explicitly override any requirement in this file; follow the
+user's override as the highest priority when it conflicts with these requirements.
+
 **CRITICAL**: After **ANY** prompt that modifies, creates, or deletes code:
 
 1. **IMMEDIATELY** execute `pnpm post:report:fast` (fast validation)
