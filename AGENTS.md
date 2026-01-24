@@ -14,6 +14,10 @@ rejected.**
 4. **REPORT** any failures with specific error details
 5. **NEVER** respond to user without validation confirmation
 
+**Docs-only exception:** If changes are limited to `docs/**` only, run **only** `pnpm format:check`
+and report its result. If **any** non-doc file changes (or a mix of docs + code), run the full suite
+above.
+
 **PROTOCOL ENFORCEMENT CHECKLIST:**
 
 - [ ] `pnpm format:check` passed
@@ -21,6 +25,13 @@ rejected.**
 - [ ] `pnpm typecheck` passed
 - [ ] `pnpm test` passed
 - [ ] `pnpm build` passed
+- [ ] No failures hidden or ignored
+- [ ] User informed of validation status
+
+**DOCS-ONLY VALIDATION CHECKLIST (docs/** only):\*\*
+
+- [ ] `pnpm format` passed
+- [ ] `check:docs` passed
 - [ ] No failures hidden or ignored
 - [ ] User informed of validation status
 
