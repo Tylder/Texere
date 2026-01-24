@@ -27,6 +27,8 @@ Requirements are finalized to preserve history and prevent link rot.
   (draft) - tooling-models-and-infrastructure
 - [`IDEATION-PROBLEMS-user-trust-and-feedback`](IDEATION-PROBLEMS-user-trust-and-feedback.md)
   (draft) - user-trust-and-feedback
+- [`IDEATION-PROBLEMS-graph-knowledge-system`](IDEATION-PROBLEMS-graph-knowledge-system.md)
+  (draft) - graph-knowledge-system
 
 ---
 

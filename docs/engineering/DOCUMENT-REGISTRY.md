@@ -5,7 +5,7 @@ stability: stable
 auto_generated: true
 auto_generated_by: script/validate-docs.mjs
 auto_generated_on_every: git commit (pre-commit hook)
-last_updated: 2026-01-21
+last_updated: 2026-01-24
 do_not_edit_manually: true
 ---
 
@@ -30,8 +30,9 @@ grep "| SPEC.*active" below
 | `IDEATION-PROBLEMS-state-and-visibility`              | IDEATION-PROBLEMS | draft  | experimental | ai-coding-system | state-and-visibility              | System lacks durable epistemic state, canonical baselines, and visibility into current understanding; state is hidden in chat narratives                                                                          |
 | `IDEATION-PROBLEMS-tooling-models-and-infrastructure` | IDEATION-PROBLEMS | draft  | experimental | ai-coding-system | tooling-models-and-infrastructure | Tool usage is unreliable; model swaps break workflows; context bloat drives costs; security boundaries are weak; dependency topology is blind; prompt brittleness undermines consistency                          |
 | `IDEATION-PROBLEMS-user-trust-and-feedback`           | IDEATION-PROBLEMS | draft  | experimental | ai-coding-system | user-trust-and-feedback           | Uncertainty and confidence are not communicated transparently; user feedback and preferences are not accumulated; agent outputs cannot be calibrated for trust                                                    |
+| `IDEATION-PROBLEMS-graph-knowledge-system`            | IDEATION-PROBLEMS | draft  | experimental | project-memory   | graph-knowledge-system            | 'Decisions decay, graphs become unqueryable dumps, external sources lack first-class status, multi-step plans remain untraced. Without explicit lifecycle linkage, documentation recreates document sprawl.'      |
 | `REQ-generate-doc-indices`                            | REQ               | active | stable       | documentation    | section-indexing                  | Extract section hierarchy (H2/H3) from documents and embed structured index in frontmatter for LLM parsing                                                                                                        |
 | `REQ-validate-docs`                                   | REQ               | active | stable       | documentation    | validation-system                 | Validate documentation structure, metadata, naming, and links; auto-update registries and folder READMEs on every commit                                                                                          |
 | `META-documentation-system`                           | META              | active | stable       | documentation    | system                            | 'Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META'                                                                                                                 |
 
-_Auto-generated: 2026-01-21_
+_Auto-generated: 2026-01-24_
