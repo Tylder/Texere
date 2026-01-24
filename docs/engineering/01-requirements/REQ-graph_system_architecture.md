@@ -8,12 +8,12 @@ area: graph-system
 feature: graph-system-architecture
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'High-level requirements for the Nx package boundaries and dependency rules of the graph system'
-summary_long:
-  'Defines the high-level architectural Requirements for how graph system code is organized in the
-  Nx monorepo, including package boundaries, dependency rules, and separation between ingestion,
-  lifecycle, projections, and storage interfaces. Details are delegated to subordinate REQs/SPECs.'
+summary_short: >-
+  High-level requirements for the Nx package boundaries and dependency rules of the graph system
+summary_long: >-
+  Defines the high-level architectural Requirements for how graph system code is organized in the Nx
+  monorepo, including package boundaries, dependency rules, and separation between ingestion,
+  lifecycle, projections, and storage interfaces. Details are delegated to subordinate REQs/SPECs.
 index:
   sections:
     - title: 'Document Relationships'
@@ -68,10 +68,6 @@ index:
 Summary: High-level architectural Requirements for Nx package boundaries and dependency rules across
 graph system code.
 
-**Upstream (depends on):**
-
-- None specified
-
 **Downstream (depends on this):**
 
 - REQ-graph-ingestion.md (planned)
@@ -82,10 +78,6 @@ graph system code.
 **Siblings (related Requirements):**
 
 - REQ-graph-knowledge-system.md (graph model semantics)
-
-**Related (cross-cutting):**
-
-- INIT-graph-system.md (if/when created)
 
 ---
 

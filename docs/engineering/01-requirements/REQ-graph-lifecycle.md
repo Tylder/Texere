@@ -8,11 +8,12 @@ area: graph-system
 feature: graph-lifecycle
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short: 'High-level requirements for lifecycle assertions and invariants'
-summary_long:
-  'Defines high-level Requirements for lifecycle assertions (Decisions, Requirements, Specs, Plans,
+summary_short: >-
+  High-level requirements for lifecycle assertions and invariants
+summary_long: >-
+  Defines high-level Requirements for lifecycle assertions (Decisions, Requirements, Specs, Plans,
   Verification) and the invariants that govern them. Detailed semantics live in subordinate
-  REQs/SPECs.'
+  REQs/SPECs.
 index:
   sections:
     - title: 'Document Relationships'
@@ -71,10 +72,6 @@ Summary: High-level Requirements for lifecycle assertions and invariants.
 - REQ-graph-ingestion.md
 - REQ-graph-projection.md
 - REQ-graph-store.md
-
-**Related (cross-cutting):**
-
-- INIT-graph-lifecycle.md (if/when created)
 
 ---
 

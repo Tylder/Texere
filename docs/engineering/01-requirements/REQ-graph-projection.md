@@ -8,10 +8,11 @@ area: graph-system
 feature: graph-projection
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short: 'High-level requirements for deterministic projections'
-summary_long:
-  'Defines high-level Requirements for deterministic, explainable projections derived from canonical
-  graph nodes. Detailed projection definitions live in subordinate REQs/SPECs.'
+summary_short: >-
+  High-level requirements for deterministic projections
+summary_long: >-
+  Defines high-level Requirements for deterministic, explainable projections derived from canonical
+  graph nodes. Detailed projection definitions live in subordinate REQs/SPECs.
 index:
   sections:
     - title: 'Document Relationships'
@@ -65,10 +66,6 @@ Summary: High-level Requirements for deterministic projections.
 - REQ-graph-ingestion.md
 - REQ-graph-lifecycle.md
 - REQ-graph-store.md
-
-**Related (cross-cutting):**
-
-- INIT-graph-projection.md (if/when created)
 
 ---
 

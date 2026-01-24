@@ -8,10 +8,11 @@ area: graph-system
 feature: graph-store
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short: 'High-level requirements for graph storage interfaces and adapters'
-summary_long:
-  'Defines high-level Requirements for graph storage interfaces, adapters, and transactional
-  semantics. Specific storage engine choices are deferred to subordinate REQs/SPECs.'
+summary_short: >-
+  High-level requirements for graph storage interfaces and adapters
+summary_long: >-
+  Defines high-level Requirements for graph storage interfaces, adapters, and transactional
+  semantics. Specific storage engine choices are deferred to subordinate REQs/SPECs.
 index:
   sections:
     - title: 'Document Relationships'
@@ -68,10 +69,6 @@ Summary: High-level Requirements for graph storage interfaces and adapters.
 - REQ-graph-ingestion.md
 - REQ-graph-lifecycle.md
 - REQ-graph-projection.md
-
-**Related (cross-cutting):**
-
-- INIT-graph-store.md (if/when created)
 
 ---
 

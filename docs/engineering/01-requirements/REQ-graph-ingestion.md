@@ -8,11 +8,12 @@ area: graph-system
 feature: graph-ingestion
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short: 'High-level requirements for ingestion pipelines and source connectors'
-summary_long:
-  'Defines high-level Requirements for ingestion of code and external sources into canonical graph
+summary_short: >-
+  High-level requirements for ingestion pipelines and source connectors
+summary_long: >-
+  Defines high-level Requirements for ingestion of code and external sources into canonical graph
   nodes, including connectors, decomposition rules, provenance, and retention policies. Detailed
-  source-specific rules are delegated to subordinate REQs/SPECs.'
+  source-specific rules are delegated to subordinate REQs/SPECs.
 index:
   sections:
     - title: 'Document Relationships'
@@ -68,10 +69,6 @@ Summary: High-level Requirements for ingestion pipelines and connectors.
 
 - REQ-graph-store.md
 - REQ-graph-projection.md
-
-**Related (cross-cutting):**
-
-- INIT-graph-ingestion.md (if/when created)
 
 ---
 
