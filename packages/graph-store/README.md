@@ -99,6 +99,35 @@ GraphStore interface and in-memory adapter for the Texere graph system.
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+## Implementation Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│         GraphStore Adapter Pattern                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │           GraphStore Interface (v0.1)                │      │
+│   │      (All adapters implement this contract)          │      │
+│   └─────────────────┬──────────────────────────────────┘      │
+│                     │                                           │
+│         ┌───────────┼───────────┬─────────────────┐             │
+│         ▼           ▼           ▼                 ▼             │
+│   ┌──────────┐ ┌─────────┐ ┌──────────┐    ┌─────────────┐     │
+│   │ InMemory │ │ SQLite  │ │PostgreSQL│    │   Neo4j     │     │
+│   │ Adapter  │ │ Adapter │ │ Adapter  │    │  Adapter    │     │
+│   │ (v0.1)   │ │(future) │ │(future)  │    │ (future)    │     │
+│   └──────────┘ └─────────┘ └──────────┘    └─────────────┘     │
+│       ▲                                                          │
+│       │                                                          │
+│   Storage Backend:                                              │
+│   • Map<string, GraphNode>                                      │
+│   • Map<string, GraphEdge>                                      │
+│   • Sorted iteration for determinism                            │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ## Usage
 
 ### Basic Operations

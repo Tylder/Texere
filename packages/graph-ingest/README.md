@@ -80,6 +80,35 @@ Ingestion orchestration, connector interface, and JSON dump utilities for the Te
 2. **Orchestrates ingestion** - Validates and invokes connectors
 3. **Outputs JSON dumps** - Human/LLM-readable inspection files
 
+```
+┌─────────────────────────────────────────────────────────────────┐
+│         Ingestion Orchestration Pipeline                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   Input:           Validation:        Execution:                │
+│   ┌─────────────┐  ┌────────────┐    ┌──────────────┐           │
+│   │  Source     │─▶│  Input     │───▶│   Invoke     │           │
+│   │  Reference  │  │  Validation│    │   Connector  │           │
+│   │  (path/url) │  └────────────┘    │              │           │
+│   └─────────────┘                    │ store.put*() │           │
+│                                      │              │           │
+│                                      └──────┬───────┘           │
+│                                             │                   │
+│                                             ▼                   │
+│                                      ┌──────────────┐           │
+│                                      │   Return     │           │
+│                                      │  IngestResult│           │
+│                                      └──────────────┘           │
+│                                                                  │
+│   Characteristics:                                              │
+│   • Agnostic to source type (delegates to connector)            │
+│   • Validates input before processing                           │
+│   • Passes store instance to connector                          │
+│   • Captures result metadata                                    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ## The Connector Pattern
 
 ```
