@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
 
 import type { ArtifactPartNode, ArtifactRootNode, ArtifactStateNode } from '@repo/graph-core';
-import { ingestRepo, writeJsonDumps } from '@repo/graph-ingest';
+import { ingestRepoFromSource, writeJsonDumps } from '@repo/graph-ingest';
 import { InMemoryGraphStore } from '@repo/graph-store';
 
 import { ScipTsIngestionConnector } from './index.js';
@@ -16,7 +16,7 @@ const execAsync = promisify(exec);
 
 async function ensureKyFixture(): Promise<{ repoPath: string; commit: string }> {
   const fixturePath =
-    process.env['GRAPH_KY_FIXTURE_PATH'] ?? path.join(process.cwd(), 'tmp', 'fixtures', 'ky');
+    process.env['GRAPH_KY_FIXTURE_PATH'] ?? path.join('/tmp', 'graph-fixtures', 'ky');
 
   try {
     const stats = await stat(fixturePath);
@@ -44,18 +44,14 @@ describe('ky repo ingestion integration (fixture-based)', () => {
     const store = new InMemoryGraphStore();
     const connector = new ScipTsIngestionConnector();
     const outputDir = path.join(tmpdir(), `graph-ky-dump-${Date.now()}`);
+    const ingestRoot = path.join(tmpdir(), `graph-ky-ingest-${Date.now()}`);
 
     try {
-      await ingestRepo(
-        {
-          repoPath,
-          repoUrl: 'https://github.com/sindresorhus/ky',
-          commit,
-          projectId: 'ky-fixture',
-        },
-        store,
-        connector,
-      );
+      await ingestRepoFromSource(repoPath, store, connector, {
+        commit,
+        projectId: 'ky-fixture',
+        ingestRoot,
+      });
 
       const root = store
         .listNodes()
@@ -67,7 +63,7 @@ describe('ky repo ingestion integration (fixture-based)', () => {
         .listNodes()
         .filter((node): node is ArtifactPartNode => node.kind === 'ArtifactPart');
 
-      expect(root?.canonical_ref).toBe('https://github.com/sindresorhus/ky');
+      expect(root?.canonical_ref).toBe(`file://${path.resolve(repoPath)}`);
       expect(state?.version_ref).toBe(commit);
       expect(parts.length).toBeGreaterThan(0);
       expect(parts.some((part) => part.part_kind === 'file')).toBe(true);
@@ -87,6 +83,7 @@ describe('ky repo ingestion integration (fixture-based)', () => {
       expect(summary.policy_count).toBeGreaterThanOrEqual(0);
     } finally {
       await rm(outputDir, { recursive: true, force: true });
+      await rm(ingestRoot, { recursive: true, force: true });
     }
   }, 900000);
 });
