@@ -17,39 +17,38 @@ summary_long:
   (decisions, assumptions, files); and knowledge and context from one task leak into another without
   clear intent, causing irrelevant suggestions and confusion. Without clear context boundaries,
   users must constantly manage scope manually.'
-related_ideation:
-  [IDEATION-PROBLEMS-state-and-visibility, IDEATION-PROBLEMS-user-trust-and-feedback]
+related_ideation: [IDEATION-PROBLEMS-user-trust-and-feedback]
 drives: []
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [88, 114]
+      lines: [87, 113]
       summary:
         'Context management directly affects communication clarity, task isolation, and suggestion
         relevance; depend on state visibility and reference anchoring mechanisms.'
       token_est: 107
     - title: 'TLDR'
-      lines: [116, 141]
+      lines: [115, 140]
       summary:
         'Users cannot see what context the agent is using; cannot point precisely to items they
         mean; and context bleeds across tasks, causing cross-contamination.'
       token_est: 193
     - title: 'Scope'
-      lines: [143, 168]
+      lines: [142, 167]
       summary:
         'Context visibility, stable references and anchoring, context isolation per task,
         intentional context bridging, and context freshness—not specific data structures or search
         algorithms.'
       token_est: 150
     - title: 'Overview'
-      lines: [170, 181]
+      lines: [169, 180]
       token_est: 107
     - title: 'Problems'
-      lines: [183, 343]
+      lines: [182, 342]
       token_est: 1229
       subsections:
         - title: 'Problem 1: PROB-028 — Context selection is implicit and opaque to the user'
-          lines: [185, 232]
+          lines: [184, 231]
           summary:
             'User cannot see or control what information agent is actively conditioning on, leading
             to misunderstandings and incorrect references.'
@@ -57,31 +56,31 @@ index:
         - title:
             'Problem 2: PROB-029 — Users cannot reliably anchor references when communicating with
             agents'
-          lines: [234, 280]
+          lines: [233, 279]
           summary:
             'Users lack stable ways to reference specific decisions, assumptions, files, or open
             items, causing ambiguity when communicating with the system.'
           token_est: 323
         - title: 'Problem 3: PROB-039 — Context spillage across tasks leads to cross-contamination'
-          lines: [282, 343]
+          lines: [281, 342]
           summary:
             'System lacks strict context isolation for different tasks or projects; knowledge and
             assumptions bleed across without clear intent, causing agent to mix contexts.'
           token_est: 569
     - title: 'Success Signals (System Level)'
-      lines: [345, 356]
+      lines: [344, 355]
       token_est: 99
     - title: 'Assumptions'
-      lines: [358, 367]
+      lines: [357, 366]
       token_est: 72
     - title: 'Unknowns'
-      lines: [369, 383]
+      lines: [368, 382]
       token_est: 95
     - title: 'Related Problems'
-      lines: [385, 394]
+      lines: [384, 393]
       token_est: 67
     - title: 'Document Metadata'
-      lines: [396, 426]
+      lines: [395, 425]
       token_est: 65
 ---
 

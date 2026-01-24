@@ -17,39 +17,38 @@ summary_long:
   recovered; tasks cannot be paused and resumed without losing intermediate findings; and knowledge
   schema evolution breaks interpretation of older stored knowledge. Continuity is blocked by lack of
   durable state infrastructure (see IDEATION-PROBLEMS-state-and-visibility).'
-related_ideation:
-  [IDEATION-PROBLEMS-state-and-visibility, IDEATION-PROBLEMS-grounding-and-freshness]
+related_ideation: [IDEATION-PROBLEMS-grounding-and-freshness]
 drives: []
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [95, 119]
+      lines: [94, 118]
       summary:
         'Continuity enables multi-day and multi-week projects; depends on durable state
         infrastructure and requires managing knowledge staleness and schema evolution.'
       token_est: 94
     - title: 'TLDR'
-      lines: [121, 143]
+      lines: [120, 142]
       summary:
         'Every new session forces the agent to rediscover repo facts, forget decisions, lose task
         context, and reinterpret knowledge from a moving schema. This wastes time and creates
         inconsistency.'
       token_est: 182
     - title: 'Scope'
-      lines: [145, 170]
+      lines: [144, 169]
       summary:
         'Session re-entry, decision recovery, task resumability, and schema evolution—not specific
         storage mechanisms, cache invalidation, or conversation history preservation.'
       token_est: 146
     - title: 'Overview'
-      lines: [172, 182]
+      lines: [171, 181]
       token_est: 102
     - title: 'Problems'
-      lines: [184, 405]
+      lines: [183, 404]
       token_est: 1739
       subsections:
         - title: 'Problem 1: PROB-001 — Session resets force repo research from scratch'
-          lines: [186, 238]
+          lines: [185, 237]
           summary:
             'New session behaves as though system has never seen the repo; agent must re-establish
             repo facts, patterns, invariants, and prior investigations repeatedly.'
@@ -57,38 +56,38 @@ index:
         - title:
             'Problem 2: PROB-004 — The agent cannot behave like it has deep, accurate historical
             knowledge'
-          lines: [240, 292]
+          lines: [239, 291]
           summary:
             'Productive long-running assistant must remember prior decisions and operate correctly
             on that history; repeats rejected ideas and forgets established constraints.'
           token_est: 413
         - title: 'Problem 3: PROB-022 — Knowledge schema evolution breaks long-lived continuity'
-          lines: [294, 346]
+          lines: [293, 345]
           summary:
             'Durable knowledge accumulates over time; when structure changes, older knowledge
             becomes hard to interpret, causing continuity breaks and subtle corruption.'
           token_est: 406
         - title:
             'Problem 4: PROB-034 — Task interruption and resumability failures cause repeated work'
-          lines: [348, 405]
+          lines: [347, 404]
           summary:
             'Long-running or multi-step tasks cannot be paused and resumed without losing
             intermediate progress, findings, and execution context.'
           token_est: 502
     - title: 'Success Signals (System Level)'
-      lines: [407, 418]
+      lines: [406, 417]
       token_est: 98
     - title: 'Assumptions'
-      lines: [420, 429]
+      lines: [419, 428]
       token_est: 76
     - title: 'Unknowns'
-      lines: [431, 441]
+      lines: [430, 440]
       token_est: 82
     - title: 'Related Problems'
-      lines: [443, 453]
+      lines: [442, 452]
       token_est: 82
     - title: 'Document Metadata'
-      lines: [455, 481]
+      lines: [454, 480]
       token_est: 62
 ---
 

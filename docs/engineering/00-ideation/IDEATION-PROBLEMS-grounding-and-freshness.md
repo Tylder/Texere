@@ -16,7 +16,7 @@ summary_long:
   reality changes; assumptions accumulate and become facts without explicit tracking; and decision
   provenance is lost, making it impossible to recover why something exists. Without grounding
   mechanisms and traceability, the system drifts silently from reality.'
-related_ideation: [IDEATION-PROBLEMS-state-and-visibility, IDEATION-PROBLEMS-session-continuity]
+related_ideation: [IDEATION-PROBLEMS-session-continuity]
 drives: []
 index:
   sections:

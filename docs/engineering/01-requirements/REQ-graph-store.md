@@ -22,34 +22,34 @@ related:
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [51, 76]
+      lines: [58, 79]
       summary: 'High-level Requirements for graph storage interfaces and adapters.'
-      token_est: 63
+      token_est: 55
     - title: 'TLDR'
-      lines: [78, 95]
+      lines: [81, 98]
       summary:
         'Graph storage MUST expose a consistent interface and transactional guarantees for canonical
         graph operations.'
       token_est: 88
     - title: 'Scope'
-      lines: [97, 120]
+      lines: [100, 123]
       summary:
         'Storage interfaces, adapters, and transactional semantics. Excludes ingestion and lifecycle
         behavior.'
       token_est: 71
     - title: 'REQ-001: Store Interface Stability'
-      lines: [122, 144]
+      lines: [125, 147]
       summary: 'The system MUST define a stable graph store interface.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [146, 153]
+      lines: [149, 156]
       summary: 'Storage requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [155, 168]
+      lines: [158, 171]
       token_est: 85
     - title: 'Blockers'
-      lines: [170, 174]
+      lines: [173, 177]
       token_est: 39
 ---
 

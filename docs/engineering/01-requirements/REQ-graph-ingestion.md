@@ -23,34 +23,34 @@ related:
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [52, 76]
+      lines: [59, 79]
       summary: 'High-level Requirements for ingestion pipelines and connectors.'
-      token_est: 59
+      token_est: 51
     - title: 'TLDR'
-      lines: [78, 96]
+      lines: [81, 99]
       summary:
         'Ingestion MUST create canonical Artifact nodes with deterministic provenance and retention
         handling; connectors are pluggable and source-specific.'
       token_est: 101
     - title: 'Scope'
-      lines: [98, 122]
+      lines: [101, 125]
       summary:
         'Ingestion pipelines, connector contracts, provenance, and retention modes. Excludes
         lifecycle semantics or projection rules.'
       token_est: 84
     - title: 'REQ-001: Connector Contract'
-      lines: [124, 147]
+      lines: [127, 150]
       summary: 'All ingestion connectors MUST implement a shared contract.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [149, 156]
+      lines: [152, 159]
       summary: 'Ingestion must align with architecture and graph model constraints.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [158, 171]
+      lines: [161, 174]
       token_est: 85
     - title: 'Blockers'
-      lines: [173, 177]
+      lines: [176, 180]
       token_est: 39
 ---
 

@@ -23,34 +23,34 @@ related:
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [52, 79]
+      lines: [59, 82]
       summary: 'High-level Requirements for lifecycle assertions and invariants.'
-      token_est: 69
+      token_est: 62
     - title: 'TLDR'
-      lines: [81, 98]
+      lines: [84, 101]
       summary:
         'Lifecycle assertions MUST be modeled as canonical graph nodes with explicit supersession,
         provenance, and validation invariants.'
       token_est: 89
     - title: 'Scope'
-      lines: [100, 123]
+      lines: [103, 126]
       summary:
         'Lifecycle assertion kinds and invariants. Excludes ingestion mechanics and storage
         selection.'
       token_est: 71
     - title: 'REQ-001: Lifecycle Assertion Catalog'
-      lines: [125, 147]
+      lines: [128, 150]
       summary: 'The system MUST define a canonical set of lifecycle assertion kinds.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [149, 156]
+      lines: [152, 159]
       summary: 'Lifecycle requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [158, 171]
+      lines: [161, 174]
       token_est: 85
     - title: 'Blockers'
-      lines: [173, 177]
+      lines: [176, 180]
       token_est: 39
 ---
 

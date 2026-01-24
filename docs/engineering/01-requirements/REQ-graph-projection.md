@@ -22,31 +22,31 @@ related:
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [48, 73]
+      lines: [55, 76]
       summary: 'High-level Requirements for deterministic projections.'
-      token_est: 59
+      token_est: 51
     - title: 'TLDR'
-      lines: [75, 92]
+      lines: [78, 95]
       summary:
         'Projections MUST be deterministic, explainable, and derived only from canonical nodes.'
       token_est: 73
     - title: 'Scope'
-      lines: [94, 116]
+      lines: [97, 119]
       summary: 'Projection contracts and determinism. Excludes ingestion and storage decisions.'
       token_est: 64
     - title: 'REQ-001: Projection Determinism'
-      lines: [118, 140]
+      lines: [121, 143]
       summary: 'Projections MUST be deterministic functions of canonical graph data.'
       token_est: 88
     - title: 'Related Requirements'
-      lines: [142, 149]
+      lines: [145, 152]
       summary: 'Projections must align with architecture and graph model.'
       token_est: 23
     - title: 'Design Decisions'
-      lines: [151, 164]
+      lines: [154, 167]
       token_est: 85
     - title: 'Blockers'
-      lines: [166, 170]
+      lines: [169, 173]
       token_est: 39
 ---
 

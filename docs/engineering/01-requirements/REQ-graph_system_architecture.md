@@ -23,47 +23,47 @@ related:
 index:
   sections:
     - title: 'Document Relationships'
-      lines: [66, 90]
+      lines: [72, 88]
       summary:
         'High-level architectural Requirements for Nx package boundaries and dependency rules across
         graph system code.'
-      token_est: 72
+      token_est: 56
     - title: 'TLDR'
-      lines: [92, 109]
+      lines: [90, 107]
       summary:
         'Separate ingestion, lifecycle, projections, and storage into distinct Nx packages with
         clean dependency rules; shared core types live in a foundational package.'
       token_est: 112
     - title: 'Scope'
-      lines: [111, 137]
+      lines: [109, 135]
       summary:
         'High-level Nx package roles and dependency rules. Excludes detailed pipeline behavior,
         query semantics, or database choices.'
       token_est: 98
     - title: 'REQ-001: Package Boundary Definition'
-      lines: [139, 171]
+      lines: [137, 169]
       summary:
         'The Nx monorepo MUST define distinct packages for core types, storage, ingestion,
         projections, and lifecycle logic.'
       token_est: 145
     - title: 'REQ-002: Dependency Direction Rules'
-      lines: [173, 204]
+      lines: [171, 202]
       summary:
         'Package dependencies MUST follow a strict directionality to prevent cyclic coupling.'
       token_est: 166
     - title: 'REQ-003: Ingestion and Lifecycle Separation'
-      lines: [206, 229]
+      lines: [204, 227]
       summary: 'Ingestion packages MUST NOT depend on lifecycle packages, and vice versa.'
       token_est: 98
     - title: 'Related Requirements'
-      lines: [231, 241]
+      lines: [229, 239]
       summary: 'This REQ establishes architectural boundaries referenced by all detailed REQs.'
       token_est: 38
     - title: 'Design Decisions'
-      lines: [243, 256]
+      lines: [241, 254]
       token_est: 85
     - title: 'Blockers'
-      lines: [258, 262]
+      lines: [256, 260]
       token_est: 39
 ---
 

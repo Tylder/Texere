@@ -20,7 +20,7 @@ summary_long:
   are unobservable, and self-improvement lacks evidence backing. Orchestration is the connective
   tissue; failures here affect all other systems.'
 related_ideation:
-  [IDEATION-PROBLEMS-state-and-visibility, IDEATION-PROBLEMS-integration-and-execution]
+  [IDEATION-PROBLEMS-integration-and-execution]
 drives: []
 index:
   sections:
