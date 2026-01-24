@@ -60,35 +60,35 @@ index:
       summary: 'Implementation of the v0.1 vertical slice with inspection outputs and tests.'
       token_est: 85
     - title: 'Preconditions'
-      lines: [138, 144]
-      token_est: 30
+      lines: [138, 148]
+      token_est: 67
     - title: 'Milestones'
-      lines: [146, 253]
+      lines: [150, 257]
       token_est: 388
       subsections:
         - title: 'Milestone 1: Core Interfaces and Node Shapes'
-          lines: [148, 164]
+          lines: [152, 168]
           token_est: 67
         - title: 'Milestone 2: In-Memory Store + Policy Persistence'
-          lines: [166, 181]
+          lines: [170, 185]
           token_est: 64
         - title: 'Milestone 3: Repo Ingestion Pipeline (SCIP-TS)'
-          lines: [183, 201]
+          lines: [187, 205]
           token_est: 90
         - title: 'Milestone 4: JSON Dumps (LLM-Friendly)'
-          lines: [203, 219]
+          lines: [207, 223]
           token_est: 55
         - title: 'Milestone 5: CurrentCommittedTruth Projection'
-          lines: [221, 235]
+          lines: [225, 239]
           token_est: 56
         - title: 'Milestone 6: Test Suite (Vitest)'
-          lines: [237, 253]
+          lines: [241, 257]
           token_est: 55
     - title: 'Risks and Mitigations'
-      lines: [255, 264]
+      lines: [259, 268]
       token_est: 63
     - title: 'Exit Criteria'
-      lines: [266, 271]
+      lines: [270, 275]
       token_est: 49
 ---
 
@@ -140,6 +140,10 @@ Summary: Implementation of the v0.1 vertical slice with inspection outputs and t
 - [ ] SPEC-graph-system-vertical-slice-v0-1 approved
 - [ ] `.env` support for `GRAPH_INGEST_ROOT`
 - [ ] Tooling available: node, pnpm, scip-typescript
+- [ ] Nx templates from `/templates` will be used for any generated packages/files
+- [ ] Tooling/testing workflow follows:
+  - [ ] docs/engineering/02-specifications/SPEC-tooling-testing-implementation-specification.md
+  - [ ] docs/engineering/02-specifications/SPEC-tooling-testing-trophy-strategy.md
 
 ---
 

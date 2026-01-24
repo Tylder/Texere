@@ -10,18 +10,18 @@ by multiple Specifications.
 
 ## Active Specifications
 
-- [`SPEC-tooling-nx-composite-projects`](SPEC-tooling-nx-composite-projects.md)
-  (nx-composite-projects)
 - [`SPEC-tooling-eslint-oxlint-hybrid-linting`](SPEC-tooling-eslint-oxlint-hybrid-linting.md)
   (hybrid-linting)
+- [`SPEC-tooling-nx-composite-projects`](SPEC-tooling-nx-composite-projects.md)
+  (nx-composite-projects)
 - [`SPEC-tooling-prettier-formatting-centralized`](SPEC-tooling-prettier-formatting-centralized.md)
   (prettier-formatting)
-- [`SPEC-tooling-typescript-strict-project-references`](SPEC-tooling-typescript-strict-project-references.md)
-  (typescript-project-references)
 - [`SPEC-tooling-testing-implementation-specification`](SPEC-tooling-testing-implementation-specification.md)
   (testing-implementation-specification)
 - [`SPEC-tooling-testing-trophy-strategy`](SPEC-tooling-testing-trophy-strategy.md)
   (testing-trophy-strategy)
+- [`SPEC-tooling-typescript-strict-project-references`](SPEC-tooling-typescript-strict-project-references.md)
+  (typescript-project-references)
 
 ## Archived
 
