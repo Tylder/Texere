@@ -22,30 +22,34 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [54, 70]
+      lines: [58, 74]
       summary: 'Provide a deterministic projection of the latest committed lifecycle assertions.'
       token_est: 78
     - title: 'Scope'
-      lines: [72, 89]
+      lines: [76, 93]
       summary: 'CurrentCommittedTruth projection rules and outputs. Excludes other projections.'
       token_est: 60
     - title: 'REQ-001: Deterministic selection'
-      lines: [91, 113]
+      lines: [95, 117]
       summary: 'The projection MUST select the latest non-superseded committed assertions.'
       token_est: 90
     - title: 'REQ-002: Explainability'
-      lines: [115, 136]
+      lines: [119, 140]
       summary: 'Each projection item MUST include explainability metadata.'
       token_est: 90
+    - title: 'REQ-003: Conflict visibility'
+      lines: [142, 164]
+      summary: 'Conflicts MUST be surfaced, not silently resolved.'
+      token_est: 99
     - title: 'Related Requirements'
-      lines: [138, 145]
+      lines: [166, 173]
       summary: 'Projection rules align with the projection and graph model requirements.'
       token_est: 25
     - title: 'Design Decisions'
-      lines: [147, 160]
+      lines: [175, 188]
       token_est: 85
     - title: 'Blockers'
-      lines: [162, 166]
+      lines: [190, 194]
       token_est: 39
 ---
 
@@ -132,6 +136,30 @@ Explainability is required for auditability and trust.
 **Verification Method:**
 
 - Projection output validation tests
+
+---
+
+## REQ-003: Conflict visibility
+
+Summary: Conflicts MUST be surfaced, not silently resolved.
+
+**Statement:**
+
+If multiple committed assertions share the same conflict key, the projection MUST surface a conflict
+indicator rather than applying implicit \"latest wins\" resolution.
+
+**Rationale:**
+
+Silent conflict resolution undermines auditability and hides competing commitments.
+
+**Measurable Fit Criteria:**
+
+- [ ] Conflicting items are flagged in projection output
+- [ ] Projection includes references to all conflicting assertions
+
+**Verification Method:**
+
+- Conflict detection tests
 
 ---
 

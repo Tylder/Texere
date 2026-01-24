@@ -22,32 +22,40 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [56, 73]
+      lines: [64, 81]
       summary:
         'Provide a deterministic in-memory graph store that satisfies the core store interface for
         v0.1 ingestion and tests.'
       token_est: 90
     - title: 'Scope'
-      lines: [75, 92]
+      lines: [83, 100]
       summary: 'In-memory adapter behavior and guarantees. Excludes production database selection.'
       token_est: 62
     - title: 'REQ-001: Interface conformance'
-      lines: [94, 116]
+      lines: [102, 124]
       summary: 'The in-memory adapter MUST implement the graph store interface.'
       token_est: 106
     - title: 'REQ-002: Append-only semantics'
-      lines: [118, 139]
+      lines: [126, 147]
       summary: 'The adapter MUST enforce append-only writes.'
       token_est: 81
+    - title: 'REQ-003: Transaction boundaries'
+      lines: [149, 171]
+      summary: 'The adapter MUST support explicit transaction boundaries.'
+      token_est: 84
+    - title: 'REQ-004: Deterministic query ordering'
+      lines: [173, 193]
+      summary: 'Query results MUST be deterministic for the same graph state.'
+      token_est: 84
     - title: 'Related Requirements'
-      lines: [141, 148]
+      lines: [195, 202]
       summary: 'In-memory storage aligns with the store interface and graph model requirements.'
       token_est: 26
     - title: 'Design Decisions'
-      lines: [150, 163]
+      lines: [204, 217]
       token_est: 85
     - title: 'Blockers'
-      lines: [165, 169]
+      lines: [219, 223]
       token_est: 39
 ---
 
@@ -135,6 +143,52 @@ Maintains immutability expectations consistent with the graph model.
 **Verification Method:**
 
 - Mutation rejection tests
+
+---
+
+## REQ-003: Transaction boundaries
+
+Summary: The adapter MUST support explicit transaction boundaries.
+
+**Statement:**
+
+The adapter MUST provide begin/commit/rollback semantics that isolate uncommitted writes from
+readers.
+
+**Rationale:**
+
+Transactions are required to model Activity atomicity during ingestion.
+
+**Measurable Fit Criteria:**
+
+- [ ] Uncommitted writes are not visible outside the transaction
+- [ ] Rollback removes all staged writes
+
+**Verification Method:**
+
+- Transaction isolation tests
+
+---
+
+## REQ-004: Deterministic query ordering
+
+Summary: Query results MUST be deterministic for the same graph state.
+
+**Statement:**
+
+The adapter MUST return deterministic ordering for queries that yield multiple nodes or edges.
+
+**Rationale:**
+
+Deterministic ordering prevents test flakiness and projection drift.
+
+**Measurable Fit Criteria:**
+
+- [ ] Repeated identical queries return the same ordered results
+
+**Verification Method:**
+
+- Stable ordering tests across repeated runs
 
 ---
 

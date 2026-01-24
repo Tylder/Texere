@@ -22,30 +22,34 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [54, 70]
+      lines: [58, 74]
       summary: 'Define the v0.1 lifecycle assertion catalog and minimum schemas.'
       token_est: 76
     - title: 'Scope'
-      lines: [72, 89]
+      lines: [76, 93]
       summary: 'Assertion kinds and schemas for v0.1. Excludes ingestion and projection rules.'
       token_est: 69
     - title: 'REQ-001: Assertion catalog'
-      lines: [91, 112]
+      lines: [95, 116]
       summary: 'The system MUST define a v0.1 catalog of assertion kinds.'
       token_est: 88
     - title: 'REQ-002: Minimum fields'
-      lines: [114, 136]
+      lines: [118, 140]
       summary: 'Each assertion kind MUST define minimum required fields.'
       token_est: 98
+    - title: 'REQ-003: Supersession eligibility'
+      lines: [142, 164]
+      summary: 'Lifecycle assertions MUST support explicit supersession.'
+      token_est: 95
     - title: 'Related Requirements'
-      lines: [138, 145]
+      lines: [166, 173]
       summary: 'Assertion requirements align with lifecycle and graph model requirements.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [147, 160]
+      lines: [175, 188]
       token_est: 85
     - title: 'Blockers'
-      lines: [162, 166]
+      lines: [190, 194]
       token_est: 39
 ---
 
@@ -132,6 +136,30 @@ Minimum fields enable invariants, projections, and reproducibility.
 **Verification Method:**
 
 - Validation tests for required fields
+
+---
+
+## REQ-003: Supersession eligibility
+
+Summary: Lifecycle assertions MUST support explicit supersession.
+
+**Statement:**
+
+Decision, Requirement, and SpecClause assertions MUST be eligible for supersession by a later
+assertion of the same kind.
+
+**Rationale:**
+
+Supersession is required to maintain append-only history with a clear current truth.
+
+**Measurable Fit Criteria:**
+
+- [ ] Supersession links are permitted between like kinds
+- [ ] Superseded assertions are excluded from current-truth projections
+
+**Verification Method:**
+
+- Supersession handling tests
 
 ---
 
