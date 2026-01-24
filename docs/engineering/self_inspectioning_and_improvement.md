@@ -15,5 +15,5 @@ code that simulates being a human user and works with the system to implement a 
 The purpose for this would again be that the user orchestrator could find ways to improve both the
 system and the user experience, it could for example notice information that would be useful to the
 user but isnt shown or perhaps ways to work with the user that allows you to help the user and give
-them the information they need for them to come to the best conclusion.
-Its basically like wrapping everything in a critique loop.
+them the information they need for them to come to the best conclusion. Its basically like wrapping
+everything in a critique loop.

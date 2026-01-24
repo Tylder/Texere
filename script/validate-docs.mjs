@@ -341,7 +341,7 @@ function updateLastUpdated(doc) {
   const now = new Date().toISOString();
 
   const updatedContent = doc.content.replace(
-    /last_updated: \d{4}-\d{2}-\d{2}(?:T[\d:\.Z]+)?/,
+    /last_updated: \d{4}-\d{2}-\d{2}(?:T[\d:.Z]+)?/,
     `last_updated: ${now}`,
   );
 
