@@ -164,111 +164,120 @@ export class ScipTsIngestionConnector implements IngestionConnector {
     // Parse the generated SCIP index
     const documents = await parseScipIndex(repoPath);
 
-    // Create deterministic IDs
-    const rootId = createDeterministicId(`${input.repoUrl}:${input.commit}`);
-    const stateId = createDeterministicId(`${rootId}:${input.commit}`);
+    return ingestScipDocuments(input, store, documents, provenance);
+  }
+}
 
-    // Compute content hash from all file paths and their symbol counts
-    const contentHashInput = documents
-      .map((doc) => `${doc.relativePath}:${doc.symbols.length}`)
-      .sort()
-      .join('|');
-    const contentHash = createDeterministicId(contentHashInput);
+export function ingestScipDocuments(
+  input: RepoIngestInput,
+  store: GraphStore,
+  documents: Document[],
+  provenance: ToolchainProvenance,
+): IngestResult {
+  // Create deterministic IDs
+  const rootId = createDeterministicId(`${input.repoUrl}:${input.commit}`);
+  const stateId = createDeterministicId(`${rootId}:${input.commit}`);
 
-    // Create root node
-    const rootNode: ArtifactRootNode = {
-      id: rootId,
-      kind: 'ArtifactRoot',
+  // Compute content hash from all file paths and their symbol counts
+  const contentHashInput = documents
+    .map((doc) => `${doc.relativePath}:${doc.symbols.length}`)
+    .sort()
+    .join('|');
+  const contentHash = createDeterministicId(contentHashInput);
+
+  // Create root node
+  const rootNode: ArtifactRootNode = {
+    id: rootId,
+    kind: 'ArtifactRoot',
+    schema_version: 'v0.1',
+    source_kind: 'repo',
+    canonical_ref: input.repoUrl,
+  };
+
+  // Create state node with provenance metadata
+  const stateNode: ArtifactStateNode & { provenance: ToolchainProvenance } = {
+    id: stateId,
+    kind: 'ArtifactState',
+    schema_version: 'v0.1',
+    artifact_root_id: rootId,
+    version_ref: input.commit,
+    content_hash: contentHash,
+    retrieved_at: new Date().toISOString(),
+    provenance,
+  };
+
+  store.putNode(rootNode);
+  store.putNode(stateNode as ArtifactStateNode);
+
+  const edges: GraphEdge[] = [];
+  const stateEdge: GraphEdge = {
+    id: createDeterministicId(`${rootId}->${stateId}`),
+    kind: 'HasState',
+    schema_version: 'v0.1',
+    from: rootId,
+    to: stateId,
+  };
+  edges.push(stateEdge);
+
+  // Process each document (file) and its symbols
+  for (const doc of documents) {
+    const relativePath = doc.relativePath;
+
+    // Create file-level ArtifactPart
+    const filePartId = createDeterministicId(`${stateId}:${relativePath}`);
+    const fileNode: ArtifactPartNode = {
+      id: filePartId,
+      kind: 'ArtifactPart',
       schema_version: 'v0.1',
-      source_kind: 'repo',
-      canonical_ref: input.repoUrl,
+      artifact_state_id: stateId,
+      locator: relativePath,
+      retention_mode: 'link-only',
+      part_kind: 'file',
     };
 
-    // Create state node with provenance metadata
-    const stateNode: ArtifactStateNode & { provenance: ToolchainProvenance } = {
-      id: stateId,
-      kind: 'ArtifactState',
+    store.putNode(fileNode);
+    edges.push({
+      id: createDeterministicId(`${stateId}->${filePartId}`),
+      kind: 'HasPart',
       schema_version: 'v0.1',
-      artifact_root_id: rootId,
-      version_ref: input.commit,
-      content_hash: contentHash,
-      retrieved_at: new Date().toISOString(),
-      provenance,
-    };
+      from: stateId,
+      to: filePartId,
+    });
 
-    store.putNode(rootNode);
-    store.putNode(stateNode as ArtifactStateNode);
+    // Create symbol-level ArtifactParts for each symbol in this file
+    for (const symbol of doc.symbols) {
+      const locator = formatSymbolLocator(relativePath, symbol);
+      const symbolPartId = createDeterministicId(`${stateId}:${locator}`);
 
-    const edges: GraphEdge[] = [];
-    const stateEdge: GraphEdge = {
-      id: createDeterministicId(`${rootId}->${stateId}`),
-      kind: 'HasState',
-      schema_version: 'v0.1',
-      from: rootId,
-      to: stateId,
-    };
-    edges.push(stateEdge);
-
-    // Process each document (file) and its symbols
-    for (const doc of documents) {
-      const relativePath = doc.relativePath;
-
-      // Create file-level ArtifactPart
-      const filePartId = createDeterministicId(`${stateId}:${relativePath}`);
-      const fileNode: ArtifactPartNode = {
-        id: filePartId,
+      const symbolNode: ArtifactPartNode = {
+        id: symbolPartId,
         kind: 'ArtifactPart',
         schema_version: 'v0.1',
         artifact_state_id: stateId,
-        locator: relativePath,
+        locator,
         retention_mode: 'link-only',
-        part_kind: 'file',
+        part_kind: 'symbol',
       };
 
-      store.putNode(fileNode);
+      store.putNode(symbolNode);
       edges.push({
-        id: createDeterministicId(`${stateId}->${filePartId}`),
+        id: createDeterministicId(`${stateId}->${symbolPartId}`),
         kind: 'HasPart',
         schema_version: 'v0.1',
         from: stateId,
-        to: filePartId,
+        to: symbolPartId,
       });
-
-      // Create symbol-level ArtifactParts for each symbol in this file
-      for (const symbol of doc.symbols) {
-        const locator = formatSymbolLocator(relativePath, symbol);
-        const symbolPartId = createDeterministicId(`${stateId}:${locator}`);
-
-        const symbolNode: ArtifactPartNode = {
-          id: symbolPartId,
-          kind: 'ArtifactPart',
-          schema_version: 'v0.1',
-          artifact_state_id: stateId,
-          locator,
-          retention_mode: 'link-only',
-          part_kind: 'symbol',
-        };
-
-        store.putNode(symbolNode);
-        edges.push({
-          id: createDeterministicId(`${stateId}->${symbolPartId}`),
-          kind: 'HasPart',
-          schema_version: 'v0.1',
-          from: stateId,
-          to: symbolPartId,
-        });
-      }
     }
-
-    for (const edge of edges) {
-      store.putEdge(edge);
-    }
-
-    return {
-      artifact_root_id: rootId,
-      artifact_state_id: stateId,
-      node_count: store.listNodes().length,
-      edge_count: store.listEdges().length,
-    };
   }
+
+  for (const edge of edges) {
+    store.putEdge(edge);
+  }
+
+  return {
+    artifact_root_id: rootId,
+    artifact_state_id: stateId,
+    node_count: store.listNodes().length,
+    edge_count: store.listEdges().length,
+  };
 }

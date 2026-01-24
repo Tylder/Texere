@@ -15,7 +15,7 @@ describe('CommandDispatcher parsing (SPEC-tooling-testing-trophy-strategy ยง2.2โ
     dispatcher.register('ingest repo', {
       description: 'Ingest',
       usage: 'ingest repo <source>',
-      handler: async (args, flags) => {
+      handler: async (args: string[], flags: Record<string, string | boolean>) => {
         captured = args;
         capturedFlags = flags;
         return { success: true, message: 'ok' };

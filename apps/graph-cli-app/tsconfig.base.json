@@ -1,3 +1,8 @@
 {
-  "extends": "@repo/typescript-config/node-library.json"
+  "extends": "@repo/typescript-config/node-library.json",
+  "compilerOptions": {
+    "paths": {
+      "@c4312/scip": ["./src/scip-types.d.ts"]
+    }
+  }
 }

@@ -49,8 +49,8 @@ describe('GraphCLI core behaviors (SPEC-tooling-testing-trophy-strategy §2.2–
     const cli = new GraphCLI(store);
     const trace = cli.trace('root', 1);
 
-    expect(trace.nodes.map((node) => node.id).sort()).toEqual(['root', 'state']);
-    expect(trace.edges.map((stored) => stored.id)).toEqual(['edge']);
+    expect(trace.nodes.map((node: GraphNode) => node.id).sort()).toEqual(['root', 'state']);
+    expect(trace.edges.map((stored: GraphEdge) => stored.id)).toEqual(['edge']);
   });
 
   it('diffs snapshots by node identity', () => {

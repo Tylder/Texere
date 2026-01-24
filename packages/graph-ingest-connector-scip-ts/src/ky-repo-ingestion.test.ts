@@ -38,7 +38,10 @@ async function ensureKyFixture(): Promise<{ repoPath: string; commit: string }> 
   return { repoPath: fixturePath, commit };
 }
 
-describe('ky repo ingestion integration (fixture-based)', () => {
+const runIntegration = process.env['RUN_INTEGRATION'] === 'true';
+const describeIf = runIntegration ? describe : describe.skip;
+
+describeIf('ky repo ingestion integration (fixture-based)', () => {
   it('ingests ky and emits inspection dumps', async () => {
     const { repoPath, commit } = await ensureKyFixture();
     const store = new InMemoryGraphStore();

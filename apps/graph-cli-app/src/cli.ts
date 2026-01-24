@@ -1,16 +1,12 @@
-import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { GraphEdge, GraphNode, PolicySelection } from '@repo/graph-core';
-import { ingestRepo, writeJsonDumps } from '@repo/graph-ingest';
+import { ingestRepoFromSource, writeJsonDumps } from '@repo/graph-ingest';
 import { ScipTsIngestionConnector } from '@repo/graph-ingest-connector-scip-ts';
 import { CurrentCommittedTruthProjection } from '@repo/graph-projection';
 import type { GraphStore } from '@repo/graph-store';
 import { InMemoryGraphStore } from '@repo/graph-store';
 
-import { loadEnvConfig } from './env.js';
-import { checkoutRef, cloneRepo, fetchRepo, runGit } from './git.js';
-import { deriveRepoName, isExistingPath, resolveIngestRoot } from './paths.js';
 import type {
   DiffResult,
   GraphSnapshot,
@@ -35,48 +31,26 @@ export class GraphCLI {
       policyScope?: string;
     },
   ): Promise<IngestResult> {
-    const env = await loadEnvConfig();
-    const ingestRoot = resolveIngestRoot(env.GRAPH_INGEST_ROOT);
-    await mkdir(ingestRoot, { recursive: true });
-
-    const repo = await this.resolveRepoSource(source, ingestRoot);
-    await this.syncRepo(repo.repoPath, source);
-    await this.checkoutIfNeeded(repo.repoPath, options);
-
-    const commitHash = await runGit(['rev-parse', 'HEAD'], repo.repoPath);
-    const projectId = options?.projectId ?? env.GRAPH_PROJECT_ID ?? 'default';
-
     const selection: PolicySelection | undefined = options?.policyScope
       ? { policy_kind: 'IngestionPolicy', scope: options.policyScope }
       : undefined;
 
-    this.store.beginTransaction();
-    try {
-      const input = {
-        repoPath: repo.repoPath,
-        repoUrl: repo.repoUrl,
-        commit: commitHash,
-        projectId,
-        ...(selection ? { policySelection: selection } : {}),
-      };
+    const result = await ingestRepoFromSource(source, this.store, new ScipTsIngestionConnector(), {
+      ...(options?.commit ? { commit: options.commit } : {}),
+      ...(options?.branch ? { branch: options.branch } : {}),
+      ...(options?.projectId ? { projectId: options.projectId } : {}),
+      ...(selection ? { policySelection: selection } : {}),
+    });
 
-      const result = await ingestRepo(input, this.store, new ScipTsIngestionConnector());
+    const outputDir = path.join('.', 'tmp', 'graph-dump');
+    await writeJsonDumps({ store: this.store, outputDir });
 
-      this.store.commit();
-
-      const outputDir = path.join('.', 'tmp', 'graph-dump');
-      await writeJsonDumps({ store: this.store, outputDir });
-
-      return {
-        success: true,
-        nodeCount: result.node_count,
-        edgeCount: result.edge_count,
-        outputDir,
-      };
-    } catch (error) {
-      this.store.rollback();
-      throw error;
-    }
+    return {
+      success: true,
+      nodeCount: result.node_count,
+      edgeCount: result.edge_count,
+      outputDir,
+    };
   }
 
   getNodes(): Array<{ kind: string; count: number }> {
@@ -150,7 +124,6 @@ export class GraphCLI {
     const projection = runner.run(name, this.store, selection);
 
     const outputDir = path.join('.', 'tmp', 'graph-dump');
-    await mkdir(outputDir, { recursive: true });
     await writeJsonDumps({ store: this.store, projection, outputDir });
 
     return {
@@ -243,41 +216,6 @@ export class GraphCLI {
       if (!visitedNodes.has(neighbor)) {
         queue.push({ id: neighbor, level: current.level + 1 });
       }
-    }
-  }
-
-  private async resolveRepoSource(
-    source: string,
-    ingestRoot: string,
-  ): Promise<{ repoPath: string; repoUrl: string }> {
-    const repoName = deriveRepoName(source);
-    const repoPath = path.join(ingestRoot, repoName);
-    const isLocal = await isExistingPath(source);
-    const repoUrl = isLocal ? `file://${path.resolve(source)}` : source;
-
-    return { repoPath, repoUrl };
-  }
-
-  private async syncRepo(repoPath: string, source: string): Promise<void> {
-    if (await isExistingPath(repoPath)) {
-      await fetchRepo(repoPath);
-      return;
-    }
-
-    await cloneRepo(source, repoPath);
-  }
-
-  private async checkoutIfNeeded(
-    repoPath: string,
-    options?: { commit?: string; branch?: string },
-  ): Promise<void> {
-    if (options?.commit) {
-      await checkoutRef(repoPath, options.commit);
-      return;
-    }
-
-    if (options?.branch) {
-      await checkoutRef(repoPath, options.branch);
     }
   }
 }
