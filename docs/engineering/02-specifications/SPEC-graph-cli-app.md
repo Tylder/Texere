@@ -30,68 +30,71 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [102, 116]
+      lines: [105, 119]
       token_est: 90
     - title: 'Core Design Principle: Extensibility'
-      lines: [118, 132]
-      token_est: 97
+      lines: [121, 143]
+      token_est: 177
     - title: 'Scope'
-      lines: [134, 159]
+      lines: [145, 170]
       token_est: 115
     - title: 'Architecture: Extensible Command Pattern'
-      lines: [161, 226]
+      lines: [172, 237]
       token_est: 289
     - title: 'Entry Point'
-      lines: [228, 239]
+      lines: [239, 250]
       token_est: 28
     - title: 'GraphCLI Class'
-      lines: [241, 281]
-      token_est: 197
+      lines: [252, 292]
+      token_est: 199
+    - title: 'Command Roadmap: More Commands Coming'
+      lines: [294, 341]
+      token_est: 309
     - title: 'v0.1 Commands (Currently Available)'
-      lines: [283, 419]
-      token_est: 310
+      lines: [343, 733]
+      token_est: 1633
       subsections:
         - title: '1. `ingest repo <url> [options]`'
-          lines: [285, 304]
-          token_est: 65
+          lines: [345, 417]
+          token_est: 418
         - title: '2. `dump [--format <format>]`'
-          lines: [306, 325]
-          token_est: 49
+          lines: [419, 492]
+          token_est: 271
         - title: '3. `trace <node-id> [--depth <n>]`'
-          lines: [327, 346]
-          token_est: 50
+          lines: [494, 556]
+          token_est: 288
         - title: '4. `diff <snap1> <snap2>`'
-          lines: [348, 366]
-          token_est: 38
+          lines: [558, 615]
+          token_est: 247
         - title: '5. `project <name>`'
-          lines: [368, 386]
-          token_est: 39
+          lines: [617, 700]
+          token_est: 341
         - title: '6. `help [command]`'
-          lines: [388, 407]
+          lines: [702, 721]
           token_est: 49
         - title: '7. `exit`'
-          lines: [409, 419]
+          lines: [723, 733]
           token_est: 16
     - title: 'Future Commands (v1.0+)'
-      lines: [421, 443]
+      lines: [735, 757]
       token_est: 114
     - title: 'State Management'
-      lines: [445, 465]
+      lines: [759, 779]
       token_est: 72
     - title: 'Extensibility Example: Adding a v1.0 Command'
-      lines: [467, 519]
+      lines: [781, 833]
       token_est: 181
     - title: 'Error Handling'
-      lines: [521, 542]
+      lines: [835, 856]
       token_est: 81
     - title: 'Testing'
-      lines: [544, 559]
+      lines: [858, 873]
       token_est: 71
     - title: 'Non-Goals'
-      lines: [561, 569]
+      lines: [875, 883]
       token_est: 37
     - title: 'Related Documents'
-      lines: [571, 575]
+      lines: [885, 889]
       token_est: 12
 ---
 
@@ -117,17 +120,25 @@ designed for easy expansion.
 
 ## Core Design Principle: Extensibility
 
-The graph-cli-app is built to grow alongside the graph system.
+The graph-cli-app is built to grow alongside the graph system. **MORE COMMANDS WILL BE ADDED AS
+FEATURES ARE IMPLEMENTED.**
 
 **Timeline:**
 
-- **v0.1 (now):** Repository ingestion commands
-- **v1.0 (future):** Add assertion commands (Decisions, Requirements, SpecClauses)
-- **v1.0+ (future):** Add validation and evidence commands
-- **v2.0+ (future):** Add more specialized commands
+- **v0.1 (now):** 7 commands—repo ingestion + inspection (dump, trace, diff, project)
+- **v1.0 (future):** Add ingestion commands for docs, forums, blogs, etc. (`ingest site`,
+  `ingest forum`, etc.)
+- **v1.0 (future):** Add assertion commands (create decision, create requirement, etc.)
+- **v1.0+ (future):** Add evidence, validation, subjects, queries, analysis
+- **v2.0+ (future):** Add specialized commands for export, etc.
+
+**Total expected commands by v2.0+:** 30-50+ (rough estimate)
 
 **Key rule:** Adding a new feature should require minimal CLI changes. Commands follow a standard
 pattern and are registered centrally. No architectural rewrites required when adding features.
+
+**This is not a finished CLI.** It's designed to accept new commands continuously as the graph
+system evolves.
 
 ---
 
@@ -280,11 +291,81 @@ class GraphCLI {
 
 ---
 
+## Command Roadmap: More Commands Coming
+
+**IMPORTANT:** The commands shown below are only v0.1. Many more commands will be added as features
+are implemented.
+
+**v0.1 (Current):** 7 commands for repo ingestion and inspection
+
+- `ingest repo` — Ingest a repository (code source)
+- `dump` — View current graph state
+- `trace` — Follow relationships
+- `diff` — Compare snapshots
+- `project` — Run projections
+- `help` — Show available commands
+- `exit` — Leave CLI
+
+**v1.0 (When more ingestion sources are implemented):** Add ingestion commands
+
+- `ingest site` — Ingest a documentation site
+- `ingest forum` — Ingest forum/discussion threads
+- `ingest blog` — Ingest blog posts
+- ... and other source types
+
+**v1.0 (When assertions are implemented):** Add assertion commands
+
+- `create decision` — Create a Decision assertion
+- `create requirement` — Create a Requirement assertion
+- `create spec-clause` — Create a SpecClause assertion
+- `list assertions` — Query assertions by filter
+- `link-evidence` — Link evidence to assertions
+- `validate` — Run graph validation
+- ... and others
+
+**v1.0+ (When evidence/validation added):** Add more commands
+
+- `create subject` — Create a Subject node
+- `create evidence` — Create evidence assertion
+- `query` — Advanced graph queries
+- `analyze` — Impact analysis
+- ... and others
+
+**v2.0+ (Future):** Add even more commands
+
+- `export` — Export graph to database
+- ... and others
+
+**The pattern stays the same:** Add handler → register command → done.
+
+---
+
 ## v0.1 Commands (Currently Available)
 
 ### 1. `ingest repo <url> [options]`
 
-Clone and ingest a repository. Calls `cli.ingestRepo()` internally.
+Clone a repository and ingest it into the graph. Creates canonical Artifact nodes representing
+repository code.
+
+**What it does (in graph terms):**
+
+1. **Clone** the repository to disk
+2. **Index** symbols using SCIP TypeScript
+3. **Create Artifact nodes:**
+   - `ArtifactRoot` — Stable identity of the repo (URL-based)
+   - `ArtifactState` — Immutable snapshot at commit/tag
+   - `ArtifactPart` (files) — One per file in the repo
+   - `ArtifactPart` (symbols) — One per TypeScript symbol (class, function, etc.)
+4. **Create edges:** HasState (Root→State), HasPart (State→Parts)
+5. **Create Policies:** IngestionPolicy and ProjectionPolicy for this artifact
+6. **Store in memory:** All nodes and edges saved to `cli.store`
+
+**Why this matters:**
+
+- Transforms external code into queryable graph nodes
+- Each symbol becomes an anchor point that Evidence and future Assertions can link to
+- Deterministic: same repo+commit always produces same node IDs
+- Locators (`path#symbol_name`) are stable references to specific code locations
 
 **Syntax:**
 
@@ -296,16 +377,61 @@ Clone and ingest a repository. Calls `cli.ingestRepo()` internally.
 
 ```bash
 > ingest repo https://github.com/sindresorhus/ky
+# Clones main branch, indexes all symbols
+
 > ingest repo https://github.com/sindresorhus/ky --commit v1.14.2
+# Clones specific tag/commit, indexes at that point in time
 ```
 
-**Output:** Ink UI showing progress (cloning, dependencies, SCIP indexing, node creation)
+**Output:** Ink UI with progress
+
+```
+┌──────────────────────────────────┐
+│ Ingesting repository...          │
+├──────────────────────────────────┤
+│ ⏳ Cloning repo...               │
+│ ✓ Cloned (2.3s)                 │
+│ ✓ Dependencies (1.2s)           │
+│ ⏳ Running SCIP indexing...       │
+│ ✓ Indexed: 156 symbols in 42 files
+│ ✓ Created artifact nodes (0.8s) │
+│   Root: 1                        │
+│   State: 1                       │
+│   Parts: 45 (files+symbols)      │
+├──────────────────────────────────┤
+│ Success (12.3s)                 │
+│ Total nodes: 47                 │
+│ Total edges: 52                 │
+└──────────────────────────────────┘
+```
+
+**Result:** Graph store now contains:
+
+- 1 ArtifactRoot node (the repo identity)
+- 1 ArtifactState node (snapshot at commit)
+- 45 ArtifactPart nodes (28 files + 17 symbols)
+- 2 Policy nodes (ingestion + projection)
+- 52 edges linking them
+- All queryable via `dump`, `trace`, `project` commands
 
 ---
 
 ### 2. `dump [--format <format>]`
 
-Display current graph state. Calls `cli.dumpToJSON()` or `cli.dumpToText()`.
+Display the current graph state. Inspect all nodes and edges in `cli.store`.
+
+**What it does:**
+
+- Lists all nodes by kind (ArtifactRoot, ArtifactState, ArtifactPart, Policy, etc.)
+- Shows node counts and types
+- Shows all edges by kind (HasState, HasPart, HasPolicy, etc.)
+- Format: human-readable text or JSON
+
+**In graph terms:**
+
+- Shows what's currently stored in memory
+- After `ingest`, dump shows the created artifact structure
+- After `project`, dump shows what was selected for the projection
 
 **Syntax:**
 
@@ -317,16 +443,71 @@ Display current graph state. Calls `cli.dumpToJSON()` or `cli.dumpToText()`.
 
 ```bash
 > dump
+# Shows text summary to terminal
+
 > dump --format json
+# Outputs JSON to stdout (useful for scripting)
 ```
 
-**Output:** Node/edge summary with counts and types
+**Output (text format):**
+
+```
+┌──────────────────────────────┐
+│ Graph State (47 nodes, 52 edges)
+├──────────────────────────────┤
+│ Nodes:                       │
+│  • ArtifactRoot: 1           │
+│  • ArtifactState: 1          │
+│  • ArtifactPart: 45          │
+│  • Policy: 2                 │
+│                              │
+│ Edges:                       │
+│  • HasState: 1               │
+│  • HasPart: 45               │
+│  • HasPolicy: 2              │
+│  • Total: 52                 │
+└──────────────────────────────┘
+```
+
+**Output (--format json):**
+
+```json
+{
+  "nodes": {
+    "ArtifactRoot": 1,
+    "ArtifactState": 1,
+    "ArtifactPart": 45,
+    "Policy": 2,
+    "total": 47
+  },
+  "edges": {
+    "HasState": 1,
+    "HasPart": 45,
+    "HasPolicy": 2,
+    "total": 52
+  }
+}
+```
 
 ---
 
 ### 3. `trace <node-id> [--depth <n>]`
 
-Follow relationships from a node. Calls `cli.trace()`.
+Follow relationships from a node. Shows the graph neighborhood of a node.
+
+**What it does:**
+
+- Starts at a node (by ID)
+- Walks outward following edges up to `depth` levels
+- Shows every node and edge encountered
+- Displays as a tree structure
+
+**In graph terms:**
+
+- Answer "what is this node connected to?"
+- After `ingest`, trace from ArtifactState to see all its parts
+- Trace a symbol (ArtifactPart) to see what policies apply to it
+- Useful for understanding graph structure
 
 **Syntax:**
 
@@ -334,20 +515,62 @@ Follow relationships from a node. Calls `cli.trace()`.
 > trace <node-id> [--depth <n>]
 ```
 
+**Arguments:**
+
+- `<node-id>` — Node to start from (find IDs via `dump`)
+- `--depth <n>` — How many levels deep (default: 3)
+
 **Examples:**
 
 ```bash
-> trace artifact_part_abc123
-> trace artifact_part_abc123 --depth 5
+> trace artifact_state_def456
+# Shows all parts of that artifact state
+
+> trace artifact_part_abc123 --depth 2
+# Shows what that symbol/file is connected to
 ```
 
-**Output:** Tree showing relationship chain
+**Output:**
+
+```
+┌──────────────────────────────────┐
+│ Trace from artifact_state_def456 │
+│ (depth=3)                        │
+├──────────────────────────────────┤
+│ artifact_state_def456            │
+│  (ArtifactState)                 │
+│  ├─ HasRoot → artifact_root_001  │
+│  │   (ArtifactRoot)              │
+│  │   └─ HasPolicy → policy_123   │
+│  │       (IngestionPolicy)       │
+│  │                               │
+│  └─ HasPart → artifact_part_001  │
+│      (ArtifactPart: file)        │
+│      ├─ HasPart → artifact_part_002
+│      │   (ArtifactPart: symbol)  │
+│      └─ HasPolicy → policy_456   │
+│          (ProjectionPolicy)      │
+└──────────────────────────────────┘
+```
 
 ---
 
 ### 4. `diff <snap1> <snap2>`
 
-Compare two snapshots. Calls `cli.diff()`.
+Compare two graph snapshots. Identify what changed between two states.
+
+**What it does:**
+
+- Loads two snapshots (from files or memory)
+- Compares node counts, edge counts, node IDs
+- Reports added, removed, and modified nodes
+- Useful for detecting changes or verifying determinism
+
+**In graph terms:**
+
+- "What changed when I ingested a different commit?"
+- "Did the projection select different nodes?"
+- "Are two ingestions of the same code identical?" (determinism check)
 
 **Syntax:**
 
@@ -355,19 +578,59 @@ Compare two snapshots. Calls `cli.diff()`.
 > diff <snap1> <snap2>
 ```
 
+**Arguments:**
+
+- `<snap1>` — First snapshot (file path or label)
+- `<snap2>` — Second snapshot (file path or label)
+
 **Examples:**
 
 ```bash
-> diff ./dump1.json ./dump2.json
+> dump --format json > /tmp/snap1.json
+[... do something ...]
+> dump --format json > /tmp/snap2.json
+> diff /tmp/snap1.json /tmp/snap2.json
 ```
 
-**Output:** Added/modified/removed nodes summary
+**Output:**
+
+```
+┌──────────────────────────────────┐
+│ Diff: snap1 → snap2              │
+├──────────────────────────────────┤
+│ Nodes: 47 → 49 (+2)              │
+│ Edges: 52 → 55 (+3)              │
+│                                  │
+│ Added nodes:                     │
+│  • ArtifactPart: 2 (new files)   │
+│                                  │
+│ Modified nodes:                  │
+│  • ArtifactState: 1 (hash change)│
+│                                  │
+│ Removed nodes:                   │
+│  • (none)                        │
+└──────────────────────────────────┘
+```
 
 ---
 
 ### 5. `project <name>`
 
-Run a projection. Calls `cli.runProjection()`.
+Run a projection. Compute a deterministic view of the graph.
+
+**What it does:**
+
+- Reads all nodes from `cli.store`
+- Applies projection rules to select/filter nodes
+- Returns a subset of nodes representing a specific view
+- Each selected node includes an explanation (why it was selected)
+
+**In graph terms:**
+
+- Projections are deterministic, read-only views of canonical nodes
+- `CurrentCommittedTruth` selects all nodes representing "what code currently exists"
+- Future projections: `ActiveWork` (what's being worked on), `GraphHealth` (validation issues)
+- Projections don't modify the store—all changes are read-only
 
 **Syntax:**
 
@@ -375,13 +638,64 @@ Run a projection. Calls `cli.runProjection()`.
 > project <name>
 ```
 
+**Arguments:**
+
+- `<name>` — Projection name (e.g., `CurrentCommittedTruth`)
+
+**v0.1 Projections:**
+
+- `CurrentCommittedTruth` — All artifact nodes (deterministic selection)
+
+**Future Projections (v1.0+):**
+
+- `ActiveWork` — Assertions marked as in-progress
+- `GraphHealth` — Validation errors and warnings
+- `ImpactAnalysis` — Trace what's affected by changes
+
 **Examples:**
 
 ```bash
 > project CurrentCommittedTruth
+# Computes the current committed truth projection
 ```
 
-**Output:** Projection results with node counts and explanation
+**Output:**
+
+```
+┌──────────────────────────────────┐
+│ Projection: CurrentCommittedTruth│
+├──────────────────────────────────┤
+│ ✓ Computed successfully          │
+│   Duration: 124ms               │
+│                                  │
+│ Selected nodes:                  │
+│  • ArtifactRoot: 1               │
+│  • ArtifactState: 1              │
+│  • ArtifactPart: 45              │
+│  • Policy: 2                     │
+│                                  │
+│ Rules applied:                   │
+│  • Include all artifact nodes    │
+│  • Include all policies          │
+│  • Exclude superseded nodes      │
+│                                  │
+│ Output: ./tmp/projection.json   │
+└──────────────────────────────────┘
+```
+
+**Explanation:**
+
+Each node in the projection includes metadata explaining why it was selected:
+
+```json
+{
+  "node_id": "artifact_part_abc123",
+  "kind": "ArtifactPart",
+  "selected_because": "Artifact node in CurrentCommittedTruth",
+  "rule": "CurrentCommittedTruthRule v1",
+  "applied_at": "2026-01-24T12:00:00Z"
+}
+```
 
 ---
 
