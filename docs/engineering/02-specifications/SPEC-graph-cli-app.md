@@ -7,208 +7,76 @@ last_updated: 2026-01-24
 area: graph-system
 feature: graph-cli-app
 summary_short: >-
-  Scenario-driven testing app for graph system: reusable workflows, deterministic fixtures,
-  inspectors for debugging, extensible for v0.1/v1.0/v2.0+
+  Interactive CLI application for manual testing and exploration of the graph system
 summary_long: >-
-  Specifies a composable testing application as a consumer of 7 graph library packages. App
-  organizes workflows into reusable Scenarios (versioned by v0.1/v1.0/v2.0+), uses deterministic
-  Fixtures to build graph nodes, provides Inspectors for debugging, and serves as primary validation
-  harness for graph features. Respects strict package boundaries; extensible without rewrite via
-  composition model.
+  Specifies a simple interactive command-line application for developers to manually test graph
+  operations, ingest repositories, run projections, and inspect graph state. The app provides an
+  interactive REPL with commands for ingestion, querying, projection, and visualization.
 keywords:
+  - cli
+  - repl
+  - interactive
   - testing
-  - app
-  - scenario
-  - graph
 implements:
   - REQ-graph-system-graph-system-architecture
   - REQ-graph-ingestion
-  - REQ-graph-lifecycle
   - REQ-graph-projection
-depends_on:
-  - SPEC-graph-system-vertical-slice-v0-1
-blocks:
-  - IMPL-PLAN-graph-cli-app
 related:
-  - REQ-graph-system-graph-knowledge-system
-  - REQ-graph-system-graph-policy-framework
-  - REQ-graph-system-graph-ingestion-repo-scip-ts
-  - REQ-graph-system-graph-projection-current-truth
+  - SPEC-graph-system-vertical-slice-v0-1
 index:
   sections:
     - title: 'TLDR'
-      lines: [199, 220]
-      summary:
-        'Build a composable testing app organized around reusable Scenarios that validate graph
-        features as they are developed; Scenarios compose Fixtures; Inspectors provide debugging;
-        E2E tests validate real repos and complex workflows.'
-      token_est: 158
+      lines: [86, 97]
+      token_est: 64
     - title: 'Scope'
-      lines: [222, 245]
-      summary:
-        'App architecture, Scenario design, Fixture patterns, Inspector tools, and E2E testing.'
-      token_est: 138
-    - title: 'Output Model'
-      lines: [247, 291]
-      summary:
-        'JSON dumps are primary data output; Ink+Pastel renders beautiful terminal UI; database
-        persistence deferred to v2.0+.'
-      token_est: 292
-    - title: 'Package Boundaries'
-      lines: [293, 328]
-      summary: 'App respects library package boundaries and depends on core graph packages only.'
-      token_est: 207
-    - title: 'Scenario Model'
-      lines: [330, 434]
-      summary:
-        'Scenarios are reusable, composable workflows with name, version, tags, and execution
-        contract.'
-      token_est: 461
-    - title: 'Fixture Model'
-      lines: [436, 550]
-      summary: 'Fixtures are factory functions that build deterministic nodes and policies.'
-      token_est: 368
+      lines: [99, 115]
+      token_est: 72
+    - title: 'Entry Point'
+      lines: [117, 128]
+      token_est: 28
+    - title: 'Commands'
+      lines: [130, 471]
+      token_est: 1056
       subsections:
-        - title: '1. Policy Fixtures'
-          lines: [442, 470]
-          token_est: 82
-        - title: '2. Artifact Fixtures'
-          lines: [472, 504]
-          token_est: 107
-        - title: '3. Assertion Fixtures (v1.0+)'
-          lines: [506, 525]
-          token_est: 68
-        - title: '4. Evidence Fixtures (v1.0+)'
-          lines: [527, 550]
-          token_est: 91
-    - title: 'GraphApp Orchestrator'
-      lines: [552, 661]
-      summary:
-        'Main context and orchestrator providing fluent API for graph operations and introspection.'
-      token_est: 393
-      subsections:
-        - title: '`withPolicy(kind, scope, fields)`'
-          lines: [620, 622]
-          token_est: 24
-        - title: '`ingestRepo(options)`'
-          lines: [624, 626]
-          token_est: 13
-        - title: '`createAssertion(kind, fields)`'
-          lines: [628, 631]
-          token_est: 26
-        - title: '`runProjection(name, selection?)`'
-          lines: [633, 636]
-          token_est: 20
-        - title: '`explain(node_id)`'
-          lines: [638, 641]
-          token_est: 24
-        - title: '`trace(start_id, depth?)`'
-          lines: [643, 646]
-          token_est: 21
-        - title: '`dump(options?)`'
-          lines: [648, 650]
-          token_est: 17
-        - title: '`validate()`'
-          lines: [652, 654]
-          token_est: 15
-        - title: '`checkInvariants()`'
-          lines: [656, 661]
-          token_est: 25
-    - title: 'Scenario Registry and Organization'
-      lines: [663, 786]
-      summary: 'Scenarios organized by version (v0.1, v1.0, v2.0+) and functionality domain.'
-      token_est: 615
-      subsections:
-        - title: 'v0.1 Scenarios (Ready Now)'
-          lines: [667, 704]
-          token_est: 219
-        - title: 'v1.0 Scenarios (Future)'
-          lines: [706, 748]
-          token_est: 271
-        - title: 'v2.0+ Scenarios'
-          lines: [750, 786]
-          token_est: 106
-    - title: 'Inspector Tools'
-      lines: [788, 888]
-      summary: 'Debugging and visualization tools for graph state inspection and analysis.'
-      token_est: 371
-      subsections:
-        - title: 'Dumper'
-          lines: [815, 836]
-          token_est: 91
-        - title: 'Tracer'
-          lines: [838, 849]
-          token_est: 54
-        - title: 'Differ'
-          lines: [851, 864]
-          token_est: 47
-        - title: 'Explainer'
-          lines: [866, 888]
-          token_est: 84
-    - title: 'Testing Strategy'
-      lines: [890, 1103]
-      summary: 'Unit, integration, and E2E testing modes aligned with scenario versions.'
-      token_est: 808
-      subsections:
-        - title: 'Unit Tests (Fast, Isolated)'
-          lines: [894, 952]
-          token_est: 211
-        - title: 'Integration Tests (Medium, Multi-Step)'
-          lines: [954, 1004]
-          token_est: 189
-        - title: 'E2E Tests (Slow, Real Data)'
-          lines: [1006, 1103]
-          token_est: 390
-    - title: 'CLI Commands & Entry Points'
-      lines: [1105, 1220]
-      summary:
-        'Four top-level commands for scenario execution, batch runs, testing, and interactive
-        debugging.'
-      token_est: 580
-      subsections:
-        - title: 'Command 1: run-scenario'
-          lines: [1109, 1150]
-          token_est: 155
-        - title: 'Command 2: run-scenarios'
-          lines: [1152, 1180]
-          token_est: 101
-        - title: 'Command 3: test'
-          lines: [1182, 1205]
-          token_est: 73
-        - title: 'Command 4: inspect'
-          lines: [1207, 1220]
-          token_est: 43
-    - title: 'Execution Modes'
-      lines: [1222, 1392]
-      summary: 'Single scenario, batch, E2E, and interactive modes for different use cases.'
-      token_est: 887
-      subsections:
-        - title: 'Mode 1: Single Scenario (Local Development)'
-          lines: [1226, 1276]
-          token_est: 258
-        - title: 'Mode 2: Batch Scenarios (CI/CD)'
-          lines: [1278, 1316]
-          token_est: 215
-        - title: 'Mode 3: E2E Tests'
-          lines: [1318, 1339]
+        - title: '1. `ingest repo <url> [options]`'
+          lines: [132, 178]
+          token_est: 188
+        - title: '2. `dump [--format <format>]`'
+          lines: [180, 243]
+          token_est: 175
+        - title: '3. `trace <node-id> [--depth <n>]`'
+          lines: [245, 286]
+          token_est: 127
+        - title: '4. `diff <snap1> <snap2>`'
+          lines: [288, 329]
+          token_est: 129
+        - title: '5. `project <name> [--selection <sel>]`'
+          lines: [331, 370]
           token_est: 114
-        - title: 'Mode 4: Interactive Inspector (Ink TUI)'
-          lines: [1341, 1392]
-          token_est: 283
-    - title: 'Extensibility Contract'
-      lines: [1277, 1316]
-      summary: 'New graph features add Scenarios and E2E tests; libraries remain unchanged.'
-      token_est: 212
-    - title: 'Non-Throwaway Guarantees'
-      lines: [1318, 1350]
-      summary: 'App designed to grow with system without architectural rewrites.'
-      token_est: 199
-    - title: 'Open Questions'
-      lines: [1352, 1359]
-      token_est: 55
+        - title: '6. `help [command]`'
+          lines: [372, 452]
+          token_est: 301
+        - title: '7. `exit`'
+          lines: [454, 471]
+          token_est: 24
+    - title: 'Output Model'
+      lines: [473, 492]
+      token_est: 120
+    - title: 'Interactive Session Example'
+      lines: [494, 551]
+      token_est: 210
+    - title: 'Error Handling'
+      lines: [553, 596]
+      token_est: 117
+    - title: 'State Management'
+      lines: [598, 614]
+      token_est: 80
+    - title: 'Non-Goals'
+      lines: [616, 624]
+      token_est: 45
     - title: 'Related Documents'
-      lines: [1361, 1368]
-      token_est: 20
+      lines: [626, 631]
+      token_est: 15
 ---
 
 # SPEC-graph-cli-app
@@ -217,1485 +85,547 @@ index:
 
 ## TLDR
 
-Summary: Build a composable testing app organized around reusable Scenarios that validate graph
-features as they are developed; Scenarios compose Fixtures; Inspectors provide debugging; E2E tests
-validate real repos and complex workflows.
+**What:** Interactive CLI REPL for manual graph testing and exploration.
 
-**What:** Scenario-driven testing and development application for the graph system
+**Why:** Provide developers a hands-on way to test graph features without writing code.
 
-**Why:** Provide a single, extensible harness for validating all graph features (v0.1, v1.0, v2.0+)
-without coupling to library packages
-
-**How:** Scenarios are reusable workflows; Fixtures are factory functions; GraphApp provides
-orchestration; Inspectors enable debugging; E2E tests validate determinism and invariants
+**How:** `pnpm -C apps/graph-cli-app dev` opens a prompt where you type commands like
+`ingest repo <url>`, `dump`, `project CurrentCommittedTruth`, etc.
 
 **Status:** Draft specification
-
-**Critical path:** Define Scenario contract → implement v0.1 Scenarios → write E2E tests for
-sindresorhus/ky → validate extensibility for v1.0
-
-**Risk:** If Scenario contract is too rigid, adding v1.0 features may require refactoring
 
 ---
 
 ## Scope
 
-Summary: App architecture, Scenario design, Fixture patterns, Inspector tools, and E2E testing.
-
 **Includes:**
 
-- App package structure and dependencies
-- Scenario contract and composition model
-- Fixture factories for policies, artifacts, assertions
-- GraphApp orchestrator interface
-- Inspector tools (dumper, tracer, differ, explainer)
-- E2E testing strategy (v0.1, v1.0, v2.0+)
-- Execution modes (single, batch, interactive, CI/CD)
-- Extensibility guarantees across versions
+- Interactive REPL entry point and command loop
+- 7 commands: `ingest`, `dump`, `trace`, `diff`, `project`, `help`, `exit`
+- Ink+Pastel terminal UI rendering
+- Error handling and debug mode
 
 **Excludes:**
 
-- Library package implementations (graph-core, graph-store, etc.)
-- Specific ingestion connector details (those are in REQ-graph-ingestion-repo-scip-ts)
-- Lifecycle assertion semantics (those are in REQ-graph-lifecycle-assertions)
-- Projection algorithm details (those are in REQ-graph-projection-current-truth)
-- Database choice and scaling (deferred to v3.0+)
+- Scenario registry or automated test framework
+- Batch execution or CI/CD workflows
+- Database persistence (v2.0+)
+- Complex workflow composition
+
+---
+
+## Entry Point
+
+```bash
+$ pnpm -C apps/graph-cli-app dev
+
+Graph CLI v0.1
+Type 'help' for available commands.
+
+> _
+```
+
+---
+
+## Commands
+
+### 1. `ingest repo <url> [options]`
+
+Clone and ingest a repository into the graph.
+
+**Syntax:**
+
+```bash
+> ingest repo <url> [--commit <ref>] [--branch <branch>]
+```
+
+**Arguments:**
+
+- `<url>` — GitHub repository URL
+- `--commit <ref>` — Specific commit/tag (default: HEAD)
+- `--branch <branch>` — Specific branch (default: main)
+
+**Examples:**
+
+```bash
+> ingest repo https://github.com/sindresorhus/ky
+> ingest repo https://github.com/sindresorhus/ky --commit v1.14.2
+> ingest repo https://github.com/sindresorhus/ky --branch develop
+```
+
+**Output:**
+
+```
+┌──────────────────────────────────────┐
+│ Ingesting repository...              │
+├──────────────────────────────────────┤
+│ ⏳ Cloning repo...                   │
+│ ✓ Cloned (2.3s)                     │
+│ ✓ Installing dependencies (1.2s)    │
+│ ⏳ Running SCIP indexing...          │
+│   Indexed: 156 symbols in 42 files  │
+│ ✓ Created artifact nodes (0.8s)     │
+│   Root: 1 | State: 1 | Parts: 45    │
+│ ✓ Generated JSON dumps (0.5s)       │
+├──────────────────────────────────────┤
+│ Success (12.3s)                     │
+│ Dump location: ./tmp/graph-dump     │
+└──────────────────────────────────────┘
+
+> _
+```
+
+---
+
+### 2. `dump [--format <format>]`
+
+Display the current graph state (nodes and edges).
+
+**Syntax:**
+
+```bash
+> dump [--format json|text]
+```
+
+**Arguments:**
+
+- `--format` — Output format: `json` or `text` (default: `text`)
+
+**Examples:**
+
+```bash
+> dump
+> dump --format json
+```
+
+**Output (text):**
+
+```
+┌──────────────────────────────────────┐
+│ Graph State                          │
+├──────────────────────────────────────┤
+│ Nodes (47 total)                    │
+│ ├── ArtifactRoot: 1                  │
+│ ├── ArtifactState: 1                 │
+│ ├── ArtifactPart: 45                 │
+│ └── Policy: 2                        │
+│                                      │
+│ Edges (52 total)                    │
+│ ├── HasState: 1                      │
+│ ├── HasPart: 45                      │
+│ └── HasPolicy: 2                     │
+└──────────────────────────────────────┘
+
+> _
+```
+
+**Output (--format json):**
+
+```json
+{
+  "nodes": {
+    "ArtifactRoot": 1,
+    "ArtifactState": 1,
+    "ArtifactPart": 45,
+    "Policy": 2,
+    "total": 47
+  },
+  "edges": {
+    "HasState": 1,
+    "HasPart": 45,
+    "HasPolicy": 2,
+    "total": 52
+  },
+  "dump_written_to": "./tmp/graph-dump"
+}
+```
+
+---
+
+### 3. `trace <node-id> [--depth <n>]`
+
+Follow relationships from a node through the graph.
+
+**Syntax:**
+
+```bash
+> trace <node-id> [--depth <n>]
+```
+
+**Arguments:**
+
+- `<node-id>` — Node ID to trace from
+- `--depth <n>` — Relationship depth (default: 3)
+
+**Examples:**
+
+```bash
+> trace artifact_part_abc123
+> trace artifact_part_abc123 --depth 5
+```
+
+**Output:**
+
+```
+┌──────────────────────────────────────┐
+│ Trace from artifact_part_abc123      │
+│ (depth=3)                            │
+├──────────────────────────────────────┤
+│ artifact_part_abc123 (ArtifactPart)  │
+│  └─ HasParent                        │
+│     └─ artifact_state_def456 (State) │
+│        └─ HasRoot                    │
+│           └─ artifact_root_ghi789    │
+│              └─ HasPolicy            │
+│                 └─ policy_001 (Pol)  │
+└──────────────────────────────────────┘
+
+> _
+```
+
+---
+
+### 4. `diff <snap1> <snap2>`
+
+Compare two graph snapshots or states.
+
+**Syntax:**
+
+```bash
+> diff <snap1> <snap2>
+```
+
+**Arguments:**
+
+- `<snap1>` — First snapshot file or state name
+- `<snap2>` — Second snapshot file or state name
+
+**Examples:**
+
+```bash
+> diff ./dump1.json ./dump2.json
+> diff before after
+```
+
+**Output:**
+
+```
+┌──────────────────────────────────────┐
+│ Diff: dump1.json → dump2.json        │
+├──────────────────────────────────────┤
+│ Nodes: 47 → 49 (+2)                  │
+│ Edges: 52 → 55 (+3)                  │
+│                                      │
+│ Added:                               │
+│  • Policy: 2 nodes                   │
+│                                      │
+│ Modified:                            │
+│  • ArtifactState: content hash       │
+└──────────────────────────────────────┘
+
+> _
+```
+
+---
+
+### 5. `project <name> [--selection <sel>]`
+
+Run a projection to compute a deterministic graph view.
+
+**Syntax:**
+
+```bash
+> project <name> [--selection <sel>]
+```
+
+**Arguments:**
+
+- `<name>` — Projection name (e.g., `CurrentCommittedTruth`)
+- `--selection` — Selection rule (future v1.0+)
+
+**Examples:**
+
+```bash
+> project CurrentCommittedTruth
+```
+
+**Output:**
+
+```
+┌──────────────────────────────────────┐
+│ Projection: CurrentCommittedTruth    │
+├──────────────────────────────────────┤
+│ ✓ Computed successfully              │
+│   Selected nodes: 45 artifacts       │
+│   Excluded: 2 (superseded/draft)     │
+│   Duration: 124ms                    │
+│                                      │
+│ Output written to:                   │
+│  ./tmp/projection.json               │
+└──────────────────────────────────────┘
+
+> _
+```
+
+---
+
+### 6. `help [command]`
+
+Show available commands or help for a specific command.
+
+**Syntax:**
+
+```bash
+> help [command]
+```
+
+**Arguments:**
+
+- `[command]` — Optional command name to get detailed help
+
+**Examples:**
+
+```bash
+> help
+> help ingest
+> help project
+```
+
+**Output (help):**
+
+```
+┌──────────────────────────────────────┐
+│ Available Commands                   │
+├──────────────────────────────────────┤
+│ ingest repo <url>                    │
+│   Clone and ingest a repository      │
+│                                      │
+│ dump [--format json|text]            │
+│   Display current graph state        │
+│                                      │
+│ trace <node-id> [--depth N]          │
+│   Follow relationships from a node   │
+│                                      │
+│ diff <snap1> <snap2>                 │
+│   Compare two snapshots              │
+│                                      │
+│ project <name>                       │
+│   Run a projection                   │
+│                                      │
+│ help [command]                       │
+│   Show this help or command help     │
+│                                      │
+│ exit                                 │
+│   Leave the CLI                      │
+└──────────────────────────────────────┘
+
+> _
+```
+
+**Output (help ingest):**
+
+```
+┌──────────────────────────────────────┐
+│ ingest repo <url> [options]          │
+├──────────────────────────────────────┤
+│ Clone and ingest a repository.       │
+│                                      │
+│ Usage:                               │
+│   ingest repo <url>                  │
+│   ingest repo <url> --commit v1.0    │
+│   ingest repo <url> --branch main    │
+│                                      │
+│ Options:                             │
+│   --commit <ref>   Commit/tag ref    │
+│   --branch <name>  Branch name       │
+│                                      │
+│ Examples:                            │
+│   > ingest repo https://github.com/  │
+│     sindresorhus/ky                  │
+│   > ingest repo https://github.com/  │
+│     sindresorhus/ky --commit v1.14.2 │
+└──────────────────────────────────────┘
+
+> _
+```
+
+---
+
+### 7. `exit`
+
+Exit the CLI application.
+
+**Syntax:**
+
+```bash
+> exit
+```
+
+**Output:**
+
+```
+Goodbye!
+$
+```
 
 ---
 
 ## Output Model
 
-Summary: JSON dumps are primary data output; Ink+Pastel renders beautiful terminal UI; database
-persistence deferred to v2.0+.
+All outputs are rendered via Ink+Pastel React components for beautiful terminal rendering.
 
-**v0.1 Output:**
+**Output Types:**
 
-- JSON files (always): `./tmp/graph-dump/artifacts.json`, `policies.json`, `projection.json`,
-  `graph_dump_summary.json`
-- Terminal UI (always, unless --json or --quiet): Ink React components with Pastel styling for
-  progress, results, graph inspection
-- Optional: `--json` flag for JSON-only output (files + JSON report to stdout)
-- Optional: `--quiet` flag to suppress UI (files only, silent)
-- Tech Stack: Ink for React-in-terminal rendering, Pastel for styled text/colors, Commander for CLI
-  scaffolding
+1. **Boxes** — Progress/status displayed in bordered boxes with icons (✓, ✗, ⏳)
+2. **Tables** — Node/edge summaries shown as ASCII tables
+3. **Trees** — Relationship traces shown as indented trees
+4. **JSON** — Optionally dump as JSON for scripting/piping
 
-**Future Output (v2.0+):**
+**Colors:**
 
-- Database persistence: Scenarios can write directly to PostgreSQL/Neo4j/other graph DB
-- Configuration via `.env`: `GRAPH_DB_URL`, `GRAPH_DB_TYPE`
-- Backward compatible: v0.1 scenarios keep using in-memory store + JSON dumps + Terminal UI
+- Green (`✓`) — Success, completed operations
+- Red (`✗`) — Errors, failed operations
+- Yellow (`⏳`) — In progress, pending operations
+- Blue (`ℹ`) — Information messages
+- Gray — Secondary/muted text
 
-**Usage Examples:**
+---
+
+## Interactive Session Example
 
 ```bash
-# v0.1: JSON files + human console output
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base
-# Creates: ./tmp/graph-dump/artifacts.json, policies.json, projection.json, summary.json
-# Prints: Scenario progress to stdout
+$ pnpm -C apps/graph-cli-app dev
 
-# v0.1: JSON output only (for CI/CD parsing)
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --json
-# Output: JSON report to stdout, files to ./tmp/graph-dump/
+Graph CLI v0.1
+Type 'help' for available commands.
 
-# v0.1: Suppress console, keep files
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --quiet
-# Output: Silent, files written to ./tmp/graph-dump/
-
-# v2.0+: Output to database (in-memory store + database write)
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --db-write
-# Requires: GRAPH_DB_URL set in .env
-# Creates: In-memory store, JSON files, database records
-```
-
----
-
-## Package Boundaries
-
-Summary: App respects library package boundaries and depends on core graph packages only.
-
-**Dependency Model:**
-
-```
-apps/graph-app
-  ├── depends on → @repo/graph-core
-  ├── depends on → @repo/graph-store
-  ├── depends on → @repo/graph-ingest
-  ├── depends on → @repo/graph-ingest-connector-scip-ts
-  ├── depends on → @repo/graph-projection
-  │
-  ├── v1.0 update: additionally depends on → @repo/graph-lifecycle
-  ├── v1.0 update: additionally depends on → @repo/graph-validation (new package, future)
-  │
-  └── DOES NOT depend on:
-      - app/graph-cli (app is the entire testing harness)
-      - any test utilities outside of itself
-```
-
-**Rationale:**
-
-- Graph library packages remain **pure libraries** with zero knowledge of the app
-- App is a **consumer** that orchestrates libraries
-- Adding new library features (v1.0 lifecycle assertions) → app adds dependencies + new Scenarios
-- App never modifies libraries; libraries never reference app
-
-**Enforcement:**
-
-- Nx dependency graph validation (via `nx dep-graph`)
-- ESLint import rules prevent violating boundaries
-- All graph-package imports go through top-level exports only
-
----
-
-## Scenario Model
-
-Summary: Scenarios are reusable, composable workflows with name, version, tags, and execution
-contract.
-
-**Scenario Contract:**
-
-```typescript
-interface Scenario {
-  // Metadata
-  name: string;
-  version: 'v0.1' | 'v1.0' | 'v2.0+';
-  description: string;
-  tags: string[]; // 'ingestion', 'lifecycle', 'projection', 'validation', 'conflict', etc.
-
-  // Execution
-  run(app: GraphApp): Promise<ScenarioResult>;
-
-  // Optional: dependencies on other scenarios
-  depends_on?: string[];
-
-  // Optional: which library packages this scenario exercises
-  exercises_packages?: string[];
-}
-
-interface ScenarioResult {
-  success: boolean;
-  duration_ms: number;
-
-  // Graph state after scenario execution
-  store: GraphStore;
-  node_count: number;
-  edge_count: number;
-  nodes_by_kind: Record<string, number>; // {'ArtifactRoot': 1, 'ArtifactPart': 42, ...}
-
-  // Projection output (if run)
-  projection?: ProjectionEnvelope;
-
-  // Assertions made and their results
-  assertions_made: Assertion[];
-  assertions_checked: { [id: string]: boolean };
-
-  // Errors and diagnostics
-  errors: string[];
-  warnings: string[];
-
-  // Execution trace
-  steps_executed: string[];
-  explain: {
-    scenario_name: string;
-    nodes_created: { kind: string; count: number }[];
-    edges_created: { kind: string; count: number }[];
-    invariants_checked: string[];
-    policies_applied: { kind: string; scope: string }[];
-  };
-}
-```
-
-**Scenario Lifecycle:**
-
-1. **Setup** — Initialize GraphApp with defaults (policies, project, store)
-2. **Execute** — Run workflow steps (ingest, create assertions, project, validate)
-3. **Introspect** — Inspect graph state (count nodes, trace relationships)
-4. **Validate** — Check invariants and expected outcomes
-5. **Report** — Return ScenarioResult with full trace
-
-**Scenario Composition:**
-
-Scenarios can invoke other scenarios and combine results:
-
-```typescript
-// Simple scenario
-const repoIngestScenario = async (app: GraphApp): Promise<ScenarioResult> => {
-  // ...setup, execute, validate
-}
-
-// Complex scenario = composition
-const lifecycleWorkflowScenario = async (app: GraphApp): Promise<ScenarioResult> => {
-  // Step 1: Execute repo ingestion scenario
-  const ingestResult = await repoIngestScenario(app)
-
-  // Step 2: Add lifecycle assertions
-  const decision = app.createAssertion('Decision', { text: 'Use TypeScript', ... })
-
-  // Step 3: Project
-  const projection = app.runProjection('CurrentCommittedTruth')
-
-  // Step 4: Validate invariants
-  const health = app.checkInvariants()
-
-  // Return combined result
-  return { success: health.errors.length === 0, ... }
-}
-```
-
-**Determinism Guarantee:**
-
-All Scenarios MUST be deterministic:
-
-- Same inputs (same repo commit, same seed data) → same outputs
-- Node IDs are deterministic (SHA-256 hashes)
-- Query results are ordered (by ID)
-- Timestamps in nodes are reproducible (test fixtures use fixed times)
-
----
-
-## Fixture Model
-
-Summary: Fixtures are factory functions that build deterministic nodes and policies.
-
-**Fixture Categories:**
-
-### 1. Policy Fixtures
-
-```typescript
-// Factory function for default policies
-export function defaultIngestionPolicy(scope: string): PolicyNode {
-  return {
-    id: createDeterministicId(`IngestionPolicy:${scope}:v0.1`),
-    kind: 'Policy',
-    schema_version: 'v0.1',
-    policy_kind: 'IngestionPolicy',
-    scope,
-    retention_mode: 'link-only', // v0.1 default
-    connector_kind: 'repo',
-    supersedes: undefined,
-  };
-}
-
-export function defaultProjectionPolicy(scope: string): PolicyNode {
-  return {
-    id: createDeterministicId(`ProjectionPolicy:${scope}:v0.1`),
-    kind: 'Policy',
-    schema_version: 'v0.1',
-    policy_kind: 'ProjectionPolicy',
-    scope,
-    rule_version: 'v0.1',
-    projections: ['CurrentCommittedTruth'],
-  };
-}
-```
-
-### 2. Artifact Fixtures
-
-```typescript
-export function repoFixture(options?: { url?: string; commit?: string; name?: string }): {
-  root: ArtifactRootNode;
-  state: ArtifactStateNode;
-} {
-  const url = options?.url ?? 'https://github.com/example/repo';
-  const commit = options?.commit ?? 'abc123';
-
-  const rootId = createDeterministicId(`${url}:${commit}`);
-  const stateId = createDeterministicId(`${rootId}:${commit}`);
-
-  return {
-    root: {
-      id: rootId,
-      kind: 'ArtifactRoot',
-      schema_version: 'v0.1',
-      source_kind: 'repo',
-      canonical_ref: url,
-    },
-    state: {
-      id: stateId,
-      kind: 'ArtifactState',
-      schema_version: 'v0.1',
-      artifact_root_id: rootId,
-      version_ref: commit,
-      content_hash: createDeterministicId(`${url}:${commit}:content`),
-      retrieved_at: '2026-01-24T00:00:00Z', // Fixed for reproducibility
-    },
-  };
-}
-```
-
-### 3. Assertion Fixtures (v1.0+)
-
-```typescript
-export function decisionFixture(text: string, options?: Partial<Decision>): Decision {
-  const conflictKey = createDeterministicId(`Decision:${text}`);
-
-  return {
-    id: createDeterministicId(`Decision:${text}:v1`),
-    kind: 'Decision',
-    schema_version: 'v0.1',
-    text,
-    conflict_key: conflictKey,
-    scope: options?.scope ?? { environment: 'all', platform: 'all' },
-    options_considered: options?.options_considered ?? [],
-    rationale: options?.rationale ?? '',
-    created_at: '2026-01-24T00:00:00Z',
-    ...options,
-  };
-}
-```
-
-### 4. Evidence Fixtures (v1.0+)
-
-```typescript
-export function evidenceFixture(locator: string, options?: Partial<Evidence>): Evidence {
-  return {
-    id: createDeterministicId(`Evidence:${locator}`),
-    kind: 'Evidence',
-    schema_version: 'v0.1',
-    artifact_locator: locator,
-    confidence: 0.9,
-    retention_mode: 'link-only',
-    ...options,
-  };
-}
-```
-
-**Fixture Properties:**
-
-- **Deterministic**: Same inputs → same output (via SHA-256 IDs)
-- **Composable**: Can be combined to build complex scenarios
-- **Testable**: Fixture tests validate they produce valid nodes
-- **Documented**: Each fixture documents expected usage
-
----
-
-## GraphApp Orchestrator
-
-Summary: Main context and orchestrator providing fluent API for graph operations and introspection.
-
-**Core Interface:**
-
-```typescript
-class GraphApp {
-  // Configuration
-  store: InMemoryGraphStore;
-  project_id: string;
-  current_agent_id: string;
-  current_activity_id: string;
-
-  // Initialization
-  constructor(options?: {
-    store?: GraphStore;
-    project_id?: string;
-    with_default_policies?: boolean;
-  });
-
-  // Builder pattern: graph operations
-  withPolicy(kind: PolicyKind, scope: string, fields?: Partial<PolicyNode>): this;
-  withDefaultPolicies(): this;
-
-  async ingestRepo(options: {
-    url: string;
-    commit: string;
-    project_id?: string;
-  }): Promise<IngestResult>;
-
-  createAssertion<K extends AssertionKind>(
-    kind: K,
-    fields: Omit<AssertionOfKind[K], 'id' | 'schema_version' | 'created_at'>,
-  ): AssertionOfKind[K];
-
-  runProjection(name: string, selection?: PolicySelection): ProjectionEnvelope;
-
-  // Graph queries
-  queryNodes(filter?: { kind?: string; subject_id?: string; scope?: ScopeFilter }): GraphNode[];
-
-  queryEdges(filter?: { kind?: string; from?: NodeId; to?: NodeId }): GraphEdge[];
-
-  getNode(id: NodeId): GraphNode | undefined;
-
-  // Introspection and debugging
-  explain(node_id: NodeId): ExplanationPath;
-
-  trace(start_id: NodeId, depth?: number): TraceResult;
-
-  diff(before: GraphStore, after: GraphStore): Change[];
-
-  dump(options?: { format?: 'text' | 'json' }): string;
-
-  // Validation
-  validate(): ValidationResult;
-
-  checkInvariants(): GraphHealthReport;
-
-  // Transaction control (delegates to store)
-  beginTransaction(): void;
-  commit(): void;
-  rollback(): void;
-}
-```
-
-**Method Details:**
-
-### `withPolicy(kind, scope, fields)`
-
-Adds a policy node to the store with deterministic ID. Returns `this` for chaining.
-
-### `ingestRepo(options)`
-
-Calls ScipTsIngestionConnector, stores artifacts, returns result with counts.
-
-### `createAssertion(kind, fields)`
-
-Builds deterministic node ID, stores in graph, returns typed assertion. Does NOT commit
-automatically (caller manages transaction).
-
-### `runProjection(name, selection?)`
-
-Resolves ProjectionPolicy (if selection provided), calls appropriate ProjectionRunner, returns
-ProjectionEnvelope with explainability.
-
-### `explain(node_id)`
-
-Walks graph backwards from node to find evidence/provenance chain. Returns ExplanationPath suitable
-for projection explain fields.
-
-### `trace(start_id, depth?)`
-
-Breadth-first traversal from start_id showing all incoming/outgoing relationships. Used for
-debugging complex linkage.
-
-### `dump(options?)`
-
-Pretty-prints all nodes and edges with relationships. Useful for terminal inspection.
-
-### `validate()`
-
-Runs all ValidationPolicy checks, returns summary (pass/fail per check).
-
-### `checkInvariants()`
-
-Executes all invariant checks from REQ-graph-knowledge-system (decision completeness, requirement
-derivation, etc.). Returns report with violations list.
-
----
-
-## Scenario Registry and Organization
-
-Summary: Scenarios organized by version (v0.1, v1.0, v2.0+) and functionality domain.
-
-### v0.1 Scenarios (Ready Now)
-
-**Directory:** `src/scenarios/v0-1/`
-
-1. **repo-ingestion-base.ts**
-   - Name: "repo-ingestion-base"
-   - Tags: ['ingestion', 'v0.1']
-   - Workflow: Clone repo → Install → Run SCIP → Create artifacts
-   - Validates: File count, symbol count, locator format (`path#scip_symbol`)
-   - Returns: Artifact structure ready for projection
-
-2. **repo-ingestion-determinism.ts**
-   - Name: "repo-ingestion-determinism"
-   - Tags: ['ingestion', 'determinism', 'v0.1']
-   - Workflow: Run repo-ingestion-base twice on same commit
-   - Validates: Identical node counts, identical content hash, identical edge structure
-   - Returns: Determinism report (pass/fail)
-
-3. **json-dumps-format.ts**
-   - Name: "json-dumps-format"
-   - Tags: ['ingestion', 'dumps', 'v0.1']
-   - Workflow: Ingest repo, call writeJsonDumps(), inspect outputs
-   - Validates: Schema version, generated_at timestamp, node counts match
-   - Returns: Paths to generated JSON files
-
-4. **projection-current-truth-basic.ts**
-   - Name: "projection-current-truth-basic"
-   - Tags: ['projection', 'v0.1']
-   - Workflow: Ingest repo, run CurrentCommittedTruth projection
-   - Validates: Projection includes all artifact nodes, ExplanationPath present
-   - Returns: ProjectionEnvelope
-
-5. **toolchain-provenance.ts**
-   - Name: "toolchain-provenance"
-   - Tags: ['ingestion', 'provenance', 'v0.1']
-   - Workflow: Ingest repo, inspect ArtifactState node metadata
-   - Validates: node_version, package_manager, scip_typescript_version recorded
-   - Returns: Provenance record
-
-### v1.0 Scenarios (Future)
-
-**Directory:** `src/scenarios/v1-0/`
-
-1. **lifecycle-decision-to-requirement.ts**
-   - Tags: ['lifecycle', 'assertions', 'v1.0']
-   - Workflow: Create Decision → Create Requirement derived from it
-   - Validates: Links created, both in current-truth projection
-
-2. **supersession-chains.ts**
-   - Tags: ['lifecycle', 'supersession', 'v1.0']
-   - Workflow: Create Decision v1 → v2 supersedes v1 → v3 supersedes v2
-   - Validates: v1 and v2 excluded from projection, only v3 selected
-
-3. **conflict-detection-scope-overlap.ts**
-   - Tags: ['lifecycle', 'conflicts', 'v1.0']
-   - Workflow: Create overlapping-scope Requirements
-   - Validates: Conflict flagged in projection
-
-4. **evidence-anchoring-to-artifact.ts**
-   - Tags: ['evidence', 'anchoring', 'v1.0']
-   - Workflow: Create Evidence linked to artifact part (symbol)
-   - Validates: Locator format correct, edges created
-
-5. **evidence-promotion-to-requirement.ts**
-   - Tags: ['evidence', 'promotion', 'v1.0']
-   - Workflow: Create Evidence → Trigger IngestionPolicy promotion → Requirement created
-   - Validates: Evidence remains, Requirement created, links established
-
-6. **plan-execution-to-activework.ts**
-   - Tags: ['planning', 'activework', 'v1.0']
-   - Workflow: Create Plan/PlanSteps → Mark as in-progress → Run ActiveWork projection
-   - Validates: Projection includes active steps in priority order
-
-7. **validation-invariants-breach.ts**
-   - Tags: ['validation', 'invariants', 'v1.0']
-   - Workflow: Create invalid Requirement (missing ABOUT_SUBJECT) → Run GraphHealth
-   - Validates: "Missing mandatory link" error raised
-
-8. **graphhealth-full-checks.ts**
-   - Tags: ['validation', 'graphhealth', 'v1.0']
-   - Workflow: Create valid + invalid assertions → Run GraphHealth
-   - Validates: All checks executed, errors reported with correct severity
-
-### v2.0+ Scenarios
-
-**Directory:** `src/scenarios/v2-0/` (future)
-
-1. **external-source-ingestion.ts**
-2. **verification-linking.ts**
-3. **waiver-system.ts**
-4. **full-text-search.ts**
-
-**Scenario Index:**
-
-All scenarios registered in `src/scenarios/index.ts`:
-
-```typescript
-export const scenarios: Record<string, Scenario> = {
-  'v0.1/repo-ingestion-base': repoIngestionBase,
-  'v0.1/repo-ingestion-determinism': repoIngestionDeterminism,
-  'v0.1/json-dumps-format': jsonDumpsFormat,
-  'v0.1/projection-current-truth-basic': projectionCurrentTruthBasic,
-  'v0.1/toolchain-provenance': toolchainProvenance,
-
-  'v1.0/lifecycle-decision-to-requirement': lifecycleDecisionToRequirement,
-  'v1.0/supersession-chains': supersessionChains,
-  'v1.0/conflict-detection-scope-overlap': conflictDetectionScopeOverlap,
-  // ... more v1.0 scenarios
-};
-
-export function getScenariosByVersion(version: 'v0.1' | 'v1.0' | 'v2.0+'): Scenario[] {
-  return Object.values(scenarios).filter((s) => s.version === version);
-}
-
-export function getScenariosByTag(tag: string): Scenario[] {
-  return Object.values(scenarios).filter((s) => s.tags.includes(tag));
-}
-```
-
----
-
-## Inspector Tools
-
-Summary: Debugging and visualization tools for graph state inspection and analysis.
-
-**Inspector Interface:**
-
-```typescript
-class GraphInspector {
-  constructor(private app: GraphApp) {}
-
-  // Pretty-print graph state
-  dump(options?: { format?: 'text' | 'json'; max_nodes?: number }): string;
-
-  // Follow relationship chains
-  trace(start_id: NodeId, depth?: number): TraceOutput;
-
-  // Compare two graph snapshots
-  diff(before_snapshot: GraphSnapshot, after_snapshot: GraphSnapshot): DiffReport;
-
-  // Render ExplanationPath as human-readable text
-  explainPath(path: ExplanationPath): string;
-
-  // Summarize graph statistics
-  summary(): GraphSummary;
-}
-```
-
-### Dumper
-
-```typescript
-// Output: Human-readable tree of nodes and edges
-dump():
-  Nodes (47 total)
-  ├── ArtifactRoot: 1
-  │   └── uuid-123...
-  │       text: "repo: https://github.com/sindresorhus/ky"
-  ├── ArtifactState: 1
-  │   └── uuid-456...
-  │       version_ref: "51b0129"
-  │       content_hash: "abcd..."
-  ├── ArtifactPart (file): 28
-  ├── ArtifactPart (symbol): 17
-  └── Policy: 2
-
-  Edges (52 total)
-  ├── HasState: 1 (ArtifactRoot → ArtifactState)
-  ├── HasPart: 45 (ArtifactState → ArtifactPart)
-  └── HasPolicy: 2 (Project → Policy)
-```
-
-### Tracer
-
-```typescript
-// Output: Relationship chains from a node
-trace(node_id):
-  Start: ArtifactState (uuid-456)
-  ├── HasPart → ArtifactPart (file: src/index.ts)
-  │   └── HasPart (reverse) ← ArtifactState
-  └── BELONGS_TO → Project (id: proj-1)
-      ├── HasPolicy → IngestionPolicy
-      └── HasPolicy → ProjectionPolicy
-```
-
-### Differ
-
-```typescript
-// Output: Changes between two snapshots
-diff(before, after):
-  +1 node: Policy (ProjectionPolicy)
-  +2 edges: BELONGS_TO
-  ~3 nodes: updated (e.g., supersession added)
-  -0 nodes removed
-
-  Details:
-  + ArtifactPart(symbol: greet)
-  + Edge(ArtifactState → ArtifactPart#greet)
-```
-
-### Explainer
-
-```typescript
-// Output: Human-readable explanation path
-explainPath(path):
-  Rule: CurrentCommittedTruth v0.1
-  Selection: Latest non-superseded committed assertion
-
-  Path:
-  1. Source: ArtifactPart (file: src/index.ts)
-     ↓ EVIDENCE_FOR
-  2. Evidence (confidence: 0.9)
-     ↓ ANCHORS_TO_ASSERTION
-  3. Requirement (id: uuid-789)
-     ✓ COMMITTED & NOT SUPERSEDED
-  4. Projection item: Requirement in CurrentCommittedTruth
-
-  Top Evidence:
-  - ArtifactPart(src/index.ts#greet) - confidence: 0.95
-  - Symbol definition in SCIP index - confidence: 0.9
-```
-
----
-
-## Testing Strategy
-
-Summary: Unit, integration, and E2E testing modes aligned with scenario versions.
-
-### Unit Tests (Fast, Isolated)
-
-**File:** `unit/scenarios.test.ts`
-
-```typescript
-// Test scenario metadata
-test('all scenarios have required metadata', () => {
-  for (const scenario of Object.values(scenarios)) {
-    expect(scenario.name).toBeDefined();
-    expect(scenario.version).toMatch(/v0\.1|v1\.0|v2\.0\+/);
-    expect(scenario.tags.length).toBeGreaterThan(0);
-  }
-});
-
-// Test fixture generation
-test('policy fixtures generate deterministic IDs', () => {
-  const policy1 = defaultIngestionPolicy('*');
-  const policy2 = defaultIngestionPolicy('*');
-  expect(policy1.id).toBe(policy2.id);
-});
-
-// Test scenario composition
-test('scenarios can be composed', async () => {
-  const app = new GraphApp({ with_default_policies: true });
-  const ingestResult = await repo_ingestion_base(app);
-  expect(ingestResult.success).toBe(true);
-  expect(ingestResult.node_count).toBeGreaterThan(0);
-});
-```
-
-**File:** `unit/fixtures.test.ts`
-
-```typescript
-test('fixture artifacts are valid nodes', () => {
-  const { root, state } = repoFixture();
-  expect(root.kind).toBe('ArtifactRoot');
-  expect(root.schema_version).toBe('v0.1');
-  expect(state.artifact_root_id).toBe(root.id);
-});
-
-test('fixtures produce consistent IDs', () => {
-  const f1 = repoFixture({ url: 'https://github.com/a/b', commit: 'abc' });
-  const f2 = repoFixture({ url: 'https://github.com/a/b', commit: 'abc' });
-  expect(f1.root.id).toBe(f2.root.id);
-});
-```
-
-**File:** `unit/inspectors.test.ts`
-
-```typescript
-test('dumper formats graph correctly', async () => {
-  const app = new GraphApp({ with_default_policies: true });
-  await repo_ingestion_base(app);
-  const output = app.dump();
-  expect(output).toContain('Nodes');
-  expect(output).toContain('Edges');
-  expect(output).toContain('ArtifactRoot');
-});
-```
-
-### Integration Tests (Medium, Multi-Step)
-
-**File:** `integration/workflows.test.ts`
-
-```typescript
-test('ingest → project → validate workflow (v0.1)', async () => {
-  const app = new GraphApp({ with_default_policies: true });
-
-  // Ingest
-  await app.ingestRepo({
-    url: 'https://github.com/sindresorhus/ky',
-    commit: '51b0129',
-  });
-
-  // Project
-  const projection = app.runProjection('CurrentCommittedTruth');
-  expect(projection.nodes.length).toBeGreaterThan(0);
-
-  // Validate
-  const validation = app.validate();
-  expect(validation.errors).toHaveLength(0);
-});
-
-test('lifecycle workflow (v1.0+)', async () => {
-  const app = new GraphApp({ with_default_policies: true });
-
-  // Create decision
-  const decision = app.createAssertion('Decision', {
-    text: 'Use TypeScript for all new code',
-    options_considered: ['TypeScript', 'Flow', 'JavaScript'],
-  });
-
-  // Create requirement from decision
-  const requirement = app.createAssertion('Requirement', {
-    text: 'All source files must be .ts',
-    derived_from: decision.id,
-  });
-
-  // Create specification
-  const spec = app.createAssertion('SpecClause', {
-    text: 'Strict mode enabled in tsconfig',
-    refines: requirement.id,
-  });
-
-  // Project and validate
-  const projection = app.runProjection('CurrentCommittedTruth');
-  expect(projection.nodes).toContainEqual(expect.objectContaining({ id: decision.id }));
-  expect(projection.nodes).toContainEqual(expect.objectContaining({ id: requirement.id }));
-  expect(projection.nodes).toContainEqual(expect.objectContaining({ id: spec.id }));
-});
-```
-
-### E2E Tests (Slow, Real Data)
-
-**File:** `e2e/v0-1/sindresorhus-ky.test.ts`
-
-```typescript
-describe('E2E: sindresorhus/ky v0.1 ingestion', () => {
-  it('ingests deterministically', async () => {
-    const run1 = await new GraphApp({ with_default_policies: true }).ingestRepo({
-      url: 'https://github.com/sindresorhus/ky',
-      commit: '51b0129',
-    });
-
-    const run2 = await new GraphApp({ with_default_policies: true }).ingestRepo({
-      url: 'https://github.com/sindresorhus/ky',
-      commit: '51b0129',
-    });
-
-    expect(run1.node_count).toBe(run2.node_count);
-    expect(run1.edge_count).toBe(run2.edge_count);
-    expect(run1.artifact_state.content_hash).toBe(run2.artifact_state.content_hash);
-  });
-
-  it('creates correct artifact structure', async () => {
-    const app = new GraphApp({ with_default_policies: true });
-    const result = await app.ingestRepo({
-      url: 'https://github.com/sindresorhus/ky',
-      commit: '51b0129',
-    });
-
-    const fileParts = app
-      .queryNodes({ kind: 'ArtifactPart' })
-      .filter((n) => (n as ArtifactPartNode).part_kind === 'file');
-    const symbolParts = app
-      .queryNodes({ kind: 'ArtifactPart' })
-      .filter((n) => (n as ArtifactPartNode).part_kind === 'symbol');
-
-    expect(fileParts.length).toBeGreaterThan(10);
-    expect(symbolParts.length).toBeGreaterThan(100);
-
-    // Verify locator format
-    for (const part of symbolParts) {
-      expect((part as ArtifactPartNode).locator).toMatch(/^.+#.+$/); // path#symbol
-    }
-  });
-
-  it('projection includes all artifacts', async () => {
-    const app = new GraphApp({ with_default_policies: true });
-    await app.ingestRepo({
-      url: 'https://github.com/sindresorhus/ky',
-      commit: '51b0129',
-    });
-
-    const projection = app.runProjection('CurrentCommittedTruth');
-    const artifactNodes = projection.nodes.filter(
-      (n) => n.kind === 'ArtifactRoot' || n.kind === 'ArtifactPart',
-    );
-
-    expect(artifactNodes.length).toBeGreaterThan(0);
-  });
-});
-```
-
-**File:** `e2e/v1-0/lifecycle.test.ts`
-
-```typescript
-describe('E2E: v1.0 lifecycle workflow', () => {
-  it('maintains invariants across decision → requirement → spec chain', async () => {
-    const app = new GraphApp({ with_default_policies: true })
-
-    const decision = app.createAssertion('Decision', { ... })
-    const requirement = app.createAssertion('Requirement', { derived_from: decision.id, ... })
-    const spec = app.createAssertion('SpecClause', { refines: requirement.id, ... })
-
-    const health = app.checkInvariants()
-    expect(health.errors).toHaveLength(0)
-  })
-
-  it('detects scope conflicts', async () => {
-    const app = new GraphApp({ with_default_policies: true })
-
-    const req1 = app.createAssertion('Requirement', {
-      text: 'Use TypeScript',
-      scope: { environment: 'prod', platform: 'all' },
-    })
-
-    const req2 = app.createAssertion('Requirement', {
-      text: 'Use JavaScript',
-      scope: { environment: 'all', platform: 'all' },
-    })
-
-    const projection = app.runProjection('CurrentCommittedTruth')
-    const conflictItem = projection.items.find(i => i.item_id === req1.id)
-    expect(conflictItem?.conflicted).toBe(true)
-  })
-})
-```
-
----
-
-## CLI Commands & Entry Points
-
-Summary: Four top-level commands for scenario execution, batch runs, testing, and interactive
-debugging.
-
-The app MUST expose exactly four executable commands via pnpm (or direct Node invocation).
-
-### Command 1: `run-scenario <name>`
-
-Execute a single scenario by name with optional flags.
-
-**Usage:**
-
-```bash
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --json
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --quiet
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --debug
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --output ./my-dump
-```
-
-**Positional Arguments:**
-
-- `<name>` — Scenario name matching registry key (e.g., `v0.1/repo-ingestion-base`)
-
-**Flags:**
-
-| Flag             | Type    | Default            | Description                                       |
-| ---------------- | ------- | ------------------ | ------------------------------------------------- |
-| `--json`         | boolean | false              | Output JSON to stdout instead of Ink UI           |
-| `--quiet`        | boolean | false              | Suppress all terminal output; write files only    |
-| `--debug`        | boolean | false              | Enable verbose logging and full error stacktraces |
-| `--output <dir>` | string  | `./tmp/graph-dump` | Output directory for JSON dumps                   |
-| `--help`         | boolean | false              | Show command help                                 |
-
-**Output (Default: Ink UI):**
-
-Renders ScenarioBox component showing progress, duration, and success/failure.
-
-**Output (--json):**
-
-Writes JSON object to stdout:
-
-```json
-{
-  "scenario": "v0.1/repo-ingestion-base",
-  "version": "v0.1",
-  "success": true,
-  "duration_ms": 12345,
-  "node_count": 47,
-  "edge_count": 52,
-  "symbols_indexed": 156,
-  "dump_path": "./tmp/graph-dump",
-  "artifacts": {
-    "nodes_by_kind": {
-      "ArtifactRoot": 1,
-      "ArtifactState": 1,
-      "ArtifactPart": 45,
-      "Policy": 2
-    },
-    "edge_count": 52
-  }
-}
-```
-
-**Exit Code:**
-
-- `0` — Scenario passed
-- `1` — Scenario failed
-- `2` — Scenario not found
-
----
-
-### Command 2: `run-scenarios <pattern>`
-
-Execute multiple scenarios matching a glob pattern with live batch progress.
-
-**Usage:**
-
-```bash
-pnpm -C apps/graph-app run-scenarios v0.1/*
-pnpm -C apps/graph-app run-scenarios v0.1/* --json
-pnpm -C apps/graph-app run-scenarios v0.1/* --report
-pnpm -C apps/graph-app run-scenarios v0.1/* --report --json
-pnpm -C apps/graph-app run-scenarios **/* --debug
-```
-
-**Positional Arguments:**
-
-- `<pattern>` — Glob pattern to match scenario names (e.g., `v0.1/*`, `**/*`, `v1.0/lifecycle*`)
-
-**Flags:**
-
-| Flag       | Type    | Default | Description                                            |
-| ---------- | ------- | ------- | ------------------------------------------------------ |
-| `--json`   | boolean | false   | Output JSON summary instead of Ink UI                  |
-| `--report` | boolean | false   | Generate HTML report (path: `./graph-app-report.html`) |
-| `--quiet`  | boolean | false   | Suppress all terminal output                           |
-| `--debug`  | boolean | false   | Verbose logging                                        |
-| `--help`   | boolean | false   | Show command help                                      |
-
-**Output (Default: Ink UI with BatchBox):**
-
-Renders live progress with current scenario, pass/fail counts, and total duration updating in
-real-time.
-
-**Output (--json):**
-
-Writes JSON summary to stdout:
-
-```json
-{
-  "batch_name": "v0.1",
-  "total_scenarios": 5,
-  "passed": 5,
-  "failed": 0,
-  "duration_ms": 65200,
-  "scenarios": [
-    {
-      "name": "v0.1/repo-ingestion-base",
-      "success": true,
-      "duration_ms": 12100
-    },
-    {
-      "name": "v0.1/repo-ingestion-determinism",
-      "success": true,
-      "duration_ms": 24400
-    }
-  ],
-  "summary": {
-    "total_artifacts": 224,
-    "total_edges": 260,
-    "conflicts": 0
-  }
-}
-```
-
-**Exit Code:**
-
-- `0` — All scenarios passed
-- `1` — At least one scenario failed
-
----
-
-### Command 3: `test [filter]`
-
-Run the full test suite (unit + integration + E2E) or specific test categories.
-
-**Usage:**
-
-```bash
-pnpm -C apps/graph-app test
-pnpm -C apps/graph-app test unit
-pnpm -C apps/graph-app test integration
-pnpm -C apps/graph-app test e2e
-pnpm -C apps/graph-app test v0.1
-pnpm -C apps/graph-app test --coverage
-pnpm -C apps/graph-app test --debug
-```
-
-**Positional Arguments (Optional):**
-
-- `[filter]` — Test filter: `unit`, `integration`, `e2e`, `v0.1`, `v1.0` (default: all)
-
-**Flags:**
-
-| Flag         | Type    | Default | Description              |
-| ------------ | ------- | ------- | ------------------------ |
-| `--coverage` | boolean | false   | Generate coverage report |
-| `--json`     | boolean | false   | Output JSON summary      |
-| `--debug`    | boolean | false   | Verbose logging          |
-| `--help`     | boolean | false   | Show command help        |
-
-**Output (Default: Ink UI with TestBox):**
-
-Renders test results by category (unit, integration, E2E) with pass/fail counts and total duration.
-
-**Output (--json):**
-
-```json
-{
-  "total": 28,
-  "passed": 28,
-  "failed": 0,
-  "duration_ms": 48200,
-  "coverage": 82,
-  "categories": {
-    "unit": { "total": 15, "passed": 15, "duration_ms": 1200 },
-    "integration": { "total": 8, "passed": 8, "duration_ms": 5400 },
-    "e2e": { "total": 5, "passed": 5, "duration_ms": 41600 }
-  }
-}
-```
-
-**Exit Code:**
-
-- `0` — All tests passed
-- `1` — At least one test failed
-
----
-
-### Command 4: `inspect`
-
-Start interactive inspector mode (Ink TUI) for debugging and exploration.
-
-**Usage:**
-
-```bash
-pnpm -C apps/graph-app inspect
-pnpm -C apps/graph-app inspect --debug
-```
-
-**Flags:**
-
-| Flag      | Type    | Default | Description       |
-| --------- | ------- | ------- | ----------------- |
-| `--debug` | boolean | false   | Verbose logging   |
-| `--help`  | boolean | false   | Show command help |
-
-**Output:**
-
-Interactive Ink TUI with command prompt and response rendering (see Mode 4 below).
-
-**Exit Code:**
-
-- `0` — User exited normally
-- `1` — Error occurred
-
----
-
-## Execution Modes
-
-Summary: Single scenario, batch, E2E, and interactive modes for different use cases.
-
-### Mode 1: Single Scenario (Local Development)
-
-```bash
-# Run one scenario with beautiful Ink UI + JSON files
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base
-
-# Terminal Output (Ink+Pastel UI):
-# ┌─────────────────────────────────────┐
-# │  repo-ingestion-base (v0.1)         │
-# ├─────────────────────────────────────┤
-# │ ⏳ Cloning repo...                   │
-# │ ✓ Installed dependencies            │
-# │ ⏳ Running scip-typescript...        │
-# │   Indexed: 156 symbols in 42 files  │
-# │ ✓ Created artifact nodes            │
-# │   Root: 1 | State: 1 | Parts: 45    │
-# │ ✓ Generated JSON dumps              │
-# ├─────────────────────────────────────┤
-# │ Success (12.3s)                     │
-# │ Dump: ./tmp/graph-dump              │
-# └─────────────────────────────────────┘
-
-# Files Created:
-# ./tmp/graph-dump/artifacts.json (47 nodes, 52 edges)
-# ./tmp/graph-dump/policies.json (2 policies)
-# ./tmp/graph-dump/projection.json (CurrentCommittedTruth)
-# ./tmp/graph-dump/graph_dump_summary.json (metadata)
-```
-
-**With flags:**
-
-```bash
-# JSON output only (for CI/CD automation)
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --json
-
-# Console output is JSON (no UI):
-# {
-#   "scenario": "repo-ingestion-base",
-#   "version": "v0.1",
-#   "success": true,
-#   "duration_ms": 12345,
-#   "node_count": 47,
-#   "edge_count": 52,
-#   "symbols_indexed": 156,
-#   "dump_path": "./tmp/graph-dump"
-# }
-
-# Suppress UI, files only (for headless execution)
-pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --quiet
-# No terminal output, files written to ./tmp/graph-dump/
-```
-
-### Mode 2: Batch Scenarios (CI/CD)
-
-```bash
-# Run all v0.1 scenarios with live progress UI (Ink)
-pnpm -C apps/graph-app run-scenarios v0.1/* --report
-
-# Terminal Output (Ink+Pastel live UI):
-# ┌──────────────────────────────────────────┐
-# │ Running v0.1 Scenarios (5/5)             │
-# ├──────────────────────────────────────────┤
-# │ ✓ repo-ingestion-base (2.1s)             │
-# │ ✓ repo-ingestion-determinism (4.2s)      │
-# │ ✓ json-dumps-format (1.8s)               │
-# │ ⏳ projection-current-truth-basic...      │
-# │   projection-current-truth-basic (0.8s)  │
-# │ ⏳ toolchain-provenance...               │
-# ├──────────────────────────────────────────┤
-# │ Passed: 5/5  |  Duration: 9.4s           │
-# │ Artifacts: 224  |  Conflicts: 0          │
-# └──────────────────────────────────────────┘
-
-# For CI/CD parsing, use JSON flag (no UI)
-pnpm -C apps/graph-app run-scenarios v0.1/* --report --json
-
-# Console Output (JSON, no Ink UI):
-# {
-#   "batch_name": "v0.1",
-#   "total_scenarios": 5,
-#   "passed": 5,
-#   "failed": 0,
-#   "duration_ms": 9400,
-#   "scenarios": [
-#     {"name": "repo-ingestion-base", "success": true, "duration_ms": 2100},
-#     {"name": "repo-ingestion-determinism", "success": true, "duration_ms": 4200},
-#     ...
-#   ],
-#   "summary": {"artifacts": 224, "assertions": 0, "conflicts": 0}
-# }
-```
-
-### Mode 3: E2E Tests
-
-```bash
-# Run full test suite with Ink progress UI
-pnpm -C apps/graph-app test
-
-# Terminal Output (Ink+Pastel):
-# ┌────────────────────────────┐
-# │ Running Test Suite          │
-# ├────────────────────────────┤
-# │ Unit Tests: 12/12 ✓        │
-# │ Integration: 8/8 ✓         │
-# │ E2E (v0.1): 5/5 ✓          │
-# │ E2E (v1.0): 8/8 ✓          │
-# ├────────────────────────────┤
-# │ Total: 33 ✓  |  45.2s      │
-# │ Pass Rate: 100%            │
-# └────────────────────────────┘
-
-# Or just e2e
-pnpm -C apps/graph-app test:e2e
-```
-
-### Mode 4: Interactive Inspector (Ink TUI)
-
-```bash
-# Start interactive Ink-based TUI with app context
-pnpm -C apps/graph-app inspect
-
-# Terminal UI (Ink+Pastel interactive):
-# ┌──────────────────────────────────────┐
-# │ Graph Inspector (Interactive Mode)   │
-# ├──────────────────────────────────────┤
-# │                                      │
-# │ > _                                  │
-# │                                      │
-# │ Commands: ingest, dump, trace,       │
-# │           diff, project, help, exit  │
-# │ Type 'help <cmd>' for more info      │
-# └──────────────────────────────────────┘
-
-# Interactive command: ingest a repository
-# > ingest repo https://github.com/sindresorhus/ky --commit v1.14.2
-#
-# ┌──────────────────────────────────────┐
-# │ ⏳ Cloning repository...              │
-# │ ✓ Cloned (2.3s)                     │
-# │ ⏳ Installing dependencies...        │
-# │ ✓ Running SCIP indexing...           │
-# │ ✓ Ingestion complete                 │
-# │   Nodes: 47 | Edges: 52              │
-# └──────────────────────────────────────┘
-
-# Interactive command: dump current graph state
-# > dump
-#
-# ┌──────────────────────────────────────┐
-# │ Graph State                          │
-# ├──────────────────────────────────────┤
-# │ Nodes (47 total)                    │
-# │ ├── ArtifactRoot: 1                  │
-# │ ├── ArtifactState: 1                 │
-# │ ├── ArtifactPart: 45                 │
-# │ └── Policy: 2                        │
-# │                                      │
-# │ Edges (52 total)                    │
-# │ ├── HasState: 1                      │
-# │ ├── HasPart: 45                      │
-# │ └── HasPolicy: 2                     │
-# └──────────────────────────────────────┘
-
-# Interactive command: trace a node's relationships
-# > trace node-456 --depth 3
-#
-# ┌──────────────────────────────────────┐
-# │ Trace from node-456 (depth=3)        │
-# ├──────────────────────────────────────┤
-# │ node-456 (ArtifactPart)              │
-# │  ├─ HasParent → node-123 (State)     │
-# │  │   └─ HasRoot → node-001 (Root)    │
-# │  └─ HasPolicy → node-789 (Policy)    │
-# │      └─ ...                          │
-# └──────────────────────────────────────┘
-
-# Interactive command: compare two snapshots
-# > diff snapshot-a snapshot-b
-#
-# ┌──────────────────────────────────────┐
-# │ Diff: snapshot-a → snapshot-b        │
-# ├──────────────────────────────────────┤
-# │ Nodes: 47 → 49 (+2)                  │
-# │ Edges: 52 → 55 (+3)                  │
-# │                                      │
-# │ New nodes: Policy nodes (2)          │
-# │ Modified: ArtifactState (1)          │
-# └──────────────────────────────────────┘
-
-# Interactive command: run a projection
-# > project CurrentCommittedTruth
-#
-# ┌──────────────────────────────────────┐
-# │ Projection: CurrentCommittedTruth    │
-# ├──────────────────────────────────────┤
-# │ ✓ Computed successfully              │
-# │   Selected: 45 artifacts             │
-# │   Excluded: 2 (superseded)           │
-# │   Explanation: ./dump/projection.json│
-# └──────────────────────────────────────┘
-
-# Interactive commands:
-# > help                   # Show all available commands
-# > help ingest           # Show ingest command help
-# > exit                  # Leave interactive mode
-```
-
-**Interactive Commands:**
-
-| Command   | Syntax                               | Description                                      |
-| --------- | ------------------------------------ | ------------------------------------------------ |
-| `ingest`  | `ingest repo <url> [--commit <ref>]` | Clone and ingest a repository                    |
-| `dump`    | `dump [--format json\|text]`         | Display current graph state                      |
-| `trace`   | `trace <node-id> [--depth N]`        | Follow relationships from a node                 |
-| `diff`    | `diff <snapshot-a> <snapshot-b>`     | Compare two graph snapshots                      |
-| `project` | `project <name>`                     | Run a projection (e.g., `CurrentCommittedTruth`) |
-| `help`    | `help [command]`                     | Show help (for all commands or specific one)     |
-| `exit`    | `exit`                               | Leave interactive mode                           |
-
-**Interactive Command Examples:**
-
-```bash
-# Ingest with default branch
-> ingest repo https://github.com/example/repo
-
-# Ingest specific commit/tag
 > ingest repo https://github.com/sindresorhus/ky --commit v1.14.2
 
-# Dump as JSON (for piping)
-> dump --format json
+┌──────────────────────────────────────┐
+│ Ingesting repository...              │
+├──────────────────────────────────────┤
+│ ✓ Cloned (2.3s)                     │
+│ ✓ Dependencies (1.2s)               │
+│ ✓ SCIP indexing (3.1s)              │
+│   156 symbols in 42 files           │
+│ ✓ Artifact nodes (0.8s)             │
+│ ✓ JSON dumps (0.5s)                 │
+├──────────────────────────────────────┤
+│ Success (12.3s)                     │
+│ Dump: ./tmp/graph-dump              │
+└──────────────────────────────────────┘
 
-# Trace a symbol node with depth limit
-> trace artifact_part_abc123 --depth 5
+> dump
 
-# Compare before/after snapshots
-> diff before.json after.json
+┌──────────────────────────────────────┐
+│ Graph State (47 nodes, 52 edges)     │
+├──────────────────────────────────────┤
+│ Nodes:                               │
+│  • ArtifactRoot: 1                   │
+│  • ArtifactState: 1                  │
+│  • ArtifactPart: 45                  │
+│  • Policy: 2                         │
+│                                      │
+│ Edges:                               │
+│  • HasState: 1                       │
+│  • HasPart: 45                       │
+│  • HasPolicy: 2                      │
+└──────────────────────────────────────┘
 
-# Run CurrentCommittedTruth projection
 > project CurrentCommittedTruth
 
-# Show all commands
-> help
+┌──────────────────────────────────────┐
+│ Projection: CurrentCommittedTruth    │
+├──────────────────────────────────────┤
+│ ✓ Computed (124ms)                  │
+│ Selected: 45 artifacts              │
+│ Output: ./tmp/projection.json       │
+└──────────────────────────────────────┘
 
-# Show ingest command syntax
-> help ingest
-
-# Exit gracefully
 > exit
+
+Goodbye!
+$
 ```
 
 ---
 
-## Extensibility Contract
+## Error Handling
 
-Summary: New graph features add Scenarios and E2E tests; libraries remain unchanged.
+**Invalid Command:**
 
-**Adding a v1.0 Feature:**
+```
+> invalid-command
+✗ Unknown command: invalid-command
+Type 'help' for available commands.
 
-When you add a new lifecycle assertion kind (e.g., `Plan`):
+> _
+```
 
-1. **Library package updates** (graph-lifecycle):
-   - Define `PlanNode` schema in graph-core
-   - Add validator for Plan in graph-validation
-   - Update store to persist Plan nodes
+**Invalid Arguments:**
 
-2. **App updates** (graph-app):
-   - Add `planFixture()` in `src/fixtures/assertions.ts`
-   - Create new scenario `src/scenarios/v1-0/plan-execution.ts`
-   - Add E2E test `e2e/v1-0/planning.test.ts`
-   - Register scenario in `src/scenarios/index.ts`
+```
+> ingest repo
+✗ Missing required argument: <url>
+Usage: ingest repo <url> [--commit <ref>]
 
-3. **Result:**
-   - Existing v0.1 scenarios unchanged
-   - New v1.0 scenarios test Plan features
-   - Full backward compatibility
+> _
+```
 
-**Adding a v2.0 Feature:**
+**Runtime Error:**
 
-When you add external ingestion (forum/issue):
+```
+> ingest repo https://github.com/nonexistent/repo
+⏳ Cloning repo...
+✗ Error: Failed to clone repository
+  Repository not found (404)
 
-1. **Library package**: New `graph-ingest-connector-forum`
-2. **App package**: New `src/scenarios/v2-0/forum-ingestion.ts` + E2E tests
-3. **Result**: v0.1 and v1.0 scenarios still pass; v2.0 scenarios test new connector
+> _
+```
 
-**Principle:**
+**Debug Mode:**
 
-- App grows by **addition** only
-- No rewrites to existing scenarios
-- Libraries never reference app
-- New features = new scenarios + new tests + new fixtures
+Add `--debug` flag to any session for verbose logging:
 
----
+```bash
+$ pnpm -C apps/graph-cli-app dev --debug
 
-## Non-Throwaway Guarantees
-
-Summary: App designed to grow with system without architectural rewrites.
-
-**Stable Contracts:**
-
-- **Scenario interface**: Defined once, extended via tagging and composition
-- **Fixture model**: Factory functions, never change; new fixtures added
-- **GraphApp API**: Methods only added, never removed
-- **Inspector tools**: Can add new inspectors; existing ones remain stable
-- **Output model**: JSON dumps always available; database persistence added in v2.0+ without
-  breaking v0.1/v1.0
-
-**Version Boundaries:**
-
-- v0.1 scenarios isolated in `src/scenarios/v0-1/`
-- v1.0 scenarios in `src/scenarios/v1-0/`
-- v2.0+ in `src/scenarios/v2-0/`
-- No cross-version dependencies (v1.0 scenarios don't call v0.1 scenarios)
-
-**Backward Compatibility:**
-
-- v0.1 tests must pass even when v1.0 is added
-- v1.0 tests must pass even when v2.0 is added
-- Snapshot files are versioned (v0.1/, v1.0/)
-
-**Validation:**
-
-- `pnpm -C apps/graph-app test:v0.1` always passes
-- New version adds new test suite, doesn't break old ones
-- Nx dependency graph enforced at build time
+# Shows detailed logs for each operation
+```
 
 ---
 
-## Open Questions
+## State Management
 
-1. Should Scenarios support conditional branches (e.g., skip if v1.0 not available)?
-2. Should inspector tools be interactive CLI or programmatic only?
-3. Should snapshot files be committed or generated?
-4. How to handle long-running scenarios (timeouts, parallelization)?
+The CLI maintains a single in-memory graph state across commands:
+
+- **Ingest** — Populates graph with artifact nodes and edges
+- **Dump/Trace/Diff** — Query current graph state
+- **Project** — Compute deterministic views (doesn't modify graph)
+- **Exit** — Discard all state
+
+If you want to start fresh:
+
+```bash
+> exit
+$ pnpm -C apps/graph-cli-app dev
+```
+
+---
+
+## Non-Goals
+
+- Persistent storage (graphs are ephemeral within a session)
+- Automated test framework or scenario registry
+- Batch execution or script files
+- Database backends
+- Web UI or API server
 
 ---
 
 ## Related Documents
 
+- SPEC-graph-system-vertical-slice-v0-1.md
 - REQ-graph-system-graph-system-architecture.md
-- REQ-graph-system-graph-knowledge-system.md
 - REQ-graph-ingestion.md
 - REQ-graph-projection.md
-- REQ-graph-lifecycle.md
-- SPEC-graph-system-vertical-slice-v0-1.md
