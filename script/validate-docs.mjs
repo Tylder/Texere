@@ -337,6 +337,61 @@ function validateLinks(doc, errors) {
   }
 }
 
+/**
+ * Validate document relationship links in frontmatter.
+ * Checks: implements, implemented_by, depends_on, blocks, coordinates, covers, drives, related, related_ideation
+ */
+function validateFrontmatterLinks(doc, allDocs, errors) {
+  if (!doc.frontmatter) return;
+
+  // Build a map of all valid document IDs (filename without .md)
+  const validDocIds = new Set(allDocs.map((d) => d.file.replace('.md', '')));
+
+  // Fields to check: all document relationship fields
+  const linkFields = [
+    'implements',
+    'implemented_by',
+    'depends_on',
+    'blocks',
+    'coordinates',
+    'covers',
+    'drives',
+    'related',
+    'related_ideation',
+  ];
+
+  for (const field of linkFields) {
+    const links = doc.frontmatter[field];
+    if (!links || !Array.isArray(links)) continue;
+
+    for (const link of links) {
+      // Skip empty or whitespace-only entries
+      if (!link || !link.trim()) continue;
+
+      // Handle section references like "REQ-foo#REQ-001"
+      const baseDocId = link.split('#')[0].trim();
+
+      // Special case: allow placeholders and optional entries
+      if (
+        baseDocId === '(optional, omit if none)' ||
+        baseDocId.includes('feature-name') ||
+        baseDocId.includes('your-feature') ||
+        baseDocId.includes('REQ-feature') ||
+        (baseDocId.includes('SPEC-') && baseDocId.includes('feature')) ||
+        (baseDocId.includes('IDEATION-') && baseDocId.includes('feature'))
+      ) {
+        continue;
+      }
+
+      if (!validDocIds.has(baseDocId)) {
+        errors.push(
+          `${doc.relativePath}: Broken link in frontmatter field "${field}": document "${baseDocId}" not found`,
+        );
+      }
+    }
+  }
+}
+
 function updateLastUpdated(doc) {
   const now = new Date().toISOString();
 
@@ -541,6 +596,7 @@ function main() {
       validateFrontmatter(doc, errors);
       validateNaming(doc, errors);
       validateLinks(doc, errors);
+      validateFrontmatterLinks(doc, updatedDocs, errors);
     }
 
     if (errors.length === 0) {
