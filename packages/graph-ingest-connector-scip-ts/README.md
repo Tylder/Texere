@@ -202,6 +202,33 @@ The connector creates these node types in the graph:
        └─ Uses: tree-sitter (TS parsing)
 ```
 
+## Testing
+
+### Default (fast) tests
+
+- Fixture-based SCIP mapping test reads `fixtures/index.scip`.
+- Keeps coverage runs fast and deterministic.
+
+Regenerate the fixture if needed:
+
+```bash
+bash script/generate-scip-fixture.sh
+```
+
+### Integration tests (slow)
+
+Integration tests run the real `scip-typescript` indexer (and may install deps). They are gated
+behind an explicit flag:
+
+```bash
+RUN_INTEGRATION=true pnpm -C packages/graph-ingest-connector-scip-ts test
+```
+
+This includes:
+
+- `src/scip-mapping-integration.test.ts`
+- `src/ky-repo-ingestion.test.ts` (requires local fixture at `GRAPH_KY_FIXTURE_PATH`)
+
 ## Related Documentation
 
 - [REQ-graph-system-graph-ingestion-repo-scip-ts](../../docs/engineering/01-requirements/REQ-graph-system-graph-ingestion-repo-scip-ts.md)
