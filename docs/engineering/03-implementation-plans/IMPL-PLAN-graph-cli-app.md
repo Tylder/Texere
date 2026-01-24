@@ -44,50 +44,50 @@ index:
       lines: [154, 161]
       token_est: 55
     - title: 'Milestones'
-      lines: [163, 485]
-      token_est: 1259
+      lines: [163, 526]
+      token_est: 1428
       subsections:
         - title: 'Milestone 1: App Scaffolding & Setup'
-          lines: [165, 223]
-          token_est: 197
+          lines: [165, 264]
+          token_est: 366
         - title: 'Milestone 2: REPL Loop & Command Dispatcher'
-          lines: [225, 365]
+          lines: [266, 406]
           token_est: 543
         - title: 'Milestone 3: Command Implementations'
-          lines: [367, 410]
+          lines: [408, 451]
           token_est: 167
         - title: 'Milestone 4: Ink UI Components'
-          lines: [412, 458]
+          lines: [453, 499]
           token_est: 214
         - title: 'Milestone 5: Integration & Testing'
-          lines: [460, 485]
+          lines: [501, 526]
           token_est: 138
     - title: 'Total Effort: ~18 hours (2.5 days)'
-      lines: [487, 495]
+      lines: [528, 536]
       token_est: 30
     - title: 'Technology Stack'
-      lines: [497, 517]
+      lines: [538, 558]
       token_est: 86
     - title: 'Implementation Notes'
-      lines: [519, 602]
+      lines: [560, 643]
       token_est: 299
     - title: 'Success Metrics'
-      lines: [604, 613]
+      lines: [645, 654]
       token_est: 64
     - title: 'Risk Register'
-      lines: [615, 624]
+      lines: [656, 665]
       token_est: 110
     - title: 'Exit Criteria (Phase 1)'
-      lines: [626, 638]
+      lines: [667, 679]
       token_est: 98
     - title: 'Assumptions'
-      lines: [640, 647]
+      lines: [681, 688]
       token_est: 49
     - title: 'Future Enhancements (v2.0+)'
-      lines: [649, 658]
+      lines: [690, 699]
       token_est: 46
     - title: 'Related Documents'
-      lines: [660, 664]
+      lines: [701, 705]
       token_est: 12
 ---
 
@@ -173,6 +173,47 @@ ingestion.
 - `tsconfig.json`, `vitest.config.ts`, `.eslintrc`
 - Entry point: `src/index.ts`, `src/cli.ts`
 - Dev script: `pnpm -C apps/graph-cli-app dev`
+
+**Expected Directory Structure:**
+
+```
+apps/graph-cli-app/
+├── src/
+│   ├── index.ts                 # Entry point
+│   ├── cli.ts                   # GraphCLI class
+│   ├── repl.ts                  # REPL loop
+│   ├── dispatcher.ts            # Command dispatcher
+│   ├── types.ts                 # TypeScript interfaces
+│   ├── commands/
+│   │   ├── ingest-repo.ts
+│   │   ├── dump.ts
+│   │   ├── trace.ts
+│   │   ├── diff.ts
+│   │   ├── project.ts
+│   │   ├── help.ts
+│   │   └── exit.ts
+│   └── ui/
+│       ├── components/
+│       │   ├── ProgressBox.tsx
+│       │   ├── StateBox.tsx
+│       │   └── ...other components
+│       └── render.ts
+├── unit/
+│   ├── cli.test.ts
+│   ├── dispatcher.test.ts
+│   └── commands/
+│       ├── ingest-repo.test.ts
+│       └── ...other command tests
+├── integration/
+│   └── workflows.test.ts
+├── e2e/
+│   └── repl.test.ts
+├── package.json
+├── tsconfig.json
+├── vitest.config.ts
+├── eslint.config.js
+└── README.md
+```
 
 **package.json Dependencies:**
 
