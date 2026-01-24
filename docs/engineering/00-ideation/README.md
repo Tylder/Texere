@@ -21,8 +21,6 @@ Requirements are finalized to preserve history and prevent link rot.
   (draft) - orchestration-and-governance
 - [`IDEATION-PROBLEMS-session-continuity`](IDEATION-PROBLEMS-session-continuity.md) (draft) -
   session-continuity
-- [`IDEATION-PROBLEMS-state-and-visibility`](IDEATION-PROBLEMS-state-and-visibility.md) (draft) -
-  state-and-visibility
 - [`IDEATION-PROBLEMS-tooling-models-and-infrastructure`](IDEATION-PROBLEMS-tooling-models-and-infrastructure.md)
   (draft) - tooling-models-and-infrastructure
 - [`IDEATION-PROBLEMS-user-trust-and-feedback`](IDEATION-PROBLEMS-user-trust-and-feedback.md)
