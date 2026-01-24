@@ -58,7 +58,7 @@ index:
     - title: 'Scope'
       lines: [122, 142]
       summary: 'Implementation of the v0.1 vertical slice with inspection outputs and tests.'
-      token_est: 85
+      token_est: 90
     - title: 'Execution Default'
       lines: [144, 158]
       summary:
@@ -69,8 +69,8 @@ index:
       lines: [160, 170]
       token_est: 67
     - title: 'Milestones'
-      lines: [172, 279]
-      token_est: 388
+      lines: [172, 283]
+      token_est: 433
       subsections:
         - title: 'Milestone 1: Core Interfaces and Node Shapes'
           lines: [174, 190]
@@ -79,23 +79,23 @@ index:
           lines: [192, 207]
           token_est: 64
         - title: 'Milestone 3: Repo Ingestion Pipeline (SCIP-TS)'
-          lines: [209, 227]
-          token_est: 90
+          lines: [209, 228]
+          token_est: 102
         - title: 'Milestone 4: JSON Dumps (LLM-Friendly)'
-          lines: [229, 245]
-          token_est: 55
+          lines: [230, 247]
+          token_est: 69
         - title: 'Milestone 5: CurrentCommittedTruth Projection'
-          lines: [247, 261]
+          lines: [249, 263]
           token_est: 56
         - title: 'Milestone 6: Test Suite (Vitest)'
-          lines: [263, 279]
-          token_est: 55
+          lines: [265, 283]
+          token_est: 75
     - title: 'Risks and Mitigations'
-      lines: [281, 290]
+      lines: [285, 294]
       token_est: 63
     - title: 'Exit Criteria'
-      lines: [292, 297]
-      token_est: 49
+      lines: [296, 301]
+      token_est: 50
 ---
 
 ---
@@ -127,7 +127,7 @@ Summary: Implementation of the v0.1 vertical slice with inspection outputs and t
 
 - GraphStore, IngestionConnector, ProjectionRunner interfaces
 - In-memory store implementation
-- Repo ingestion for `sindresorhus/ky` (v1.14.2)
+- Repo ingestion for `sindresorhus/ky` (v1.14.2) via local fixture copy
 - Graph-native policies (ingestion + projection)
 - JSON dump outputs and summary
 - Vitest tests for determinism and policy selection
@@ -214,6 +214,7 @@ slice.
 
 - Clone to `GRAPH_INGEST_ROOT` (default `./tmp/Texere/graph-ingest`)
 - Install dependencies via lockfile
+- Install policy controlled by argument with default enabled
 - Run scip-typescript index
 - Map files + symbols to ArtifactParts
 - Record toolchain versions in Activity metadata
@@ -236,6 +237,7 @@ slice.
 - `./tmp/graph-dump/policies.json`
 - `./tmp/graph-dump/projection.json`
 - `./tmp/graph-dump/graph_dump_summary.json`
+- Dumps follow the stable envelope schema with `schema_version`, `generated_at`, `project_id`
 
 **Verification:**
 
@@ -269,12 +271,14 @@ slice.
 - `ingestion_determinism.test.ts`
 - `policy_selection.test.ts`
 - `projection_determinism.test.ts`
+- `ky_repo_ingestion.integration.test.ts` (fixture-based)
 
 **Verification:**
 
 - [ ] Tests pass and are reproducible
 - [ ] Policy selection is deterministic
 - [ ] Projection determinism verified
+- [ ] ky ingestion uses a local fixture clone, not network
 
 ---
 
@@ -291,7 +295,7 @@ slice.
 
 ## Exit Criteria
 
-- [ ] Ingestion completes deterministically on `sindresorhus/ky` v1.14.2
+- [ ] Ingestion completes deterministically on `sindresorhus/ky` v1.14.2 (fixture-based)
 - [ ] JSON dumps are stable and inspectable
 - [ ] CurrentCommittedTruth projection is deterministic and explainable
 - [ ] All Vitest checks pass
