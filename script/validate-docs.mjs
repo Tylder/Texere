@@ -137,13 +137,29 @@ function parseFrontmatter(content) {
           .split(',')
           .map((v) => v.trim());
       }
-      // Handle block scalars (| or >)
-      else if (value === '|' || value === '>') {
-        // Block scalar: consume next non-empty line
-        if (i < lines.length - 1) {
+      // Handle block scalars (| or > with optional - or +)
+      else if (value.match(/^[|>][-+]?$/)) {
+        // Block scalar: consume indented lines until unindented or end
+        const blockLines = [];
+        const baseIndent = line.match(/^(\s*)/)[1].length;
+
+        while (i < lines.length - 1) {
           i++;
-          value = lines[i].trim();
+          const nextLine = lines[i];
+
+          // Stop if we hit an unindented line (next key or end)
+          if (nextLine.trim() && !nextLine.match(/^\s/) && nextLine.includes(':')) {
+            i--; // Back up so we don't skip the next key
+            break;
+          }
+
+          // Skip empty lines but keep processing
+          if (nextLine.trim()) {
+            blockLines.push(nextLine.trim());
+          }
         }
+
+        value = blockLines.join(' ').trim();
         result[key] = value;
       } else if (value) {
         result[key] = value;

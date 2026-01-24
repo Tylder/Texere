@@ -8,15 +8,15 @@ area: ai-coding-system
 feature: session-continuity
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Session resets force repeated repo research; historical knowledge and constraints are lost; task
-  state cannot be resumed; schema evolution breaks interpretation'
-summary_long:
-  'Identifies 4 critical continuity problems: new sessions behave as though they have never seen the
+summary_short: >-
+  Session resets force repeated repo research; historical knowledge and constraints are lost; task
+  state cannot be resumed; schema evolution breaks interpretation
+summary_long: >-
+  Identifies 4 critical continuity problems: new sessions behave as though they have never seen the
   repo, causing costly re-discovery; long-term decisions and constraints cannot be reliably
   recovered; tasks cannot be paused and resumed without losing intermediate findings; and knowledge
   schema evolution breaks interpretation of older stored knowledge. Continuity is blocked by lack of
-  durable state infrastructure (see IDEATION-PROBLEMS-state-and-visibility).'
+  durable state infrastructure (see IDEATION-PROBLEMS-state-and-visibility).
 related_ideation: [IDEATION-PROBLEMS-grounding-and-freshness]
 drives: []
 index:

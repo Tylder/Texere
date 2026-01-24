@@ -28,58 +28,62 @@ related:
 index:
   sections:
     - title: "TLDR"
-      lines: [88, 105]
+      lines: [92, 109]
       summary: 'Clone a repo at a commit, run scip-typescript, and map files/symbols into ArtifactRoot, ArtifactState, and ArtifactPart with deterministic provenance.'
       token_est: 99
     - title: "Scope"
-      lines: [107, 127]
+      lines: [111, 131]
       summary: 'TypeScript repo ingestion via SCIP into Artifact nodes. Excludes lifecycle assertions, projections, and store selection details.'
       token_est: 88
     - title: "REQ-001: Commit-anchored ingestion"
-      lines: [129, 151]
+      lines: [133, 155]
       summary: 'Ingestion MUST be anchored to an immutable commit hash.'
       token_est: 104
     - title: "REQ-002: SCIP index generation"
-      lines: [153, 175]
+      lines: [157, 179]
       summary: 'Ingestion MUST generate a SCIP index for the target repo.'
       token_est: 112
     - title: "REQ-003: Install policy"
-      lines: [177, 200]
+      lines: [181, 204]
       summary: 'Ingestion MUST install dependencies using the repo's declared package manager.'
       token_est: 123
     - title: "REQ-004: ArtifactPart mapping"
-      lines: [202, 229]
+      lines: [206, 233]
       summary: 'Files and symbols MUST be represented as ArtifactParts.'
       token_est: 132
     - title: "REQ-005: Locator format"
-      lines: [231, 253]
+      lines: [235, 257]
       summary: 'Symbol locators MUST use SCIP identifiers.'
       token_est: 97
     - title: "REQ-006: Toolchain provenance"
-      lines: [255, 278]
+      lines: [259, 282]
       summary: 'The ingestion run MUST record toolchain versions.'
       token_est: 115
     - title: "REQ-007: Failure policy"
-      lines: [280, 303]
+      lines: [284, 307]
       summary: 'SCIP index generation failures MUST fail the ingestion.'
       token_est: 111
     - title: "REQ-008: Retention mode for third-party code"
-      lines: [305, 326]
+      lines: [309, 330]
       summary: 'Retention mode MUST default to link-only for third-party repositories.'
       token_est: 88
     - title: "REQ-009: Monorepo coverage"
-      lines: [328, 350]
+      lines: [332, 354]
       summary: 'Monorepo ingestion MUST index all packages by default.'
       token_est: 97
+    - title: "REQ-010: Workspace root configuration"
+      lines: [356, 378]
+      summary: 'The clone workspace root MUST be configurable via environment file.'
+      token_est: 103
     - title: "Related Requirements"
-      lines: [352, 359]
+      lines: [380, 387]
       summary: 'Repo ingestion must align with ingestion and graph model requirements.'
       token_est: 25
     - title: "Design Decisions"
-      lines: [361, 374]
+      lines: [389, 402]
       token_est: 85
     - title: "Blockers"
-      lines: [376, 380]
+      lines: [404, 408]
       token_est: 39
 ---
 
@@ -346,6 +350,30 @@ Partial indexing can omit symbol definitions and break cross-file queries.
 **Verification Method:**
 
 - Monorepo indexing tests
+
+---
+
+## REQ-010: Workspace root configuration
+
+Summary: The clone workspace root MUST be configurable via environment file.
+
+**Statement:**
+
+The ingestion pipeline MUST read a workspace root from `.env` (e.g., `GRAPH_INGEST_ROOT`) and MUST
+default to `./tmp/Texere/graph-ingest` when the variable is unset.
+
+**Rationale:**
+
+A configurable workspace path keeps ingestion isolated and makes local inspection predictable.
+
+**Measurable Fit Criteria:**
+
+- [ ] Setting `GRAPH_INGEST_ROOT` changes the clone location
+- [ ] Unset `GRAPH_INGEST_ROOT` uses `./tmp/Texere/graph-ingest`
+
+**Verification Method:**
+
+- Workspace root resolution tests
 
 ---
 

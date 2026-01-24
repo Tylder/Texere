@@ -8,15 +8,15 @@ area: ai-coding-system
 feature: context-and-task-isolation
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Context selection is opaque; users cannot anchor stable references; context spills across task
-  boundaries, contaminating unrelated work'
-summary_long:
-  'Identifies 3 critical context and task isolation problems: users cannot see or control what
+summary_short: >-
+  Context selection is opaque; users cannot anchor stable references; context spills across task
+  boundaries, contaminating unrelated work
+summary_long: >-
+  Identifies 3 critical context and task isolation problems: users cannot see or control what
   information the agent is conditioning on; users lack stable ways to reference specific items
   (decisions, assumptions, files); and knowledge and context from one task leak into another without
   clear intent, causing irrelevant suggestions and confusion. Without clear context boundaries,
-  users must constantly manage scope manually.'
+  users must constantly manage scope manually.
 related_ideation: [IDEATION-PROBLEMS-user-trust-and-feedback]
 drives: []
 index:

@@ -8,17 +8,17 @@ area: ai-coding-system
 feature: orchestration-and-governance
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Orchestration is opaque and unreliable; phase discipline blurs; multi-agent coordination fails;
+summary_short: >-
+  Orchestration is opaque and unreliable; phase discipline blurs; multi-agent coordination fails;
   quality control is missing or ineffective; scope boundaries are ambiguous; self-improvement is
-  ungrounded'
-summary_long:
-  'Identifies 10 critical orchestration and governance problems: phase boundaries blur, multi-agent
+  ungrounded
+summary_long: >-
+  Identifies 10 critical orchestration and governance problems: phase boundaries blur, multi-agent
   conflicts corrupt state, quality control cannot intercept outputs, scope/autonomy expectations
   diverge, operational healthiness is untestable, system reliability depends on fragile agent
   compliance, multi-agent coordination is blind, critical review is weak, orchestration decisions
   are unobservable, and self-improvement lacks evidence backing. Orchestration is the connective
-  tissue; failures here affect all other systems.'
+  tissue; failures here affect all other systems.
 related_ideation:
   [IDEATION-PROBLEMS-integration-and-execution]
 drives: []

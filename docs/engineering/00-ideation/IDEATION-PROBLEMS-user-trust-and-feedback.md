@@ -8,15 +8,15 @@ area: ai-coding-system
 feature: user-trust-and-feedback
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Uncertainty and confidence are not communicated transparently; user feedback and preferences are
-  not accumulated; agent outputs cannot be calibrated for trust'
-summary_long:
-  'Identifies 3 critical user-facing problems: users cannot tell when to trust the agent because
+summary_short: >-
+  Uncertainty and confidence are not communicated transparently; user feedback and preferences are
+  not accumulated; agent outputs cannot be calibrated for trust
+summary_long: >-
+  Identifies 3 critical user-facing problems: users cannot tell when to trust the agent because
   confidence signals are missing or masked by fluency; user feedback and learned preferences vanish
   at session end, forcing re-education; and no systematic mechanism to calibrate trust based on past
   reliability. Without these, users either blindly follow bad advice or reject good advice, reducing
-  utility.'
+  utility.
 related_ideation: [IDEATION-PROBLEMS-orchestration-and-governance]
 drives: []
 index:

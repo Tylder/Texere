@@ -8,9 +8,9 @@ area: documentation
 feature: validation-system
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Validate documentation structure, metadata, naming, and links; auto-update registries and folder
-  READMEs on every commit'
+summary_short: >-
+  Validate documentation structure, metadata, naming, and links; auto-update registries and folder
+  READMEs on every commit
 summary_long: |
   Defines normative requirements for the documentation validation system that ensures every engineering document has
   correct frontmatter fields, follows naming conventions, contains valid links, and maintains synchronized indices

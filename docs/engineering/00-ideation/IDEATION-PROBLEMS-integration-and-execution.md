@@ -8,16 +8,16 @@ area: ai-coding-system
 feature: integration-and-execution
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Code generation violates repo constraints; test/build results are not reliably incorporated;
+summary_short: >-
+  Code generation violates repo constraints; test/build results are not reliably incorporated;
   environment drift breaks reproducibility; repo mutations are unsafe; changes are not reviewable at
-  human granularity'
-summary_long:
-  'Identifies 5 critical execution problems: generated code fails to align with architecture and
+  human granularity
+summary_long: >-
+  Identifies 5 critical execution problems: generated code fails to align with architecture and
   style; execution feedback (tests, builds) does not meaningfully update beliefs or drive fixes;
   environment differences corrupt results; repo state mutations are ambiguous or unsafe; and
   generated diffs are too large or unrationalized for effective human review. Without good execution
-  integration, the system increases rework rather than reducing it.'
+  integration, the system increases rework rather than reducing it.
 related_ideation:
   [IDEATION-PROBLEMS-grounding-and-freshness, IDEATION-PROBLEMS-orchestration-and-governance]
 drives: []

@@ -8,15 +8,15 @@ area: knowledge
 feature: graph-knowledge-system
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Project decisions decay and become untraceable; a graph approach must avoid taxonomy sprawl and
-  enforce lineage across evidence, plans, and code'
-summary_long:
-  'Identifies 12 core problems a graph-based project memory must solve: epistemic drift, graph
+summary_short: >-
+  Project decisions decay and become untraceable; a graph approach must avoid taxonomy sprawl and
+  enforce lineage across evidence, plans, and code
+summary_long: >-
+  Identifies 12 core problems a graph-based project memory must solve: epistemic drift, graph
   bloat/duplication, external-source parity, plan representation, weak invariants, time-scoped
   truth, retention constraints, multi-writer conflicts, lifecycle fragmentation, spec drift, missing
   verification evidence, and query usability. Includes failure modes, scenarios, resolution signals,
-  impacts, and boundaries. Drives Requirements after validation.'
+  impacts, and boundaries. Drives Requirements after validation.
 related_ideation: []
 drives: []
 index:

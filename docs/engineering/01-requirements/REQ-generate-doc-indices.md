@@ -8,9 +8,9 @@ area: documentation
 feature: section-indexing
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Extract section hierarchy (H2/H3) from documents and embed structured index in frontmatter for
-  LLM parsing'
+summary_short: >-
+  Extract section hierarchy (H2/H3) from documents and embed structured index in frontmatter for LLM
+  parsing
 summary_long: |
   Defines normative requirements for the section indexing system that extracts markdown headings from documents,
   collects section summaries, estimates token counts, and embeds a structured index in document frontmatter. This enables

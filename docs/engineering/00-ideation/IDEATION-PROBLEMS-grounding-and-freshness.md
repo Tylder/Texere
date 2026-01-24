@@ -8,14 +8,14 @@ area: ai-coding-system
 feature: grounding-and-freshness
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Research becomes stale without cheap upkeep; hallucination and assumption drift are not
-  mechanically prevented; decisions lack auditable history and traceability'
-summary_long:
-  'Identifies 3 critical problems: research ages without validation, leading to silent failures when
+summary_short: >-
+  Research becomes stale without cheap upkeep; hallucination and assumption drift are not
+  mechanically prevented; decisions lack auditable history and traceability
+summary_long: >-
+  Identifies 3 critical problems: research ages without validation, leading to silent failures when
   reality changes; assumptions accumulate and become facts without explicit tracking; and decision
   provenance is lost, making it impossible to recover why something exists. Without grounding
-  mechanisms and traceability, the system drifts silently from reality.'
+  mechanisms and traceability, the system drifts silently from reality.
 related_ideation: [IDEATION-PROBLEMS-session-continuity]
 drives: []
 index:

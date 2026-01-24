@@ -8,15 +8,15 @@ area: ai-coding-system
 feature: tooling-models-and-infrastructure
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Tool usage is unreliable; model swaps break workflows; context bloat drives costs; security
-  boundaries are weak; dependency topology is blind; prompt brittleness undermines consistency'
-summary_long:
-  'Identifies 6 critical infrastructure problems: tools exist but agents misuse them or forget them;
+summary_short: >-
+  Tool usage is unreliable; model swaps break workflows; context bloat drives costs; security
+  boundaries are weak; dependency topology is blind; prompt brittleness undermines consistency
+summary_long: >-
+  Identifies 6 critical infrastructure problems: tools exist but agents misuse them or forget them;
   model-specific prompt tuning creates lock-in and fragility; repeated document ingestion wastes
   tokens; secrets leak into prompts; cross-repo dependencies are invisible; prompts must be
   constantly tweaked to maintain consistency. These problems compound cost, reduce portability, and
-  create operational brittleness.'
+  create operational brittleness.
 related_ideation:
   [IDEATION-PROBLEMS-orchestration-and-governance, IDEATION-PROBLEMS-integration-and-execution]
 drives: []

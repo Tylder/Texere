@@ -58,7 +58,7 @@ index:
       summary:
         'End-to-end slice covering repo ingestion, in-memory store, policy-driven behavior, JSON
         inspection outputs, and CurrentCommittedTruth projection.'
-      token_est: 124
+      token_est: 127
     - title: 'Implements'
       lines: [156, 181]
       summary: 'Implements core ingestion, store, policy, and projection requirements for v0.1.'
@@ -67,7 +67,7 @@ index:
       lines: [183, 230]
       summary:
         'CLI-driven ingestion emits JSON dumps; projection output is deterministic and explainable.'
-      token_est: 181
+      token_est: 186
     - title: 'Data Models'
       lines: [232, 268]
       summary: 'Minimal node set for the slice with deterministic IDs and locators.'
@@ -101,8 +101,8 @@ index:
       summary: 'The slice MUST be extendable without rewrite.'
       token_est: 59
     - title: 'Open Questions'
-      lines: [369, 372]
-      token_est: 36
+      lines: [369, 371]
+      token_est: 21
 ---
 
 # SPEC-graph-system-vertical-slice-v0-1
@@ -135,7 +135,7 @@ inspection outputs, and CurrentCommittedTruth projection.
 
 **Includes:**
 
-- Repo ingestion for `sindresorhus/ky` at a specified commit
+- Repo ingestion for `sindresorhus/ky` pinned to release `v1.14.2` (commit `51b0129`)
 - SCIP-based symbol extraction (file + symbol parts)
 - In-memory graph store
 - Graph-native policies for ingestion and projection
@@ -209,13 +209,15 @@ These interfaces MUST exist even if only a single in-memory implementation is pr
 **Inputs:**
 
 - `repo_url` (e.g., `https://github.com/sindresorhus/ky`)
-- `commit` (explicit commit hash)
+- `commit` (explicit commit hash; use `51b0129` for `v1.14.2`)
 - `project_id` (target Project)
 - `policy_id` (optional override; default resolved by policy selection)
+- `GRAPH_INGEST_ROOT` (from `.env`, default `./tmp/Texere/graph-ingest`)
 
 **Behavior:**
 
 - Clones repo at commit
+- Uses workspace root from `.env` (default `./tmp/Texere/graph-ingest`)
 - Installs dependencies using repo lockfile and package manager
 - Runs `scip-typescript index`
 - Writes ArtifactRoot/State/Part to in-memory store
@@ -368,5 +370,4 @@ Summary: The slice MUST be extendable without rewrite.
 
 ## Open Questions
 
-- Which commit of `sindresorhus/ky` should we pin for repeatable tests?
 - Should policy fixtures live as JSON files or generated in test setup?

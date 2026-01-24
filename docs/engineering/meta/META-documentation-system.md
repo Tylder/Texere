@@ -8,8 +8,8 @@ area: documentation
 feature: system
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
-summary_short:
-  'Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META'
+summary_short: >-
+  Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META
 summary_long: |
   Defines all document types, required frontmatter fields, mandatory sections (Relationships, TLDR,
   Scope, etc.), naming conventions, linking rules, and automation system. Includes examples for each
