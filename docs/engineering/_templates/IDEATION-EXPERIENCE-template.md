@@ -1,31 +1,32 @@
 ---
 # REQUIRED FIELDS — DO NOT REMOVE ANY OF THESE
-type: IDEATION-EXPERIENCE           # Always "IDEATION-EXPERIENCE" for this document type
-status: draft                       # Current status: draft | active | stable | deprecated
-stability: experimental             # Maturity level: experimental | beta | stable
-created: YYYY-MM-DD                 # ISO format (YYYY-MM-DD). Set once, never change.
-last_updated: YYYY-MM-DD            # AUTO-UPDATED on commit. DO NOT manually edit.
-area: search                        # System area (e.g., search, api, auth, database)
-feature: pagination-system          # Feature/initiative name (e.g., pagination, auth-v2)
-                                    # Use kebab-case, match across IDEATION-PROBLEMS, IDEATION-UNKNOWNS
-summary_short: >-                   # 1-2 sentences for document registry tables
+type: IDEATION-EXPERIENCE # Always "IDEATION-EXPERIENCE" for this document type
+status: draft # Current status: draft | active | stable | deprecated
+stability: experimental # Maturity level: experimental | beta | stable
+created: YYYY-MM-DD # ISO format (YYYY-MM-DD). Set once, never change.
+last_updated: YYYY-MM-DD # AUTO-UPDATED on commit. DO NOT manually edit.
+area: search # System area (e.g., search, api, auth, database)
+feature:
+  pagination-system # Feature/initiative name (e.g., pagination, auth-v2)
+  # Use kebab-case, match across IDEATION-PROBLEMS, IDEATION-UNKNOWNS
+summary_short: >- # 1-2 sentences for document registry tables
   How data analysts and API consumers will experience pagination: journeys, personas, invariants
-summary_long: >-                    # 3-5 sentences: who uses this, how they use it, what matters to them
+summary_long: >- # 3-5 sentences: who uses this, how they use it, what matters to them
   Defines 2 personas (Alice: data analyst, Bob: API consumer) and their primary workflows.
-  Establishes experience invariants (always show progress, consistent error messages),
-  failure recovery paths, and success signals. Drives user-centric Requirements.
+  Establishes experience invariants (always show progress, consistent error messages), failure
+  recovery paths, and success signals. Drives user-centric Requirements.
 
 # OPTIONAL FIELDS — safe to omit if not applicable
-keywords:                           # Search keywords (2-3 recommended). Omit field if not needed.
+keywords: # Search keywords (2-3 recommended). Omit field if not needed.
   - ideation
   - experience
   - user-centric
 
 # DOCUMENT RELATIONSHIPS — omit sections with no entries
-related_ideation:                   # Other ideation docs on this feature (Problems, Unknowns)
+related_ideation: # Other ideation docs on this feature (Problems, Unknowns)
   - IDEATION-PROBLEMS-pagination
   - IDEATION-UNKNOWNS-pagination
-drives:                             # Requirements this drives (fill after REQ-* created)
+drives: # Requirements this drives (fill after REQ-* created)
   - REQ-feature-name
 ---
 

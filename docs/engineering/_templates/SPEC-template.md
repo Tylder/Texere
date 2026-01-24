@@ -1,37 +1,40 @@
 ---
 # REQUIRED FIELDS — DO NOT REMOVE ANY OF THESE
-type: SPEC                          # Always "SPEC" for this document type
-status: draft                       # Current status: draft | active | stable | deprecated
-                                    # Use draft while in development; change to active when approved
-stability: experimental             # Maturity level: experimental | beta | stable
-                                    # experimental = early, may change; beta = mostly stable
-created: YYYY-MM-DD                 # ISO format (YYYY-MM-DD). Set once, never change.
-last_updated: YYYY-MM-DD            # AUTO-UPDATED on commit. DO NOT manually edit.
-area: api                           # System area (e.g., api, database, service, auth, search)
-feature: pagination-system          # Feature/initiative name (e.g., pagination-system, auth-v2)
-                                    # Use kebab-case, match across related docs (IDEATION, REQ, etc.)
-summary_short: >-                   # 1-2 sentences for document registry tables
+type: SPEC # Always "SPEC" for this document type
+status:
+  draft # Current status: draft | active | stable | deprecated
+  # Use draft while in development; change to active when approved
+stability:
+  experimental # Maturity level: experimental | beta | stable
+  # experimental = early, may change; beta = mostly stable
+created: YYYY-MM-DD # ISO format (YYYY-MM-DD). Set once, never change.
+last_updated: YYYY-MM-DD # AUTO-UPDATED on commit. DO NOT manually edit.
+area: api # System area (e.g., api, database, service, auth, search)
+feature:
+  pagination-system # Feature/initiative name (e.g., pagination-system, auth-v2)
+  # Use kebab-case, match across related docs (IDEATION, REQ, etc.)
+summary_short: >- # 1-2 sentences for document registry tables
   GET /search endpoint with offset/limit pagination, metadata, and error handling
-summary_long: >-                    # 3-5 sentences: what this covers, why it matters, how it connects
+summary_long: >- # 3-5 sentences: what this covers, why it matters, how it connects
   Specifies API contract for paginated search results including request parameters (query, offset,
   limit, filters), response schema with pagination metadata (total, offset, limit, remaining,
   has_next, has_prev), error codes, and <100ms performance constraint. Implements
   REQ-pagination-system via shared pagination library.
 
 # OPTIONAL FIELDS — safe to omit if not applicable
-keywords:                           # Search keywords (2-3 recommended). Omit field if not needed.
+keywords: # Search keywords (2-3 recommended). Omit field if not needed.
   - pagination
   - api
 
 # DOCUMENT RELATIONSHIPS — omit sections with no entries
-implements:                         # Requirements this implements. Use format: REQ-name#REQ-001
+implements: # Requirements this implements. Use format: REQ-name#REQ-001
   - REQ-pagination-system#REQ-001
   - REQ-pagination-system#REQ-002
-depends_on:                         # Specs/docs required before this can be completed
+depends_on: # Specs/docs required before this can be completed
   - SPEC-shared-pagination-lib
-blocks:                             # Plans/docs blocked waiting for this Spec
+blocks: # Plans/docs blocked waiting for this Spec
   - IMPL-PLAN-pagination-system
-related:                            # Cross-cutting related documents
+related: # Cross-cutting related documents
   - SPEC-user-list-pagination
 ---
 

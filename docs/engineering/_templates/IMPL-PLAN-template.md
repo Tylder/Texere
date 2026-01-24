@@ -1,39 +1,41 @@
 ---
 # REQUIRED FIELDS — DO NOT REMOVE ANY OF THESE
-type: IMPL-PLAN                     # Always "IMPL-PLAN" for this document type
-status: draft                       # Current status: draft | active | completed | on-hold
-                                    # Use draft during planning; active during execution; completed when done
-stability: experimental             # Maturity level: experimental | beta | stable
-created: YYYY-MM-DD                 # ISO format (YYYY-MM-DD). Set once, never change.
-last_updated: YYYY-MM-DD            # AUTO-UPDATED on commit. DO NOT manually edit.
-area: core-api                      # System area (e.g., core-api, database, services)
-feature: pagination-system          # Feature/initiative name (e.g., pagination-system, auth-v2)
-                                    # Use kebab-case, match across IDEATION, REQ, SPEC docs
-summary_short: >-                   # 1-2 sentences for document registry tables
+type: IMPL-PLAN # Always "IMPL-PLAN" for this document type
+status:
+  draft # Current status: draft | active | completed | on-hold
+  # Use draft during planning; active during execution; completed when done
+stability: experimental # Maturity level: experimental | beta | stable
+created: YYYY-MM-DD # ISO format (YYYY-MM-DD). Set once, never change.
+last_updated: YYYY-MM-DD # AUTO-UPDATED on commit. DO NOT manually edit.
+area: core-api # System area (e.g., core-api, database, services)
+feature:
+  pagination-system # Feature/initiative name (e.g., pagination-system, auth-v2)
+  # Use kebab-case, match across IDEATION, REQ, SPEC docs
+summary_short: >- # 1-2 sentences for document registry tables
   Coordinate implementation of pagination across three endpoints (search, users, timeline)
-summary_long: >-                    # 3-5 sentences: what this plan covers, milestones, teams, outcomes
-  Coordinates 6 milestones from shared library build through production deployment.
-  Work spans 3 teams (search, users, timeline endpoints). Includes work breakdown,
-  risk register, rollout strategy with canary deployment, and success criteria.
+summary_long: >- # 3-5 sentences: what this plan covers, milestones, teams, outcomes
+  Coordinates 6 milestones from shared library build through production deployment. Work spans 3
+  teams (search, users, timeline endpoints). Includes work breakdown, risk register, rollout
+  strategy with canary deployment, and success criteria.
 
 # OPTIONAL FIELDS — safe to omit if not applicable
-keywords:                           # Search keywords (2-3 recommended). Omit field if not needed.
+keywords: # Search keywords (2-3 recommended). Omit field if not needed.
   - implementation
   - planning
   - deployment
 
 # DOCUMENT RELATIONSHIPS — omit sections with no entries
-coordinates:                        # Specs this plan coordinates
+coordinates: # Specs this plan coordinates
   - SPEC-search-results-pagination
   - SPEC-user-list-pagination
-covers:                             # Requirements this plan implements
+covers: # Requirements this plan implements
   - REQ-pagination-system#REQ-001
   - REQ-pagination-system#REQ-002
-depends_on:                         # Specs/docs required before this can start
+depends_on: # Specs/docs required before this can start
   - SPEC-shared-pagination-lib
-blocks:                             # Plans/docs blocked waiting for this one (rare for impl plans)
+blocks: # Plans/docs blocked waiting for this one (rare for impl plans)
   - (optional, omit if none)
-related:                            # Cross-cutting related documents
+related: # Cross-cutting related documents
   - INIT-pagination
 ---
 

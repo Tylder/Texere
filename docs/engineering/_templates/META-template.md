@@ -1,20 +1,20 @@
 ---
 # REQUIRED FIELDS — DO NOT REMOVE ANY OF THESE
-type: META                          # Always "META" for this document type
-status: draft                       # Current status: draft | active | stable | deprecated
-stability: experimental             # Maturity level: experimental | beta | stable
-created: YYYY-MM-DD                 # ISO format (YYYY-MM-DD). Set once, never change.
-last_updated: YYYY-MM-DD            # AUTO-UPDATED on commit. DO NOT manually edit.
-area: system                        # System area (e.g., system, documentation, governance)
-feature: your-feature               # Feature/initiative name (e.g., documentation-system)
-summary_short: >-                   # 1-2 sentences for document registry tables
+type: META # Always "META" for this document type
+status: draft # Current status: draft | active | stable | deprecated
+stability: experimental # Maturity level: experimental | beta | stable
+created: YYYY-MM-DD # ISO format (YYYY-MM-DD). Set once, never change.
+last_updated: YYYY-MM-DD # AUTO-UPDATED on commit. DO NOT manually edit.
+area: system # System area (e.g., system, documentation, governance)
+feature: your-feature # Feature/initiative name (e.g., documentation-system)
+summary_short: >- # 1-2 sentences for document registry tables
   Brief 1-2 sentence summary of this meta document
-summary_long: >-                    # 3-5 sentences: what this covers, why it matters, how it connects
-  Longer 3-5 sentence summary explaining what this meta doc covers, why it matters,
-  and how it relates to other documents. Used by LLM systems to determine relevance.
+summary_long: >- # 3-5 sentences: what this covers, why it matters, how it connects
+  Longer 3-5 sentence summary explaining what this meta doc covers, why it matters, and how it
+  relates to other documents. Used by LLM systems to determine relevance.
 
 # OPTIONAL FIELDS — safe to omit if not applicable
-keywords:                           # Search keywords (2-3 recommended). Omit field if not needed.
+keywords: # Search keywords (2-3 recommended). Omit field if not needed.
   - keyword1
   - keyword2
 ---
