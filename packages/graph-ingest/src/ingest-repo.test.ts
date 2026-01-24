@@ -10,6 +10,7 @@ import type {
 } from '@repo/graph-core';
 import type { GraphStore } from '@repo/graph-store';
 
+// eslint-disable-next-line import/order
 import type { IngestionConnector, RepoIngestInput } from './ingest-repo.js';
 
 const loadEnvConfigMock = vi.hoisted(() =>
@@ -56,9 +57,9 @@ class FakeStore implements GraphStore {
   beginTransaction = vi.fn();
   commit = vi.fn();
   rollback = vi.fn();
-  putNode(node: GraphNode): void {}
-  putEdge(edge: GraphEdge): void {}
-  getNode(id: NodeId): GraphNode | undefined {
+  putNode(_node: GraphNode): void {}
+  putEdge(_edge: GraphEdge): void {}
+  getNode(_id: NodeId): GraphNode | undefined {
     return undefined;
   }
   listNodes(): GraphNode[] {
@@ -67,10 +68,10 @@ class FakeStore implements GraphStore {
   listEdges(): GraphEdge[] {
     return [];
   }
-  getEdges(query?: EdgeQuery): GraphEdge[] {
+  getEdges(_query?: EdgeQuery): GraphEdge[] {
     return [];
   }
-  queryPolicy(selection: PolicySelection): PolicyNode | undefined {
+  queryPolicy(_selection: PolicySelection): PolicyNode | undefined {
     return undefined;
   }
 }
