@@ -103,7 +103,7 @@ describe('InMemoryGraphStore', () => {
       store.putEdge(edge2);
       const edges = store.listEdges();
 
-      expect(edges[0].id).toBeLessThan(edges[1].id);
+      expect(edges[0]?.id.localeCompare(edges[1]?.id ?? '')).toBeLessThan(0);
     });
 
     it('filters edges by query', () => {

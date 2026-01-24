@@ -34,6 +34,7 @@
     "test:watch": "vitest --watch"
   },
   "dependencies": {
+    "@c4312/scip": "^0.1.0",
     "@repo/graph-core": "workspace:*",
     "@repo/graph-ingest": "workspace:*",
     "@repo/graph-store": "workspace:*"

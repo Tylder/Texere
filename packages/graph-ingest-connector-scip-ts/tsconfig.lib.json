@@ -5,7 +5,10 @@
     "rootDir": "src",
     "types": ["node"],
     "noEmitOnError": true,
-    "tsBuildInfoFile": ".cache/tsconfig.lib.tsbuildinfo"
+    "tsBuildInfoFile": ".cache/tsconfig.lib.tsbuildinfo",
+    "paths": {
+      "@c4312/scip": ["./src/scip-types.d.ts"]
+    }
   },
   "references": [
     {

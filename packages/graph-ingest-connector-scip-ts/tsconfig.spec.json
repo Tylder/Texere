@@ -5,7 +5,10 @@
     "outDir": ".cache/ts-spec",
     "types": ["vitest/globals", "node"],
     "composite": true,
-    "tsBuildInfoFile": ".cache/tsconfig.spec.tsbuildinfo"
+    "tsBuildInfoFile": ".cache/tsconfig.spec.tsbuildinfo",
+    "paths": {
+      "@c4312/scip": ["./src/scip-types.d.ts"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "vitest.config.ts", "vitest.setup.ts"],
   "references": [

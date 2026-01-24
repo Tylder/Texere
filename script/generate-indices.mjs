@@ -297,7 +297,7 @@ function embedSectionIndex(doc) {
   // Format the document with Prettier
   try {
     execSync(`npx prettier "${doc.path}" --write`, { stdio: 'pipe' });
-  } catch (_err) {
+  } catch {
     // Silently ignore formatting errors
   }
 
@@ -379,7 +379,7 @@ function embedSectionIndex(doc) {
     // Run Prettier one more time to ensure final formatting
     try {
       execSync(`npx prettier "${doc.path}" --write`, { stdio: 'pipe' });
-    } catch (_err) {
+    } catch {
       // Silently ignore formatting errors
     }
 

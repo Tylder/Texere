@@ -16,10 +16,13 @@ rejected.**
 **VALIDATION PROTOCOL:**
 
 **After single code change:**
+
 - Run `pnpm post:report:fast` (format + lint:fix + typecheck + test)
 
 **After major fixes or multiple steps:**
-- Run `pnpm post:report` (full validation: format + lint:fix + typecheck + test:coverage + all checks)
+
+- Run `pnpm post:report` (full validation: format + lint:fix + typecheck + test:coverage + all
+  checks)
 
 ---
 

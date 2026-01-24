@@ -193,6 +193,9 @@ importers:
 
   packages/graph-ingest-connector-scip-ts:
     dependencies:
+      '@c4312/scip':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@repo/graph-core':
         specifier: workspace:*
         version: link:../graph-core
@@ -828,6 +831,12 @@ packages:
   '@bcoe/v8-coverage@1.0.2':
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
+
+  '@bufbuild/protobuf@2.11.0':
+    resolution: {integrity: sha512-sBXGT13cpmPR5BMgHE6UEEfEaShh5Ror6rfN3yEK5si7QVrtZg8LEPQb0VVhiLRUslD2yLnXtnRzG035J/mZXQ==}
+
+  '@c4312/scip@0.1.0':
+    resolution: {integrity: sha512-V1VIq3rB1tIj7n3NHIg+VgbKEYl75O+yM30GD4K5wQgdgC7taOsJU7itQdMvtkKhyCWHHuR3WZ0ijUUqPELR3g==}
 
   '@emnapi/core@1.8.1':
     resolution: {integrity: sha512-AvT9QFpxK0Zd8J0jopedNm+w/2fIzvtPKPjqyw9jwvBaReTTqPBk9Hixaz7KbjimP+QNz605/XnjFcDAL2pqBg==}
@@ -4716,6 +4725,12 @@ snapshots:
       '@babel/helper-validator-identifier': 7.28.5
 
   '@bcoe/v8-coverage@1.0.2': {}
+
+  '@bufbuild/protobuf@2.11.0': {}
+
+  '@c4312/scip@0.1.0':
+    dependencies:
+      '@bufbuild/protobuf': 2.11.0
 
   '@emnapi/core@1.8.1':
     dependencies:
