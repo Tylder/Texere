@@ -13,6 +13,8 @@ immutable by ID—if intent changes, deprecate and create a new requirement ID.
 ## Archived / Deprecated
 
 - [`REQ-graph-ingestion`](REQ-graph-ingestion.md) (draft) - graph-ingestion
+- [`REQ-graph-system-graph-ingestion-repo-scip-ts`](REQ-graph-system-graph-ingestion-repo-scip-ts.md)
+  (draft) - graph-ingestion-repo-scip-ts
 - [`REQ-graph-lifecycle`](REQ-graph-lifecycle.md) (draft) - graph-lifecycle
 - [`REQ-graph-projection`](REQ-graph-projection.md) (draft) - graph-projection
 - [`REQ-graph-store`](REQ-graph-store.md) (draft) - graph-store
