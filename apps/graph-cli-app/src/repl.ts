@@ -20,7 +20,8 @@ export async function startRepl(): Promise<void> {
   dispatcher.register('ingest repo', {
     handler: ingestRepoCommand,
     description: 'Ingest a repository',
-    usage: 'ingest repo <source> [--commit <ref>] [--branch <branch>]',
+    usage:
+      'ingest repo <source> [--commit <ref>] [--branch <branch>] [--project <id>] [--policy <scope>]',
   });
   dispatcher.register('dump', {
     handler: dumpCommand,
@@ -40,7 +41,7 @@ export async function startRepl(): Promise<void> {
   dispatcher.register('project', {
     handler: projectCommand,
     description: 'Run a projection',
-    usage: 'project <name>',
+    usage: 'project <name> [--policy <scope>]',
   });
   dispatcher.register('help', {
     handler: createHelpCommand(() => dispatcher.listCommands()),

@@ -45,6 +45,7 @@ export type IngestResult = {
   success: boolean;
   nodeCount: number;
   edgeCount: number;
+  outputDir: string;
 };
 
 export type TraceResult = {

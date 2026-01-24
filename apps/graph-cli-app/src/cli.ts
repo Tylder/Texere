@@ -1,7 +1,16 @@
-import type { GraphNode } from '@repo/graph-core';
+import { mkdir } from 'node:fs/promises';
+import path from 'node:path';
+
+import type { GraphEdge, GraphNode, PolicySelection } from '@repo/graph-core';
+import { ingestRepo, writeJsonDumps } from '@repo/graph-ingest';
+import { ScipTsIngestionConnector } from '@repo/graph-ingest-connector-scip-ts';
+import { CurrentCommittedTruthProjection } from '@repo/graph-projection';
 import type { GraphStore } from '@repo/graph-store';
 import { InMemoryGraphStore } from '@repo/graph-store';
 
+import { loadEnvConfig } from './env.js';
+import { checkoutRef, cloneRepo, fetchRepo, runGit } from './git.js';
+import { deriveRepoName, isExistingPath, resolveIngestRoot } from './paths.js';
 import type {
   DiffResult,
   GraphSnapshot,
@@ -18,11 +27,56 @@ export class GraphCLI {
   }
 
   async ingestRepo(
-    _source: string,
-    _options?: { commit?: string; branch?: string },
+    source: string,
+    options?: {
+      commit?: string;
+      branch?: string;
+      projectId?: string;
+      policyScope?: string;
+    },
   ): Promise<IngestResult> {
-    await Promise.resolve();
-    throw new Error('Ingest not implemented yet.');
+    const env = await loadEnvConfig();
+    const ingestRoot = resolveIngestRoot(env.GRAPH_INGEST_ROOT);
+    await mkdir(ingestRoot, { recursive: true });
+
+    const repo = await this.resolveRepoSource(source, ingestRoot);
+    await this.syncRepo(repo.repoPath, source);
+    await this.checkoutIfNeeded(repo.repoPath, options);
+
+    const commitHash = await runGit(['rev-parse', 'HEAD'], repo.repoPath);
+    const projectId = options?.projectId ?? env.GRAPH_PROJECT_ID ?? 'default';
+
+    const selection: PolicySelection | undefined = options?.policyScope
+      ? { policy_kind: 'IngestionPolicy', scope: options.policyScope }
+      : undefined;
+
+    this.store.beginTransaction();
+    try {
+      const input = {
+        repoPath: repo.repoPath,
+        repoUrl: repo.repoUrl,
+        commit: commitHash,
+        projectId,
+        ...(selection ? { policySelection: selection } : {}),
+      };
+
+      const result = await ingestRepo(input, this.store, new ScipTsIngestionConnector());
+
+      this.store.commit();
+
+      const outputDir = path.join('.', 'tmp', 'graph-dump');
+      await writeJsonDumps({ store: this.store, outputDir });
+
+      return {
+        success: true,
+        nodeCount: result.node_count,
+        edgeCount: result.edge_count,
+        outputDir,
+      };
+    } catch (error) {
+      this.store.rollback();
+      throw error;
+    }
   }
 
   getNodes(): Array<{ kind: string; count: number }> {
@@ -49,17 +103,61 @@ export class GraphCLI {
     return this.store.getNode(id);
   }
 
-  trace(_nodeId: string, _depth = 3): TraceResult {
-    throw new Error('Trace not implemented yet.');
+  trace(nodeId: string, depth = 3): TraceResult {
+    const visitedNodes = new Set<string>();
+    const visitedEdges = new Set<string>();
+    const nodes: GraphNode[] = [];
+    const edges: GraphEdge[] = [];
+    const queue: Array<{ id: string; level: number }> = [{ id: nodeId, level: 0 }];
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current || current.level > depth) {
+        continue;
+      }
+
+      this.visitNode(current.id, visitedNodes, nodes);
+      this.collectEdges(current, visitedNodes, visitedEdges, edges, queue);
+    }
+
+    return { node_id: nodeId, depth, nodes, edges };
   }
 
-  diff(_snap1: GraphSnapshot, _snap2: GraphSnapshot): DiffResult {
-    throw new Error('Diff not implemented yet.');
+  diff(snap1: GraphSnapshot, snap2: GraphSnapshot): DiffResult {
+    const ids1 = new Set(snap1.nodes.map((node) => node.id));
+    const ids2 = new Set(snap2.nodes.map((node) => node.id));
+
+    const added = snap2.nodes.filter((node) => !ids1.has(node.id)).map((node) => node.id);
+    const removed = snap1.nodes.filter((node) => !ids2.has(node.id)).map((node) => node.id);
+    const modified = snap2.nodes
+      .filter((node) => ids1.has(node.id))
+      .filter((node) => {
+        const previous = snap1.nodes.find((candidate) => candidate.id === node.id);
+        return previous && JSON.stringify(previous) !== JSON.stringify(node);
+      })
+      .map((node) => node.id);
+
+    const summary = `Nodes: ${snap1.nodes.length} -> ${snap2.nodes.length} (added ${added.length}, removed ${removed.length}, modified ${modified.length})`;
+
+    return { summary, added, removed, modified };
   }
 
-  async runProjection(_name: string): Promise<ProjectionResult> {
-    await Promise.resolve();
-    throw new Error('Projection not implemented yet.');
+  async runProjection(name: string, options?: { policyScope?: string }): Promise<ProjectionResult> {
+    const selection: PolicySelection | undefined = options?.policyScope
+      ? { policy_kind: 'ProjectionPolicy', scope: options.policyScope }
+      : undefined;
+    const runner = new CurrentCommittedTruthProjection();
+    const projection = runner.run(name, this.store, selection);
+
+    const outputDir = path.join('.', 'tmp', 'graph-dump');
+    await mkdir(outputDir, { recursive: true });
+    await writeJsonDumps({ store: this.store, projection, outputDir });
+
+    return {
+      name: projection.projection_name,
+      nodes: projection.nodes,
+      edges: projection.edges,
+    };
   }
 
   dumpToJSON(): GraphSnapshot {
@@ -108,5 +206,78 @@ export class GraphCLI {
       return ['  (none)'];
     }
     return entries.map(([kind, count]) => `  ${kind}: ${count}`);
+  }
+
+  private visitNode(id: string, visitedNodes: Set<string>, nodes: GraphNode[]): void {
+    if (visitedNodes.has(id)) {
+      return;
+    }
+
+    const node = this.store.getNode(id);
+    if (!node) {
+      return;
+    }
+
+    visitedNodes.add(id);
+    nodes.push(node);
+  }
+
+  private collectEdges(
+    current: { id: string; level: number },
+    visitedNodes: Set<string>,
+    visitedEdges: Set<string>,
+    edges: GraphEdge[],
+    queue: Array<{ id: string; level: number }>,
+  ): void {
+    for (const edge of this.store.getEdges()) {
+      if (edge.from !== current.id && edge.to !== current.id) {
+        continue;
+      }
+
+      if (!visitedEdges.has(edge.id)) {
+        visitedEdges.add(edge.id);
+        edges.push(edge);
+      }
+
+      const neighbor = edge.from === current.id ? edge.to : edge.from;
+      if (!visitedNodes.has(neighbor)) {
+        queue.push({ id: neighbor, level: current.level + 1 });
+      }
+    }
+  }
+
+  private async resolveRepoSource(
+    source: string,
+    ingestRoot: string,
+  ): Promise<{ repoPath: string; repoUrl: string }> {
+    const repoName = deriveRepoName(source);
+    const repoPath = path.join(ingestRoot, repoName);
+    const isLocal = await isExistingPath(source);
+    const repoUrl = isLocal ? `file://${path.resolve(source)}` : source;
+
+    return { repoPath, repoUrl };
+  }
+
+  private async syncRepo(repoPath: string, source: string): Promise<void> {
+    if (await isExistingPath(repoPath)) {
+      await fetchRepo(repoPath);
+      return;
+    }
+
+    await cloneRepo(source, repoPath);
+  }
+
+  private async checkoutIfNeeded(
+    repoPath: string,
+    options?: { commit?: string; branch?: string },
+  ): Promise<void> {
+    if (options?.commit) {
+      await checkoutRef(repoPath, options.commit);
+      return;
+    }
+
+    if (options?.branch) {
+      await checkoutRef(repoPath, options.branch);
+    }
   }
 }
