@@ -57,62 +57,62 @@ index:
       lines: [416, 456]
       token_est: 199
     - title: 'v0.1 Node & Edge Schemas'
-      lines: [458, 556]
-      token_est: 467
+      lines: [458, 555]
+      token_est: 458
     - title: 'Command Roadmap: More Commands Coming'
-      lines: [558, 605]
+      lines: [557, 604]
       token_est: 309
     - title: 'Ingestion Lifecycle'
-      lines: [607, 655]
+      lines: [606, 654]
       token_est: 258
     - title: 'Snapshot File Format'
-      lines: [657, 749]
+      lines: [656, 748]
       token_est: 219
     - title: 'v0.1 Commands (Currently Available)'
-      lines: [751, 1141]
-      token_est: 1633
+      lines: [750, 1121]
+      token_est: 1584
       subsections:
         - title: '1. `ingest repo <url> [options]`'
-          lines: [753, 825]
+          lines: [752, 824]
           token_est: 418
         - title: '2. `dump [--format <format>]`'
-          lines: [827, 900]
-          token_est: 271
+          lines: [826, 883]
+          token_est: 245
         - title: '3. `trace <node-id> [--depth <n>]`'
-          lines: [902, 964]
-          token_est: 288
+          lines: [885, 944]
+          token_est: 272
         - title: '4. `diff <snap1> <snap2>`'
-          lines: [966, 1023]
-          token_est: 247
+          lines: [946, 1003]
+          token_est: 240
         - title: '5. `project <name>`'
-          lines: [1025, 1108]
+          lines: [1005, 1088]
           token_est: 341
         - title: '6. `help [command]`'
-          lines: [1110, 1129]
+          lines: [1090, 1109]
           token_est: 49
         - title: '7. `exit`'
-          lines: [1131, 1141]
+          lines: [1111, 1121]
           token_est: 16
     - title: 'Future Commands (v1.0+)'
-      lines: [1143, 1165]
+      lines: [1123, 1145]
       token_est: 114
     - title: 'State Management'
-      lines: [1167, 1187]
+      lines: [1147, 1167]
       token_est: 72
     - title: 'Extensibility Example: Adding a v1.0 Command'
-      lines: [1189, 1241]
+      lines: [1169, 1221]
       token_est: 181
     - title: 'Error Handling'
-      lines: [1243, 1264]
+      lines: [1223, 1244]
       token_est: 81
     - title: 'Testing'
-      lines: [1266, 1281]
+      lines: [1246, 1261]
       token_est: 71
     - title: 'Non-Goals'
-      lines: [1283, 1291]
+      lines: [1263, 1271]
       token_est: 37
     - title: 'Related Documents'
-      lines: [1293, 1297]
+      lines: [1273, 1277]
       token_est: 12
 ---
 
@@ -541,14 +541,13 @@ Formal definitions of node and edge types created during v0.1 operations.
 {
   source_id: string; // ID of source node
   target_id: string; // ID of target node
-  kind: string; // Type of relationship (HasRoot, HasState, HasPart, HasPolicy)
+  kind: string; // Type of relationship (HasState, HasPart, HasPolicy)
   created_at: string; // ISO-8601 timestamp
 }
 ```
 
 **Edge kinds in v0.1:**
 
-- `HasRoot` — ArtifactRoot → ArtifactState
 - `HasState` — ArtifactRoot → ArtifactState
 - `HasPart` — ArtifactState → ArtifactPart
 - `HasPolicy` — (node) → Policy
@@ -879,23 +878,7 @@ Display the current graph state. Inspect all nodes and edges in `cli.store`.
 
 **Output (--format json):**
 
-```json
-{
-  "nodes": {
-    "ArtifactRoot": 1,
-    "ArtifactState": 1,
-    "ArtifactPart": 45,
-    "Policy": 2,
-    "total": 47
-  },
-  "edges": {
-    "HasState": 1,
-    "HasPart": 45,
-    "HasPolicy": 2,
-    "total": 52
-  }
-}
-```
+Outputs a full `GraphSnapshot` (see Snapshot File Format).
 
 ---
 
@@ -931,8 +914,8 @@ Follow relationships from a node. Shows the graph neighborhood of a node.
 **Examples:**
 
 ```bash
-> trace artifact_state_def456
-# Shows all parts of that artifact state
+> trace artifact_root_001
+# Shows the artifact state and its parts
 
 > trace artifact_part_abc123 --depth 2
 # Shows what that symbol/file is connected to
@@ -942,22 +925,19 @@ Follow relationships from a node. Shows the graph neighborhood of a node.
 
 ```
 ┌──────────────────────────────────┐
-│ Trace from artifact_state_def456 │
+│ Trace from artifact_root_001     │
 │ (depth=3)                        │
 ├──────────────────────────────────┤
-│ artifact_state_def456            │
-│  (ArtifactState)                 │
-│  ├─ HasRoot → artifact_root_001  │
-│  │   (ArtifactRoot)              │
-│  │   └─ HasPolicy → policy_123   │
-│  │       (IngestionPolicy)       │
-│  │                               │
-│  └─ HasPart → artifact_part_001  │
-│      (ArtifactPart: file)        │
-│      ├─ HasPart → artifact_part_002
-│      │   (ArtifactPart: symbol)  │
-│      └─ HasPolicy → policy_456   │
-│          (ProjectionPolicy)      │
+│ artifact_root_001                │
+│  (ArtifactRoot)                  │
+│  ├─ HasState → artifact_state_def456
+│  │   (ArtifactState)             │
+│  │   ├─ HasPart → artifact_part_001
+│  │   │   (ArtifactPart: file)    │
+│  │   └─ HasPolicy → policy_456   │
+│  │       (ProjectionPolicy)      │
+│  └─ HasPolicy → policy_123       │
+│      (IngestionPolicy)           │
 └──────────────────────────────────┘
 ```
 
@@ -969,7 +949,7 @@ Compare two graph snapshots. Identify what changed between two states.
 
 **What it does:**
 
-- Loads two snapshots (from files or memory)
+- Loads two snapshots from files
 - Compares node counts, edge counts, node IDs
 - Reports added, removed, and modified nodes
 - Useful for detecting changes or verifying determinism
@@ -988,8 +968,8 @@ Compare two graph snapshots. Identify what changed between two states.
 
 **Arguments:**
 
-- `<snap1>` — First snapshot (file path or label)
-- `<snap2>` — Second snapshot (file path or label)
+- `<snap1>` — First snapshot file path
+- `<snap2>` — Second snapshot file path
 
 **Examples:**
 

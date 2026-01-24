@@ -13,6 +13,16 @@ rejected.**
 4. **REPORT** any failures with specific error details
 5. **NEVER** respond to user without validation confirmation
 
+**Definition:**
+
+- **Code changes** include edits to source, configs, scripts, build/test tooling, or any file
+  outside `/docs`.
+- **Docs-only changes** are limited to files under `/docs` and are **not** considered code changes.
+
+**Docs-only validation:**
+
+- Run `pnpm check:docs`
+
 **VALIDATION PROTOCOL:**
 
 **After single code change:**
