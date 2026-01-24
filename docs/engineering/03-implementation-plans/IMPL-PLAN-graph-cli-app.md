@@ -29,65 +29,78 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [98, 122]
+      lines: [111, 135]
       summary:
         'Implement extensible interactive CLI that grows with graph features. v0.1 has repo
         ingestion. v1.0+ adds assertion commands using same pattern.'
       token_est: 168
     - title: 'Scope'
-      lines: [124, 152]
+      lines: [137, 165]
       summary:
         'Implement extensible interactive CLI that grows with graph features. v0.1 includes repo
         ingestion.'
-      token_est: 164
+      token_est: 166
     - title: 'Preconditions'
-      lines: [154, 161]
+      lines: [167, 174]
       token_est: 55
     - title: 'Milestones'
-      lines: [163, 526]
-      token_est: 1428
+      lines: [176, 539]
+      token_est: 1433
       subsections:
         - title: 'Milestone 1: App Scaffolding & Setup'
-          lines: [165, 264]
+          lines: [178, 277]
           token_est: 366
         - title: 'Milestone 2: REPL Loop & Command Dispatcher'
-          lines: [266, 406]
+          lines: [279, 419]
           token_est: 543
         - title: 'Milestone 3: Command Implementations'
-          lines: [408, 451]
-          token_est: 167
+          lines: [421, 464]
+          token_est: 172
         - title: 'Milestone 4: Ink UI Components'
-          lines: [453, 499]
+          lines: [466, 512]
           token_est: 214
         - title: 'Milestone 5: Integration & Testing'
-          lines: [501, 526]
+          lines: [514, 539]
           token_est: 138
     - title: 'Total Effort: ~18 hours (2.5 days)'
-      lines: [528, 536]
+      lines: [541, 549]
       token_est: 30
     - title: 'Technology Stack'
-      lines: [538, 558]
+      lines: [551, 571]
       token_est: 86
     - title: 'Implementation Notes'
-      lines: [560, 643]
-      token_est: 299
+      lines: [573, 657]
+      token_est: 307
+      subsections:
+        - title: 'REPL Loop Architecture'
+          lines: [575, 621]
+          token_est: 167
+        - title: 'Error Handling Strategy'
+          lines: [623, 628]
+          token_est: 50
+        - title: 'State Management'
+          lines: [630, 642]
+          token_est: 46
+        - title: 'Command Parsing'
+          lines: [644, 657]
+          token_est: 42
     - title: 'Success Metrics'
-      lines: [645, 654]
+      lines: [659, 668]
       token_est: 64
     - title: 'Risk Register'
-      lines: [656, 665]
+      lines: [670, 679]
       token_est: 110
     - title: 'Exit Criteria (Phase 1)'
-      lines: [667, 679]
+      lines: [681, 693]
       token_est: 98
     - title: 'Assumptions'
-      lines: [681, 688]
+      lines: [695, 702]
       token_est: 49
     - title: 'Future Enhancements (v2.0+)'
-      lines: [690, 699]
+      lines: [704, 713]
       token_est: 46
     - title: 'Related Documents'
-      lines: [701, 705]
+      lines: [715, 719]
       token_est: 12
 ---
 
@@ -131,7 +144,7 @@ ingestion.
 - Nx app structure (`apps/graph-cli-app/`)
 - Entry point: `pnpm dev` starts REPL
 - Extensible command dispatcher (how commands are registered/executed)
-- v0.1 commands: `ingest`, `dump`, `trace`, `diff`, `project`, `help`, `exit`
+- v0.1 commands: `ingest repo`, `dump`, `trace`, `diff`, `project`, `help`, `exit`
 - GraphCLI class (manages in-memory store)
 - Ink+Pastel components for terminal output
 - Error handling and debug mode
@@ -372,7 +385,7 @@ async function startRepl() {
   dispatcher.register('ingest repo', {
     handler: ingestRepoCommand,
     description: 'Ingest a repository',
-    usage: 'ingest repo <url> [--commit <ref>] [--branch <branch>]',
+    usage: 'ingest repo <source> [--commit <ref>] [--branch <branch>]',
   });
   dispatcher.register('dump', {
     handler: dumpCommand,
@@ -411,7 +424,7 @@ async function startRepl() {
 
 **Deliverables:**
 
-- `src/commands/ingest.ts` — `ingest repo <url>`
+- `src/commands/ingest.ts` — `ingest repo <source>` (URL or local path)
 - `src/commands/dump.ts` — `dump [--format]`
 - `src/commands/trace.ts` — `trace <node-id> [--depth]`
 - `src/commands/diff.ts` — `diff <snap1> <snap2>`
@@ -428,7 +441,7 @@ interface Command {
   name: string;
   description: string;
   usage: string;
-  execute(args: string[], flags: Record<string, any>, app: GraphApp): Promise<CommandResult>;
+  execute(args: string[], flags: Record<string, any>, app: GraphCLI): Promise<CommandResult>;
 }
 
 interface CommandResult {
@@ -634,6 +647,7 @@ Use Commander-like parsing:
 
 ```bash
 > ingest repo https://github.com/foo/bar --commit v1.0
+> ingest repo ./path/to/local/repo --commit v1.0
   command: "ingest"
   subcommand: "repo"
   args: ["https://github.com/foo/bar"]
