@@ -7,16 +7,20 @@ last_updated: 2026-01-24
 area: graph-system
 feature: graph-cli-app
 summary_short: >-
-  Interactive CLI application for manual testing and exploration of the graph system
+  Interactive CLI testing tool that grows with the graph system—add new commands as features are
+  implemented
 summary_long: >-
-  Specifies a simple interactive command-line application for developers to manually test graph
-  operations, ingest repositories, run projections, and inspect graph state. The app provides an
-  interactive REPL with commands for ingestion, querying, projection, and visualization.
+  Specifies a simple, extensible interactive CLI application for personal testing of graph features.
+  The CLI is designed to grow: as new graph features are implemented (v0.1 repo ingestion, v1.0
+  assertions, v1.0+ validation), corresponding commands are added to the CLI. The architecture
+  supports adding new commands without requiring architectural changes. Primary purpose: manual
+  testing of features during development. Secondary: can serve as E2E test harness.
 keywords:
   - cli
   - repl
   - interactive
   - testing
+  - extensible
 implements:
   - REQ-graph-system-graph-system-architecture
   - REQ-graph-ingestion
@@ -26,57 +30,69 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [86, 97]
-      token_est: 64
+      lines: [102, 116]
+      token_est: 90
+    - title: 'Core Design Principle: Extensibility'
+      lines: [118, 132]
+      token_est: 97
     - title: 'Scope'
-      lines: [99, 115]
-      token_est: 72
+      lines: [134, 159]
+      token_est: 115
+    - title: 'Architecture: Extensible Command Pattern'
+      lines: [161, 226]
+      token_est: 289
     - title: 'Entry Point'
-      lines: [117, 128]
+      lines: [228, 239]
       token_est: 28
-    - title: 'Commands'
-      lines: [130, 471]
-      token_est: 1056
+    - title: 'GraphCLI Class'
+      lines: [241, 281]
+      token_est: 197
+    - title: 'v0.1 Commands (Currently Available)'
+      lines: [283, 419]
+      token_est: 310
       subsections:
         - title: '1. `ingest repo <url> [options]`'
-          lines: [132, 178]
-          token_est: 188
+          lines: [285, 304]
+          token_est: 65
         - title: '2. `dump [--format <format>]`'
-          lines: [180, 243]
-          token_est: 175
+          lines: [306, 325]
+          token_est: 49
         - title: '3. `trace <node-id> [--depth <n>]`'
-          lines: [245, 286]
-          token_est: 127
+          lines: [327, 346]
+          token_est: 50
         - title: '4. `diff <snap1> <snap2>`'
-          lines: [288, 329]
-          token_est: 129
-        - title: '5. `project <name> [--selection <sel>]`'
-          lines: [331, 370]
-          token_est: 114
+          lines: [348, 366]
+          token_est: 38
+        - title: '5. `project <name>`'
+          lines: [368, 386]
+          token_est: 39
         - title: '6. `help [command]`'
-          lines: [372, 452]
-          token_est: 301
+          lines: [388, 407]
+          token_est: 49
         - title: '7. `exit`'
-          lines: [454, 471]
-          token_est: 24
-    - title: 'Output Model'
-      lines: [473, 492]
-      token_est: 120
-    - title: 'Interactive Session Example'
-      lines: [494, 551]
-      token_est: 210
-    - title: 'Error Handling'
-      lines: [553, 596]
-      token_est: 117
+          lines: [409, 419]
+          token_est: 16
+    - title: 'Future Commands (v1.0+)'
+      lines: [421, 443]
+      token_est: 114
     - title: 'State Management'
-      lines: [598, 614]
-      token_est: 80
+      lines: [445, 465]
+      token_est: 72
+    - title: 'Extensibility Example: Adding a v1.0 Command'
+      lines: [467, 519]
+      token_est: 181
+    - title: 'Error Handling'
+      lines: [521, 542]
+      token_est: 81
+    - title: 'Testing'
+      lines: [544, 559]
+      token_est: 71
     - title: 'Non-Goals'
-      lines: [616, 624]
-      token_est: 45
+      lines: [561, 569]
+      token_est: 37
     - title: 'Related Documents'
-      lines: [626, 631]
-      token_est: 15
+      lines: [571, 575]
+      token_est: 12
 ---
 
 # SPEC-graph-cli-app
@@ -85,14 +101,33 @@ index:
 
 ## TLDR
 
-**What:** Interactive CLI REPL for manual graph testing and exploration.
+**What:** Interactive CLI REPL for personally testing graph features as they are implemented.
 
-**Why:** Provide developers a hands-on way to test graph features without writing code.
+**Why:** Provide a hands-on tool to manually test and explore each graph feature during development.
 
-**How:** `pnpm -C apps/graph-cli-app dev` opens a prompt where you type commands like
-`ingest repo <url>`, `dump`, `project CurrentCommittedTruth`, etc.
+**How:** Simple command loop—as features are added to graph libraries, add corresponding commands to
+the CLI.
+
+**Philosophy:** The CLI grows with the graph system. Not all commands exist yet. Architecture is
+designed for easy expansion.
 
 **Status:** Draft specification
+
+---
+
+## Core Design Principle: Extensibility
+
+The graph-cli-app is built to grow alongside the graph system.
+
+**Timeline:**
+
+- **v0.1 (now):** Repository ingestion commands
+- **v1.0 (future):** Add assertion commands (Decisions, Requirements, SpecClauses)
+- **v1.0+ (future):** Add validation and evidence commands
+- **v2.0+ (future):** Add more specialized commands
+
+**Key rule:** Adding a new feature should require minimal CLI changes. Commands follow a standard
+pattern and are registered centrally. No architectural rewrites required when adding features.
 
 ---
 
@@ -101,16 +136,92 @@ index:
 **Includes:**
 
 - Interactive REPL entry point and command loop
-- 7 commands: `ingest`, `dump`, `trace`, `diff`, `project`, `help`, `exit`
+- `GraphCLI` class: manages in-memory store and graph operations
+- Command dispatcher and argument parsing
+- Extensible command pattern (how to add new commands)
 - Ink+Pastel terminal UI rendering
 - Error handling and debug mode
 
 **Excludes:**
 
-- Scenario registry or automated test framework
-- Batch execution or CI/CD workflows
-- Database persistence (v2.0+)
-- Complex workflow composition
+- Automated test framework or CI/CD workflows
+- Database persistence (deferred to v2.0+)
+- Web API
+
+**Future (when features exist):**
+
+- Assertion commands (v1.0)
+- Validation commands (v1.0+)
+- Evidence linking (v1.0+)
+- Subject management (v1.0+)
+- Advanced projections (v1.0+)
+
+---
+
+## Architecture: Extensible Command Pattern
+
+Every command follows the same pattern:
+
+```typescript
+// Step 1: Define the command handler
+export async function ingestRepoCommand(
+  args: string[],
+  flags: Record<string, any>,
+  cli: GraphCLI
+): Promise<CommandResult> {
+  const url = args[0];
+  const commit = flags.commit;
+
+  const result = await cli.ingestRepo(url, { commit });
+  return {
+    success: result.success,
+    message: `Ingested ${result.nodeCount} nodes`,
+    data: result
+  };
+}
+
+// Step 2: Register it in the dispatcher
+const commands = {
+  'ingest repo': {
+    handler: ingestRepoCommand,
+    description: 'Clone and ingest a repository',
+    usage: 'ingest repo <url> [--commit <ref>]',
+  }
+};
+
+// Step 3: When a new feature exists, add a new command following the same pattern
+export async function createDecisionCommand(
+  args: string[],
+  flags: Record<string, any>,
+  cli: GraphCLI
+): Promise<CommandResult> {
+  const text = args.join(' ');
+  const decision = await cli.createAssertion('Decision', { text });
+  return {
+    success: true,
+    message: `Created Decision: ${decision.id}`,
+    data: decision
+  };
+}
+
+const commands = {
+  'ingest repo': { ... },
+  'create decision': {
+    handler: createDecisionCommand,
+    description: 'Create a decision assertion',
+    usage: 'create decision <text>',
+  }
+};
+```
+
+**Pattern:**
+
+1. Implement command handler that calls `GraphCLI` methods
+2. Return `CommandResult` with status, message, and data
+3. Register command in dispatcher with usage/description
+4. CLI automatically adds it to help, parsing, and execution flow
+
+**No changes to REPL loop required.** Just add command handlers and register them.
 
 ---
 
@@ -127,11 +238,53 @@ Type 'help' for available commands.
 
 ---
 
-## Commands
+## GraphCLI Class
+
+The `GraphCLI` class manages the in-memory graph store and provides methods that commands invoke.
+
+**Current v0.1 Interface:**
+
+```typescript
+class GraphCLI {
+  // State
+  private store: GraphStore;
+
+  // v0.1 methods (ingestion & projection)
+  async ingestRepo(
+    url: string,
+    options?: { commit?: string; branch?: string },
+  ): Promise<IngestResult>;
+  getNodes(): Array<{ kind: string; count: number }>;
+  getEdges(): Array<{ kind: string; count: number }>;
+  getNodeById(id: string): Node | undefined;
+  trace(nodeId: string, depth?: number): TraceResult;
+  diff(snap1: GraphSnapshot, snap2: GraphSnapshot): DiffResult;
+  async runProjection(name: string): Promise<ProjectionResult>;
+  dumpToJSON(): GraphSnapshot;
+  dumpToText(): string;
+
+  // Future v1.0 methods (will be added)
+  // async createAssertion(kind: string, fields: object): Promise<Assertion>;
+  // async queryAssertions(filter: object): Promise<Assertion[]>;
+  // async createSubject(name: string): Promise<Subject>;
+  // async linkEvidence(...): Promise<void>;
+  // async validate(): Promise<ValidationResult>;
+}
+```
+
+**Key properties:**
+
+- `store: GraphStore` — In-memory graph store (persists across commands in a session)
+- All methods are synchronous except I/O-bound ones (`ingestRepo()`, `runProjection()`)
+- New methods added as features are implemented
+
+---
+
+## v0.1 Commands (Currently Available)
 
 ### 1. `ingest repo <url> [options]`
 
-Clone and ingest a repository into the graph.
+Clone and ingest a repository. Calls `cli.ingestRepo()` internally.
 
 **Syntax:**
 
@@ -139,57 +292,26 @@ Clone and ingest a repository into the graph.
 > ingest repo <url> [--commit <ref>] [--branch <branch>]
 ```
 
-**Arguments:**
-
-- `<url>` — GitHub repository URL
-- `--commit <ref>` — Specific commit/tag (default: HEAD)
-- `--branch <branch>` — Specific branch (default: main)
-
 **Examples:**
 
 ```bash
 > ingest repo https://github.com/sindresorhus/ky
 > ingest repo https://github.com/sindresorhus/ky --commit v1.14.2
-> ingest repo https://github.com/sindresorhus/ky --branch develop
 ```
 
-**Output:**
-
-```
-┌──────────────────────────────────────┐
-│ Ingesting repository...              │
-├──────────────────────────────────────┤
-│ ⏳ Cloning repo...                   │
-│ ✓ Cloned (2.3s)                     │
-│ ✓ Installing dependencies (1.2s)    │
-│ ⏳ Running SCIP indexing...          │
-│   Indexed: 156 symbols in 42 files  │
-│ ✓ Created artifact nodes (0.8s)     │
-│   Root: 1 | State: 1 | Parts: 45    │
-│ ✓ Generated JSON dumps (0.5s)       │
-├──────────────────────────────────────┤
-│ Success (12.3s)                     │
-│ Dump location: ./tmp/graph-dump     │
-└──────────────────────────────────────┘
-
-> _
-```
+**Output:** Ink UI showing progress (cloning, dependencies, SCIP indexing, node creation)
 
 ---
 
 ### 2. `dump [--format <format>]`
 
-Display the current graph state (nodes and edges).
+Display current graph state. Calls `cli.dumpToJSON()` or `cli.dumpToText()`.
 
 **Syntax:**
 
 ```bash
 > dump [--format json|text]
 ```
-
-**Arguments:**
-
-- `--format` — Output format: `json` or `text` (default: `text`)
 
 **Examples:**
 
@@ -198,64 +320,19 @@ Display the current graph state (nodes and edges).
 > dump --format json
 ```
 
-**Output (text):**
-
-```
-┌──────────────────────────────────────┐
-│ Graph State                          │
-├──────────────────────────────────────┤
-│ Nodes (47 total)                    │
-│ ├── ArtifactRoot: 1                  │
-│ ├── ArtifactState: 1                 │
-│ ├── ArtifactPart: 45                 │
-│ └── Policy: 2                        │
-│                                      │
-│ Edges (52 total)                    │
-│ ├── HasState: 1                      │
-│ ├── HasPart: 45                      │
-│ └── HasPolicy: 2                     │
-└──────────────────────────────────────┘
-
-> _
-```
-
-**Output (--format json):**
-
-```json
-{
-  "nodes": {
-    "ArtifactRoot": 1,
-    "ArtifactState": 1,
-    "ArtifactPart": 45,
-    "Policy": 2,
-    "total": 47
-  },
-  "edges": {
-    "HasState": 1,
-    "HasPart": 45,
-    "HasPolicy": 2,
-    "total": 52
-  },
-  "dump_written_to": "./tmp/graph-dump"
-}
-```
+**Output:** Node/edge summary with counts and types
 
 ---
 
 ### 3. `trace <node-id> [--depth <n>]`
 
-Follow relationships from a node through the graph.
+Follow relationships from a node. Calls `cli.trace()`.
 
 **Syntax:**
 
 ```bash
 > trace <node-id> [--depth <n>]
 ```
-
-**Arguments:**
-
-- `<node-id>` — Node ID to trace from
-- `--depth <n>` — Relationship depth (default: 3)
 
 **Examples:**
 
@@ -264,30 +341,13 @@ Follow relationships from a node through the graph.
 > trace artifact_part_abc123 --depth 5
 ```
 
-**Output:**
-
-```
-┌──────────────────────────────────────┐
-│ Trace from artifact_part_abc123      │
-│ (depth=3)                            │
-├──────────────────────────────────────┤
-│ artifact_part_abc123 (ArtifactPart)  │
-│  └─ HasParent                        │
-│     └─ artifact_state_def456 (State) │
-│        └─ HasRoot                    │
-│           └─ artifact_root_ghi789    │
-│              └─ HasPolicy            │
-│                 └─ policy_001 (Pol)  │
-└──────────────────────────────────────┘
-
-> _
-```
+**Output:** Tree showing relationship chain
 
 ---
 
 ### 4. `diff <snap1> <snap2>`
 
-Compare two graph snapshots or states.
+Compare two snapshots. Calls `cli.diff()`.
 
 **Syntax:**
 
@@ -295,53 +355,25 @@ Compare two graph snapshots or states.
 > diff <snap1> <snap2>
 ```
 
-**Arguments:**
-
-- `<snap1>` — First snapshot file or state name
-- `<snap2>` — Second snapshot file or state name
-
 **Examples:**
 
 ```bash
 > diff ./dump1.json ./dump2.json
-> diff before after
 ```
 
-**Output:**
-
-```
-┌──────────────────────────────────────┐
-│ Diff: dump1.json → dump2.json        │
-├──────────────────────────────────────┤
-│ Nodes: 47 → 49 (+2)                  │
-│ Edges: 52 → 55 (+3)                  │
-│                                      │
-│ Added:                               │
-│  • Policy: 2 nodes                   │
-│                                      │
-│ Modified:                            │
-│  • ArtifactState: content hash       │
-└──────────────────────────────────────┘
-
-> _
-```
+**Output:** Added/modified/removed nodes summary
 
 ---
 
-### 5. `project <name> [--selection <sel>]`
+### 5. `project <name>`
 
-Run a projection to compute a deterministic graph view.
+Run a projection. Calls `cli.runProjection()`.
 
 **Syntax:**
 
 ```bash
-> project <name> [--selection <sel>]
+> project <name>
 ```
-
-**Arguments:**
-
-- `<name>` — Projection name (e.g., `CurrentCommittedTruth`)
-- `--selection` — Selection rule (future v1.0+)
 
 **Examples:**
 
@@ -349,23 +381,7 @@ Run a projection to compute a deterministic graph view.
 > project CurrentCommittedTruth
 ```
 
-**Output:**
-
-```
-┌──────────────────────────────────────┐
-│ Projection: CurrentCommittedTruth    │
-├──────────────────────────────────────┤
-│ ✓ Computed successfully              │
-│   Selected nodes: 45 artifacts       │
-│   Excluded: 2 (superseded/draft)     │
-│   Duration: 124ms                    │
-│                                      │
-│ Output written to:                   │
-│  ./tmp/projection.json               │
-└──────────────────────────────────────┘
-
-> _
-```
+**Output:** Projection results with node counts and explanation
 
 ---
 
@@ -379,81 +395,20 @@ Show available commands or help for a specific command.
 > help [command]
 ```
 
-**Arguments:**
-
-- `[command]` — Optional command name to get detailed help
-
 **Examples:**
 
 ```bash
 > help
 > help ingest
-> help project
 ```
 
-**Output (help):**
-
-```
-┌──────────────────────────────────────┐
-│ Available Commands                   │
-├──────────────────────────────────────┤
-│ ingest repo <url>                    │
-│   Clone and ingest a repository      │
-│                                      │
-│ dump [--format json|text]            │
-│   Display current graph state        │
-│                                      │
-│ trace <node-id> [--depth N]          │
-│   Follow relationships from a node   │
-│                                      │
-│ diff <snap1> <snap2>                 │
-│   Compare two snapshots              │
-│                                      │
-│ project <name>                       │
-│   Run a projection                   │
-│                                      │
-│ help [command]                       │
-│   Show this help or command help     │
-│                                      │
-│ exit                                 │
-│   Leave the CLI                      │
-└──────────────────────────────────────┘
-
-> _
-```
-
-**Output (help ingest):**
-
-```
-┌──────────────────────────────────────┐
-│ ingest repo <url> [options]          │
-├──────────────────────────────────────┤
-│ Clone and ingest a repository.       │
-│                                      │
-│ Usage:                               │
-│   ingest repo <url>                  │
-│   ingest repo <url> --commit v1.0    │
-│   ingest repo <url> --branch main    │
-│                                      │
-│ Options:                             │
-│   --commit <ref>   Commit/tag ref    │
-│   --branch <name>  Branch name       │
-│                                      │
-│ Examples:                            │
-│   > ingest repo https://github.com/  │
-│     sindresorhus/ky                  │
-│   > ingest repo https://github.com/  │
-│     sindresorhus/ky --commit v1.14.2 │
-└──────────────────────────────────────┘
-
-> _
-```
+**Output:** Command list or detailed help for one command
 
 ---
 
 ### 7. `exit`
 
-Exit the CLI application.
+Exit the CLI.
 
 **Syntax:**
 
@@ -461,171 +416,160 @@ Exit the CLI application.
 > exit
 ```
 
-**Output:**
-
-```
-Goodbye!
-$
-```
-
 ---
 
-## Output Model
+## Future Commands (v1.0+)
 
-All outputs are rendered via Ink+Pastel React components for beautiful terminal rendering.
-
-**Output Types:**
-
-1. **Boxes** — Progress/status displayed in bordered boxes with icons (✓, ✗, ⏳)
-2. **Tables** — Node/edge summaries shown as ASCII tables
-3. **Trees** — Relationship traces shown as indented trees
-4. **JSON** — Optionally dump as JSON for scripting/piping
-
-**Colors:**
-
-- Green (`✓`) — Success, completed operations
-- Red (`✗`) — Errors, failed operations
-- Yellow (`⏳`) — In progress, pending operations
-- Blue (`ℹ`) — Information messages
-- Gray — Secondary/muted text
-
----
-
-## Interactive Session Example
+When the graph libraries add assertion support, you will add commands like:
 
 ```bash
-$ pnpm -C apps/graph-cli-app dev
-
-Graph CLI v0.1
-Type 'help' for available commands.
-
-> ingest repo https://github.com/sindresorhus/ky --commit v1.14.2
-
-┌──────────────────────────────────────┐
-│ Ingesting repository...              │
-├──────────────────────────────────────┤
-│ ✓ Cloned (2.3s)                     │
-│ ✓ Dependencies (1.2s)               │
-│ ✓ SCIP indexing (3.1s)              │
-│   156 symbols in 42 files           │
-│ ✓ Artifact nodes (0.8s)             │
-│ ✓ JSON dumps (0.5s)                 │
-├──────────────────────────────────────┤
-│ Success (12.3s)                     │
-│ Dump: ./tmp/graph-dump              │
-└──────────────────────────────────────┘
-
-> dump
-
-┌──────────────────────────────────────┐
-│ Graph State (47 nodes, 52 edges)     │
-├──────────────────────────────────────┤
-│ Nodes:                               │
-│  • ArtifactRoot: 1                   │
-│  • ArtifactState: 1                  │
-│  • ArtifactPart: 45                  │
-│  • Policy: 2                         │
-│                                      │
-│ Edges:                               │
-│  • HasState: 1                       │
-│  • HasPart: 45                       │
-│  • HasPolicy: 2                      │
-└──────────────────────────────────────┘
-
-> project CurrentCommittedTruth
-
-┌──────────────────────────────────────┐
-│ Projection: CurrentCommittedTruth    │
-├──────────────────────────────────────┤
-│ ✓ Computed (124ms)                  │
-│ Selected: 45 artifacts              │
-│ Output: ./tmp/projection.json       │
-└──────────────────────────────────────┘
-
-> exit
-
-Goodbye!
-$
+> create decision "Use TypeScript for backend"
+> create requirement "Must support PostgreSQL"
+> create spec-clause "API must return 200 on success"
+> link-evidence artifact_part_xyz123 to decision_id123
+> list assertions
+> validate graph
+> query subjects
 ```
 
----
+Each new command follows the same pattern:
 
-## Error Handling
+1. Create a handler function
+2. Call the appropriate `GraphCLI` method
+3. Register the command
 
-**Invalid Command:**
-
-```
-> invalid-command
-✗ Unknown command: invalid-command
-Type 'help' for available commands.
-
-> _
-```
-
-**Invalid Arguments:**
-
-```
-> ingest repo
-✗ Missing required argument: <url>
-Usage: ingest repo <url> [--commit <ref>]
-
-> _
-```
-
-**Runtime Error:**
-
-```
-> ingest repo https://github.com/nonexistent/repo
-⏳ Cloning repo...
-✗ Error: Failed to clone repository
-  Repository not found (404)
-
-> _
-```
-
-**Debug Mode:**
-
-Add `--debug` flag to any session for verbose logging:
-
-```bash
-$ pnpm -C apps/graph-cli-app dev --debug
-
-# Shows detailed logs for each operation
-```
+No changes to the REPL architecture. Just add new handlers.
 
 ---
 
 ## State Management
 
-The CLI maintains a single in-memory graph state across commands:
+Single `GraphCLI` instance per session:
 
-- **Ingest** — Populates graph with artifact nodes and edges
-- **Dump/Trace/Diff** — Query current graph state
-- **Project** — Compute deterministic views (doesn't modify graph)
-- **Exit** — Discard all state
+```
+User types:   > ingest repo https://github.com/...
+                        ↓
+REPL parses:  command="ingest", subcommand="repo", args=[url], flags={}
+                        ↓
+Dispatcher:   ingestRepoCommand(args, flags, cli)
+                        ↓
+GraphCLI:     cli.ingestRepo(url) → stores nodes in cli.store
+                        ↓
+Render:       renderProgressBox(result)
+                        ↓
+Loop:         Prompt for next command
+```
 
-If you want to start fresh:
+Commands query/modify `cli.store`. Session ends when user types `exit`.
+
+---
+
+## Extensibility Example: Adding a v1.0 Command
+
+When you implement Assertions in the graph libraries:
+
+**1. Add method to GraphCLI:**
+
+```typescript
+async createAssertion(kind: string, fields: object): Promise<Assertion> {
+  // Call graph-lifecycle package
+  // Store in this.store
+}
+```
+
+**2. Create command handler:**
+
+```typescript
+// src/commands/create-decision.ts
+export async function createDecisionCommand(
+  args: string[],
+  flags: Record<string, any>,
+  cli: GraphCLI,
+): Promise<CommandResult> {
+  const text = args.join(' ');
+  const decision = await cli.createAssertion('Decision', { text });
+  return {
+    success: true,
+    message: `Created Decision: ${decision.id}`,
+    data: decision,
+  };
+}
+```
+
+**3. Register in dispatcher:**
+
+```typescript
+// src/dispatcher.ts
+commands['create decision'] = {
+  handler: createDecisionCommand,
+  description: 'Create a decision assertion',
+  usage: 'create decision <text>',
+};
+```
+
+**4. Test immediately:**
 
 ```bash
-> exit
 $ pnpm -C apps/graph-cli-app dev
+> create decision "Use TypeScript for backend"
+```
+
+No rewrites. No new patterns. Just add a handler and register it.
+
+---
+
+## Error Handling
+
+Invalid commands, missing args, runtime errors all show helpful messages:
+
+```
+> invalid-cmd
+✗ Unknown command: invalid-cmd
+Type 'help' for available commands.
+
+> ingest repo
+✗ Missing required argument: <url>
+Usage: ingest repo <url> [--commit <ref>]
+
+> ingest repo https://github.com/invalid/repo
+⏳ Cloning repo...
+✗ Error: Repository not found (404)
+
+> ingest repo ... --debug
+[Shows full stacktrace]
+```
+
+---
+
+## Testing
+
+CLI can be used manually for testing during development, and later can support automated E2E tests:
+
+```bash
+# Manual testing (primary purpose)
+$ pnpm -C apps/graph-cli-app dev
+> ingest repo ...
+> dump
+> project CurrentCommittedTruth
+
+# E2E testing (secondary)
+# Can wrap REPL in test harness to automate workflows
 ```
 
 ---
 
 ## Non-Goals
 
-- Persistent storage (graphs are ephemeral within a session)
-- Automated test framework or scenario registry
-- Batch execution or script files
-- Database backends
-- Web UI or API server
+- Automated CI/CD testing framework (use Vitest for that)
+- Database persistence (v2.0+)
+- Web UI or API
+- Complex workflow composition
+- Batch execution
 
 ---
 
 ## Related Documents
 
+- IMPL-PLAN-graph-cli-app.md
 - SPEC-graph-system-vertical-slice-v0-1.md
 - REQ-graph-system-graph-system-architecture.md
-- REQ-graph-ingestion.md
-- REQ-graph-projection.md

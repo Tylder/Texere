@@ -7,11 +7,13 @@ last_updated: 2026-01-24
 area: graph-system
 feature: graph-cli-app
 summary_short: >-
-  Simple interactive CLI implementation: REPL loop with 7 commands for graph testing
+  Extensible interactive CLI that grows with graph system—v0.1 has repo ingestion, v1.0+ adds
+  assertion commands
 summary_long: >-
-  Coordinates implementation of a straightforward interactive CLI application with Enquirer for
-  prompts, Commander for argument parsing, and Ink+Pastel for terminal UI rendering. Single phase
-  (v0.1) implementation focused on core commands: ingest, dump, trace, diff, project, help, exit.
+  Coordinates implementation of an interactive CLI application designed to grow alongside graph
+  features. v0.1 implements repo ingestion commands. Extensible command pattern means v1.0 can add
+  assertion commands without architectural rewrites. Uses Enquirer for prompts, command dispatcher
+  for routing, Ink+Pastel for terminal UI.
 keywords:
   - implementation
   - planning
@@ -27,61 +29,65 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [92, 109]
-      summary: 'Implement interactive CLI in single phase (v0.1) with 7 core commands.'
-      token_est: 114
+      lines: [98, 122]
+      summary:
+        'Implement extensible interactive CLI that grows with graph features. v0.1 has repo
+        ingestion. v1.0+ adds assertion commands using same pattern.'
+      token_est: 168
     - title: 'Scope'
-      lines: [111, 131]
-      summary: 'Implement interactive CLI with 7 commands and Ink rendering.'
-      token_est: 103
+      lines: [124, 152]
+      summary:
+        'Implement extensible interactive CLI that grows with graph features. v0.1 includes repo
+        ingestion.'
+      token_est: 164
     - title: 'Preconditions'
-      lines: [133, 140]
+      lines: [154, 161]
       token_est: 55
     - title: 'Milestones'
-      lines: [142, 326]
-      token_est: 769
+      lines: [163, 379]
+      token_est: 875
       subsections:
         - title: 'Milestone 1: App Scaffolding & Setup'
-          lines: [144, 164]
+          lines: [165, 185]
           token_est: 95
         - title: 'Milestone 2: REPL Loop & Command Dispatcher'
-          lines: [166, 207]
-          token_est: 175
+          lines: [187, 260]
+          token_est: 281
         - title: 'Milestone 3: Command Implementations'
-          lines: [209, 252]
+          lines: [262, 305]
           token_est: 167
         - title: 'Milestone 4: Ink UI Components'
-          lines: [254, 300]
+          lines: [307, 353]
           token_est: 214
         - title: 'Milestone 5: Integration & Testing'
-          lines: [302, 326]
+          lines: [355, 379]
           token_est: 117
     - title: 'Total Effort: ~18 hours (2.5 days)'
-      lines: [328, 336]
+      lines: [381, 389]
       token_est: 30
     - title: 'Technology Stack'
-      lines: [338, 356]
+      lines: [391, 409]
       token_est: 71
     - title: 'Implementation Notes'
-      lines: [358, 411]
+      lines: [411, 464]
       token_est: 175
     - title: 'Success Metrics'
-      lines: [413, 422]
+      lines: [466, 475]
       token_est: 64
     - title: 'Risk Register'
-      lines: [424, 433]
+      lines: [477, 486]
       token_est: 110
     - title: 'Exit Criteria (Phase 1)'
-      lines: [435, 447]
+      lines: [488, 500]
       token_est: 98
     - title: 'Assumptions'
-      lines: [449, 456]
+      lines: [502, 509]
       token_est: 49
     - title: 'Future Enhancements (v2.0+)'
-      lines: [458, 467]
+      lines: [511, 520]
       token_est: 46
     - title: 'Related Documents'
-      lines: [469, 473]
+      lines: [522, 526]
       token_est: 12
 ---
 
@@ -91,40 +97,55 @@ index:
 
 ## TLDR
 
-Summary: Implement interactive CLI in single phase (v0.1) with 7 core commands.
+Summary: Implement extensible interactive CLI that grows with graph features. v0.1 has repo
+ingestion. v1.0+ adds assertion commands using same pattern.
 
-**What:** REPL-based CLI for manual graph testing using Enquirer, Commander, and Ink.
+**What:** REPL-based CLI for personal testing of graph features as they're implemented.
 
-**Why:** Give developers a hands-on tool for exploring graph features without writing code.
+**Why:** Give hands-on testing tool during development. As features are added to graph libraries,
+add CLI commands without architectural rewrites.
 
-**How:** Command loop → parse input → execute operation → render output → loop
+**How:** Extensible command pattern: new commands = handler + registration. REPL and dispatcher stay
+the same.
+
+**Philosophy:** CLI grows with the graph system. v0.1 ingests repos. v1.0 will add assertions. Same
+extensible pattern.
 
 **Status:** Draft
 
-**Critical path:** M1 (setup) → M2 (REPL loop) → M3 (commands) → M4 (Ink UI) → M5 (tests)
+**Critical path:** M1 (setup) → M2 (REPL + dispatcher) → M3 (v0.1 commands) → M4 (Ink UI) → M5
+(tests)
 
-**Risk:** If Enquirer/Ink have rendering bugs, CLI experience suffers. Mitigate via early
-prototyping.
+**Risk:** If command pattern is rigid, v1.0 features will require rewrites. Mitigate via careful
+dispatcher design in M2.
 
 ---
 
 ## Scope
 
-Summary: Implement interactive CLI with 7 commands and Ink rendering.
+Summary: Implement extensible interactive CLI that grows with graph features. v0.1 includes repo
+ingestion.
 
-**Includes:**
+**Includes (v0.1):**
 
 - Nx app structure (`apps/graph-cli-app/`)
 - Entry point: `pnpm dev` starts REPL
-- 7 commands: `ingest`, `dump`, `trace`, `diff`, `project`, `help`, `exit`
-- Ink+Pastel components for output
-- Command parsing and argument validation
+- Extensible command dispatcher (how commands are registered/executed)
+- v0.1 commands: `ingest`, `dump`, `trace`, `diff`, `project`, `help`, `exit`
+- GraphCLI class (manages in-memory store)
+- Ink+Pastel components for terminal output
 - Error handling and debug mode
+
+**Includes (Design for future):**
+
+- Clear pattern for adding v1.0 commands (assertions, validation)
+- GraphCLI methods stubbed for future features
+- Command registration system that works for new commands
 
 **Excludes:**
 
-- Scenario registry or automated test framework
-- Batch execution or CI/CD workflows
+- v1.0+ assertion commands (added later when assertions are implemented)
+- Automated test framework or CI/CD workflows
 - Database persistence or storage backends
 - Web UI or API server
 
@@ -169,24 +190,56 @@ Summary: Implement interactive CLI with 7 commands and Ink rendering.
 
 **Deliverables:**
 
+- `src/cli.ts` — GraphCLI class definition
 - `src/repl.ts` — Main REPL loop using Enquirer
 - `src/dispatcher.ts` — Command parser and router
 - `src/types.ts` — Command interface and result types
-- Tests: `unit/repl.test.ts`, `unit/dispatcher.test.ts`
+- Tests: `unit/cli.test.ts`, `unit/repl.test.ts`, `unit/dispatcher.test.ts`
 
 **Code Structure:**
 
 ```typescript
+// src/cli.ts
+class GraphCLI {
+  private store: GraphStore;
+
+  async ingestRepo(url: string, options?: { commit?: string; branch?: string }) {
+    // Call graph-ingest package, populate store
+  }
+
+  getNodes() {
+    /* ... */
+  }
+  getEdges() {
+    /* ... */
+  }
+  trace(nodeId: string, depth?: number) {
+    /* ... */
+  }
+  diff(snap1, snap2) {
+    /* ... */
+  }
+  async runProjection(name: string) {
+    /* ... */
+  }
+  dumpToJSON() {
+    /* ... */
+  }
+  dumpToText() {
+    /* ... */
+  }
+}
+
 // src/repl.ts
 async function startRepl() {
-  const app = new GraphApp(store);
+  const cli = new GraphCLI();
 
   while (true) {
     const input = await promptUser('> ');
     const [command, args, flags] = parseInput(input);
 
     try {
-      const result = await dispatcher.execute(command, args, flags, app);
+      const result = await dispatcher.execute(command, args, flags, cli);
       renderOutput(result);
     } catch (err) {
       renderError(err);
