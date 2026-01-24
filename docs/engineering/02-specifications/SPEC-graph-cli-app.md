@@ -159,22 +159,41 @@ index:
         - title: 'E2E Tests (Slow, Real Data)'
           lines: [1006, 1103]
           token_est: 390
+    - title: 'CLI Commands & Entry Points'
+      lines: [1105, 1220]
+      summary:
+        'Four top-level commands for scenario execution, batch runs, testing, and interactive
+        debugging.'
+      token_est: 580
+      subsections:
+        - title: 'Command 1: run-scenario'
+          lines: [1109, 1150]
+          token_est: 155
+        - title: 'Command 2: run-scenarios'
+          lines: [1152, 1180]
+          token_est: 101
+        - title: 'Command 3: test'
+          lines: [1182, 1205]
+          token_est: 73
+        - title: 'Command 4: inspect'
+          lines: [1207, 1220]
+          token_est: 43
     - title: 'Execution Modes'
-      lines: [1105, 1275]
+      lines: [1222, 1392]
       summary: 'Single scenario, batch, E2E, and interactive modes for different use cases.'
       token_est: 887
       subsections:
         - title: 'Mode 1: Single Scenario (Local Development)'
-          lines: [1109, 1159]
+          lines: [1226, 1276]
           token_est: 258
         - title: 'Mode 2: Batch Scenarios (CI/CD)'
-          lines: [1161, 1199]
+          lines: [1278, 1316]
           token_est: 215
         - title: 'Mode 3: E2E Tests'
-          lines: [1201, 1222]
+          lines: [1318, 1339]
           token_est: 114
         - title: 'Mode 4: Interactive Inspector (Ink TUI)'
-          lines: [1224, 1275]
+          lines: [1341, 1392]
           token_est: 283
     - title: 'Extensibility Contract'
       lines: [1277, 1316]
@@ -1102,6 +1121,236 @@ describe('E2E: v1.0 lifecycle workflow', () => {
 
 ---
 
+## CLI Commands & Entry Points
+
+Summary: Four top-level commands for scenario execution, batch runs, testing, and interactive
+debugging.
+
+The app MUST expose exactly four executable commands via pnpm (or direct Node invocation).
+
+### Command 1: `run-scenario <name>`
+
+Execute a single scenario by name with optional flags.
+
+**Usage:**
+
+```bash
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --json
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --quiet
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --debug
+pnpm -C apps/graph-app run-scenario v0.1/repo-ingestion-base --output ./my-dump
+```
+
+**Positional Arguments:**
+
+- `<name>` — Scenario name matching registry key (e.g., `v0.1/repo-ingestion-base`)
+
+**Flags:**
+
+| Flag             | Type    | Default            | Description                                       |
+| ---------------- | ------- | ------------------ | ------------------------------------------------- |
+| `--json`         | boolean | false              | Output JSON to stdout instead of Ink UI           |
+| `--quiet`        | boolean | false              | Suppress all terminal output; write files only    |
+| `--debug`        | boolean | false              | Enable verbose logging and full error stacktraces |
+| `--output <dir>` | string  | `./tmp/graph-dump` | Output directory for JSON dumps                   |
+| `--help`         | boolean | false              | Show command help                                 |
+
+**Output (Default: Ink UI):**
+
+Renders ScenarioBox component showing progress, duration, and success/failure.
+
+**Output (--json):**
+
+Writes JSON object to stdout:
+
+```json
+{
+  "scenario": "v0.1/repo-ingestion-base",
+  "version": "v0.1",
+  "success": true,
+  "duration_ms": 12345,
+  "node_count": 47,
+  "edge_count": 52,
+  "symbols_indexed": 156,
+  "dump_path": "./tmp/graph-dump",
+  "artifacts": {
+    "nodes_by_kind": {
+      "ArtifactRoot": 1,
+      "ArtifactState": 1,
+      "ArtifactPart": 45,
+      "Policy": 2
+    },
+    "edge_count": 52
+  }
+}
+```
+
+**Exit Code:**
+
+- `0` — Scenario passed
+- `1` — Scenario failed
+- `2` — Scenario not found
+
+---
+
+### Command 2: `run-scenarios <pattern>`
+
+Execute multiple scenarios matching a glob pattern with live batch progress.
+
+**Usage:**
+
+```bash
+pnpm -C apps/graph-app run-scenarios v0.1/*
+pnpm -C apps/graph-app run-scenarios v0.1/* --json
+pnpm -C apps/graph-app run-scenarios v0.1/* --report
+pnpm -C apps/graph-app run-scenarios v0.1/* --report --json
+pnpm -C apps/graph-app run-scenarios **/* --debug
+```
+
+**Positional Arguments:**
+
+- `<pattern>` — Glob pattern to match scenario names (e.g., `v0.1/*`, `**/*`, `v1.0/lifecycle*`)
+
+**Flags:**
+
+| Flag       | Type    | Default | Description                                            |
+| ---------- | ------- | ------- | ------------------------------------------------------ |
+| `--json`   | boolean | false   | Output JSON summary instead of Ink UI                  |
+| `--report` | boolean | false   | Generate HTML report (path: `./graph-app-report.html`) |
+| `--quiet`  | boolean | false   | Suppress all terminal output                           |
+| `--debug`  | boolean | false   | Verbose logging                                        |
+| `--help`   | boolean | false   | Show command help                                      |
+
+**Output (Default: Ink UI with BatchBox):**
+
+Renders live progress with current scenario, pass/fail counts, and total duration updating in
+real-time.
+
+**Output (--json):**
+
+Writes JSON summary to stdout:
+
+```json
+{
+  "batch_name": "v0.1",
+  "total_scenarios": 5,
+  "passed": 5,
+  "failed": 0,
+  "duration_ms": 65200,
+  "scenarios": [
+    {
+      "name": "v0.1/repo-ingestion-base",
+      "success": true,
+      "duration_ms": 12100
+    },
+    {
+      "name": "v0.1/repo-ingestion-determinism",
+      "success": true,
+      "duration_ms": 24400
+    }
+  ],
+  "summary": {
+    "total_artifacts": 224,
+    "total_edges": 260,
+    "conflicts": 0
+  }
+}
+```
+
+**Exit Code:**
+
+- `0` — All scenarios passed
+- `1` — At least one scenario failed
+
+---
+
+### Command 3: `test [filter]`
+
+Run the full test suite (unit + integration + E2E) or specific test categories.
+
+**Usage:**
+
+```bash
+pnpm -C apps/graph-app test
+pnpm -C apps/graph-app test unit
+pnpm -C apps/graph-app test integration
+pnpm -C apps/graph-app test e2e
+pnpm -C apps/graph-app test v0.1
+pnpm -C apps/graph-app test --coverage
+pnpm -C apps/graph-app test --debug
+```
+
+**Positional Arguments (Optional):**
+
+- `[filter]` — Test filter: `unit`, `integration`, `e2e`, `v0.1`, `v1.0` (default: all)
+
+**Flags:**
+
+| Flag         | Type    | Default | Description              |
+| ------------ | ------- | ------- | ------------------------ |
+| `--coverage` | boolean | false   | Generate coverage report |
+| `--json`     | boolean | false   | Output JSON summary      |
+| `--debug`    | boolean | false   | Verbose logging          |
+| `--help`     | boolean | false   | Show command help        |
+
+**Output (Default: Ink UI with TestBox):**
+
+Renders test results by category (unit, integration, E2E) with pass/fail counts and total duration.
+
+**Output (--json):**
+
+```json
+{
+  "total": 28,
+  "passed": 28,
+  "failed": 0,
+  "duration_ms": 48200,
+  "coverage": 82,
+  "categories": {
+    "unit": { "total": 15, "passed": 15, "duration_ms": 1200 },
+    "integration": { "total": 8, "passed": 8, "duration_ms": 5400 },
+    "e2e": { "total": 5, "passed": 5, "duration_ms": 41600 }
+  }
+}
+```
+
+**Exit Code:**
+
+- `0` — All tests passed
+- `1` — At least one test failed
+
+---
+
+### Command 4: `inspect`
+
+Start interactive inspector mode (Ink TUI) for debugging and exploration.
+
+**Usage:**
+
+```bash
+pnpm -C apps/graph-app inspect
+pnpm -C apps/graph-app inspect --debug
+```
+
+**Flags:**
+
+| Flag      | Type    | Default | Description       |
+| --------- | ------- | ------- | ----------------- |
+| `--debug` | boolean | false   | Verbose logging   |
+| `--help`  | boolean | false   | Show command help |
+
+**Output:**
+
+Interactive Ink TUI with command prompt and response rendering (see Mode 4 below).
+
+**Exit Code:**
+
+- `0` — User exited normally
+- `1` — Error occurred
+
+---
+
 ## Execution Modes
 
 Summary: Single scenario, batch, E2E, and interactive modes for different use cases.
@@ -1235,20 +1484,24 @@ pnpm -C apps/graph-app inspect
 # │ > _                                  │
 # │                                      │
 # │ Commands: ingest, dump, trace,       │
-# │           diff, project, exit        │
-# │ Help: type 'help' for all commands   │
+# │           diff, project, help, exit  │
+# │ Type 'help <cmd>' for more info      │
 # └──────────────────────────────────────┘
 
-# Interactive commands:
-# > ingest({ url: 'https://github.com/...', commit: '...' })
+# Interactive command: ingest a repository
+# > ingest repo https://github.com/sindresorhus/ky --commit v1.14.2
 #
 # ┌──────────────────────────────────────┐
-# │ ⏳ Ingesting repository...            │
+# │ ⏳ Cloning repository...              │
+# │ ✓ Cloned (2.3s)                     │
+# │ ⏳ Installing dependencies...        │
+# │ ✓ Running SCIP indexing...           │
 # │ ✓ Ingestion complete                 │
 # │   Nodes: 47 | Edges: 52              │
 # └──────────────────────────────────────┘
 
-# > dump()
+# Interactive command: dump current graph state
+# > dump
 #
 # ┌──────────────────────────────────────┐
 # │ Graph State                          │
@@ -1256,8 +1509,7 @@ pnpm -C apps/graph-app inspect
 # │ Nodes (47 total)                    │
 # │ ├── ArtifactRoot: 1                  │
 # │ ├── ArtifactState: 1                 │
-# │ ├── ArtifactPart (file): 28          │
-# │ ├── ArtifactPart (symbol): 17        │
+# │ ├── ArtifactPart: 45                 │
 # │ └── Policy: 2                        │
 # │                                      │
 # │ Edges (52 total)                    │
@@ -1266,10 +1518,91 @@ pnpm -C apps/graph-app inspect
 # │ └── HasPolicy: 2                     │
 # └──────────────────────────────────────┘
 
-# > trace('node-456')  # Follow relationship chains
-# > diff(snap1, snap2)  # Compare graph snapshots
-# > project('CurrentCommittedTruth')  # Run projection
-# > exit()  # Leave interactive mode
+# Interactive command: trace a node's relationships
+# > trace node-456 --depth 3
+#
+# ┌──────────────────────────────────────┐
+# │ Trace from node-456 (depth=3)        │
+# ├──────────────────────────────────────┤
+# │ node-456 (ArtifactPart)              │
+# │  ├─ HasParent → node-123 (State)     │
+# │  │   └─ HasRoot → node-001 (Root)    │
+# │  └─ HasPolicy → node-789 (Policy)    │
+# │      └─ ...                          │
+# └──────────────────────────────────────┘
+
+# Interactive command: compare two snapshots
+# > diff snapshot-a snapshot-b
+#
+# ┌──────────────────────────────────────┐
+# │ Diff: snapshot-a → snapshot-b        │
+# ├──────────────────────────────────────┤
+# │ Nodes: 47 → 49 (+2)                  │
+# │ Edges: 52 → 55 (+3)                  │
+# │                                      │
+# │ New nodes: Policy nodes (2)          │
+# │ Modified: ArtifactState (1)          │
+# └──────────────────────────────────────┘
+
+# Interactive command: run a projection
+# > project CurrentCommittedTruth
+#
+# ┌──────────────────────────────────────┐
+# │ Projection: CurrentCommittedTruth    │
+# ├──────────────────────────────────────┤
+# │ ✓ Computed successfully              │
+# │   Selected: 45 artifacts             │
+# │   Excluded: 2 (superseded)           │
+# │   Explanation: ./dump/projection.json│
+# └──────────────────────────────────────┘
+
+# Interactive commands:
+# > help                   # Show all available commands
+# > help ingest           # Show ingest command help
+# > exit                  # Leave interactive mode
+```
+
+**Interactive Commands:**
+
+| Command   | Syntax                               | Description                                      |
+| --------- | ------------------------------------ | ------------------------------------------------ |
+| `ingest`  | `ingest repo <url> [--commit <ref>]` | Clone and ingest a repository                    |
+| `dump`    | `dump [--format json\|text]`         | Display current graph state                      |
+| `trace`   | `trace <node-id> [--depth N]`        | Follow relationships from a node                 |
+| `diff`    | `diff <snapshot-a> <snapshot-b>`     | Compare two graph snapshots                      |
+| `project` | `project <name>`                     | Run a projection (e.g., `CurrentCommittedTruth`) |
+| `help`    | `help [command]`                     | Show help (for all commands or specific one)     |
+| `exit`    | `exit`                               | Leave interactive mode                           |
+
+**Interactive Command Examples:**
+
+```bash
+# Ingest with default branch
+> ingest repo https://github.com/example/repo
+
+# Ingest specific commit/tag
+> ingest repo https://github.com/sindresorhus/ky --commit v1.14.2
+
+# Dump as JSON (for piping)
+> dump --format json
+
+# Trace a symbol node with depth limit
+> trace artifact_part_abc123 --depth 5
+
+# Compare before/after snapshots
+> diff before.json after.json
+
+# Run CurrentCommittedTruth projection
+> project CurrentCommittedTruth
+
+# Show all commands
+> help
+
+# Show ingest command syntax
+> help ingest
+
+# Exit gracefully
+> exit
 ```
 
 ---
