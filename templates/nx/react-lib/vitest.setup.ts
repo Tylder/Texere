@@ -2,7 +2,7 @@
  * Vitest setup file for React component testing.
  * Runs before each test suite to configure the test environment.
  *
- * Per ADR-VI-TECH-7 §3.2 (testing_implementation_specification)
+ * Per SPEC-tooling-testing-implementation-specification §3.2 (testing_implementation_specification)
  */
 
 import { afterEach } from 'vitest';

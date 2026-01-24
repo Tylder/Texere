@@ -32,7 +32,7 @@ Next.js app template aligned with Nx + strict TypeScript.
 All test files must cite their governing spec sections in the describe block:
 
 ```typescript
-describe('MyPage (ADR-VI-TECH-6 §2.2–§4.4, ADR-VI-TECH-7 §3–§6)', () => {
+describe('MyPage (SPEC-tooling-testing-trophy-strategy §2.2–§4.4, SPEC-tooling-testing-implementation-specification §3–§6)', () => {
   it('renders the dashboard', () => {
     render(<MyPage />);
     // assertions
@@ -41,12 +41,12 @@ describe('MyPage (ADR-VI-TECH-6 §2.2–§4.4, ADR-VI-TECH-7 §3–§6)', () => 
 ```
 
 This ensures traceability to the testing standards documented in
-[ADR-VI-TECH-6 §2.2–§4.4](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-6-testing-strategy-trophy.md)
+[SPEC-tooling-testing-trophy-strategy §2.2–§4.4](../../../../../docs/engineering/03-adrs/SPEC-tooling-testing-trophy-strategy-testing-strategy-trophy.md)
 and
-[ADR-VI-TECH-7 §3–§6](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-7-testing-implementation-specification.md).
+[SPEC-tooling-testing-implementation-specification §3–§6](../../../../../docs/engineering/03-adrs/SPEC-tooling-testing-implementation-specification-testing-implementation-specification.md).
 
 Coverage targets are **70–80%** per
-[ADR-VI-TECH-7 §Coverage Targets](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-7-testing-implementation-specification.md#coverage-targets--quality-gates).
+[SPEC-tooling-testing-implementation-specification §Coverage Targets](../../../../../docs/engineering/03-adrs/SPEC-tooling-testing-implementation-specification-testing-implementation-specification.md#coverage-targets--quality-gates).
 Focus on integration tests (60–70%) and critical paths at 100%; aim for 70%+ overall.
 
 ## Quality & Tooling
@@ -60,7 +60,7 @@ Focus on integration tests (60–70%) and critical paths at 100%; aim for 70%+ o
 
 - TypeScript config: `docs/specs/engineering/typescript_configuration.md`
 - Testing strategy/specification:
-  [ADR-VI-TECH-6](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-6-testing-strategy-trophy.md)
+  [SPEC-tooling-testing-trophy-strategy](../../../../../docs/engineering/03-adrs/SPEC-tooling-testing-trophy-strategy-testing-strategy-trophy.md)
   (§2.2),
-  [ADR-VI-TECH-7](../../../../../docs/engineering/03-adrs/ADR-VI-TECH-7-testing-implementation-specification.md)
+  [SPEC-tooling-testing-implementation-specification](../../../../../docs/engineering/03-adrs/SPEC-tooling-testing-implementation-specification-testing-implementation-specification.md)
   (§3)
