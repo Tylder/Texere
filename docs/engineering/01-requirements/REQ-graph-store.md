@@ -13,6 +13,12 @@ summary_short: >-
 summary_long: >-
   Defines high-level Requirements for graph storage interfaces, adapters, and transactional
   semantics. Specific storage engine choices are deferred to subordinate REQs/SPECs.
+keywords:
+  - requirements
+  - graph
+  - storage
+related:
+  - REQ-graph_knowledge_system
 index:
   sections:
     - title: 'Document Relationships'

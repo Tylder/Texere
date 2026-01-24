@@ -14,6 +14,12 @@ summary_long: >-
   Defines the high-level architectural Requirements for how graph system code is organized in the Nx
   monorepo, including package boundaries, dependency rules, and separation between ingestion,
   lifecycle, projections, and storage interfaces. Details are delegated to subordinate REQs/SPECs.
+keywords:
+  - requirements
+  - graph
+  - architecture
+related:
+  - REQ-graph_knowledge_system
 index:
   sections:
     - title: 'Document Relationships'

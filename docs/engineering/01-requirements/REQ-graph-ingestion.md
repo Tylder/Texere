@@ -14,6 +14,12 @@ summary_long: >-
   Defines high-level Requirements for ingestion of code and external sources into canonical graph
   nodes, including connectors, decomposition rules, provenance, and retention policies. Detailed
   source-specific rules are delegated to subordinate REQs/SPECs.
+keywords:
+  - requirements
+  - graph
+  - ingestion
+related:
+  - REQ-graph_knowledge_system
 index:
   sections:
     - title: 'Document Relationships'

@@ -13,6 +13,12 @@ summary_short: >-
 summary_long: >-
   Defines high-level Requirements for deterministic, explainable projections derived from canonical
   graph nodes. Detailed projection definitions live in subordinate REQs/SPECs.
+keywords:
+  - requirements
+  - graph
+  - projection
+related:
+  - REQ-graph_knowledge_system
 index:
   sections:
     - title: 'Document Relationships'

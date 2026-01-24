@@ -14,6 +14,12 @@ summary_long: >-
   Defines high-level Requirements for lifecycle assertions (Decisions, Requirements, Specs, Plans,
   Verification) and the invariants that govern them. Detailed semantics live in subordinate
   REQs/SPECs.
+keywords:
+  - requirements
+  - graph
+  - lifecycle
+related:
+  - REQ-graph_knowledge_system
 index:
   sections:
     - title: 'Document Relationships'
