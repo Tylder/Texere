@@ -29,24 +29,24 @@ index:
         provenance, and validation invariants.'
       token_est: 89
     - title: 'Scope'
-      lines: [76, 99]
+      lines: [76, 93]
       summary:
-        'Lifecycle assertion kinds and invariants. Excludes ingestion mechanics and storage
-        selection.'
-      token_est: 71
+        'Lifecycle assertion kinds, supersession rules, and validation invariants. Excludes
+        ingestion mechanics, projection logic, and storage semantics.'
+      token_est: 73
     - title: 'REQ-001: Lifecycle Assertion Catalog'
-      lines: [101, 123]
+      lines: [95, 117]
       summary: 'The system MUST define a canonical set of lifecycle assertion kinds.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [125, 132]
+      lines: [119, 126]
       summary: 'Lifecycle requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [134, 147]
+      lines: [128, 141]
       token_est: 85
     - title: 'Blockers'
-      lines: [149, 153]
+      lines: [143, 147]
       token_est: 39
 ---
 
@@ -75,26 +75,20 @@ provenance, and validation invariants.
 
 ## Scope
 
-Summary: Lifecycle assertion kinds and invariants. Excludes ingestion mechanics and storage
-selection.
+Summary: Lifecycle assertion kinds, supersession rules, and validation invariants. Excludes
+ingestion mechanics, projection logic, and storage semantics.
 
 **Includes:**
 
 - Assertion kinds and minimum fields
 - Supersession rules
-- Invariant enforcement
+- Validation invariants for lifecycle assertions
 
 **Excludes:**
 
-- Ingestion pipelines (separate REQ)
-- Projection rules (separate REQ)
-- Storage engine selection (separate REQ)
-
-**In separate docs:**
-
-- REQ-graph-ingestion.md
-- REQ-graph-projection.md
-- REQ-graph-store.md
+- Ingestion pipelines and source parsing
+- Projection definitions and selection rules
+- Storage engine selection and transaction semantics
 
 ---
 

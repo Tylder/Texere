@@ -22,27 +22,29 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [53, 70]
+      lines: [55, 72]
       summary:
         'Projections MUST be deterministic, explainable, and derived only from canonical nodes.'
       token_est: 73
     - title: 'Scope'
-      lines: [72, 94]
-      summary: 'Projection contracts and determinism. Excludes ingestion and storage decisions.'
-      token_est: 64
+      lines: [74, 91]
+      summary:
+        'Projection contracts, determinism, and explainability. Excludes ingestion, lifecycle
+        semantics, and storage decisions.'
+      token_est: 62
     - title: 'REQ-001: Projection Determinism'
-      lines: [96, 118]
+      lines: [93, 115]
       summary: 'Projections MUST be deterministic functions of canonical graph data.'
       token_est: 88
     - title: 'Related Requirements'
-      lines: [120, 127]
+      lines: [117, 124]
       summary: 'Projections must align with architecture and graph model.'
       token_est: 23
     - title: 'Design Decisions'
-      lines: [129, 142]
+      lines: [126, 139]
       token_est: 85
     - title: 'Blockers'
-      lines: [144, 148]
+      lines: [141, 145]
       token_est: 39
 ---
 
@@ -71,25 +73,20 @@ explainability
 
 ## Scope
 
-Summary: Projection contracts and determinism. Excludes ingestion and storage decisions.
+Summary: Projection contracts, determinism, and explainability. Excludes ingestion, lifecycle
+semantics, and storage decisions.
 
 **Includes:**
 
 - Determinism requirements
 - Explainability requirements
-- Projection registration
+- Projection registration and metadata
 
 **Excludes:**
 
-- Ingestion pipelines (separate REQ)
-- Lifecycle semantics (separate REQ)
-- Storage engine selection (separate REQ)
-
-**In separate docs:**
-
-- REQ-graph-ingestion.md
-- REQ-graph-lifecycle.md
-- REQ-graph-store.md
+- Ingestion pipelines and source parsing
+- Lifecycle semantics and invariants
+- Storage engine selection and transaction semantics
 
 ---
 

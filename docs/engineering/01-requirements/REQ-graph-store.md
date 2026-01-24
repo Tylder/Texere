@@ -28,24 +28,24 @@ index:
         graph operations.'
       token_est: 88
     - title: 'Scope'
-      lines: [75, 98]
+      lines: [75, 92]
       summary:
-        'Storage interfaces, adapters, and transactional semantics. Excludes ingestion and lifecycle
-        behavior.'
-      token_est: 71
+        'Storage interfaces, adapters, and transactional semantics. Excludes ingestion, lifecycle,
+        and projection behavior.'
+      token_est: 63
     - title: 'REQ-001: Store Interface Stability'
-      lines: [100, 122]
+      lines: [94, 116]
       summary: 'The system MUST define a stable graph store interface.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [124, 131]
+      lines: [118, 125]
       summary: 'Storage requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [133, 146]
+      lines: [127, 140]
       token_est: 85
     - title: 'Blockers'
-      lines: [148, 152]
+      lines: [142, 146]
       token_est: 39
 ---
 
@@ -74,8 +74,8 @@ graph operations.
 
 ## Scope
 
-Summary: Storage interfaces, adapters, and transactional semantics. Excludes ingestion and lifecycle
-behavior.
+Summary: Storage interfaces, adapters, and transactional semantics. Excludes ingestion, lifecycle,
+and projection behavior.
 
 **Includes:**
 
@@ -85,15 +85,9 @@ behavior.
 
 **Excludes:**
 
-- Ingestion pipelines (separate REQ)
-- Lifecycle semantics (separate REQ)
-- Projection rules (separate REQ)
-
-**In separate docs:**
-
-- REQ-graph-ingestion.md
-- REQ-graph-lifecycle.md
-- REQ-graph-projection.md
+- Ingestion pipelines and source parsing
+- Lifecycle semantics and invariants
+- Projection definitions and selection rules
 
 ---
 

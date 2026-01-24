@@ -23,30 +23,31 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [57, 75]
+      lines: [58, 76]
       summary:
         'Ingestion MUST create canonical Artifact nodes with deterministic provenance and retention
         handling; connectors are pluggable and source-specific.'
       token_est: 101
     - title: 'Scope'
-      lines: [77, 101]
+      lines: [78, 98]
       summary:
-        'Ingestion pipelines, connector contracts, provenance, and retention modes. Excludes
-        lifecycle semantics or projection rules.'
-      token_est: 84
+        'Source-agnostic ingestion pipeline requirements, connector contracts, provenance, and
+        retention modes. Excludes source-specific parsing rules, lifecycle semantics, and projection
+        logic.'
+      token_est: 98
     - title: 'REQ-001: Connector Contract'
-      lines: [103, 126]
+      lines: [100, 123]
       summary: 'All ingestion connectors MUST implement a shared contract.'
       token_est: 103
     - title: 'Related Requirements'
-      lines: [128, 135]
+      lines: [125, 132]
       summary: 'Ingestion must align with architecture and graph model constraints.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [137, 150]
+      lines: [134, 147]
       token_est: 85
     - title: 'Blockers'
-      lines: [152, 156]
+      lines: [149, 153]
       token_est: 39
 ---
 
@@ -76,27 +77,23 @@ schema
 
 ## Scope
 
-Summary: Ingestion pipelines, connector contracts, provenance, and retention modes. Excludes
-lifecycle semantics or projection rules.
+Summary: Source-agnostic ingestion pipeline requirements, connector contracts, provenance, and
+retention modes. Excludes source-specific parsing rules, lifecycle semantics, and projection logic.
 
 **Includes:**
 
 - Connector interface and lifecycle
+- Source-agnostic pipeline stages (fetch -> decompose -> write)
 - Decomposition into ArtifactRoot/State/Part
 - Provenance and Activity metadata
 - Retention policy outcomes (link-only/excerpt/hashed)
 
 **Excludes:**
 
+- Source-specific parsing/decomposition rules (separate REQs)
 - Decision/Requirement semantics (separate REQ)
 - Projection rules (separate REQ)
 - Storage engine choice (separate REQ)
-
-**In separate docs:**
-
-- REQ-graph-lifecycle.md
-- REQ-graph-projection.md
-- REQ-graph-store.md
 
 ---
 
