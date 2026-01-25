@@ -48,60 +48,56 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [112, 129]
+      lines: [108, 125]
       summary:
         'Ingest `sindresorhus/ky` via scip-typescript, store in-memory, emit JSON dumps, and compute
         CurrentCommittedTruth with policy-driven selection; validate via Vitest.'
       token_est: 111
     - title: 'Scope'
-      lines: [131, 154]
+      lines: [127, 150]
       summary:
         'End-to-end slice covering repo ingestion, in-memory store, policy-driven behavior, JSON
         inspection outputs, and CurrentCommittedTruth projection.'
       token_est: 127
-    - title: 'Implements'
-      lines: [156, 181]
-      summary: 'Implements core ingestion, store, policy, and projection requirements for v0.1.'
-      token_est: 127
     - title: 'Interfaces & Observable Behavior'
-      lines: [183, 235]
+      lines: [152, 204]
       summary:
         'CLI-driven ingestion emits JSON dumps; projection output is deterministic and explainable.'
       token_est: 238
     - title: 'Data Models'
-      lines: [237, 273]
+      lines: [206, 242]
       summary: 'Minimal node set for the slice with deterministic IDs and locators.'
       token_est: 91
     - title: 'Workflows'
-      lines: [275, 287]
+      lines: [244, 256]
       summary: 'Ingestion and projection workflow with explicit policy resolution.'
       token_est: 68
     - title: 'Dump Schema (Stable and LLM-Friendly)'
-      lines: [289, 312]
+      lines: [258, 281]
       summary: 'JSON dumps MUST be stable, versioned, and readable by humans and LLMs.'
       token_est: 107
     - title: 'Error Handling'
-      lines: [314, 322]
+      lines: [283, 291]
       summary: 'Failure is explicit; no partial writes on SCIP failure.'
       token_est: 67
     - title: 'Testing & Verification'
-      lines: [324, 342]
+      lines: [293, 311]
       summary: 'Vitest suite validates determinism and policy-driven behavior.'
       token_est: 73
     - title: 'Observability'
-      lines: [344, 353]
+      lines: [313, 322]
       summary: 'Minimal inspection outputs for debugging and review.'
       token_est: 51
     - title: 'Security & Retention'
-      lines: [355, 362]
+      lines: [324, 331]
       summary: 'Default link-only retention for third-party code.'
       token_est: 32
     - title: 'Non-Throwaway Guarantees'
-      lines: [364, 372]
+      lines: [333, 341]
       summary: 'The slice MUST be extendable without rewrite.'
       token_est: 59
     - title: 'Open Questions'
-      lines: [374, 376]
+      lines: [343, 345]
       token_est: 21
 ---
 
@@ -150,33 +146,6 @@ inspection outputs, and CurrentCommittedTruth projection.
 - Production storage backends
 - ActiveWork or GraphHealth projections
 - UI/UX or API services
-
----
-
-## Implements
-
-Summary: Implements core ingestion, store, policy, and projection requirements for v0.1.
-
-- REQ-graph-system-graph-ingestion-repo-scip-ts.md#REQ-001 (Commit-anchored ingestion)
-- REQ-graph-system-graph-ingestion-repo-scip-ts.md#REQ-002 (SCIP index generation)
-- REQ-graph-system-graph-ingestion-repo-scip-ts.md#REQ-003 (Install policy)
-- REQ-graph-system-graph-ingestion-repo-scip-ts.md#REQ-004 (ArtifactPart mapping)
-- REQ-graph-system-graph-ingestion-repo-scip-ts.md#REQ-005 (Locator format)
-- REQ-graph-system-graph-ingestion-repo-scip-ts.md#REQ-006 (Toolchain provenance)
-- REQ-graph-system-graph-ingestion-repo-scip-ts.md#REQ-007 (Failure policy)
-- REQ-graph-system-graph-ingestion-repo-scip-ts.md#REQ-008 (Retention mode)
-- REQ-graph-system-graph-ingestion-repo-scip-ts.md#REQ-009 (Monorepo coverage)
-- REQ-graph-system-graph-store-inmemory.md#REQ-001 (Store interface conformance)
-- REQ-graph-system-graph-store-inmemory.md#REQ-002 (Append-only semantics)
-- REQ-graph-system-graph-store-inmemory.md#REQ-003 (Transaction boundaries)
-- REQ-graph-system-graph-store-inmemory.md#REQ-004 (Deterministic ordering)
-- REQ-graph-system-graph-projection-current-truth.md#REQ-001 (Deterministic selection)
-- REQ-graph-system-graph-projection-current-truth.md#REQ-002 (Explainability)
-- REQ-graph-system-graph-projection-current-truth.md#REQ-003 (Conflict visibility)
-- REQ-graph-system-graph-policy-framework.md#REQ-001 (Policy kinds)
-- REQ-graph-system-graph-policy-framework.md#REQ-002 (Policy supersession)
-- REQ-graph-system-graph-policy-framework.md#REQ-003 (Policy scope and selection)
-- REQ-graph-system-graph-policy-framework.md#REQ-004 (Policy provenance)
 
 ---
 
