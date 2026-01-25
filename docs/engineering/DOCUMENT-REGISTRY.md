@@ -5,7 +5,7 @@ stability: stable
 auto_generated: true
 auto_generated_by: script/validate-docs.mjs
 auto_generated_on_every: git commit (pre-commit hook)
-last_updated: 2026-01-24
+last_updated: 2026-01-25
 do_not_edit_manually: true
 ---
 
@@ -55,4 +55,4 @@ grep "| SPEC.*active" below
 | `IMPL-PLAN-graph-system-vertical-slice-v0-1`          | IMPL-PLAN         | draft  | experimental | graph-system     | graph-vertical-slice-v0-1            | Implement the v0.1 vertical slice for graph ingestion, policy, storage, projection, and tests                                                                                                                     |
 | `META-documentation-system`                           | META              | active | stable       | documentation    | system                               | Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META                                                                                                                   |
 
-_Auto-generated: 2026-01-24_
+_Auto-generated: 2026-01-25_
