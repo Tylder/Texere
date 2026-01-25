@@ -1,9 +1,9 @@
 ---
-type: REQ
+type: SPEC
 status: draft
 stability: experimental
 created: 2026-01-25
-last_updated: 2026-01-25
+last_updated: 2026-01-25T22:33:14.156Z
 area: graph-system
 feature: graph-ingestion-repo-ts
 frontmatter_auto_updated_by: script/validate-docs.mjs
@@ -32,7 +32,7 @@ index:
     - title: 'Scope'
       lines: [178, 203]
       summary:
-        'Requirements for symbol identity, incremental indexing, storage schema, cross-repo
+        'Specifications for symbol identity, incremental indexing, storage schema, cross-repo
         references, rename handling, language extensibility, and agent-facing API with sub-100 ms
         query latency. Excludes semantic/vector search as a core capability.'
       token_est: 146
@@ -151,7 +151,7 @@ index:
       token_est: 84
 ---
 
-# REQ-graph-system-graph-ingestion-repo-ts
+# SPEC-graph-system-graph-ingestion-repo-ts
 
 ---
 
@@ -177,7 +177,7 @@ hybrid graph+relational store
 
 ## Scope
 
-Summary: Requirements for symbol identity, incremental indexing, storage schema, cross-repo
+Summary: Specifications for symbol identity, incremental indexing, storage schema, cross-repo
 references, rename handling, language extensibility, and agent-facing API with sub-100 ms query
 latency. Excludes semantic/vector search as a core capability.
 
