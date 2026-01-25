@@ -25,7 +25,7 @@ GraphStore interface and in-memory adapter for the Texere graph system.
 │                                 │ passes store instance                     │
 │                                 ▼                                           │
 │   ┌─────────────────────────────────────────────────────────────────┐      │
-│   │  @repo/graph-ingest-connector-scip-ts                           │      │
+│   │  @repo/graph-ingest-connector-ts                           │      │
 │   │  (Writes nodes/edges to store)                                  │      │
 │   └─────────────────────────────┬───────────────────────────────────┘      │
 │                                 │                                           │

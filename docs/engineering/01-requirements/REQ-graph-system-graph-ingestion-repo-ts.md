@@ -5,7 +5,7 @@ stability: experimental
 created: 2026-01-25
 last_updated: 2026-01-25
 area: graph-system
-feature: graph-ingestion-repo-scip-ts
+feature: graph-ingestion-repo-ts
 frontmatter_auto_updated_by: script/validate-docs.mjs
 frontmatter_auto_updated_on_every: git commit (pre-commit hook)
 summary_short: >-
@@ -151,7 +151,7 @@ index:
       token_est: 84
 ---
 
-# REQ-graph-system-graph-ingestion-repo-scip-ts
+# REQ-graph-system-graph-ingestion-repo-ts
 
 ---
 

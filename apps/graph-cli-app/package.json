@@ -26,7 +26,7 @@
   "dependencies": {
     "@repo/graph-core": "workspace:*",
     "@repo/graph-ingest": "workspace:*",
-    "@repo/graph-ingest-connector-scip-ts": "workspace:*",
+    "@repo/graph-ingest-connector-ts": "workspace:*",
     "@repo/graph-projection": "workspace:*",
     "@repo/graph-store": "workspace:*",
     "commander": "^14.0.2",

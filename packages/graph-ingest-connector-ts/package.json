@@ -1,5 +1,5 @@
 {
-  "name": "@repo/graph-ingest-connector-scip-ts",
+  "name": "@repo/graph-ingest-connector-ts",
   "version": "0.0.0",
   "private": true,
   "description": "SCIP-TS repository ingestion connector.",

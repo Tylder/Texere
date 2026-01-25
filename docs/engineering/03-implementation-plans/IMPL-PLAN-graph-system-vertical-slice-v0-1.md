@@ -20,16 +20,16 @@ keywords:
 coordinates:
   - SPEC-graph-system-vertical-slice-v0-1
 covers:
-  - REQ-graph-system-graph-ingestion-repo-scip-ts#REQ-001
-  - REQ-graph-system-graph-ingestion-repo-scip-ts#REQ-002
-  - REQ-graph-system-graph-ingestion-repo-scip-ts#REQ-003
-  - REQ-graph-system-graph-ingestion-repo-scip-ts#REQ-004
-  - REQ-graph-system-graph-ingestion-repo-scip-ts#REQ-005
-  - REQ-graph-system-graph-ingestion-repo-scip-ts#REQ-006
-  - REQ-graph-system-graph-ingestion-repo-scip-ts#REQ-007
-  - REQ-graph-system-graph-ingestion-repo-scip-ts#REQ-008
-  - REQ-graph-system-graph-ingestion-repo-scip-ts#REQ-009
-  - REQ-graph-system-graph-ingestion-repo-scip-ts#REQ-010
+  - REQ-graph-system-graph-ingestion-repo-ts#REQ-001
+  - REQ-graph-system-graph-ingestion-repo-ts#REQ-002
+  - REQ-graph-system-graph-ingestion-repo-ts#REQ-003
+  - REQ-graph-system-graph-ingestion-repo-ts#REQ-004
+  - REQ-graph-system-graph-ingestion-repo-ts#REQ-005
+  - REQ-graph-system-graph-ingestion-repo-ts#REQ-006
+  - REQ-graph-system-graph-ingestion-repo-ts#REQ-007
+  - REQ-graph-system-graph-ingestion-repo-ts#REQ-008
+  - REQ-graph-system-graph-ingestion-repo-ts#REQ-009
+  - REQ-graph-system-graph-ingestion-repo-ts#REQ-010
   - REQ-graph-system-graph-store-inmemory#REQ-001
   - REQ-graph-system-graph-store-inmemory#REQ-002
   - REQ-graph-system-graph-store-inmemory#REQ-003

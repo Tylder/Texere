@@ -128,7 +128,7 @@ Ingestion orchestration, connector interface, and JSON dump utilities for the Te
 │                                                                  │
 │   // Usage:                                                      │
 │   import { ingestRepo } from '@repo/graph-ingest';              │
-│   import { ScipTsConnector } from '@repo/graph-ingest-connector-scip-ts';│
+│   import { ScipTsConnector } from '@repo/graph-ingest-connector-ts';│
 │                                                                  │
 │   const connector = new ScipTsConnector();                      │
 │   await ingestRepo(input, store, connector);                    │
@@ -142,7 +142,7 @@ Ingestion orchestration, connector interface, and JSON dump utilities for the Te
 
 ```typescript
 import { ingestRepo } from '@repo/graph-ingest';
-import { ScipTsIngestionConnector } from '@repo/graph-ingest-connector-scip-ts';
+import { ScipTsIngestionConnector } from '@repo/graph-ingest-connector-ts';
 import { InMemoryGraphStore } from '@repo/graph-store';
 
 const store = new InMemoryGraphStore();
@@ -263,7 +263,7 @@ export class WebIngestionConnector implements IngestionConnector {
        │
        │ interface implemented by
        ▼
-@repo/graph-ingest-connector-scip-ts
+@repo/graph-ingest-connector-ts
 ```
 
 ## Exports

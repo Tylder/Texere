@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import type { GraphEdge, GraphNode, PolicySelection } from '@repo/graph-core';
 import { ingestRepoFromSource, writeJsonDumps } from '@repo/graph-ingest';
-import { ScipTsIngestionConnector } from '@repo/graph-ingest-connector-scip-ts';
+import { ScipTsIngestionConnector } from '@repo/graph-ingest-connector-ts';
 import { CurrentCommittedTruthProjection } from '@repo/graph-projection';
 import type { GraphStore } from '@repo/graph-store';
 import { InMemoryGraphStore } from '@repo/graph-store';

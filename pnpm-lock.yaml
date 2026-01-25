@@ -80,9 +80,9 @@ importers:
       '@repo/graph-ingest':
         specifier: workspace:*
         version: link:../../packages/graph-ingest
-      '@repo/graph-ingest-connector-scip-ts':
+      '@repo/graph-ingest-connector-ts':
         specifier: workspace:*
-        version: link:../../packages/graph-ingest-connector-scip-ts
+        version: link:../../packages/graph-ingest-connector-ts
       '@repo/graph-projection':
         specifier: workspace:*
         version: link:../../packages/graph-projection
@@ -246,7 +246,7 @@ importers:
         specifier: ^4.0.15
         version: 4.0.17(@types/node@22.19.7)(yaml@2.8.2)
 
-  packages/graph-ingest-connector-scip-ts:
+  packages/graph-ingest-connector-ts:
     dependencies:
       '@c4312/scip':
         specifier: ^0.1.0

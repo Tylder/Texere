@@ -1,14 +1,14 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "graph-ingest-connector-scip-ts",
+  "name": "graph-ingest-connector-ts",
   "projectType": "library",
-  "sourceRoot": "packages/graph-ingest-connector-scip-ts/src",
+  "sourceRoot": "packages/graph-ingest-connector-ts/src",
   "tags": ["runtime:shared", "scope:graph"],
   "targets": {
     "build": {
       "executor": "nx:run-script",
       "options": { "script": "build" },
-      "outputs": ["{workspaceRoot}/dist/packages/graph-ingest-connector-scip-ts"],
+      "outputs": ["{workspaceRoot}/dist/packages/graph-ingest-connector-ts"],
       "inputs": ["default", "{projectRoot}/tsconfig.lib.json", "{projectRoot}/src/**"],
       "dependsOn": ["^build"]
     },

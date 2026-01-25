@@ -374,7 +374,7 @@ Add explicit npm dependencies to M1 preconditions.
     "@repo/graph-core": "*",
     "@repo/graph-store": "*",
     "@repo/graph-ingest": "*",
-    "@repo/graph-ingest-connector-scip-ts": "*",
+    "@repo/graph-ingest-connector-ts": "*",
     "@repo/graph-projection": "*"
   },
   "devDependencies": {

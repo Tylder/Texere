@@ -1,4 +1,4 @@
-# @repo/graph-ingest-connector-scip-ts
+# @repo/graph-ingest-connector-ts
 
 SCIP-TS repository ingestion connector for the Texere graph system.
 
@@ -27,7 +27,7 @@ SCIP-TS repository ingestion connector for the Texere graph system.
 │                                 ▼                                            │
 │   ┌─────────────────────────────────────────────────────────────────┐       │
 │   │                                                                 │       │
-│   │   ★ @repo/graph-ingest-connector-scip-ts ★  <── YOU ARE HERE   │       │
+│   │   ★ @repo/graph-ingest-connector-ts ★  <── YOU ARE HERE   │       │
 │   │                                                                 │       │
 │   │   ┌───────────────────────────────────────────────────────┐    │       │
 │   │   │           ScipTsIngestionConnector                     │    │       │
@@ -60,7 +60,7 @@ SCIP-TS repository ingestion connector for the Texere graph system.
 
 ## This Package's Role
 
-`@repo/graph-ingest-connector-scip-ts` is the **source-specific connector** that extracts TypeScript
+`@repo/graph-ingest-connector-ts` is the **source-specific connector** that extracts TypeScript
 repository structure and ingests it into the graph:
 
 - **ScipTsIngestionConnector** - Implements the IngestionConnector interface
@@ -129,7 +129,7 @@ repository structure and ingests it into the graph:
 
 ```typescript
 import { ingestRepo } from '@repo/graph-ingest';
-import { ScipTsIngestionConnector } from '@repo/graph-ingest-connector-scip-ts';
+import { ScipTsIngestionConnector } from '@repo/graph-ingest-connector-ts';
 import { InMemoryGraphStore } from '@repo/graph-store';
 
 const store = new InMemoryGraphStore();
@@ -197,7 +197,7 @@ The connector creates these node types in the graph:
 @repo/graph-ingest             │
        │                       │
        ▼                       │
-@repo/graph-ingest-connector-scip-ts (this package)
+@repo/graph-ingest-connector-ts (this package)
        │
        └─ Uses: tree-sitter (TS parsing)
 ```
@@ -221,7 +221,7 @@ Integration tests run the real `scip-typescript` indexer (and may install deps).
 behind an explicit flag:
 
 ```bash
-RUN_INTEGRATION=true pnpm -C packages/graph-ingest-connector-scip-ts test
+RUN_INTEGRATION=true pnpm -C packages/graph-ingest-connector-ts test
 ```
 
 This includes:

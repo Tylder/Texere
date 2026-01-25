@@ -23,7 +23,7 @@
       "path": "./packages/graph-ingest"
     },
     {
-      "path": "./packages/graph-ingest-connector-scip-ts"
+      "path": "./packages/graph-ingest-connector-ts"
     },
     {
       "path": "./packages/graph-projection"

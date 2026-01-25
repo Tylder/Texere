@@ -28,9 +28,7 @@ async function generateFixture() {
     // Verify we have the right commit
     const commit = execSync(`git rev-parse HEAD`, { cwd: tmpDir, encoding: 'utf-8' }).trim();
     if (!commit.startsWith('51b0129')) {
-      throw new Error(
-        `Expected commit 51b0129..., got ${commit}. Clone may have failed.`,
-      );
+      throw new Error(`Expected commit 51b0129..., got ${commit}. Clone may have failed.`);
     }
     console.log(`✓ Cloned at commit ${commit.substring(0, 7)}`);
 
