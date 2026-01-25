@@ -28,6 +28,7 @@
     "build": "tsc -b tsconfig.lib.json",
     "check-types": "tsc -b tsconfig.json",
     "check-types:clean": "tsc -b tsconfig.json --stopOnBuildErrors && tsc -b tsconfig.json --clean",
+    "generate-fixture": "node scripts/generate-fixture.mjs",
     "lint": "eslint . --cache --cache-location \"$NX_WORKSPACE_ROOT/.cache/eslint/\"",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
