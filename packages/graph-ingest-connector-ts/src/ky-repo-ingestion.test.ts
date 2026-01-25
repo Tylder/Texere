@@ -6,9 +6,9 @@ import { promisify } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import type { ArtifactPartNode, ArtifactRootNode, ArtifactStateNode } from '@repo/graph-core';
+import type { FileNode, SymbolNode } from '@repo/graph-core';
 import { ingestRepoFromSource, writeJsonDumps } from '@repo/graph-ingest';
-import { InMemoryGraphStore } from '@repo/graph-store';
+import { InMemoryGraphStore, InMemoryRelationalStore } from '@repo/graph-store';
 
 import { ScipTsIngestionConnector } from './index.js';
 
@@ -44,37 +44,31 @@ const describeIf = runIntegration ? describe : describe.skip;
 describeIf('ky repo ingestion integration (fixture-based)', () => {
   it('ingests ky and emits inspection dumps', async () => {
     const { repoPath, commit } = await ensureKyFixture();
-    const store = new InMemoryGraphStore();
+    const store = { graph: new InMemoryGraphStore(), relational: new InMemoryRelationalStore() };
     const connector = new ScipTsIngestionConnector();
     const outputDir = path.join(tmpdir(), `graph-ky-dump-${Date.now()}`);
     const ingestRoot = path.join(tmpdir(), `graph-ky-ingest-${Date.now()}`);
 
     try {
-      await ingestRepoFromSource(repoPath, store, connector, {
+      const result = await ingestRepoFromSource(repoPath, store, connector, {
         commit,
         projectId: 'ky-fixture',
         ingestRoot,
       });
 
-      const root = store
+      const files = store.graph
         .listNodes()
-        .find((node): node is ArtifactRootNode => node.kind === 'ArtifactRoot');
-      const state = store
+        .filter((node): node is FileNode => node.kind === 'File');
+      const symbols = store.graph
         .listNodes()
-        .find((node): node is ArtifactStateNode => node.kind === 'ArtifactState');
-      const parts = store
-        .listNodes()
-        .filter((node): node is ArtifactPartNode => node.kind === 'ArtifactPart');
+        .filter((node): node is SymbolNode => node.kind === 'Symbol');
 
-      expect(root?.canonical_ref).toBe(`file://${path.resolve(repoPath)}`);
-      expect(state?.version_ref).toBe(commit);
-      expect(parts.length).toBeGreaterThan(0);
-      expect(parts.some((part) => part.part_kind === 'file')).toBe(true);
-      expect(parts.some((part) => part.part_kind === 'symbol')).toBe(true);
-      expect(parts.every((part) => part.retention_mode === 'link-only')).toBe(true);
-      expect(parts.some((part) => part.locator.includes('#'))).toBe(true);
+      expect(result.run_summary.snapshot_id).toBe(commit);
+      expect(files.length).toBeGreaterThan(0);
+      expect(symbols.length).toBeGreaterThan(0);
+      expect(files.some((file) => file.locator?.path_or_url)).toBe(true);
 
-      await writeJsonDumps({ store, outputDir });
+      await writeJsonDumps({ store: store.graph, outputDir });
 
       const artifacts = JSON.parse(await readFile(path.join(outputDir, 'artifacts.json'), 'utf-8'));
       expect(artifacts.nodes.length).toBeGreaterThan(0);
@@ -82,7 +76,7 @@ describeIf('ky repo ingestion integration (fixture-based)', () => {
       const summary = JSON.parse(
         await readFile(path.join(outputDir, 'graph_dump_summary.json'), 'utf-8'),
       );
-      expect(summary.node_count).toBe(store.listNodes().length);
+      expect(summary.node_count).toBe(store.graph.listNodes().length);
       expect(summary.policy_count).toBeGreaterThanOrEqual(0);
     } finally {
       await rm(outputDir, { recursive: true, force: true });

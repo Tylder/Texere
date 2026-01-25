@@ -4,12 +4,13 @@ import path from 'node:path';
 
 import {
   createDeterministicId,
-  type ArtifactPartNode,
   type GraphEdge,
   type PolicyNode,
   type ProjectionEnvelope,
+  type FileNode,
+  type SymbolNode,
 } from '@repo/graph-core';
-import { InMemoryGraphStore } from '@repo/graph-store';
+import { InMemoryGraphStore, InMemoryRelationalStore } from '@repo/graph-store';
 
 import type { IngestionConnector, RepoIngestInput } from './index.js';
 import { ingestRepo, writeJsonDumps } from './index.js';
@@ -19,84 +20,86 @@ class FakeRepoConnector implements IngestionConnector {
     return sourceKind === 'repo';
   }
 
-  async ingest(input: RepoIngestInput, store: InMemoryGraphStore): Promise<any> {
-    const rootId = createDeterministicId(`${input.repoUrl}:${input.commit}`);
-    const stateId = createDeterministicId(`${rootId}:${input.commit}`);
-    const filePartId = createDeterministicId(`${stateId}:README.md`);
-    const symbolPartId = createDeterministicId(`${stateId}:README.md#symbol`);
+  async ingest(
+    input: RepoIngestInput,
+    store: { graph: InMemoryGraphStore; relational: any },
+  ): Promise<any> {
+    const packageName = 'example';
+    const version = '0.0.0';
+    const fileId = createDeterministicId(`${packageName}:${input.snapshot_id}:README.md`);
+    const symbolId = 'scip-ts example README md symbol';
 
-    store.putNode({
-      id: rootId,
-      kind: 'ArtifactRoot',
+    const fileNode: FileNode = {
+      id: fileId,
+      kind: 'File',
       schema_version: 'v0.1',
-      source_kind: 'repo',
-      canonical_ref: input.repoUrl,
-    });
-
-    store.putNode({
-      id: stateId,
-      kind: 'ArtifactState',
-      schema_version: 'v0.1',
-      artifact_root_id: rootId,
-      version_ref: input.commit,
-      content_hash: createDeterministicId('content'),
-      retrieved_at: new Date(0).toISOString(),
-    });
-
-    const fileNode: ArtifactPartNode = {
-      id: filePartId,
-      kind: 'ArtifactPart',
-      schema_version: 'v0.1',
-      artifact_state_id: stateId,
-      locator: 'README.md',
-      retention_mode: 'link-only',
-      part_kind: 'file',
+      fileId,
+      path: 'README.md',
+      packageName,
+      commitSha: input.snapshot_id,
+      language: 'typescript',
+      stale: false,
     };
 
-    const symbolNode: ArtifactPartNode = {
-      id: symbolPartId,
-      kind: 'ArtifactPart',
+    const symbolNode: SymbolNode = {
+      id: createDeterministicId(`${symbolId}:${packageName}:${version}`),
+      kind: 'Symbol',
       schema_version: 'v0.1',
-      artifact_state_id: stateId,
-      locator: 'README.md#symbol:root',
-      retention_mode: 'link-only',
-      part_kind: 'symbol',
+      symbolId,
+      symbolKind: 'symbol',
+      visibility: 'public',
+      packageName,
+      version,
+      stale: false,
     };
 
-    store.putNode(fileNode);
-    store.putNode(symbolNode);
+    store.graph.putNode(fileNode);
+    store.graph.putNode(symbolNode);
 
     const edges: GraphEdge[] = [
       {
-        id: createDeterministicId(`${rootId}->${stateId}`),
-        kind: 'HasState',
+        id: createDeterministicId(`${fileId}->${symbolNode.id}`),
+        kind: 'DEFINES',
         schema_version: 'v0.1',
-        from: rootId,
-        to: stateId,
-      },
-      {
-        id: createDeterministicId(`${stateId}->${filePartId}`),
-        kind: 'HasPart',
-        schema_version: 'v0.1',
-        from: stateId,
-        to: filePartId,
-      },
-      {
-        id: createDeterministicId(`${stateId}->${symbolPartId}`),
-        kind: 'HasPart',
-        schema_version: 'v0.1',
-        from: stateId,
-        to: symbolPartId,
+        from: fileId,
+        to: symbolNode.id,
+        range: { range_kind: 'byte_offset', start_byte: 0, end_byte: 1 },
+        definitionKind: 'definition',
       },
     ];
 
-    edges.forEach((edge) => store.putEdge(edge));
+    edges.forEach((edge) => store.graph.putEdge(edge));
 
     return {
-      artifact_root_id: rootId,
-      artifact_state_id: stateId,
-      node_count: store.listNodes().length,
-      edge_count: store.listEdges().length,
+      run_summary: {
+        run_id: input.run_id,
+        connector_id: 'fake',
+        connector_version: '0.0.0',
+        source_ref: input.source_ref,
+        snapshot_id: input.snapshot_id,
+        started_at: new Date(0).toISOString(),
+        finished_at: new Date(0).toISOString(),
+        status: 'complete',
+        profiles_emitted: [],
+        retention_mode: 'link-only',
+        profile_modes: [],
+        counts_by_profile: [],
+        failures: [],
+        skips: [],
+      },
+      capability_declarations: [],
+      policy_decision: {
+        policy_ref: input.policy_ref,
+        selection_inputs: {},
+        tie_breaks: [],
+        scope_selectors: [],
+        lens_policy: 'working',
+        retention_mode: 'link-only',
+        materialization_mode: 'reference-only',
+        authority_mode: 'external-authoritative',
+        enrichments: [],
+      },
+      profiles: [],
     };
   }
 }
@@ -107,22 +110,24 @@ describe('Ingestion determinism (SPEC-tooling-testing-trophy-strategy §2.2–§
     const input = {
       repoPath: '/tmp/example',
       repoUrl: 'https://example.com/repo',
-      commit: 'abc123',
-      projectId: 'project-1',
+      source_ref: 'https://example.com/repo',
+      policy_ref: 'default-policy',
+      snapshot_id: 'abc123',
+      run_id: 'run-1',
     };
 
-    const storeA = new InMemoryGraphStore();
+    const storeA = { graph: new InMemoryGraphStore(), relational: new InMemoryRelationalStore() };
     await ingestRepo(input, storeA, connector);
     const snapshotA = {
-      nodes: storeA.listNodes(),
-      edges: storeA.listEdges(),
+      nodes: storeA.graph.listNodes(),
+      edges: storeA.graph.listEdges(),
     };
 
-    const storeB = new InMemoryGraphStore();
+    const storeB = { graph: new InMemoryGraphStore(), relational: new InMemoryRelationalStore() };
     await ingestRepo(input, storeB, connector);
     const snapshotB = {
-      nodes: storeB.listNodes(),
-      edges: storeB.listEdges(),
+      nodes: storeB.graph.listNodes(),
+      edges: storeB.graph.listEdges(),
     };
 
     expect(snapshotA).toEqual(snapshotB);
@@ -132,19 +137,46 @@ describe('Ingestion determinism (SPEC-tooling-testing-trophy-strategy §2.2–§
     const connector: IngestionConnector = {
       canHandle: () => false,
       ingest: async () => ({
-        artifact_root_id: '',
-        artifact_state_id: '',
-        node_count: 0,
-        edge_count: 0,
+        run_summary: {
+          run_id: 'run-1',
+          connector_id: 'fake',
+          connector_version: '0.0.0',
+          source_ref: 'https://example.com/repo',
+          snapshot_id: 'abc123',
+          started_at: new Date(0).toISOString(),
+          finished_at: new Date(0).toISOString(),
+          status: 'complete',
+          profiles_emitted: [],
+          retention_mode: 'link-only',
+          profile_modes: [],
+          counts_by_profile: [],
+          failures: [],
+          skips: [],
+        },
+        capability_declarations: [],
+        policy_decision: {
+          policy_ref: 'default-policy',
+          selection_inputs: {},
+          tie_breaks: [],
+          scope_selectors: [],
+          lens_policy: 'working',
+          retention_mode: 'link-only',
+          materialization_mode: 'reference-only',
+          authority_mode: 'external-authoritative',
+          enrichments: [],
+        },
+        profiles: [],
       }),
     };
     const input = {
       repoPath: '/tmp/example',
       repoUrl: 'https://example.com/repo',
-      commit: 'abc123',
-      projectId: 'project-1',
+      source_ref: 'https://example.com/repo',
+      policy_ref: 'default-policy',
+      snapshot_id: 'abc123',
+      run_id: 'run-1',
     };
-    const store = new InMemoryGraphStore();
+    const store = { graph: new InMemoryGraphStore(), relational: new InMemoryRelationalStore() };
 
     await expect(ingestRepo(input, store, connector)).rejects.toThrow(
       'Connector does not support repo ingestion',
@@ -155,13 +187,17 @@ describe('Ingestion determinism (SPEC-tooling-testing-trophy-strategy §2.2–§
 describe('writeJsonDumps (SPEC-tooling-testing-trophy-strategy §2.2–§4.4, SPEC-tooling-testing-implementation-specification §3–§6)', () => {
   it('writes artifacts, policies, and summary JSON files', async () => {
     const store = new InMemoryGraphStore();
-    const rootId = createDeterministicId('root');
+    const fileId = createDeterministicId('file:root');
     store.putNode({
-      id: rootId,
-      kind: 'ArtifactRoot',
+      id: fileId,
+      kind: 'File',
       schema_version: 'v0.1',
-      source_kind: 'repo',
-      canonical_ref: 'https://example.com/repo',
+      fileId,
+      path: 'README.md',
+      packageName: 'example',
+      commitSha: 'abc123',
+      language: 'typescript',
+      stale: false,
     });
 
     const policy: PolicyNode = {
@@ -180,7 +216,7 @@ describe('writeJsonDumps (SPEC-tooling-testing-trophy-strategy §2.2–§4.4, SP
 
       const artifacts = JSON.parse(await readFile(path.join(outputDir, 'artifacts.json'), 'utf-8'));
       expect(artifacts.nodes).toHaveLength(1);
-      expect(artifacts.nodes[0].kind).toBe('ArtifactRoot');
+      expect(artifacts.nodes[0].kind).toBe('File');
 
       const policies = JSON.parse(await readFile(path.join(outputDir, 'policies.json'), 'utf-8'));
       expect(policies.policies).toHaveLength(1);
@@ -218,11 +254,6 @@ describe('writeJsonDumps (SPEC-tooling-testing-trophy-strategy §2.2–§4.4, SP
       );
       expect(projectionData.projection_name).toBe('TestProjection');
       expect(projectionData.explanation).toBe('Test explanation');
-
-      const summary = JSON.parse(
-        await readFile(path.join(outputDir, 'graph_dump_summary.json'), 'utf-8'),
-      );
-      expect(summary.projection).toBe('TestProjection');
     } finally {
       await rm(outputDir, { recursive: true, force: true });
     }

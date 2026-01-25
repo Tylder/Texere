@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "downlevelIteration": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"],
+    "noEmitOnError": true,
+    "tsBuildInfoFile": ".cache/tsconfig.lib.tsbuildinfo"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"]
+}

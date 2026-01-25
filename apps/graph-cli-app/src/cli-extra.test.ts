@@ -1,41 +1,47 @@
 import { describe, expect, it } from 'vitest';
 
 import type { GraphEdge, GraphNode } from '@repo/graph-core';
-import { InMemoryGraphStore } from '@repo/graph-store';
+import { InMemoryGraphStore, InMemoryRelationalStore } from '@repo/graph-store';
 
 import { GraphCLI } from './cli.js';
 
 describe('graph cli helpers (SPEC-tooling-testing-trophy-strategy §2.2–§4.4, SPEC-tooling-testing-implementation-specification §3–§6)', () => {
   it('summarizes nodes and edges', () => {
-    const store = new InMemoryGraphStore();
+    const store = { graph: new InMemoryGraphStore(), relational: new InMemoryRelationalStore() };
     const node: GraphNode = {
-      id: 'root',
-      kind: 'ArtifactRoot',
+      id: 'file:root',
+      kind: 'File',
       schema_version: 'v0.1',
-      source_kind: 'repo',
-      canonical_ref: 'file://repo',
+      fileId: 'file:root',
+      path: 'README.md',
+      packageName: 'repo',
+      commitSha: 'commit',
+      language: 'typescript',
+      stale: false,
     };
     const edge: GraphEdge = {
       id: 'edge',
-      kind: 'HasState',
+      kind: 'REFERS_TO',
       schema_version: 'v0.1',
-      from: 'root',
-      to: 'state',
+      from: 'file:root',
+      to: 'symbol:state',
+      range: { range_kind: 'byte_offset', start_byte: 0, end_byte: 1 },
+      referenceKind: 'read',
     };
-    store.putNode(node);
-    store.putEdge(edge);
+    store.graph.putNode(node);
+    store.graph.putEdge(edge);
 
     const cli = new GraphCLI(store);
     const nodes = cli.getNodes();
     const edges = cli.getEdges();
 
-    expect(nodes).toEqual([{ kind: 'ArtifactRoot', count: 1 }]);
-    expect(edges).toEqual([{ kind: 'HasState', count: 1 }]);
-    expect(cli.getNodeById('root')).toEqual(node);
+    expect(nodes).toEqual([{ kind: 'File', count: 1 }]);
+    expect(edges).toEqual([{ kind: 'REFERS_TO', count: 1 }]);
+    expect(cli.getNodeById('file:root')).toEqual(node);
   });
 
   it('formats dump output', () => {
-    const store = new InMemoryGraphStore();
+    const store = { graph: new InMemoryGraphStore(), relational: new InMemoryRelationalStore() };
     const cli = new GraphCLI(store);
     const text = cli.dumpToText();
 

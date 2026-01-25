@@ -2,9 +2,16 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { InMemoryGraphStore } from '@repo/graph-store';
+import { InMemoryGraphStore, InMemoryRelationalStore } from '@repo/graph-store';
 
 import { ScipTsIngestionConnector } from './index.js';
+
+function createStore(): { graph: InMemoryGraphStore; relational: InMemoryRelationalStore } {
+  return {
+    graph: new InMemoryGraphStore(),
+    relational: new InMemoryRelationalStore(),
+  };
+}
 
 describe('ScipTsIngestionConnector utility functions', () => {
   describe('canHandle', () => {
@@ -23,7 +30,7 @@ describe('ScipTsIngestionConnector utility functions', () => {
   describe('ingest error handling', () => {
     it('throws when repo path is not a directory', async () => {
       const connector = new ScipTsIngestionConnector();
-      const store = new InMemoryGraphStore();
+      const store = createStore();
       const tempFile = path.join(tmpdir(), `not-a-dir-${Date.now()}.txt`);
 
       await writeFile(tempFile, 'test content', 'utf-8');
@@ -34,8 +41,11 @@ describe('ScipTsIngestionConnector utility functions', () => {
             {
               repoPath: tempFile,
               repoUrl: 'https://example.com/repo',
-              commit: 'abc123',
-              projectId: 'project-1',
+              source_ref: 'https://example.com/repo',
+              policy_ref: 'default-policy',
+              snapshot_id: 'abc123',
+              run_id: 'run-1',
+              connector_options: { skipInstall: true },
             },
             store,
           ),
@@ -47,15 +57,18 @@ describe('ScipTsIngestionConnector utility functions', () => {
 
     it('throws when repo path does not exist', async () => {
       const connector = new ScipTsIngestionConnector();
-      const store = new InMemoryGraphStore();
+      const store = createStore();
 
       await expect(
         connector.ingest(
           {
             repoPath: '/nonexistent/path/that/does/not/exist',
             repoUrl: 'https://example.com/repo',
-            commit: 'abc123',
-            projectId: 'project-1',
+            source_ref: 'https://example.com/repo',
+            policy_ref: 'default-policy',
+            snapshot_id: 'abc123',
+            run_id: 'run-1',
+            connector_options: { skipInstall: true },
           },
           store,
         ),
@@ -64,11 +77,10 @@ describe('ScipTsIngestionConnector utility functions', () => {
 
     it('throws when scip-typescript fails (no tsconfig)', async () => {
       const connector = new ScipTsIngestionConnector();
-      const store = new InMemoryGraphStore();
+      const store = createStore();
       const repoRoot = path.join(tmpdir(), `empty-repo-${Date.now()}`);
 
       await mkdir(repoRoot, { recursive: true });
-      // Create package.json but no tsconfig - scip-typescript will fail
       await writeFile(
         path.join(repoRoot, 'package.json'),
         JSON.stringify({ name: 'test', version: '1.0.0' }),
@@ -81,8 +93,11 @@ describe('ScipTsIngestionConnector utility functions', () => {
             {
               repoPath: repoRoot,
               repoUrl: 'https://example.com/repo',
-              commit: 'abc123',
-              projectId: 'project-1',
+              source_ref: 'https://example.com/repo',
+              policy_ref: 'default-policy',
+              snapshot_id: 'abc123',
+              run_id: 'run-1',
+              connector_options: { skipInstall: true },
             },
             store,
           ),

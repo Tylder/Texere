@@ -314,6 +314,37 @@ importers:
         specifier: ^4.0.15
         version: 4.0.17(@types/node@22.19.7)(yaml@2.8.2)
 
+  packages/graph-query:
+    dependencies:
+      '@repo/graph-core':
+        specifier: workspace:*
+        version: link:../graph-core
+      '@repo/graph-store':
+        specifier: workspace:*
+        version: link:../graph-store
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^22.9.3
+        version: 22.19.7
+      '@vitest/coverage-v8':
+        specifier: ^4.0.15
+        version: 4.0.18(vitest@4.0.17(@types/node@22.19.7)(yaml@2.8.2))
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.15
+        version: 4.0.17(@types/node@22.19.7)(yaml@2.8.2)
+
   packages/graph-store:
     dependencies:
       '@repo/graph-core':

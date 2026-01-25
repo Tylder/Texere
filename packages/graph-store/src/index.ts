@@ -105,3 +105,124 @@ export class InMemoryGraphStore implements GraphStore {
     return candidates[candidates.length - 1];
   }
 }
+
+export type FileMetadata = {
+  file_id: string;
+  path: string;
+  package_name: string;
+  commit_sha: string;
+  language: string;
+  content_hash: string;
+  stale: boolean;
+};
+
+export type CommitMetadata = {
+  commit_sha: string;
+  timestamp: string;
+  author: string;
+  message: string;
+};
+
+export type PackageMetadata = {
+  package_name: string;
+  version: string;
+  language: string;
+  scip_url: string;
+};
+
+export type IndexStatusRecord = {
+  file_id: string;
+  status: 'complete' | 'partial' | 'failed' | 'skipped';
+  indexed_at: string;
+  error_message: string | null;
+};
+
+export interface RelationalStore {
+  beginTransaction(): void;
+  commit(): void;
+  rollback(): void;
+  putFile(record: FileMetadata): void;
+  putCommit(record: CommitMetadata): void;
+  putPackage(record: PackageMetadata): void;
+  putIndexStatus(record: IndexStatusRecord): void;
+  getFile(file_id: string): FileMetadata | undefined;
+  listFiles(): FileMetadata[];
+  listCommits(): CommitMetadata[];
+  listPackages(): PackageMetadata[];
+  listIndexStatus(): IndexStatusRecord[];
+}
+
+type RelationalSnapshot = {
+  files: Map<string, FileMetadata>;
+  commits: Map<string, CommitMetadata>;
+  packages: Map<string, PackageMetadata>;
+  indexStatus: Map<string, IndexStatusRecord>;
+};
+
+export class InMemoryRelationalStore implements RelationalStore {
+  private files = new Map<string, FileMetadata>();
+  private commits = new Map<string, CommitMetadata>();
+  private packages = new Map<string, PackageMetadata>();
+  private indexStatus = new Map<string, IndexStatusRecord>();
+  private snapshots: RelationalSnapshot[] = [];
+
+  beginTransaction(): void {
+    this.snapshots.push({
+      files: new Map(this.files),
+      commits: new Map(this.commits),
+      packages: new Map(this.packages),
+      indexStatus: new Map(this.indexStatus),
+    });
+  }
+
+  commit(): void {
+    this.snapshots.pop();
+  }
+
+  rollback(): void {
+    const snapshot = this.snapshots.pop();
+    if (!snapshot) return;
+    this.files = snapshot.files;
+    this.commits = snapshot.commits;
+    this.packages = snapshot.packages;
+    this.indexStatus = snapshot.indexStatus;
+  }
+
+  putFile(record: FileMetadata): void {
+    this.files.set(record.file_id, record);
+  }
+
+  putCommit(record: CommitMetadata): void {
+    this.commits.set(record.commit_sha, record);
+  }
+
+  putPackage(record: PackageMetadata): void {
+    this.packages.set(`${record.package_name}@${record.version}`, record);
+  }
+
+  putIndexStatus(record: IndexStatusRecord): void {
+    this.indexStatus.set(record.file_id, record);
+  }
+
+  getFile(file_id: string): FileMetadata | undefined {
+    return this.files.get(file_id);
+  }
+
+  listFiles(): FileMetadata[] {
+    return [...this.files.values()].sort((a, b) => a.file_id.localeCompare(b.file_id));
+  }
+
+  listCommits(): CommitMetadata[] {
+    return [...this.commits.values()].sort((a, b) => a.commit_sha.localeCompare(b.commit_sha));
+  }
+
+  listPackages(): PackageMetadata[] {
+    return [...this.packages.values()].sort((a, b) =>
+      `${a.package_name}@${a.version}`.localeCompare(`${b.package_name}@${b.version}`),
+    );
+  }
+
+  listIndexStatus(): IndexStatusRecord[] {
+    return [...this.indexStatus.values()].sort((a, b) => a.file_id.localeCompare(b.file_id));
+  }
+}

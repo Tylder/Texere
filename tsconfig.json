@@ -29,6 +29,9 @@
       "path": "./packages/graph-projection"
     },
     {
+      "path": "./packages/graph-query"
+    },
+    {
       "path": "./apps/graph-cli-app"
     }
   ]

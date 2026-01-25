@@ -2,12 +2,13 @@ import { describe, it, expect, beforeEach } from 'vitest';
 
 import {
   createDeterministicId,
-  type ArtifactRootNode,
   type GraphEdge,
   type PolicyNode,
+  type FileNode,
 } from '@repo/graph-core';
 
 import { InMemoryGraphStore } from './index.js';
+import { InMemoryRelationalStore } from './index.js';
 
 describe('InMemoryGraphStore', () => {
   let store: InMemoryGraphStore;
@@ -18,12 +19,16 @@ describe('InMemoryGraphStore', () => {
 
   describe('transactions', () => {
     it('commits a transaction', () => {
-      const node: ArtifactRootNode = {
-        id: createDeterministicId('test'),
-        kind: 'ArtifactRoot',
+      const node: FileNode = {
+        id: createDeterministicId('file:test'),
+        kind: 'File',
         schema_version: 'v0.1',
-        source_kind: 'repo',
-        canonical_ref: 'https://example.com/repo',
+        fileId: 'file:test',
+        path: 'src/index.ts',
+        packageName: 'example',
+        commitSha: 'abc123',
+        language: 'typescript',
+        stale: false,
       };
 
       store.beginTransaction();
@@ -34,22 +39,30 @@ describe('InMemoryGraphStore', () => {
     });
 
     it('rolls back a transaction', () => {
-      const node: ArtifactRootNode = {
-        id: createDeterministicId('test'),
-        kind: 'ArtifactRoot',
+      const node: FileNode = {
+        id: createDeterministicId('file:test'),
+        kind: 'File',
         schema_version: 'v0.1',
-        source_kind: 'repo',
-        canonical_ref: 'https://example.com/repo',
+        fileId: 'file:test',
+        path: 'src/index.ts',
+        packageName: 'example',
+        commitSha: 'abc123',
+        language: 'typescript',
+        stale: false,
       };
 
       store.putNode(node);
       store.beginTransaction();
-      const anotherNode: ArtifactRootNode = {
-        id: createDeterministicId('test2'),
-        kind: 'ArtifactRoot',
+      const anotherNode: FileNode = {
+        id: createDeterministicId('file:test2'),
+        kind: 'File',
         schema_version: 'v0.1',
-        source_kind: 'repo',
-        canonical_ref: 'https://example.com/repo2',
+        fileId: 'file:test2',
+        path: 'src/other.ts',
+        packageName: 'example',
+        commitSha: 'abc123',
+        language: 'typescript',
+        stale: false,
       };
       store.putNode(anotherNode);
       store.rollback();
@@ -69,10 +82,16 @@ describe('InMemoryGraphStore', () => {
       const nodeB = createDeterministicId('b');
       const edge: GraphEdge = {
         id: createDeterministicId('edge-1'),
-        kind: 'HasState',
+        kind: 'REFERS_TO',
         schema_version: 'v0.1',
         from: nodeA,
         to: nodeB,
+        range: {
+          range_kind: 'byte_offset',
+          start_byte: 0,
+          end_byte: 1,
+        },
+        referenceKind: 'read',
       };
 
       store.putEdge(edge);
@@ -86,17 +105,29 @@ describe('InMemoryGraphStore', () => {
       const nodeB = createDeterministicId('b');
       const edge1: GraphEdge = {
         id: createDeterministicId('z'),
-        kind: 'HasState',
+        kind: 'REFERS_TO',
         schema_version: 'v0.1',
         from: nodeA,
         to: nodeB,
+        range: {
+          range_kind: 'byte_offset',
+          start_byte: 0,
+          end_byte: 1,
+        },
+        referenceKind: 'read',
       };
       const edge2: GraphEdge = {
         id: createDeterministicId('a'),
-        kind: 'HasState',
+        kind: 'REFERS_TO',
         schema_version: 'v0.1',
         from: nodeB,
         to: nodeA,
+        range: {
+          range_kind: 'byte_offset',
+          start_byte: 2,
+          end_byte: 3,
+        },
+        referenceKind: 'read',
       };
 
       store.putEdge(edge1);
@@ -112,17 +143,29 @@ describe('InMemoryGraphStore', () => {
       const nodeC = createDeterministicId('c');
       const edge1: GraphEdge = {
         id: createDeterministicId('edge-1'),
-        kind: 'HasState',
+        kind: 'REFERS_TO',
         schema_version: 'v0.1',
         from: nodeA,
         to: nodeB,
+        range: {
+          range_kind: 'byte_offset',
+          start_byte: 0,
+          end_byte: 1,
+        },
+        referenceKind: 'read',
       };
       const edge2: GraphEdge = {
         id: createDeterministicId('edge-2'),
-        kind: 'HasPart',
+        kind: 'DEFINES',
         schema_version: 'v0.1',
         from: nodeB,
         to: nodeC,
+        range: {
+          range_kind: 'byte_offset',
+          start_byte: 2,
+          end_byte: 4,
+        },
+        definitionKind: 'definition',
       };
 
       store.putEdge(edge1);
@@ -136,7 +179,7 @@ describe('InMemoryGraphStore', () => {
       expect(toC).toHaveLength(1);
       expect(toC[0]).toEqual(edge2);
 
-      const hasPart = store.getEdges({ kind: 'HasPart' });
+      const hasPart = store.getEdges({ kind: 'DEFINES' });
       expect(hasPart).toHaveLength(1);
       expect(hasPart[0]).toEqual(edge2);
     });
@@ -187,5 +230,56 @@ describe('InMemoryGraphStore', () => {
       const selected = store.queryPolicy({ policy_kind: 'ValidationPolicy', scope: 'module' });
       expect(selected?.id).toBe(policyA.id);
     });
+  });
+});
+
+describe('InMemoryRelationalStore', () => {
+  it('stores and lists records deterministically', () => {
+    const store = new InMemoryRelationalStore();
+
+    store.putFile({
+      file_id: 'b',
+      path: 'src/b.ts',
+      package_name: 'pkg',
+      commit_sha: 'commit',
+      language: 'typescript',
+      content_hash: 'hash-b',
+      stale: false,
+    });
+    store.putFile({
+      file_id: 'a',
+      path: 'src/a.ts',
+      package_name: 'pkg',
+      commit_sha: 'commit',
+      language: 'typescript',
+      content_hash: 'hash-a',
+      stale: false,
+    });
+
+    const files = store.listFiles();
+    expect(files[0]?.file_id).toBe('a');
+    expect(files[1]?.file_id).toBe('b');
+  });
+
+  it('rolls back relational transactions', () => {
+    const store = new InMemoryRelationalStore();
+    store.putCommit({
+      commit_sha: 'a',
+      timestamp: 't',
+      author: 'author',
+      message: 'message',
+    });
+
+    store.beginTransaction();
+    store.putCommit({
+      commit_sha: 'b',
+      timestamp: 't2',
+      author: 'author2',
+      message: 'message2',
+    });
+    store.rollback();
+
+    expect(store.listCommits()).toHaveLength(1);
+    expect(store.listCommits()[0]?.commit_sha).toBe('a');
   });
 });

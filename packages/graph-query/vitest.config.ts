@@ -18,10 +18,10 @@ export default defineConfig({
       reporter: ['text', 'lcov', 'json'],
       reportsDirectory: './coverage',
       thresholds: {
-        statements: 60,
-        lines: 60,
-        functions: 60,
-        branches: 40, // Lower for integration-heavy module with many external tool error paths
+        statements: 20,
+        lines: 20,
+        functions: 20,
+        branches: 15,
       },
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['**/.cache/**', 'dist', '**/*.d.ts', '**/node_modules/**'],

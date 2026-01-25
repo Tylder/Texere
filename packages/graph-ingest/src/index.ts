@@ -1,6 +1,14 @@
 export type {
   IngestResult,
   IngestionConnector,
+  IngestionStore,
+  PolicyDecisionRecord,
+  ProfileOutput,
+  RunSummary,
+  RunStatus,
+  RetentionMode,
+  MaterializationMode,
+  AuthorityMode,
   RepoIngestInput,
   RepoSourceIngestOptions,
 } from './ingest-repo.js';

@@ -4,16 +4,28 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { deserializeSCIP } from '@c4312/scip';
-import type { Document, SymbolInformation } from '@c4312/scip';
+import type { Document, Index, Occurrence, SymbolInformation } from '@c4312/scip';
 import {
   createDeterministicId,
-  type ArtifactPartNode,
-  type ArtifactRootNode,
-  type ArtifactStateNode,
+  type CommitNode,
+  type DefinesEdge,
+  type FileNode,
   type GraphEdge,
+  type ImplementsEdge,
+  type PackageNode,
+  type RefersToEdge,
+  type SymbolNode,
+  type TypeNode,
+  type DeclaresTypeEdge,
+  type Range,
 } from '@repo/graph-core';
-import type { IngestResult, IngestionConnector, RepoIngestInput } from '@repo/graph-ingest';
-import type { GraphStore } from '@repo/graph-store';
+import type {
+  IngestResult,
+  IngestionConnector,
+  IngestionStore,
+  RepoIngestInput,
+} from '@repo/graph-ingest';
+import type { IndexStatusRecord } from '@repo/graph-store';
 
 const execAsync = promisify(exec);
 
@@ -24,10 +36,17 @@ export interface ToolchainProvenance {
   packageManagerVersion: string;
 }
 
-async function detectPackageManager(
-  repoPath: string,
-): Promise<{ name: string; lockfile: string } | null> {
-  const lockfiles = [
+type PackageJson = {
+  name?: string;
+  version?: string;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+};
+
+type PackageManager = 'pnpm' | 'yarn' | 'npm';
+
+async function detectPackageManager(repoPath: string): Promise<PackageManager> {
+  const lockfiles: Array<{ name: PackageManager; lockfile: string }> = [
     { name: 'pnpm', lockfile: 'pnpm-lock.yaml' },
     { name: 'yarn', lockfile: 'yarn.lock' },
     { name: 'npm', lockfile: 'package-lock.json' },
@@ -36,19 +55,61 @@ async function detectPackageManager(
   for (const { name, lockfile } of lockfiles) {
     try {
       await stat(path.join(repoPath, lockfile));
-      return { name, lockfile };
+      return name;
     } catch {
-      // Continue to next lockfile
+      // Continue to next lockfile.
     }
   }
 
-  return null;
+  return 'npm';
+}
+
+async function installDependencies(
+  repoPath: string,
+  packageManager: PackageManager,
+): Promise<void> {
+  let command = '';
+
+  if (packageManager === 'pnpm') {
+    command = 'pnpm install --frozen-lockfile';
+  } else if (packageManager === 'yarn') {
+    command = 'yarn install --frozen-lockfile';
+  } else {
+    const hasLockfile = await hasPackageLock(repoPath);
+    command = hasLockfile ? 'npm ci' : 'npm install';
+  }
+
+  try {
+    await execAsync(command, { cwd: repoPath, timeout: 300000 });
+  } catch (error) {
+    const err = error as Error & { stderr?: string; stdout?: string };
+    throw new Error(
+      `Dependency install failed: ${err.message}\nstderr: ${err.stderr ?? ''}\nstdout: ${err.stdout ?? ''}`,
+    );
+  }
+}
+
+async function hasPackageLock(repoPath: string): Promise<boolean> {
+  try {
+    await stat(path.join(repoPath, 'package-lock.json'));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readPackageJson(repoPath: string): Promise<PackageJson> {
+  try {
+    const raw = await readFile(path.join(repoPath, 'package.json'), 'utf-8');
+    return JSON.parse(raw) as PackageJson;
+  } catch {
+    return {};
+  }
 }
 
 async function getToolchainProvenance(repoPath: string): Promise<ToolchainProvenance> {
   const nodeVersion = process.version;
 
-  // Get scip-typescript version
   let scipTypescriptVersion = 'unknown';
   try {
     const { stdout } = await execAsync('npx @sourcegraph/scip-typescript --version', {
@@ -57,12 +118,10 @@ async function getToolchainProvenance(repoPath: string): Promise<ToolchainProven
     });
     scipTypescriptVersion = stdout.trim();
   } catch {
-    // Version detection failed, use unknown
+    // Version detection failed.
   }
 
-  // Get package manager info
-  const pm = await detectPackageManager(repoPath);
-  const packageManager = pm?.name ?? 'npm';
+  const packageManager = await detectPackageManager(repoPath);
   let packageManagerVersion = 'unknown';
 
   try {
@@ -72,7 +131,7 @@ async function getToolchainProvenance(repoPath: string): Promise<ToolchainProven
     });
     packageManagerVersion = stdout.trim();
   } catch {
-    // Version detection failed
+    // Version detection failed.
   }
 
   return {
@@ -84,17 +143,15 @@ async function getToolchainProvenance(repoPath: string): Promise<ToolchainProven
 }
 
 async function runScipTypescript(repoPath: string): Promise<void> {
-  const pm = await detectPackageManager(repoPath);
-  const packageManager = pm?.name ?? 'npm';
+  const packageManager = await detectPackageManager(repoPath);
 
-  // Determine workspace flag for monorepos
   let workspaceFlag = '';
   if (packageManager === 'pnpm') {
     try {
       await stat(path.join(repoPath, 'pnpm-workspace.yaml'));
       workspaceFlag = '--pnpm-workspaces';
     } catch {
-      // Not a pnpm workspace
+      // Not a pnpm workspace.
     }
   } else if (packageManager === 'yarn') {
     try {
@@ -105,7 +162,7 @@ async function runScipTypescript(repoPath: string): Promise<void> {
         workspaceFlag = '--yarn-workspaces';
       }
     } catch {
-      // Not a yarn workspace
+      // Not a yarn workspace.
     }
   }
 
@@ -114,8 +171,8 @@ async function runScipTypescript(repoPath: string): Promise<void> {
   try {
     await execAsync(command, {
       cwd: repoPath,
-      timeout: 300000, // 5 minute timeout for large repos
-      maxBuffer: 50 * 1024 * 1024, // 50MB buffer
+      timeout: 300000,
+      maxBuffer: 50 * 1024 * 1024,
     });
   } catch (error) {
     const err = error as Error & { stderr?: string; stdout?: string };
@@ -125,22 +182,62 @@ async function runScipTypescript(repoPath: string): Promise<void> {
   }
 }
 
-async function parseScipIndex(repoPath: string): Promise<Document[]> {
+async function parseScipIndex(repoPath: string): Promise<Index> {
   const indexPath = path.join(repoPath, 'index.scip');
 
   try {
     const buffer = await readFile(indexPath);
-    const index = deserializeSCIP(new Uint8Array(buffer));
-    return index.documents;
+    return deserializeSCIP(new Uint8Array(buffer));
   } catch (error) {
     throw new Error(`Failed to parse SCIP index at ${indexPath}: ${(error as Error).message}`);
   }
 }
 
-function formatSymbolLocator(relativePath: string, symbol: SymbolInformation): string {
-  // Use the SCIP symbol identifier as the locator suffix
-  // Format: path#scip_symbol (per REQ-005)
-  return `${relativePath}#${symbol.symbol}`;
+function buildRange(occurrence: Occurrence): Range | undefined {
+  const range = occurrence.range;
+  if (!range || range.length < 3) return undefined;
+
+  const [startLine, startCol] = range;
+  if (typeof startLine !== 'number' || typeof startCol !== 'number') return undefined;
+
+  if (range.length === 3) {
+    return {
+      range_kind: 'line_col',
+      start_line: startLine,
+      start_col: startCol,
+      end_line: startLine,
+      end_col: range[2] ?? startCol,
+    };
+  }
+
+  return {
+    range_kind: 'line_col',
+    start_line: startLine,
+    start_col: startCol,
+    end_line: range[2] ?? startLine,
+    end_col: range[3] ?? startCol,
+  };
+}
+
+function buildIndexStatus(fileId: string): IndexStatusRecord {
+  return {
+    file_id: fileId,
+    status: 'complete',
+    indexed_at: new Date().toISOString(),
+    error_message: null,
+  };
+}
+
+function isDefinition(symbolRoles: number): boolean {
+  return (symbolRoles & 1) === 1;
+}
+
+function isReference(symbolRoles: number): boolean {
+  return (symbolRoles & 2) === 2;
+}
+
+function toSymbolKind(symbol: SymbolInformation): string {
+  return symbol.displayName ? symbol.displayName : String(symbol.kind);
 }
 
 export class ScipTsIngestionConnector implements IngestionConnector {
@@ -148,136 +245,347 @@ export class ScipTsIngestionConnector implements IngestionConnector {
     return sourceKind === 'repo';
   }
 
-  async ingest(input: RepoIngestInput, store: GraphStore): Promise<IngestResult> {
+  async ingest(input: RepoIngestInput, store: IngestionStore): Promise<IngestResult> {
     const repoPath = input.repoPath;
     const repoStats = await stat(repoPath);
     if (!repoStats.isDirectory()) {
       throw new Error(`Repo path is not a directory: ${repoPath}`);
     }
 
-    // Capture toolchain provenance before running scip-typescript
-    const provenance = await getToolchainProvenance(repoPath);
+    const skipInstall = Boolean(input.connector_options?.['skipInstall']);
+    if (!skipInstall) {
+      const packageManager = await detectPackageManager(repoPath);
+      await installDependencies(repoPath, packageManager);
+    }
 
-    // Run scip-typescript to generate the index
+    const provenance = await getToolchainProvenance(repoPath);
     await runScipTypescript(repoPath);
 
-    // Parse the generated SCIP index
-    const documents = await parseScipIndex(repoPath);
+    const index = await parseScipIndex(repoPath);
+    const documents = index.documents;
+    const packageJson = await readPackageJson(repoPath);
+    const packageName = packageJson.name ?? 'unknown';
+    const packageVersion = packageJson.version ?? '0.0.0';
 
-    return ingestScipDocuments(input, store, documents, provenance);
+    return ingestScipDocuments(input, store, documents, provenance, {
+      packageName,
+      packageVersion,
+      dependencies: {
+        ...packageJson.dependencies,
+        ...packageJson.devDependencies,
+      },
+    });
   }
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function ingestScipDocuments(
   input: RepoIngestInput,
-  store: GraphStore,
+  store: IngestionStore,
   documents: Document[],
   provenance: ToolchainProvenance,
+  options: {
+    packageName: string;
+    packageVersion: string;
+    dependencies: Record<string, string>;
+  },
 ): IngestResult {
-  // Create deterministic IDs
-  const rootId = createDeterministicId(`${input.repoUrl}:${input.commit}`);
-  const stateId = createDeterministicId(`${rootId}:${input.commit}`);
+  const { packageName, packageVersion, dependencies } = options;
 
-  // Compute content hash from all file paths and their symbol counts
-  const contentHashInput = documents
-    .map((doc) => `${doc.relativePath}:${doc.symbols.length}`)
-    .sort()
-    .join('|');
-  const contentHash = createDeterministicId(contentHashInput);
+  const now = new Date().toISOString();
+  const commitSha = input.snapshot_id;
+  const rootPackageId = createDeterministicId(`package:${packageName}@${packageVersion}`);
+  const commitId = createDeterministicId(`commit:${commitSha}`);
 
-  // Create root node
-  const rootNode: ArtifactRootNode = {
-    id: rootId,
-    kind: 'ArtifactRoot',
+  const packageNode: PackageNode = {
+    id: rootPackageId,
+    kind: 'Package',
     schema_version: 'v0.1',
-    source_kind: 'repo',
-    canonical_ref: input.repoUrl,
+    name: packageName,
+    version: packageVersion,
+    language: 'typescript',
+    sourceRepo: input.source_ref,
+    scipUrl: '',
   };
 
-  // Create state node with provenance metadata
-  const stateNode: ArtifactStateNode & { provenance: ToolchainProvenance } = {
-    id: stateId,
-    kind: 'ArtifactState',
+  const commitNode: CommitNode = {
+    id: commitId,
+    kind: 'Commit',
     schema_version: 'v0.1',
-    artifact_root_id: rootId,
-    version_ref: input.commit,
-    content_hash: contentHash,
-    retrieved_at: new Date().toISOString(),
-    provenance,
+    commitSha,
+    timestamp: now,
+    author: 'unknown',
+    message: 'unknown',
   };
 
-  store.putNode(rootNode);
-  store.putNode(stateNode as ArtifactStateNode);
+  store.graph.putNode(packageNode);
+  store.graph.putNode(commitNode);
+  store.relational.putCommit({
+    commit_sha: commitSha,
+    timestamp: now,
+    author: 'unknown',
+    message: 'unknown',
+  });
+  store.relational.putPackage({
+    package_name: packageName,
+    version: packageVersion,
+    language: 'typescript',
+    scip_url: '',
+  });
 
+  const symbolNodes = new Map<string, SymbolNode>();
+  const typeNodes = new Map<string, TypeNode>();
   const edges: GraphEdge[] = [];
-  const stateEdge: GraphEdge = {
-    id: createDeterministicId(`${rootId}->${stateId}`),
-    kind: 'HasState',
-    schema_version: 'v0.1',
-    from: rootId,
-    to: stateId,
-  };
-  edges.push(stateEdge);
 
-  // Process each document (file) and its symbols
-  for (const doc of documents) {
-    const relativePath = doc.relativePath;
-
-    // Create file-level ArtifactPart
-    const filePartId = createDeterministicId(`${stateId}:${relativePath}`);
-    const fileNode: ArtifactPartNode = {
-      id: filePartId,
-      kind: 'ArtifactPart',
+  for (const [depName, versionRange] of Object.entries(dependencies)) {
+    const depId = createDeterministicId(`package:${depName}@${versionRange}`);
+    const depNode: PackageNode = {
+      id: depId,
+      kind: 'Package',
       schema_version: 'v0.1',
-      artifact_state_id: stateId,
-      locator: relativePath,
-      retention_mode: 'link-only',
-      part_kind: 'file',
+      name: depName,
+      version: versionRange,
+      language: 'typescript',
+      sourceRepo: '',
+      scipUrl: '',
     };
 
-    store.putNode(fileNode);
-    edges.push({
-      id: createDeterministicId(`${stateId}->${filePartId}`),
-      kind: 'HasPart',
-      schema_version: 'v0.1',
-      from: stateId,
-      to: filePartId,
+    store.graph.putNode(depNode);
+    store.relational.putPackage({
+      package_name: depName,
+      version: versionRange,
+      language: 'typescript',
+      scip_url: '',
     });
 
-    // Create symbol-level ArtifactParts for each symbol in this file
+    edges.push({
+      id: createDeterministicId(`${rootPackageId}->${depId}`),
+      kind: 'DEPENDS_ON',
+      schema_version: 'v0.1',
+      from: rootPackageId,
+      to: depId,
+      versionRange: versionRange,
+    });
+  }
+
+  for (const doc of documents) {
+    const fileId = createDeterministicId(`${packageName}:${commitSha}:${doc.relativePath}`);
+    const fileNode: FileNode = {
+      id: fileId,
+      kind: 'File',
+      schema_version: 'v0.1',
+      fileId,
+      path: doc.relativePath,
+      packageName,
+      commitSha,
+      language: doc.language ?? 'typescript',
+      stale: false,
+      locator: {
+        source_ref: input.source_ref,
+        snapshot_id: input.snapshot_id,
+        path_or_url: doc.relativePath,
+      },
+    };
+
+    store.graph.putNode(fileNode);
+    store.relational.putFile({
+      file_id: fileId,
+      path: doc.relativePath,
+      package_name: packageName,
+      commit_sha: commitSha,
+      language: doc.language ?? 'typescript',
+      content_hash: createDeterministicId(doc.text ?? ''),
+      stale: false,
+    });
+    store.relational.putIndexStatus(buildIndexStatus(fileId));
+
     for (const symbol of doc.symbols) {
-      const locator = formatSymbolLocator(relativePath, symbol);
-      const symbolPartId = createDeterministicId(`${stateId}:${locator}`);
+      const symbolId = symbol.symbol;
+      if (!symbolId) continue;
 
-      const symbolNode: ArtifactPartNode = {
-        id: symbolPartId,
-        kind: 'ArtifactPart',
-        schema_version: 'v0.1',
-        artifact_state_id: stateId,
-        locator,
-        retention_mode: 'link-only',
-        part_kind: 'symbol',
-      };
+      if (!symbolNodes.has(symbolId)) {
+        const symbolNode: SymbolNode = {
+          id: createDeterministicId(`${symbolId}:${packageName}:${packageVersion}`),
+          kind: 'Symbol',
+          schema_version: 'v0.1',
+          symbolId,
+          symbolKind: toSymbolKind(symbol),
+          visibility: 'unknown',
+          packageName,
+          version: packageVersion,
+          stale: false,
+        };
+        symbolNodes.set(symbolId, symbolNode);
+        store.graph.putNode(symbolNode);
 
-      store.putNode(symbolNode);
-      edges.push({
-        id: createDeterministicId(`${stateId}->${symbolPartId}`),
-        kind: 'HasPart',
-        schema_version: 'v0.1',
-        from: stateId,
-        to: symbolPartId,
-      });
+        edges.push({
+          id: createDeterministicId(`${symbolNode.id}->${commitId}`),
+          kind: 'INDEXED_AT',
+          schema_version: 'v0.1',
+          from: symbolNode.id,
+          to: commitId,
+        });
+      }
+
+      for (const relationship of symbol.relationships ?? []) {
+        const targetSymbolId = relationship.symbol;
+        if (!targetSymbolId) continue;
+
+        if (relationship.isTypeDefinition) {
+          const typeId = createDeterministicId(
+            `${targetSymbolId}:${packageName}:${packageVersion}`,
+          );
+          if (!typeNodes.has(typeId)) {
+            const typeNode: TypeNode = {
+              id: typeId,
+              kind: 'Type',
+              schema_version: 'v0.1',
+              typeId: targetSymbolId,
+              typeKind: 'unknown',
+              packageName,
+              version: packageVersion,
+            };
+            typeNodes.set(typeId, typeNode);
+            store.graph.putNode(typeNode);
+          }
+
+          const declaresType: DeclaresTypeEdge = {
+            id: createDeterministicId(`${symbolId}->${typeId}`),
+            kind: 'DECLARES_TYPE',
+            schema_version: 'v0.1',
+            from: symbolNodes.get(symbolId)?.id ?? createDeterministicId(symbolId),
+            to: typeId,
+          };
+          edges.push(declaresType);
+        }
+
+        if (relationship.isImplementation) {
+          const implementsEdge: ImplementsEdge = {
+            id: createDeterministicId(`${symbolId}->${targetSymbolId}`),
+            kind: 'IMPLEMENTS',
+            schema_version: 'v0.1',
+            from: symbolNodes.get(symbolId)?.id ?? createDeterministicId(symbolId),
+            to: createDeterministicId(`${targetSymbolId}:${packageName}:${packageVersion}`),
+            relationKind: 'implements',
+          };
+          edges.push(implementsEdge);
+        }
+      }
+    }
+
+    for (const occurrence of doc.occurrences ?? []) {
+      const symbolId = occurrence.symbol;
+      if (!symbolId) continue;
+
+      const symbolNode = symbolNodes.get(symbolId);
+      if (!symbolNode) continue;
+
+      const range = buildRange(occurrence);
+      if (!range) continue;
+
+      if (isDefinition(occurrence.symbolRoles)) {
+        const definesEdge: DefinesEdge = {
+          id: createDeterministicId(`${fileId}->${symbolNode.id}:${JSON.stringify(range)}`),
+          kind: 'DEFINES',
+          schema_version: 'v0.1',
+          from: fileId,
+          to: symbolNode.id,
+          range,
+          definitionKind: 'definition',
+        };
+        edges.push(definesEdge);
+      }
+
+      if (isReference(occurrence.symbolRoles)) {
+        const refersToEdge: RefersToEdge = {
+          id: createDeterministicId(`${fileId}->${symbolNode.id}:${JSON.stringify(range)}:ref`),
+          kind: 'REFERS_TO',
+          schema_version: 'v0.1',
+          from: fileId,
+          to: symbolNode.id,
+          range,
+          referenceKind: 'read',
+        };
+        edges.push(refersToEdge);
+      }
     }
   }
 
+  edges.sort((a, b) => a.id.localeCompare(b.id));
   for (const edge of edges) {
-    store.putEdge(edge);
+    store.graph.putEdge(edge);
   }
 
+  const profileName = 'repo-ts';
+  const profileVersion = 'v0.1';
+  const nodeCount = store.graph.listNodes().length;
+  const edgeCount = store.graph.listEdges().length;
+
   return {
-    artifact_root_id: rootId,
-    artifact_state_id: stateId,
-    node_count: store.listNodes().length,
-    edge_count: store.listEdges().length,
+    run_summary: {
+      run_id: input.run_id,
+      connector_id: 'graph-ingest-connector-ts',
+      connector_version: '0.0.0',
+      source_ref: input.source_ref,
+      snapshot_id: input.snapshot_id,
+      started_at: now,
+      finished_at: now,
+      status: 'complete',
+      profiles_emitted: [{ name: profileName, version: profileVersion }],
+      retention_mode: 'link-only',
+      profile_modes: [
+        {
+          profile_name: profileName,
+          profile_version: profileVersion,
+          content_materialization_mode: 'reference-only',
+          content_authority_mode: 'external-authoritative',
+        },
+      ],
+      counts_by_profile: [
+        {
+          profile_name: profileName,
+          profile_version: profileVersion,
+          node_count: nodeCount,
+          edge_count: edgeCount,
+        },
+      ],
+      failures: [],
+      skips: [],
+    },
+    capability_declarations: [
+      {
+        profile_name: profileName,
+        profile_version: profileVersion,
+        manifest_version: 'v0.1',
+        capabilities: {
+          incremental: false,
+          scip: true,
+          provenance: provenance,
+        },
+        unsupported: ['incremental'],
+      },
+    ],
+    policy_decision: {
+      policy_ref: input.policy_ref,
+      selection_inputs: {
+        source_ref: input.source_ref,
+        snapshot_id: input.snapshot_id,
+      },
+      tie_breaks: [],
+      scope_selectors: ['repo'],
+      lens_policy: 'working',
+      retention_mode: 'link-only',
+      materialization_mode: 'reference-only',
+      authority_mode: 'external-authoritative',
+      enrichments: [],
+    },
+    profiles: [
+      {
+        profile_name: profileName,
+        profile_version: profileVersion,
+        node_count: nodeCount,
+        edge_count: edgeCount,
+      },
+    ],
   };
 }

@@ -4,8 +4,8 @@ import type { GraphEdge, GraphNode, PolicySelection } from '@repo/graph-core';
 import { ingestRepoFromSource, writeJsonDumps } from '@repo/graph-ingest';
 import { ScipTsIngestionConnector } from '@repo/graph-ingest-connector-ts';
 import { CurrentCommittedTruthProjection } from '@repo/graph-projection';
-import type { GraphStore } from '@repo/graph-store';
-import { InMemoryGraphStore } from '@repo/graph-store';
+import type { GraphStore, RelationalStore } from '@repo/graph-store';
+import { InMemoryGraphStore, InMemoryRelationalStore } from '@repo/graph-store';
 
 import type {
   DiffResult,
@@ -16,9 +16,14 @@ import type {
 } from './types.js';
 
 export class GraphCLI {
-  private store: GraphStore;
+  private store: { graph: GraphStore; relational: RelationalStore };
 
-  constructor(store: GraphStore = new InMemoryGraphStore()) {
+  constructor(
+    store: { graph: GraphStore; relational: RelationalStore } = {
+      graph: new InMemoryGraphStore(),
+      relational: new InMemoryRelationalStore(),
+    },
+  ) {
     this.store = store;
   }
 
@@ -35,7 +40,7 @@ export class GraphCLI {
       ? { policy_kind: 'IngestionPolicy', scope: options.policyScope }
       : undefined;
 
-    const result = await ingestRepoFromSource(source, this.store, new ScipTsIngestionConnector(), {
+    await ingestRepoFromSource(source, this.store, new ScipTsIngestionConnector(), {
       ...(options?.commit ? { commit: options.commit } : {}),
       ...(options?.branch ? { branch: options.branch } : {}),
       ...(options?.projectId ? { projectId: options.projectId } : {}),
@@ -43,19 +48,19 @@ export class GraphCLI {
     });
 
     const outputDir = path.join('.', 'tmp', 'graph-dump');
-    await writeJsonDumps({ store: this.store, outputDir });
+    await writeJsonDumps({ store: this.store.graph, outputDir });
 
     return {
       success: true,
-      nodeCount: result.node_count,
-      edgeCount: result.edge_count,
+      nodeCount: this.store.graph.listNodes().length,
+      edgeCount: this.store.graph.listEdges().length,
       outputDir,
     };
   }
 
   getNodes(): Array<{ kind: string; count: number }> {
     const counts = new Map<string, number>();
-    for (const node of this.store.listNodes()) {
+    for (const node of this.store.graph.listNodes()) {
       counts.set(node.kind, (counts.get(node.kind) ?? 0) + 1);
     }
     return [...counts.entries()]
@@ -65,7 +70,7 @@ export class GraphCLI {
 
   getEdges(): Array<{ kind: string; count: number }> {
     const counts = new Map<string, number>();
-    for (const edge of this.store.listEdges()) {
+    for (const edge of this.store.graph.listEdges()) {
       counts.set(edge.kind, (counts.get(edge.kind) ?? 0) + 1);
     }
     return [...counts.entries()]
@@ -74,7 +79,7 @@ export class GraphCLI {
   }
 
   getNodeById(id: string): GraphNode | undefined {
-    return this.store.getNode(id);
+    return this.store.graph.getNode(id);
   }
 
   trace(nodeId: string, depth = 3): TraceResult {
@@ -121,10 +126,10 @@ export class GraphCLI {
       ? { policy_kind: 'ProjectionPolicy', scope: options.policyScope }
       : undefined;
     const runner = new CurrentCommittedTruthProjection();
-    const projection = runner.run(name, this.store, selection);
+    const projection = runner.run(name, this.store.graph, selection);
 
     const outputDir = path.join('.', 'tmp', 'graph-dump');
-    await writeJsonDumps({ store: this.store, projection, outputDir });
+    await writeJsonDumps({ store: this.store.graph, projection, outputDir });
 
     return {
       name: projection.projection_name,
@@ -134,8 +139,8 @@ export class GraphCLI {
   }
 
   dumpToJSON(): GraphSnapshot {
-    const nodes = this.store.listNodes();
-    const edges = this.store.listEdges();
+    const nodes = this.store.graph.listNodes();
+    const edges = this.store.graph.listEdges();
     const nodesByKind = this.countByKind(nodes);
     const edgesByKind = this.countByKind(edges);
 
@@ -186,7 +191,7 @@ export class GraphCLI {
       return;
     }
 
-    const node = this.store.getNode(id);
+    const node = this.store.graph.getNode(id);
     if (!node) {
       return;
     }
@@ -202,7 +207,7 @@ export class GraphCLI {
     edges: GraphEdge[],
     queue: Array<{ id: string; level: number }>,
   ): void {
-    for (const edge of this.store.getEdges()) {
+    for (const edge of this.store.graph.getEdges()) {
       if (edge.from !== current.id && edge.to !== current.id) {
         continue;
       }

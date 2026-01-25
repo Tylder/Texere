@@ -6,24 +6,32 @@ describe('InMemoryGraphStore determinism (SPEC-tooling-testing-trophy-strategy Â
   it('returns nodes in deterministic order', () => {
     const store = new InMemoryGraphStore();
     const nodeA: GraphNode = {
-      id: createDeterministicId('b'),
-      kind: 'ArtifactRoot',
+      id: createDeterministicId('file:b'),
+      kind: 'File',
       schema_version: 'v0.1',
-      source_kind: 'repo',
-      canonical_ref: 'https://example.com/a',
+      fileId: createDeterministicId('file:b'),
+      path: 'src/b.ts',
+      packageName: 'example',
+      commitSha: 'commit',
+      language: 'typescript',
+      stale: false,
     };
     const nodeB: GraphNode = {
-      id: createDeterministicId('a'),
-      kind: 'ArtifactRoot',
+      id: createDeterministicId('file:a'),
+      kind: 'File',
       schema_version: 'v0.1',
-      source_kind: 'repo',
-      canonical_ref: 'https://example.com/b',
+      fileId: createDeterministicId('file:a'),
+      path: 'src/a.ts',
+      packageName: 'example',
+      commitSha: 'commit',
+      language: 'typescript',
+      stale: false,
     };
 
     store.putNode(nodeA);
     store.putNode(nodeB);
 
     const ids = store.listNodes().map((node) => node.id);
-    expect(ids).toEqual([nodeA.id, nodeB.id]);
+    expect(ids).toEqual([nodeB.id, nodeA.id]);
   });
 });

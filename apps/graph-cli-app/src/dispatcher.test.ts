@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { InMemoryGraphStore } from '@repo/graph-store';
+import { InMemoryGraphStore, InMemoryRelationalStore } from '@repo/graph-store';
 
 import { GraphCLI } from './cli.js';
 import { CommandDispatcher } from './dispatcher.js';
 
 describe('CommandDispatcher parsing (SPEC-tooling-testing-trophy-strategy §2.2–§4.4, SPEC-tooling-testing-implementation-specification §3–§6)', () => {
   it('routes two-word commands and parses flags', async () => {
-    const cli = new GraphCLI(new InMemoryGraphStore());
+    const cli = new GraphCLI({
+      graph: new InMemoryGraphStore(),
+      relational: new InMemoryRelationalStore(),
+    });
     const dispatcher = new CommandDispatcher();
     let captured: string[] = [];
     let capturedFlags: Record<string, string | boolean> = {};
@@ -30,7 +33,10 @@ describe('CommandDispatcher parsing (SPEC-tooling-testing-trophy-strategy §2.2�
   });
 
   it('returns a helpful error for unknown commands', async () => {
-    const cli = new GraphCLI(new InMemoryGraphStore());
+    const cli = new GraphCLI({
+      graph: new InMemoryGraphStore(),
+      relational: new InMemoryRelationalStore(),
+    });
     const dispatcher = new CommandDispatcher();
 
     const result = await dispatcher.execute('unknown', cli);

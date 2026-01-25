@@ -7,11 +7,15 @@ describe('Projection determinism (SPEC-tooling-testing-trophy-strategy §2.2–�
   it('returns stable nodes and edges for the same store state', () => {
     const store = new InMemoryGraphStore();
     const node: GraphNode = {
-      id: createDeterministicId('root'),
-      kind: 'ArtifactRoot',
+      id: createDeterministicId('file:root'),
+      kind: 'File',
       schema_version: 'v0.1',
-      source_kind: 'repo',
-      canonical_ref: 'https://example.com/repo',
+      fileId: createDeterministicId('file:root'),
+      path: 'README.md',
+      packageName: 'example',
+      commitSha: 'abc123',
+      language: 'typescript',
+      stale: false,
     };
     const policy: PolicyNode = {
       id: createDeterministicId('policy'),
@@ -43,11 +47,15 @@ describe('Projection determinism (SPEC-tooling-testing-trophy-strategy §2.2–�
   it('returns explanation without policy when no selection provided', () => {
     const store = new InMemoryGraphStore();
     const node: GraphNode = {
-      id: createDeterministicId('root'),
-      kind: 'ArtifactRoot',
+      id: createDeterministicId('file:root'),
+      kind: 'File',
       schema_version: 'v0.1',
-      source_kind: 'repo',
-      canonical_ref: 'https://example.com/repo',
+      fileId: createDeterministicId('file:root'),
+      path: 'README.md',
+      packageName: 'example',
+      commitSha: 'abc123',
+      language: 'typescript',
+      stale: false,
     };
 
     store.putNode(node);
