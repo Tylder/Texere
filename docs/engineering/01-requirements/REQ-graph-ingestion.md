@@ -23,83 +23,85 @@ implements:
 related:
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [108, 123]
+      lines: [110, 125]
       token_est: 119
     - title: 'Scope'
-      lines: [125, 143]
+      lines: [127, 145]
       token_est: 91
     - title: 'Definitions'
-      lines: [145, 162]
+      lines: [147, 164]
       token_est: 153
     - title: 'REQ-001 Connector contract'
-      lines: [164, 186]
+      lines: [166, 188]
       token_est: 149
     - title: 'REQ-002 Deterministic policy selection'
-      lines: [188, 199]
+      lines: [190, 201]
       token_est: 39
     - title: 'REQ-003 Run summary (readiness, completeness, counts)'
-      lines: [201, 222]
+      lines: [203, 224]
       token_est: 111
     - title: 'REQ-004 Capability declaration (profile-defined registry)'
-      lines: [224, 241]
+      lines: [226, 243]
       token_est: 89
     - title: 'REQ-005 Policy decision record'
-      lines: [243, 258]
+      lines: [245, 260]
       token_est: 60
     - title: 'REQ-006 Retention, materialization, and authority'
-      lines: [260, 299]
+      lines: [262, 301]
       token_est: 176
     - title: 'REQ-007 Locator normalization (profile-declared citable categories)'
-      lines: [301, 320]
+      lines: [303, 322]
       token_est: 77
     - title: 'REQ-008 Range model (typed)'
-      lines: [322, 355]
+      lines: [324, 357]
       token_est: 115
     - title: 'REQ-009 Profiles and query obligations'
-      lines: [357, 375]
+      lines: [359, 377]
       token_est: 90
     - title: 'REQ-009A Profile specification template (normative)'
-      lines: [377, 390]
+      lines: [379, 392]
       token_est: 104
     - title: 'REQ-010 Optional enrichments'
-      lines: [392, 409]
+      lines: [394, 411]
       token_est: 82
     - title: 'REQ-011 Incremental ingestion (high-churn sources)'
-      lines: [411, 423]
+      lines: [413, 425]
       token_est: 65
     - title: 'REQ-012 Update semantics (immutability vs mutable-by-latest)'
-      lines: [425, 437]
+      lines: [427, 439]
       token_est: 80
     - title: 'REQ-013 Deletions, tombstones, and garbage collection'
-      lines: [439, 451]
+      lines: [441, 453]
       token_est: 65
     - title: 'REQ-014 Incremental correctness guardrails'
-      lines: [453, 466]
+      lines: [455, 468]
       token_est: 63
     - title: 'REQ-015 Working set and dual-lane storage (high-churn sources)'
-      lines: [468, 479]
+      lines: [470, 481]
       token_est: 62
     - title: 'REQ-016 Agent query lens (working vs snapshot)'
-      lines: [481, 493]
+      lines: [483, 495]
       token_est: 68
     - title: 'REQ-017 Atomic application of ingestion runs'
-      lines: [495, 506]
+      lines: [497, 508]
       token_est: 59
     - title: 'REQ-018 Ownership boundary (profile-declared)'
-      lines: [508, 517]
+      lines: [510, 519]
       token_est: 51
     - title: 'Related Requirements'
-      lines: [519, 526]
+      lines: [521, 528]
       summary: 'Ingestion must align with architecture and graph model constraints.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [528, 541]
+      lines: [530, 543]
       token_est: 85
     - title: 'Blockers'
-      lines: [543, 547]
+      lines: [545, 549]
       token_est: 39
 ---
 

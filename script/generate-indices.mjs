@@ -16,6 +16,7 @@ const DOC_FOLDERS = {
   requirements: '01-requirements',
   specifications: '02-specifications',
   plans: '03-implementation-plans',
+  reference: '04-reference',
   meta: 'meta',
 };
 

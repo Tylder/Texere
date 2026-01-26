@@ -22,37 +22,39 @@ implements:
 related:
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [63, 80]
+      lines: [65, 82]
       summary:
         'Graph storage MUST expose a consistent interface and transactional guarantees for canonical
         graph operations.'
       token_est: 88
     - title: 'Scope'
-      lines: [82, 99]
+      lines: [84, 101]
       summary:
         'Storage interfaces, adapters, and transactional semantics. Excludes ingestion, lifecycle,
         and projection behavior.'
       token_est: 63
     - title: 'REQ-001: Store Interface Stability'
-      lines: [101, 123]
+      lines: [103, 125]
       summary: 'The system MUST define a stable graph store interface.'
       token_est: 103
     - title: 'REQ-002: Policy data persistence'
-      lines: [125, 147]
+      lines: [127, 149]
       summary: 'The store MUST persist policy nodes and support policy queries.'
       token_est: 106
     - title: 'Related Requirements'
-      lines: [149, 156]
+      lines: [151, 158]
       summary: 'Storage requirements must align with architecture and graph model.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [158, 171]
+      lines: [160, 173]
       token_est: 85
     - title: 'Blockers'
-      lines: [173, 177]
+      lines: [175, 179]
       token_est: 39
 ---
 

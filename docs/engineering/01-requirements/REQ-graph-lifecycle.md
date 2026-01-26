@@ -23,33 +23,35 @@ implements:
 related:
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [60, 77]
+      lines: [62, 79]
       summary:
         'Lifecycle assertions MUST be modeled as canonical graph nodes with explicit supersession,
         provenance, and validation invariants.'
       token_est: 89
     - title: 'Scope'
-      lines: [79, 96]
+      lines: [81, 98]
       summary:
         'Lifecycle assertion kinds, supersession rules, and validation invariants. Excludes
         ingestion mechanics, projection logic, and storage semantics.'
       token_est: 73
     - title: 'REQ-001: Lifecycle Assertion Catalog'
-      lines: [98, 120]
+      lines: [100, 122]
       summary: 'The system MUST define a canonical set of lifecycle assertion kinds.'
       token_est: 103
     - title: 'REQ-002: Policy-driven validation'
-      lines: [122, 145]
+      lines: [124, 147]
       summary: 'Validation and conflict rules MUST be driven by graph-native policy.'
       token_est: 101
     - title: 'Design Decisions'
-      lines: [147, 160]
+      lines: [149, 162]
       token_est: 85
     - title: 'Blockers'
-      lines: [162, 166]
+      lines: [164, 168]
       token_est: 39
 ---
 

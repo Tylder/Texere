@@ -19,48 +19,50 @@ keywords:
 related:
   - REQ-graph-ingestion
   - REQ-graph-system-graph-ingestion-repo-ts
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [71, 83]
+      lines: [73, 85]
       summary:
         'Define package boundaries so schema, storage, ingestion, and querying remain decoupled.'
       token_est: 63
     - title: 'Scope'
-      lines: [85, 102]
+      lines: [87, 104]
       summary: 'Package responsibilities and explicit exclusions for the core graph system.'
       token_est: 64
     - title: 'Specification'
-      lines: [104, 140]
+      lines: [106, 142]
       summary: 'Each package has a single primary responsibility.'
       token_est: 234
     - title: 'Workflow'
-      lines: [142, 150]
+      lines: [144, 152]
       summary: 'Teams implement features in the package that owns the responsibility.'
       token_est: 64
     - title: 'Rationale'
-      lines: [152, 157]
+      lines: [154, 159]
       token_est: 29
     - title: 'Alternatives Considered'
-      lines: [159, 164]
+      lines: [161, 166]
       token_est: 33
     - title: 'Consequences'
-      lines: [166, 171]
+      lines: [168, 173]
       token_est: 24
     - title: 'Verification Approach'
-      lines: [173, 178]
+      lines: [175, 180]
       token_est: 32
     - title: 'Design Decisions'
-      lines: [180, 184]
+      lines: [182, 186]
       token_est: 19
     - title: 'Blockers'
-      lines: [186, 190]
+      lines: [188, 192]
       token_est: 6
     - title: 'Assumptions'
-      lines: [192, 196]
+      lines: [194, 198]
       token_est: 16
     - title: 'Unknowns'
-      lines: [198, 202]
+      lines: [200, 204]
       token_est: 17
 ---
 

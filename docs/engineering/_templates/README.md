@@ -100,6 +100,12 @@ Create one per piece that needs to be built. Multiple Specs can implement the sa
 
 Create when Specifications are ready. One Plan can coordinate multiple Specs and Requirements.
 
+### Reference Template
+
+- **`REFERENCE-template.md`** – Design drivers, analyses, knowledge frameworks
+
+Create when you have foundational knowledge that should inform multiple Requirements, Specs, or Plans.
+
 ### Initiative Index Template
 
 - **`INIT-template.md`** – Links to all related docs + status + tracking

@@ -24,41 +24,43 @@ related:
   - REQ-graph-lifecycle
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [67, 83]
+      lines: [69, 85]
       summary: 'Define the v0.1 lifecycle assertion catalog and minimum schemas.'
       token_est: 76
     - title: 'Scope'
-      lines: [85, 102]
+      lines: [87, 104]
       summary: 'Assertion kinds and schemas for v0.1. Excludes ingestion and projection rules.'
       token_est: 69
     - title: 'REQ-001: Assertion catalog'
-      lines: [104, 125]
+      lines: [106, 127]
       summary: 'The system MUST define a v0.1 catalog of assertion kinds.'
       token_est: 88
     - title: 'REQ-002: Minimum fields'
-      lines: [127, 149]
+      lines: [129, 151]
       summary: 'Each assertion kind MUST define minimum required fields.'
       token_est: 98
     - title: 'REQ-003: Supersession eligibility'
-      lines: [151, 173]
+      lines: [153, 175]
       summary: 'Lifecycle assertions MUST support explicit supersession.'
       token_est: 95
     - title: 'REQ-004: Extension contract for new assertion kinds'
-      lines: [175, 197]
+      lines: [177, 199]
       summary: 'New assertion kinds MUST register schemas and conflict policies before use.'
       token_est: 133
     - title: 'Related Requirements'
-      lines: [199, 206]
+      lines: [201, 208]
       summary: 'Assertion requirements align with lifecycle and graph model requirements.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [208, 221]
+      lines: [210, 223]
       token_est: 85
     - title: 'Blockers'
-      lines: [223, 227]
+      lines: [225, 229]
       token_est: 39
 ---
 

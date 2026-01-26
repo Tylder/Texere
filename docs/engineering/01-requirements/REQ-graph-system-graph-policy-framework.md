@@ -26,44 +26,46 @@ related:
   - REQ-graph-projection
   - REQ-graph-lifecycle
   - REQ-graph-store
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [72, 89]
+      lines: [74, 91]
       summary:
         'Policies MUST be represented as canonical graph data with provenance, supersession, and
         queryable scope.'
       token_est: 88
     - title: 'Scope'
-      lines: [91, 108]
+      lines: [93, 110]
       summary: 'Policy representation and selection in the graph. Excludes concrete policy values.'
       token_est: 78
     - title: 'REQ-001: Policy kinds'
-      lines: [110, 137]
+      lines: [112, 139]
       summary: 'The system MUST support a minimal set of policy kinds.'
       token_est: 106
     - title: 'REQ-002: Policy supersession'
-      lines: [139, 160]
+      lines: [141, 162]
       summary: 'Policy changes MUST be append-only and supersession-based.'
       token_est: 86
     - title: 'REQ-003: Policy scope and selection'
-      lines: [162, 184]
+      lines: [164, 186]
       summary: 'Policy applicability MUST be explicit and queryable.'
       token_est: 108
     - title: 'REQ-004: Policy provenance'
-      lines: [186, 206]
+      lines: [188, 208]
       summary: 'Policy changes MUST record Agent and Activity provenance.'
       token_est: 72
     - title: 'Related Requirements'
-      lines: [208, 218]
+      lines: [210, 220]
       summary:
         'Policy framework aligns with ingestion, projection, lifecycle, and store requirements.'
       token_est: 33
     - title: 'Design Decisions'
-      lines: [220, 233]
+      lines: [222, 235]
       token_est: 85
     - title: 'Blockers'
-      lines: [235, 239]
+      lines: [237, 241]
       token_est: 39
 ---
 

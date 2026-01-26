@@ -24,43 +24,45 @@ related:
   - REQ-graph-store
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [69, 86]
+      lines: [71, 88]
       summary:
         'Provide a deterministic in-memory graph store that satisfies the core store interface for
         v0.1 ingestion and tests.'
       token_est: 90
     - title: 'Scope'
-      lines: [88, 105]
+      lines: [90, 107]
       summary: 'In-memory adapter behavior and guarantees. Excludes production database selection.'
       token_est: 62
     - title: 'REQ-001: Interface conformance'
-      lines: [107, 129]
+      lines: [109, 131]
       summary: 'The in-memory adapter MUST implement the graph store interface.'
       token_est: 106
     - title: 'REQ-002: Append-only semantics'
-      lines: [131, 152]
+      lines: [133, 154]
       summary: 'The adapter MUST enforce append-only writes.'
       token_est: 81
     - title: 'REQ-003: Transaction boundaries'
-      lines: [154, 176]
+      lines: [156, 178]
       summary: 'The adapter MUST support explicit transaction boundaries.'
       token_est: 84
     - title: 'REQ-004: Deterministic query ordering'
-      lines: [178, 198]
+      lines: [180, 200]
       summary: 'Query results MUST be deterministic for the same graph state.'
       token_est: 84
     - title: 'Related Requirements'
-      lines: [200, 207]
+      lines: [202, 209]
       summary: 'In-memory storage aligns with the store interface and graph model requirements.'
       token_est: 26
     - title: 'Design Decisions'
-      lines: [209, 222]
+      lines: [211, 224]
       token_est: 85
     - title: 'Blockers'
-      lines: [224, 228]
+      lines: [226, 230]
       token_est: 39
 ---
 

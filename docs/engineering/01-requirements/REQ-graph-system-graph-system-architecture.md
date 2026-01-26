@@ -23,50 +23,52 @@ implements:
 related:
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [77, 94]
+      lines: [79, 96]
       summary:
         'Separate ingestion, lifecycle, projections, and storage into distinct Nx packages with
         clean dependency rules; shared core types live in a foundational package.'
       token_est: 112
     - title: 'Scope'
-      lines: [96, 116]
+      lines: [98, 118]
       summary:
         'High-level Nx package roles and dependency rules. Excludes runtime behavior, ingestion
         specifics, projection logic, and storage semantics.'
       token_est: 98
     - title: 'REQ-001: Package Boundary Definition'
-      lines: [118, 150]
+      lines: [120, 152]
       summary:
         'The Nx monorepo MUST define distinct packages for core types, storage, ingestion,
         projections, and lifecycle logic.'
       token_est: 145
     - title: 'REQ-002: Dependency Direction Rules'
-      lines: [152, 183]
+      lines: [154, 185]
       summary:
         'Package dependencies MUST follow a strict directionality to prevent cyclic coupling.'
       token_est: 166
     - title: 'REQ-003: Ingestion and Lifecycle Separation'
-      lines: [185, 208]
+      lines: [187, 210]
       summary: 'Ingestion packages MUST NOT depend on lifecycle packages, and vice versa.'
       token_est: 98
     - title: 'REQ-004: Knowledge type registry ownership'
-      lines: [210, 236]
+      lines: [212, 238]
       summary:
         'Knowledge type definitions MUST live in the lifecycle/core boundary and be consumed, not
         redefined, by ingestion and projection.'
       token_est: 164
     - title: 'Related Requirements'
-      lines: [238, 248]
+      lines: [240, 250]
       summary: 'This REQ establishes architectural boundaries referenced by all detailed REQs.'
       token_est: 38
     - title: 'Design Decisions'
-      lines: [250, 263]
+      lines: [252, 265]
       token_est: 85
     - title: 'Blockers'
-      lines: [265, 269]
+      lines: [267, 271]
       token_est: 39
 ---
 

@@ -54,53 +54,55 @@ related:
   - REQ-graph-store
   - REQ-graph-projection
   - REQ-graph-system-graph-policy-framework
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [111, 129]
+      lines: [113, 131]
       summary:
         'Implement the v0.2 vertical slice for repo ingestion with a full TypeScript profile,
         connector contract outputs, and ky fixture validation.'
       token_est: 124
     - title: 'Scope'
-      lines: [131, 154]
+      lines: [133, 156]
       summary:
         'Implement the repo TypeScript ingestion profile end-to-end using the updated connector
         contract and schema requirements.'
       token_est: 151
     - title: 'Execution Default'
-      lines: [156, 163]
+      lines: [158, 165]
       summary:
         'Default execution is the full v0.2 slice, including connector contract outputs and query
         API, unless explicitly scoped down.'
       token_est: 42
     - title: 'Preconditions'
-      lines: [165, 176]
+      lines: [167, 178]
       token_est: 78
     - title: 'Milestones'
-      lines: [178, 269]
+      lines: [180, 271]
       token_est: 496
       subsections:
         - title: 'Milestone 1: Connector Contract Alignment'
-          lines: [180, 195]
+          lines: [182, 197]
           token_est: 85
         - title: 'Milestone 2: Orchestration and Language-Specific Steps'
-          lines: [197, 214]
+          lines: [199, 216]
           token_est: 102
         - title: 'Milestone 3: Graph + Relational Schema Mapping'
-          lines: [216, 234]
+          lines: [218, 236]
           token_est: 123
         - title: 'Milestone 4: Agent-Facing Query API'
-          lines: [236, 251]
+          lines: [238, 253]
           token_est: 81
         - title: 'Milestone 5: Ky Fixture Ingestion and Integration Tests'
-          lines: [253, 269]
+          lines: [255, 271]
           token_est: 104
     - title: 'Risks and Mitigations'
-      lines: [271, 280]
+      lines: [273, 282]
       token_est: 98
     - title: 'Exit Criteria'
-      lines: [282, 288]
+      lines: [284, 290]
       token_est: 67
 ---
 

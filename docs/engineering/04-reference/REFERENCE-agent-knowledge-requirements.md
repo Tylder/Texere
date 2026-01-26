@@ -1,4 +1,57 @@
-# Agent Knowledge Questions — System Design Driver
+---
+type: REFERENCE
+status: active
+stability: stable
+created: 2026-01-26
+last_updated: 2026-01-26
+area: knowledge-graph
+feature: agent-knowledge-requirements
+summary_short: >-
+  Questions that effective coding agents must be able to answer when modifying a repository
+summary_long: >-
+  Enumerates the questions that agents repeatedly need answered in order to make safe, grounded
+  decisions when adding features to or modifying a codebase. Organized by knowledge category
+  (repo-index-only, repo+graph-knowledge, external-library, documentation-only) to inform system
+  design and identify gaps in knowledge infrastructure.
+keywords:
+  - agent-reasoning
+  - knowledge-requirements
+  - design-drivers
+  - repository-queries
+index:
+  sections:
+    - title: 'Purpose'
+      lines: [56, 67]
+      token_est: 106
+    - title: 'Scope'
+      lines: [69, 89]
+      token_est: 95
+    - title: 'How to Read This Document'
+      lines: [91, 102]
+      token_est: 98
+    - title: 'Knowledge Categories'
+      lines: [104, 163]
+      token_est: 189
+    - title: 'Category A — Repo‑Index‑Only Questions'
+      lines: [165, 225]
+      token_est: 277
+    - title: 'Category B — Repo + Graph‑Knowledge‑System Questions'
+      lines: [227, 287]
+      token_est: 251
+    - title: 'Category C — External Library (Indexed Code + Docs) Questions'
+      lines: [289, 349]
+      token_est: 258
+    - title: 'Category D — Documentation‑Only Questions'
+      lines: [351, 411]
+      token_est: 237
+    - title: 'How to Use This Reference'
+      lines: [413, 417]
+      token_est: 49
+---
+
+# REFERENCE-agent-knowledge-requirements
+
+---
 
 ## Purpose
 
@@ -13,16 +66,38 @@ bodies of text or relying on agent guesswork, the system design is incomplete.
 
 ---
 
+## Scope
+
+**What this covers:**
+
+- Four knowledge categories (repo-index-only, repo+graph-knowledge, external-library,
+  documentation-only)
+- 20 critical questions agents must be able to answer
+- Why each question exists and what fails if unanswered
+
+**What this doesn't cover:**
+
+- How to implement answers (that's in Requirements and Specs)
+- Agent prompting or runtime behavior
+- Document ontology or specific schema design
+
+**In separate docs:**
+
+- Implementation requirements: `REQ-graph-system-graph-knowledge-system`
+- Graph system design: `IDEATION-PROBLEMS-graph-knowledge-system`
+
+---
+
 ## How to Read This Document
 
 - Questions are written in **agent‑internal language** (how agents reason, not how systems are
-  specified).
-- Each question belongs to **exactly one knowledge category**.
-- Categories are based on **what knowledge must exist** for the question to be answerable.
+  specified)
+- Each question belongs to **exactly one knowledge category**
+- Categories are based on **what knowledge must exist** for the question to be answerable
 - Questions are **timeless** (not phase‑specific) and **descriptive** (they reflect reality, not
-  ideal behavior).
+  ideal behavior)
 - Many questions are intentionally **blocking or safety‑oriented**; their role is to prevent
-  incorrect progress.
+  incorrect progress
 
 ---
 
@@ -332,3 +407,11 @@ bodies of text or relying on agent guesswork, the system design is incomplete.
 **If the system cannot answer this:**
 
 - Research conclusions are treated as facts prematurely.
+
+---
+
+## How to Use This Reference
+
+Documents in the knowledge-graph system should reference this via
+`related_reference: [REFERENCE-agent-knowledge-requirements]` in their frontmatter. This establishes
+that the document is designed to make one or more of these critical questions answerable.

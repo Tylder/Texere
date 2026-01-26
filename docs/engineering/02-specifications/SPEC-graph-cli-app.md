@@ -27,92 +27,94 @@ implements:
   - REQ-graph-projection
 related:
   - SPEC-graph-system-vertical-slice-v0-1
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [123, 137]
+      lines: [125, 139]
       token_est: 90
     - title: 'Core Design Principle: Extensibility'
-      lines: [139, 161]
+      lines: [141, 163]
       token_est: 177
     - title: 'Scope'
-      lines: [163, 190]
+      lines: [165, 192]
       token_est: 143
     - title: 'Architecture: Extensible Command Pattern'
-      lines: [192, 257]
+      lines: [194, 259]
       token_est: 289
     - title: 'Command Handler Interface'
-      lines: [259, 336]
+      lines: [261, 338]
       token_est: 293
     - title: 'GraphStore Interface'
-      lines: [338, 385]
+      lines: [340, 387]
       token_est: 169
     - title: 'Environment Variables'
-      lines: [387, 403]
+      lines: [389, 405]
       token_est: 103
     - title: 'Entry Point'
-      lines: [405, 416]
+      lines: [407, 418]
       token_est: 28
     - title: 'GraphCLI Class'
-      lines: [418, 458]
+      lines: [420, 460]
       token_est: 199
     - title: 'v0.1 Node & Edge Schemas'
-      lines: [460, 557]
+      lines: [462, 559]
       token_est: 458
     - title: 'Command Roadmap: More Commands Coming'
-      lines: [559, 606]
+      lines: [561, 608]
       token_est: 309
     - title: 'Ingestion Lifecycle'
-      lines: [608, 656]
+      lines: [610, 658]
       token_est: 258
     - title: 'Snapshot File Format'
-      lines: [658, 750]
+      lines: [660, 752]
       token_est: 219
     - title: 'v0.1 Commands (Currently Available)'
-      lines: [752, 1123]
+      lines: [754, 1125]
       token_est: 1584
       subsections:
         - title: '1. `ingest repo <url> [options]`'
-          lines: [754, 826]
+          lines: [756, 828]
           token_est: 418
         - title: '2. `dump [--format <format>]`'
-          lines: [828, 885]
+          lines: [830, 887]
           token_est: 245
         - title: '3. `trace <node-id> [--depth <n>]`'
-          lines: [887, 946]
+          lines: [889, 948]
           token_est: 272
         - title: '4. `diff <snap1> <snap2>`'
-          lines: [948, 1005]
+          lines: [950, 1007]
           token_est: 240
         - title: '5. `project <name>`'
-          lines: [1007, 1090]
+          lines: [1009, 1092]
           token_est: 341
         - title: '6. `help [command]`'
-          lines: [1092, 1111]
+          lines: [1094, 1113]
           token_est: 49
         - title: '7. `exit`'
-          lines: [1113, 1123]
+          lines: [1115, 1125]
           token_est: 16
     - title: 'Future Commands (v1.0+)'
-      lines: [1125, 1147]
+      lines: [1127, 1149]
       token_est: 114
     - title: 'State Management'
-      lines: [1149, 1169]
+      lines: [1151, 1171]
       token_est: 72
     - title: 'Extensibility Example: Adding a v1.0 Command'
-      lines: [1171, 1223]
+      lines: [1173, 1225]
       token_est: 181
     - title: 'Error Handling'
-      lines: [1225, 1246]
+      lines: [1227, 1248]
       token_est: 81
     - title: 'Testing'
-      lines: [1248, 1263]
+      lines: [1250, 1265]
       token_est: 71
     - title: 'Non-Goals'
-      lines: [1265, 1273]
+      lines: [1267, 1275]
       token_est: 37
     - title: 'Related Documents'
-      lines: [1275, 1279]
+      lines: [1277, 1281]
       token_est: 12
 ---
 

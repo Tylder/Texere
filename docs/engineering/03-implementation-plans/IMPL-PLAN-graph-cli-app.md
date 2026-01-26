@@ -26,81 +26,83 @@ depends_on:
   - SPEC-graph-system-vertical-slice-v0-1
 related:
   - REQ-graph-system-graph-system-architecture
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [111, 135]
+      lines: [113, 137]
       summary:
         'Implement extensible interactive CLI that grows with graph features. v0.1 has repo
         ingestion. v1.0+ adds assertion commands using same pattern.'
       token_est: 168
     - title: 'Scope'
-      lines: [137, 165]
+      lines: [139, 167]
       summary:
         'Implement extensible interactive CLI that grows with graph features. v0.1 includes repo
         ingestion.'
       token_est: 166
     - title: 'Preconditions'
-      lines: [167, 174]
+      lines: [169, 176]
       token_est: 55
     - title: 'Milestones'
-      lines: [176, 543]
+      lines: [178, 545]
       token_est: 1477
       subsections:
         - title: 'Milestone 1: App Scaffolding & Setup'
-          lines: [178, 279]
+          lines: [180, 281]
           token_est: 385
         - title: 'Milestone 2: REPL Loop & Command Dispatcher'
-          lines: [281, 421]
+          lines: [283, 423]
           token_est: 543
         - title: 'Milestone 3: Command Implementations'
-          lines: [423, 466]
+          lines: [425, 468]
           token_est: 172
         - title: 'Milestone 4: Ink UI Components'
-          lines: [468, 514]
+          lines: [470, 516]
           token_est: 214
         - title: 'Milestone 5: Integration & Testing'
-          lines: [516, 543]
+          lines: [518, 545]
           token_est: 163
     - title: 'Total Effort: ~18 hours (2.5 days)'
-      lines: [545, 553]
+      lines: [547, 555]
       token_est: 30
     - title: 'Technology Stack'
-      lines: [555, 581]
+      lines: [557, 583]
       token_est: 97
     - title: 'Implementation Notes'
-      lines: [583, 667]
+      lines: [585, 669]
       token_est: 307
       subsections:
         - title: 'REPL Loop Architecture'
-          lines: [585, 631]
+          lines: [587, 633]
           token_est: 167
         - title: 'Error Handling Strategy'
-          lines: [633, 638]
+          lines: [635, 640]
           token_est: 50
         - title: 'State Management'
-          lines: [640, 652]
+          lines: [642, 654]
           token_est: 46
         - title: 'Command Parsing'
-          lines: [654, 667]
+          lines: [656, 669]
           token_est: 42
     - title: 'Success Metrics'
-      lines: [669, 678]
+      lines: [671, 680]
       token_est: 64
     - title: 'Risk Register'
-      lines: [680, 689]
+      lines: [682, 691]
       token_est: 110
     - title: 'Exit Criteria (Phase 1)'
-      lines: [691, 703]
+      lines: [693, 705]
       token_est: 98
     - title: 'Assumptions'
-      lines: [705, 712]
+      lines: [707, 714]
       token_est: 49
     - title: 'Future Enhancements (v2.0+)'
-      lines: [714, 723]
+      lines: [716, 725]
       token_est: 46
     - title: 'Related Documents'
-      lines: [725, 729]
+      lines: [727, 731]
       token_est: 12
 ---
 

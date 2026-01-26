@@ -47,54 +47,56 @@ related:
   - REQ-graph-store
   - REQ-graph-projection
   - REQ-graph-system-graph-policy-framework
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [103, 120]
+      lines: [105, 122]
       summary:
         'Build the v0.1 vertical slice end-to-end with stable interfaces, policy-driven behavior,
         and testable JSON outputs for inspection.'
       token_est: 102
     - title: 'Scope'
-      lines: [122, 143]
+      lines: [124, 145]
       summary: 'Implementation of the v0.1 vertical slice with inspection outputs and tests.'
       token_est: 104
     - title: 'Execution Default'
-      lines: [145, 159]
+      lines: [147, 161]
       summary:
         'Unless explicitly scoped down, the default execution scope is the full v0.1 end-to-end
         slice.'
       token_est: 78
     - title: 'Preconditions'
-      lines: [161, 171]
+      lines: [163, 173]
       token_est: 67
     - title: 'Milestones'
-      lines: [173, 284]
+      lines: [175, 286]
       token_est: 433
       subsections:
         - title: 'Milestone 1: Core Interfaces and Node Shapes'
-          lines: [175, 191]
+          lines: [177, 193]
           token_est: 67
         - title: 'Milestone 2: In-Memory Store + Policy Persistence'
-          lines: [193, 208]
+          lines: [195, 210]
           token_est: 64
         - title: 'Milestone 3: Repo Ingestion Pipeline (SCIP-TS)'
-          lines: [210, 229]
+          lines: [212, 231]
           token_est: 102
         - title: 'Milestone 4: JSON Dumps (LLM-Friendly)'
-          lines: [231, 248]
+          lines: [233, 250]
           token_est: 69
         - title: 'Milestone 5: CurrentCommittedTruth Projection'
-          lines: [250, 264]
+          lines: [252, 266]
           token_est: 56
         - title: 'Milestone 6: Test Suite (Vitest)'
-          lines: [266, 284]
+          lines: [268, 286]
           token_est: 75
     - title: 'Risks and Mitigations'
-      lines: [286, 295]
+      lines: [288, 297]
       token_est: 63
     - title: 'Exit Criteria'
-      lines: [297, 302]
+      lines: [299, 304]
       token_est: 50
 ---
 

@@ -22,36 +22,38 @@ implements:
 related:
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [62, 79]
+      lines: [64, 81]
       summary:
         'Projections MUST be deterministic, explainable, and derived only from canonical nodes.'
       token_est: 73
     - title: 'Scope'
-      lines: [81, 98]
+      lines: [83, 100]
       summary:
         'Projection contracts, determinism, and explainability. Excludes ingestion, lifecycle
         semantics, and storage decisions.'
       token_est: 62
     - title: 'REQ-001: Projection Determinism'
-      lines: [100, 122]
+      lines: [102, 124]
       summary: 'Projections MUST be deterministic functions of canonical graph data.'
       token_est: 88
     - title: 'REQ-002: Projection policy governance'
-      lines: [124, 146]
+      lines: [126, 148]
       summary: 'Projection selection MUST be governed by graph-native ProjectionPolicy.'
       token_est: 95
     - title: 'Related Requirements'
-      lines: [148, 155]
+      lines: [150, 157]
       summary: 'Projections must align with architecture and graph model.'
       token_est: 23
     - title: 'Design Decisions'
-      lines: [157, 170]
+      lines: [159, 172]
       token_est: 85
     - title: 'Blockers'
-      lines: [172, 176]
+      lines: [174, 178]
       token_est: 39
 ---
 

@@ -21,137 +21,139 @@ keywords:
   - scip
   - ingestion
   - typescript
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [162, 180]
+      lines: [164, 182]
       summary:
         'Build a language-aware index that supports sub-100 ms structural queries, incremental
         updates, cross-repo references, and a typed API using SCIP identifiers.'
       token_est: 115
     - title: 'Scope'
-      lines: [182, 207]
+      lines: [184, 209]
       summary:
         'Specifications for symbol identity, incremental indexing, storage schema, cross-repo
         references, rename handling, language extensibility, and agent-facing API with sub-100 ms
         query latency. Excludes semantic/vector search as a core capability.'
       token_est: 146
     - title: 'Context'
-      lines: [209, 222]
+      lines: [211, 224]
       token_est: 164
     - title: 'Evidence Summary'
-      lines: [224, 356]
+      lines: [226, 358]
       token_est: 1302
       subsections:
         - title: 'Research summary: symbol identity and reference tracking'
-          lines: [226, 273]
+          lines: [228, 275]
           token_est: 394
         - title: 'Research summary: incremental indexing'
-          lines: [275, 300]
+          lines: [277, 302]
           token_est: 162
         - title: 'Research summary: database models'
-          lines: [302, 330]
+          lines: [304, 332]
           token_est: 202
         - title: 'Candidate database libraries and evidence'
-          lines: [332, 341]
+          lines: [334, 343]
           token_est: 420
         - title: 'Recommended storage choices'
-          lines: [343, 356]
+          lines: [345, 358]
           token_est: 121
     - title: 'REQ-001: Authoritative symbol identity via SCIP'
-      lines: [358, 392]
+      lines: [360, 394]
       summary:
         'The system MUST use SCIP string identifiers as authoritative, stable symbol identities
         across languages and repositories.'
       token_est: 232
     - title: 'REQ-002: Incremental indexing pipeline'
-      lines: [394, 426]
+      lines: [396, 428]
       summary:
         'The system MUST support incremental indexing with per-file units, ownership sets, and
         staleness tracking.'
       token_est: 229
     - title: 'REQ-003: Hybrid storage model and trust boundary'
-      lines: [428, 458]
+      lines: [430, 460]
       summary:
         'The system MUST use a hybrid graph + relational storage model and treat repository text as
         untrusted.'
       token_est: 218
     - title: 'REQ-004: Graph schema, edges, indexes, and constraints'
-      lines: [460, 519]
+      lines: [462, 521]
       summary:
         'The property graph MUST implement specified node/edge types, properties, and indexes.'
       token_est: 610
     - title: 'REQ-005: Relational schema for metadata and status'
-      lines: [521, 548]
+      lines: [523, 550]
       summary:
         'The relational store MUST include tables for files, commits, packages, and index status.'
       token_est: 151
     - title: 'REQ-006: Cross-repository references and versioning'
-      lines: [550, 578]
+      lines: [552, 580]
       summary:
         'The system MUST resolve cross-repo references using package metadata and SCIP registry
         entries.'
       token_est: 185
     - title: 'REQ-006a: Unresolved reference surfacing'
-      lines: [580, 603]
+      lines: [582, 605]
       summary: 'The system MUST surface unresolved external references with explicit reasons.'
       token_est: 140
     - title: 'REQ-007: Handling renames and moves'
-      lines: [605, 633]
+      lines: [607, 635]
       summary:
         'The system MUST preserve symbol identity across renames when semantics are unchanged and
         must mark stale units when identities change.'
       token_est: 202
     - title: 'REQ-008: Language extensibility'
-      lines: [635, 663]
+      lines: [637, 665]
       summary:
         'The system MUST support multiple languages via indexers that emit SCIP and map to a common
         schema.'
       token_est: 180
     - title: 'REQ-009: Agent-facing API (typed, structural)'
-      lines: [665, 893]
+      lines: [667, 895]
       summary:
         'The system MUST expose typed API methods for structural graph queries with no
         natural-language summarization.'
       token_est: 1111
     - title: 'REQ-010: Performance target and query latency'
-      lines: [895, 919]
+      lines: [897, 921]
       summary:
         'The system MUST target sub-100 ms query latency with appropriate indexing and caching.'
       token_est: 150
     - title: 'REQ-011: Semantic/vector search is optional and constrained'
-      lines: [921, 945]
+      lines: [923, 947]
       summary:
         'Semantic/vector search MUST NOT be part of core design and must respect trust boundary if
         added.'
       token_est: 145
     - title: 'Design Decisions'
-      lines: [947, 987]
+      lines: [949, 989]
       token_est: 524
       subsections:
         - title: 'Decision 001: Symbol identity'
-          lines: [949, 961]
+          lines: [951, 963]
           token_est: 201
         - title: 'Decision 002: Incremental indexing'
-          lines: [963, 974]
+          lines: [965, 976]
           token_est: 173
         - title: 'Decision 003: Storage and database model'
-          lines: [976, 987]
+          lines: [978, 989]
           token_est: 147
     - title: 'Blockers'
-      lines: [989, 993]
+      lines: [991, 995]
       token_est: 12
     - title: 'Assumptions'
-      lines: [995, 1002]
+      lines: [997, 1004]
       token_est: 101
     - title: 'Unknowns'
-      lines: [1004, 1014]
+      lines: [1006, 1016]
       token_est: 181
     - title: 'Reference Index (verbatim URLs from source material)'
-      lines: [1016, 1066]
+      lines: [1018, 1068]
       token_est: 106
     - title: 'Conclusion'
-      lines: [1068, 1074]
+      lines: [1070, 1076]
       token_est: 84
 ---
 

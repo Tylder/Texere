@@ -26,6 +26,7 @@ const DOC_FOLDERS = {
   requirements: '01-requirements',
   specifications: '02-specifications',
   plans: '03-implementation-plans',
+  reference: '04-reference',
   meta: 'meta',
 };
 
@@ -34,12 +35,13 @@ const DOC_TYPES = {
   requirements: 'REQ',
   specifications: 'SPEC',
   plans: 'IMPL-PLAN',
+  reference: 'REFERENCE',
   meta: 'META',
 };
 
 const IDEATION_SUBTYPES = ['PROBLEMS', 'EXPERIENCE', 'UNKNOWNS'];
 
-const FOLDER_ORDER = ['ideation', 'requirements', 'specifications', 'plans', 'meta'];
+const FOLDER_ORDER = ['ideation', 'requirements', 'specifications', 'plans', 'reference', 'meta'];
 
 const REQUIRED_FRONTMATTER_FIELDS = [
   'type',

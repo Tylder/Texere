@@ -24,41 +24,43 @@ related:
   - REQ-graph-projection
   - REQ-graph-system-graph-knowledge-system
   - REQ-graph-system-graph-policy-framework
+related_reference:
+  - REFERENCE-agent-knowledge-requirements
 index:
   sections:
     - title: 'TLDR'
-      lines: [67, 83]
+      lines: [69, 85]
       summary: 'Provide a deterministic projection of the latest committed lifecycle assertions.'
       token_est: 78
     - title: 'Scope'
-      lines: [85, 102]
+      lines: [87, 104]
       summary: 'CurrentCommittedTruth projection rules and outputs. Excludes other projections.'
       token_est: 60
     - title: 'REQ-001: Deterministic selection'
-      lines: [104, 126]
+      lines: [106, 128]
       summary: 'The projection MUST select the latest non-superseded committed assertions.'
       token_est: 90
     - title: 'REQ-002: Explainability'
-      lines: [128, 149]
+      lines: [130, 151]
       summary: 'Each projection item MUST include explainability metadata.'
       token_est: 90
     - title: 'REQ-003: Conflict visibility'
-      lines: [151, 173]
+      lines: [153, 175]
       summary: 'Conflicts MUST be surfaced, not silently resolved.'
       token_est: 99
     - title: 'REQ-004: Knowledge type eligibility'
-      lines: [175, 198]
+      lines: [177, 200]
       summary: 'Types included in the projection MUST declare conflict key and supersession policy.'
       token_est: 121
     - title: 'Related Requirements'
-      lines: [200, 207]
+      lines: [202, 209]
       summary: 'Projection rules align with the projection and graph model requirements.'
       token_est: 25
     - title: 'Design Decisions'
-      lines: [209, 222]
+      lines: [211, 224]
       token_est: 85
     - title: 'Blockers'
-      lines: [224, 228]
+      lines: [226, 230]
       token_est: 39
 ---
 
