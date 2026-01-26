@@ -27,34 +27,38 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [63, 79]
+      lines: [67, 83]
       summary: 'Provide a deterministic projection of the latest committed lifecycle assertions.'
       token_est: 78
     - title: 'Scope'
-      lines: [81, 98]
+      lines: [85, 102]
       summary: 'CurrentCommittedTruth projection rules and outputs. Excludes other projections.'
       token_est: 60
     - title: 'REQ-001: Deterministic selection'
-      lines: [100, 122]
+      lines: [104, 126]
       summary: 'The projection MUST select the latest non-superseded committed assertions.'
       token_est: 90
     - title: 'REQ-002: Explainability'
-      lines: [124, 145]
+      lines: [128, 149]
       summary: 'Each projection item MUST include explainability metadata.'
       token_est: 90
     - title: 'REQ-003: Conflict visibility'
-      lines: [147, 169]
+      lines: [151, 173]
       summary: 'Conflicts MUST be surfaced, not silently resolved.'
       token_est: 99
+    - title: 'REQ-004: Knowledge type eligibility'
+      lines: [175, 198]
+      summary: 'Types included in the projection MUST declare conflict key and supersession policy.'
+      token_est: 121
     - title: 'Related Requirements'
-      lines: [171, 178]
+      lines: [200, 207]
       summary: 'Projection rules align with the projection and graph model requirements.'
       token_est: 25
     - title: 'Design Decisions'
-      lines: [180, 193]
+      lines: [209, 222]
       token_est: 85
     - title: 'Blockers'
-      lines: [195, 199]
+      lines: [224, 228]
       token_est: 39
 ---
 
@@ -165,6 +169,31 @@ Silent conflict resolution undermines auditability and hides competing commitmen
 **Verification Method:**
 
 - Conflict detection tests
+
+---
+
+## REQ-004: Knowledge type eligibility
+
+Summary: Types included in the projection MUST declare conflict key and supersession policy.
+
+**Statement:**
+
+Any knowledge type included in CurrentCommittedTruth MUST declare a deterministic conflict key
+policy and supersession eligibility in the knowledge type registry.
+
+**Rationale:**
+
+Current truth selection requires stable conflict detection to remain deterministic as new types are
+added.
+
+**Measurable Fit Criteria:**
+
+- [ ] Projection rejects types lacking conflict key policy
+- [ ] Projection output lists the type registry entry used for selection
+
+**Verification Method:**
+
+- Projection tests with a newly registered type
 
 ---
 

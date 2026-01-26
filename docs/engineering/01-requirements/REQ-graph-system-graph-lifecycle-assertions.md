@@ -27,34 +27,38 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [63, 79]
+      lines: [67, 83]
       summary: 'Define the v0.1 lifecycle assertion catalog and minimum schemas.'
       token_est: 76
     - title: 'Scope'
-      lines: [81, 98]
+      lines: [85, 102]
       summary: 'Assertion kinds and schemas for v0.1. Excludes ingestion and projection rules.'
       token_est: 69
     - title: 'REQ-001: Assertion catalog'
-      lines: [100, 121]
+      lines: [104, 125]
       summary: 'The system MUST define a v0.1 catalog of assertion kinds.'
       token_est: 88
     - title: 'REQ-002: Minimum fields'
-      lines: [123, 145]
+      lines: [127, 149]
       summary: 'Each assertion kind MUST define minimum required fields.'
       token_est: 98
     - title: 'REQ-003: Supersession eligibility'
-      lines: [147, 169]
+      lines: [151, 173]
       summary: 'Lifecycle assertions MUST support explicit supersession.'
       token_est: 95
+    - title: 'REQ-004: Extension contract for new assertion kinds'
+      lines: [175, 197]
+      summary: 'New assertion kinds MUST register schemas and conflict policies before use.'
+      token_est: 133
     - title: 'Related Requirements'
-      lines: [171, 178]
+      lines: [199, 206]
       summary: 'Assertion requirements align with lifecycle and graph model requirements.'
       token_est: 24
     - title: 'Design Decisions'
-      lines: [180, 193]
+      lines: [208, 221]
       token_est: 85
     - title: 'Blockers'
-      lines: [195, 199]
+      lines: [223, 227]
       token_est: 39
 ---
 
@@ -165,6 +169,30 @@ Supersession is required to maintain append-only history with a clear current tr
 **Verification Method:**
 
 - Supersession handling tests
+
+---
+
+## REQ-004: Extension contract for new assertion kinds
+
+Summary: New assertion kinds MUST register schemas and conflict policies before use.
+
+**Statement:**
+
+Any new assertion kind MUST be added to the knowledge type registry with a schema, required fields,
+conflict key policy (when applicable), and supersession eligibility before ingestion or projection.
+
+**Rationale:**
+
+Extension must be deterministic and auditable to avoid rewrites when new types are introduced.
+
+**Measurable Fit Criteria:**
+
+- [ ] Unregistered assertion kinds are rejected at ingest time
+- [ ] Each new kind declares required fields and conflict key policy
+
+**Verification Method:**
+
+- Registry validation tests for new kinds
 
 ---
 

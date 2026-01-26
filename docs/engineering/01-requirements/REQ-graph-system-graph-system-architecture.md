@@ -26,41 +26,47 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [71, 88]
+      lines: [77, 94]
       summary:
         'Separate ingestion, lifecycle, projections, and storage into distinct Nx packages with
         clean dependency rules; shared core types live in a foundational package.'
       token_est: 112
     - title: 'Scope'
-      lines: [90, 110]
+      lines: [96, 116]
       summary:
         'High-level Nx package roles and dependency rules. Excludes runtime behavior, ingestion
         specifics, projection logic, and storage semantics.'
       token_est: 98
     - title: 'REQ-001: Package Boundary Definition'
-      lines: [112, 144]
+      lines: [118, 150]
       summary:
         'The Nx monorepo MUST define distinct packages for core types, storage, ingestion,
         projections, and lifecycle logic.'
       token_est: 145
     - title: 'REQ-002: Dependency Direction Rules'
-      lines: [146, 177]
+      lines: [152, 183]
       summary:
         'Package dependencies MUST follow a strict directionality to prevent cyclic coupling.'
       token_est: 166
     - title: 'REQ-003: Ingestion and Lifecycle Separation'
-      lines: [179, 202]
+      lines: [185, 208]
       summary: 'Ingestion packages MUST NOT depend on lifecycle packages, and vice versa.'
       token_est: 98
+    - title: 'REQ-004: Knowledge type registry ownership'
+      lines: [210, 236]
+      summary:
+        'Knowledge type definitions MUST live in the lifecycle/core boundary and be consumed, not
+        redefined, by ingestion and projection.'
+      token_est: 164
     - title: 'Related Requirements'
-      lines: [204, 214]
+      lines: [238, 248]
       summary: 'This REQ establishes architectural boundaries referenced by all detailed REQs.'
       token_est: 38
     - title: 'Design Decisions'
-      lines: [216, 229]
+      lines: [250, 263]
       token_est: 85
     - title: 'Blockers'
-      lines: [231, 235]
+      lines: [265, 269]
       token_est: 39
 ---
 
@@ -198,6 +204,34 @@ Ingestion should remain source-agnostic and independent of decision/spec semanti
 
 - Static dependency checks
 - Lint rule validation
+
+---
+
+## REQ-004: Knowledge type registry ownership
+
+Summary: Knowledge type definitions MUST live in the lifecycle/core boundary and be consumed, not
+redefined, by ingestion and projection.
+
+**Statement:**
+
+The knowledge type registry and validation rules MUST be implemented in graph-core and/or
+graph-lifecycle. graph-ingest and connector packages MUST read the registry to validate outputs but
+MUST NOT define new knowledge types. graph-projection MUST consume the registry to determine
+eligible types and conflict policies.
+
+**Rationale:**
+
+Centralized ownership prevents divergent type definitions and enables extension without rewrites.
+
+**Measurable Fit Criteria:**
+
+- [ ] Knowledge type registry is defined in graph-core/graph-lifecycle
+- [ ] graph-ingest consumes registry metadata without owning it
+- [ ] graph-projection uses registry metadata for selection rules
+
+**Verification Method:**
+
+- Dependency rule validation and registry lookup tests
 
 ---
 

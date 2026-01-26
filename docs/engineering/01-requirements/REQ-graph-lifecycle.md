@@ -26,34 +26,30 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [64, 81]
+      lines: [60, 77]
       summary:
         'Lifecycle assertions MUST be modeled as canonical graph nodes with explicit supersession,
         provenance, and validation invariants.'
       token_est: 89
     - title: 'Scope'
-      lines: [83, 100]
+      lines: [79, 96]
       summary:
         'Lifecycle assertion kinds, supersession rules, and validation invariants. Excludes
         ingestion mechanics, projection logic, and storage semantics.'
       token_est: 73
     - title: 'REQ-001: Lifecycle Assertion Catalog'
-      lines: [102, 124]
+      lines: [98, 120]
       summary: 'The system MUST define a canonical set of lifecycle assertion kinds.'
       token_est: 103
     - title: 'REQ-002: Policy-driven validation'
-      lines: [126, 149]
+      lines: [122, 145]
       summary: 'Validation and conflict rules MUST be driven by graph-native policy.'
       token_est: 101
-    - title: 'Related Requirements'
-      lines: [151, 158]
-      summary: 'Lifecycle requirements must align with architecture and graph model.'
-      token_est: 24
     - title: 'Design Decisions'
-      lines: [160, 173]
+      lines: [147, 160]
       token_est: 85
     - title: 'Blockers'
-      lines: [175, 179]
+      lines: [162, 166]
       token_est: 39
 ---
 

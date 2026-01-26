@@ -26,282 +26,323 @@ related:
 index:
   sections:
     - title: 'TLDR'
-      lines: [312, 333]
+      lines: [353, 374]
       summary:
         'Lifecycle-traceable graph memory with append-only canonical nodes, deterministic truth
         selection, provenance, time lenses, and ingest-to-graph parity for code and external
         sources.'
       token_est: 140
     - title: 'Scope'
-      lines: [335, 360]
+      lines: [376, 401]
       summary:
         'Lifecycle traceability, graph model, provenance, ingestion parity, time-lens queries,
         projections, and validation invariants. Excludes document-genre ontology, legal advice, full
         PM suite, and valid-time semantics.'
       token_est: 151
     - title: '1. Purpose'
-      lines: [362, 370]
+      lines: [403, 411]
       token_est: 91
     - title: '2. Non-goals'
-      lines: [372, 382]
+      lines: [413, 423]
       token_est: 81
     - title: '3. Key Definitions (Actionable)'
-      lines: [384, 660]
+      lines: [425, 701]
       token_est: 1479
       subsections:
         - title: '3.1 Node Category'
-          lines: [390, 401]
+          lines: [431, 442]
           token_est: 85
         - title: '3.1a Project (workspace / tenant)'
-          lines: [403, 428]
+          lines: [444, 469]
           token_est: 136
         - title: '3.2 Subject (canonical thing)'
-          lines: [430, 462]
+          lines: [471, 503]
           token_est: 175
         - title: '3.3 Artifact (verifiable source material)'
-          lines: [464, 544]
+          lines: [505, 585]
           token_est: 388
         - title: '3.4 Assertion (lifecycle statement)'
-          lines: [546, 571]
+          lines: [587, 612]
           token_est: 141
         - title: '3.5 Epistemic Type'
-          lines: [573, 582]
+          lines: [614, 623]
           token_est: 64
         - title: '3.6 Evidence (as an Assertion)'
-          lines: [584, 606]
+          lines: [625, 647]
           token_est: 129
         - title: '3.7 Agent'
-          lines: [608, 618]
+          lines: [649, 659]
           token_est: 62
         - title: '3.8 Activity'
-          lines: [620, 630]
+          lines: [661, 671]
           token_est: 67
         - title: '3.9 Supersession'
-          lines: [632, 639]
+          lines: [673, 680]
           token_est: 41
         - title: '3.10 Transaction-time “as-of” lens'
-          lines: [641, 646]
+          lines: [682, 687]
           token_est: 32
         - title: '3.11 Projection (non-canonical)'
-          lines: [648, 660]
+          lines: [689, 701]
           token_est: 101
     - title: '4. Design Principles (Normative)'
-      lines: [662, 678]
+      lines: [703, 719]
       token_est: 164
     - title: '5. Node Categories and Minimum Properties (Normative)'
-      lines: [680, 708]
+      lines: [721, 749]
       token_est: 163
     - title: '6. Core Relationships (Normative)'
-      lines: [710, 794]
+      lines: [751, 835]
       token_est: 640
       subsections:
         - title: 'REQ-REL-001 — Supersession'
-          lines: [712, 723]
+          lines: [753, 764]
           token_est: 59
         - title: 'REQ-REL-002 — Evidence as anchor + interpretation'
-          lines: [725, 736]
+          lines: [766, 777]
           token_est: 78
         - title: 'REQ-REL-003 — Lifecycle trace spine'
-          lines: [738, 749]
+          lines: [779, 790]
           token_est: 77
         - title: 'REQ-REL-004 — Relationship vocabulary (minimum)'
-          lines: [751, 794]
+          lines: [792, 835]
           token_est: 420
     - title: '7. Invariants and Validation (Normative)'
-      lines: [796, 864]
+      lines: [837, 905]
       token_est: 340
       subsections:
         - title: 'REQ-INV-001 — Decision completeness'
-          lines: [798, 808]
+          lines: [839, 849]
           token_est: 72
         - title: 'REQ-INV-002 — Requirement derivation'
-          lines: [810, 819]
+          lines: [851, 860]
           token_est: 46
         - title: 'REQ-INV-003 — SpecClause refinement'
-          lines: [821, 829]
+          lines: [862, 870]
           token_est: 34
         - title: 'REQ-INV-004 — PlanStep grounding and dependencies'
-          lines: [831, 842]
+          lines: [872, 883]
           token_est: 68
         - title: 'REQ-INV-005 — Verification linkage'
-          lines: [844, 853]
+          lines: [885, 894]
           token_est: 50
         - title: 'REQ-INV-006 — Deterministic current truth selection'
-          lines: [855, 864]
+          lines: [896, 905]
           token_est: 64
     - title: '8. Time Lens and Query Contract (Normative)'
-      lines: [866, 907]
-      token_est: 189
+      lines: [907, 968]
+      token_est: 290
     - title: '9. Projections (Derived Views) (Normative)'
-      lines: [909, 966]
+      lines: [970, 1027]
       token_est: 332
       subsections:
         - title: 'REQ-PROJ-001 — Projection registry'
-          lines: [911, 921]
+          lines: [972, 982]
           token_est: 59
         - title: 'REQ-PROJ-001a — Projection explainability'
-          lines: [923, 935]
+          lines: [984, 996]
           token_est: 90
         - title: 'REQ-PROJ-002 — Who computes projections'
-          lines: [937, 947]
+          lines: [998, 1008]
           token_est: 62
         - title: 'REQ-PROJ-003 — Minimum projections (v1)'
-          lines: [949, 966]
+          lines: [1010, 1027]
           token_est: 115
     - title: '10. Ingestion (Web + Code) to Graph (Normative)'
-      lines: [968, 1125]
-      token_est: 965
+      lines: [1029, 1205]
+      token_est: 1046
       subsections:
         - title: 'REQ-ING-001 — Ingest-to-graph parity'
-          lines: [970, 982]
+          lines: [1031, 1043]
           token_est: 89
         - title: 'REQ-ING-001a — Ingestion depth configuration'
-          lines: [984, 1001]
+          lines: [1045, 1062]
           token_est: 110
         - title: 'REQ-ING-002 — External source decomposition'
-          lines: [1003, 1012]
+          lines: [1064, 1073]
           token_est: 49
         - title: 'REQ-ING-003 — Two-tier ingestion and evidence promotion'
-          lines: [1014, 1039]
+          lines: [1075, 1100]
           token_est: 184
         - title: 'REQ-ING-004 — Retention policy as queryable facts'
-          lines: [1041, 1061]
+          lines: [1102, 1122]
           token_est: 155
         - title: 'REQ-ING-005 — Code ingestion decomposition'
-          lines: [1063, 1079]
+          lines: [1124, 1140]
           token_est: 112
         - title: 'REQ-ING-006 — External sources: forums/issues/threaded discussions'
-          lines: [1081, 1109]
+          lines: [1142, 1170]
           token_est: 164
         - title: 'REQ-ING-007 — Promotion triggers (Tier 2)'
-          lines: [1111, 1125]
-          token_est: 94
+          lines: [1172, 1188]
+          token_est: 95
+        - title: 'REQ-ING-008 — External provenance and freshness'
+          lines: [1190, 1205]
+          token_est: 80
     - title: '11. Graph Scale and “Active vs Historical” (Normative)'
-      lines: [1127, 1184]
+      lines: [1207, 1264]
       token_est: 348
       subsections:
         - title: 'REQ-SCALE-001 — Active vs historical separation'
-          lines: [1129, 1148]
+          lines: [1209, 1228]
           token_est: 149
         - title: 'REQ-SCALE-001a — Archival/retirement semantics'
-          lines: [1150, 1159]
+          lines: [1230, 1239]
           token_est: 50
         - title: 'REQ-SCALE-002 — Write-hot state via projections'
-          lines: [1161, 1171]
+          lines: [1241, 1251]
           token_est: 62
         - title: 'REQ-SCALE-002a — Deterministic ActiveWork rules'
-          lines: [1173, 1184]
+          lines: [1253, 1264]
           token_est: 77
     - title: '12. Required Query Capabilities (Normative)'
-      lines: [1186, 1224]
-      token_est: 228
+      lines: [1266, 1318]
+      token_est: 311
+      subsections:
+        - title: 'REQ-QUERY-001 — Why / rationale'
+          lines: [1268, 1274]
+          token_est: 49
+        - title: 'REQ-QUERY-002 — What is current committed truth'
+          lines: [1276, 1281]
+          token_est: 39
+        - title: 'REQ-QUERY-003 — What is next / blockers'
+          lines: [1283, 1288]
+          token_est: 42
+        - title: 'REQ-QUERY-004 — Impact analysis'
+          lines: [1290, 1296]
+          token_est: 45
+        - title: 'REQ-QUERY-005 — Health / gaps'
+          lines: [1298, 1304]
+          token_est: 47
+        - title: 'REQ-QUERY-006 — Capability discovery'
+          lines: [1306, 1318]
+          token_est: 84
     - title: '13. Notes on Database Choice (Informational)'
-      lines: [1226, 1232]
+      lines: [1320, 1326]
       token_est: 63
     - title: '14. Traceability to Former Problem Areas (Informational)'
-      lines: [1234, 1246]
+      lines: [1328, 1340]
       token_est: 91
     - title: '15. Normative Schemas and Contracts (Normative)'
-      lines: [1248, 1406]
-      token_est: 624
+      lines: [1342, 1525]
+      token_est: 775
       subsections:
         - title: 'REQ-SCHEMA-001 — Assertion schema registry'
-          lines: [1253, 1263]
+          lines: [1347, 1357]
           token_est: 67
         - title: 'REQ-SCHEMA-002 — Minimum required fields per Assertion kind (v1)'
-          lines: [1265, 1390]
+          lines: [1359, 1484]
           token_est: 437
         - title: 'REQ-SCHEMA-003 — Normalization rules'
-          lines: [1392, 1406]
+          lines: [1486, 1500]
           token_est: 93
+        - title: 'REQ-SCHEMA-004 — Knowledge type registry and extension contract'
+          lines: [1502, 1525]
+          token_est: 151
     - title: '16. Conflict Model and Contradiction Handling (Normative)'
-      lines: [1408, 1463]
-      token_est: 272
+      lines: [1527, 1594]
+      token_est: 345
+      subsections:
+        - title: 'REQ-CONF-001 — Conflict keys'
+          lines: [1531, 1547]
+          token_est: 90
+        - title: 'REQ-CONF-001a — Conflict keys for new knowledge types'
+          lines: [1549, 1559]
+          token_est: 73
+        - title: 'REQ-CONF-002 — Contradiction detection'
+          lines: [1561, 1570]
+          token_est: 46
+        - title: 'REQ-CONF-003 — Resolution policy'
+          lines: [1572, 1582]
+          token_est: 60
+        - title: 'REQ-CONF-004 — Scoped coexistence'
+          lines: [1584, 1594]
+          token_est: 54
     - title: '17. Plans and Work Execution Model (Normative)'
-      lines: [1465, 1541]
+      lines: [1596, 1672]
       token_est: 375
       subsections:
         - title: 'REQ-PLAN-001 — Plan identity and versioning'
-          lines: [1467, 1478]
+          lines: [1598, 1609]
           token_est: 86
         - title: 'REQ-PLAN-003 — PlanStep membership'
-          lines: [1480, 1490]
+          lines: [1611, 1621]
           token_est: 52
         - title: 'REQ-PLAN-002 — PlanStep ordering'
-          lines: [1492, 1506]
+          lines: [1623, 1637]
           token_est: 59
         - title: 'REQ-WORK-001 — Progress and status via WorkEvents'
-          lines: [1508, 1519]
+          lines: [1639, 1650]
           token_est: 63
         - title: 'REQ-WORK-002 — Blocking semantics'
-          lines: [1521, 1530]
+          lines: [1652, 1661]
           token_est: 54
         - title: 'REQ-ARCH-001 — Archival/retirement representation'
-          lines: [1532, 1541]
+          lines: [1663, 1672]
           token_est: 52
     - title: '18. Evidence Strength Model (Normative)'
-      lines: [1543, 1577]
+      lines: [1674, 1708]
       token_est: 153
     - title: '19. Retention Boundaries and Raw-Input Prohibition (Normative)'
-      lines: [1579, 1627]
+      lines: [1710, 1758]
       token_est: 258
     - title: '20. Subject Equivalence and Merge Workflow (Normative)'
-      lines: [1629, 1663]
+      lines: [1760, 1794]
       token_est: 154
     - title: '21. Ingestion Idempotency and Deduplication (Normative)'
-      lines: [1665, 1702]
+      lines: [1796, 1833]
       token_est: 179
     - title: '22. Locator Specification (Normative)'
-      lines: [1704, 1732]
+      lines: [1835, 1863]
       token_est: 104
     - title: '23. Projection Output Envelope (Normative)'
-      lines: [1734, 1765]
+      lines: [1865, 1896]
       token_est: 127
     - title: '24. Validation Enforcement, Staging, and Waivers (Normative)'
-      lines: [1767, 1810]
+      lines: [1898, 1941]
       token_est: 202
     - title: '25. Project Scoping and Multi-Project Operation (Normative)'
-      lines: [1812, 1824]
+      lines: [1943, 1955]
       token_est: 65
     - title: '26. Supersession Semantics and Visibility (Normative)'
-      lines: [1826, 1860]
+      lines: [1957, 1991]
       token_est: 202
     - title: '27. Scope Model (Normative)'
-      lines: [1862, 1892]
+      lines: [1993, 2023]
       token_est: 128
     - title: '28. Deterministic Canonicalization and Idempotency (Normative)'
-      lines: [1894, 1945]
+      lines: [2025, 2076]
       token_est: 232
     - title: '29. Waivers and Exceptional Paths (Normative)'
-      lines: [1947, 1965]
+      lines: [2078, 2096]
       token_est: 85
     - title: '30. Projections, Explanations, and GraphHealth (Normative)'
-      lines: [1967, 2018]
+      lines: [2098, 2149]
       token_est: 236
     - title: '31. External Source Rights and Metadata (Normative)'
-      lines: [2020, 2037]
+      lines: [2151, 2168]
       token_est: 68
     - title: '32. Locator Mapping Across Versions (Normative)'
-      lines: [2039, 2050]
+      lines: [2170, 2181]
       token_est: 67
     - title: '33. Activity Atomicity and Transactions (Normative)'
-      lines: [2052, 2063]
+      lines: [2183, 2194]
       token_est: 63
     - title: '34. Additional Tightening (Normative)'
-      lines: [2065, 2117]
+      lines: [2196, 2248]
       token_est: 232
     - title: '35. Open Questions (Remaining)'
-      lines: [2119, 2132]
+      lines: [2250, 2263]
       token_est: 114
     - title: 'Related Requirements'
-      lines: [2134, 2140]
+      lines: [2265, 2271]
       summary: 'No explicit cross-document requirements listed in this document.'
       token_est: 21
     - title: 'Design Decisions'
-      lines: [2142, 2155]
+      lines: [2273, 2286]
       token_est: 85
     - title: 'Blockers'
-      lines: [2157, 2161]
+      lines: [2288, 2292]
       token_est: 39
 ---
 
@@ -906,6 +947,26 @@ latest non-superseded Assertions with `epistemic_type=committed`, subject to con
 
 ---
 
+### REQ-TIME-004 — Freshness metadata for active sources
+
+**Statement (MUST):** Every query response SHALL include freshness metadata sufficient to assess
+staleness for active sources.
+
+**Minimum freshness metadata (v1):**
+
+- `source_ref`
+- `snapshot_id` (commit/tag or external snapshot identifier)
+- `captured_at`
+- `staleness_reason` (optional; required if freshness is unknown)
+- `run_id` (ingestion run that produced the data)
+- `completeness` (complete | partial | unknown)
+
+**Acceptance criteria:**
+
+- Clients can distinguish stale vs unknown vs fresh results without out-of-band context.
+
+---
+
 ## 9. Projections (Derived Views) (Normative)
 
 ### REQ-PROJ-001 — Projection registry
@@ -1124,6 +1185,25 @@ external material is relied upon.
 - Tier 2 promotion is repeatable and does not create duplicate Evidence Assertions (see
   REQ-ING-IDEM-003).
 
+---
+
+### REQ-ING-008 — External provenance and freshness
+
+**Statement (MUST):** External-source Artifacts and Assertions SHALL record provenance and freshness
+metadata sufficient to evaluate staleness and trust.
+
+**Minimum metadata (v1):**
+
+- `source_ref`
+- `snapshot_id`
+- `captured_at`
+- `staleness_reason` (required if freshness is unknown)
+
+**Acceptance criteria:**
+
+- External Artifacts include source, snapshot, and capture time.
+- Staleness is explicit when freshness cannot be asserted.
+
 ## 11. Graph Scale and “Active vs Historical” (Normative)
 
 ### REQ-SCALE-001 — Active vs historical separation
@@ -1220,6 +1300,20 @@ Requirements, Decisions, Plans, and VerificationEvidence.
 **Statement (MUST):** The system SHALL answer: “Where is the graph incomplete or inconsistent?” by
 returning GraphHealth violations and dangling nodes (unlinked decisions, unverified requirements,
 orphan plan steps, ambiguous supersession).
+
+---
+
+### REQ-QUERY-006 — Capability discovery
+
+**Statement (MUST):** The system SHALL expose capability discovery for knowledge types, projections,
+and query surfaces.
+
+**Minimum discovery output (v1):**
+
+- knowledge type registry entries (type_id + schema version + conflict policy)
+- supported projections (name + rule version + supported types)
+- supported query methods (method name + response schema + required capabilities)
+- freshness guarantees per profile/lens
 
 ---
 
@@ -1405,6 +1499,31 @@ it MUST match the edges.
 
 ---
 
+### REQ-SCHEMA-004 — Knowledge type registry and extension contract
+
+**Statement (MUST):** The system SHALL maintain a knowledge type registry that defines extension
+contracts for all Assertion kinds and other knowledge types participating in projections or API
+queries.
+
+**Minimum registry fields (v1):**
+
+- `type_id` (stable identifier)
+- `category` (Assertion | Subject | Artifact | Projection output)
+- `schema_ref` (required/optional fields + versions)
+- `conflict_key_policy` (required when type participates in current truth)
+- `supersession_policy` (eligible or not, target types)
+- `required_relationships[]`
+- `projection_eligibility[]` (e.g., CurrentCommittedTruth)
+- `api_exposure[]` (query surfaces, response shapes)
+- `capability_ids[]` (for capability discovery)
+
+**Acceptance criteria:**
+
+- New knowledge types are rejected unless registered with required fields.
+- Registry metadata is queryable via capability discovery.
+
+---
+
 ## 16. Conflict Model and Contradiction Handling (Normative)
 
 This section defines deterministic behaviour when commitments overlap or contradict.
@@ -1424,6 +1543,18 @@ This section defines deterministic behaviour when commitments overlap or contrad
 **Acceptance criteria:**
 
 - The same semantic commitment produces the same conflict_key across runs.
+
+---
+
+### REQ-CONF-001a — Conflict keys for new knowledge types
+
+**Statement (MUST):** Any knowledge type participating in current truth selection MUST define a
+deterministic conflict key policy in the knowledge type registry.
+
+**Acceptance criteria:**
+
+- Current truth projection rejects types without a conflict key policy.
+- Independent implementations produce identical conflict keys for the same input.
 
 ---
 

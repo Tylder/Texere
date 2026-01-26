@@ -24,130 +24,134 @@ keywords:
 index:
   sections:
     - title: 'TLDR'
-      lines: [158, 176]
+      lines: [162, 180]
       summary:
         'Build a language-aware index that supports sub-100 ms structural queries, incremental
         updates, cross-repo references, and a typed API using SCIP identifiers.'
       token_est: 115
     - title: 'Scope'
-      lines: [178, 203]
+      lines: [182, 207]
       summary:
         'Specifications for symbol identity, incremental indexing, storage schema, cross-repo
         references, rename handling, language extensibility, and agent-facing API with sub-100 ms
         query latency. Excludes semantic/vector search as a core capability.'
       token_est: 146
     - title: 'Context'
-      lines: [205, 218]
+      lines: [209, 222]
       token_est: 164
     - title: 'Evidence Summary'
-      lines: [220, 352]
+      lines: [224, 356]
       token_est: 1302
       subsections:
         - title: 'Research summary: symbol identity and reference tracking'
-          lines: [222, 269]
+          lines: [226, 273]
           token_est: 394
         - title: 'Research summary: incremental indexing'
-          lines: [271, 296]
+          lines: [275, 300]
           token_est: 162
         - title: 'Research summary: database models'
-          lines: [298, 326]
+          lines: [302, 330]
           token_est: 202
         - title: 'Candidate database libraries and evidence'
-          lines: [328, 337]
+          lines: [332, 341]
           token_est: 420
         - title: 'Recommended storage choices'
-          lines: [339, 352]
+          lines: [343, 356]
           token_est: 121
     - title: 'REQ-001: Authoritative symbol identity via SCIP'
-      lines: [354, 388]
+      lines: [358, 392]
       summary:
         'The system MUST use SCIP string identifiers as authoritative, stable symbol identities
         across languages and repositories.'
       token_est: 232
     - title: 'REQ-002: Incremental indexing pipeline'
-      lines: [390, 422]
+      lines: [394, 426]
       summary:
         'The system MUST support incremental indexing with per-file units, ownership sets, and
         staleness tracking.'
       token_est: 229
     - title: 'REQ-003: Hybrid storage model and trust boundary'
-      lines: [424, 454]
+      lines: [428, 458]
       summary:
         'The system MUST use a hybrid graph + relational storage model and treat repository text as
         untrusted.'
       token_est: 218
     - title: 'REQ-004: Graph schema, edges, indexes, and constraints'
-      lines: [456, 515]
+      lines: [460, 519]
       summary:
         'The property graph MUST implement specified node/edge types, properties, and indexes.'
       token_est: 610
     - title: 'REQ-005: Relational schema for metadata and status'
-      lines: [517, 544]
+      lines: [521, 548]
       summary:
         'The relational store MUST include tables for files, commits, packages, and index status.'
       token_est: 151
     - title: 'REQ-006: Cross-repository references and versioning'
-      lines: [546, 574]
+      lines: [550, 578]
       summary:
         'The system MUST resolve cross-repo references using package metadata and SCIP registry
         entries.'
       token_est: 185
+    - title: 'REQ-006a: Unresolved reference surfacing'
+      lines: [580, 603]
+      summary: 'The system MUST surface unresolved external references with explicit reasons.'
+      token_est: 140
     - title: 'REQ-007: Handling renames and moves'
-      lines: [576, 604]
+      lines: [605, 633]
       summary:
         'The system MUST preserve symbol identity across renames when semantics are unchanged and
         must mark stale units when identities change.'
       token_est: 202
     - title: 'REQ-008: Language extensibility'
-      lines: [606, 634]
+      lines: [635, 663]
       summary:
         'The system MUST support multiple languages via indexers that emit SCIP and map to a common
         schema.'
       token_est: 180
     - title: 'REQ-009: Agent-facing API (typed, structural)'
-      lines: [636, 828]
+      lines: [665, 893]
       summary:
         'The system MUST expose typed API methods for structural graph queries with no
         natural-language summarization.'
-      token_est: 1012
+      token_est: 1111
     - title: 'REQ-010: Performance target and query latency'
-      lines: [830, 854]
+      lines: [895, 919]
       summary:
         'The system MUST target sub-100 ms query latency with appropriate indexing and caching.'
       token_est: 150
     - title: 'REQ-011: Semantic/vector search is optional and constrained'
-      lines: [856, 880]
+      lines: [921, 945]
       summary:
         'Semantic/vector search MUST NOT be part of core design and must respect trust boundary if
         added.'
       token_est: 145
     - title: 'Design Decisions'
-      lines: [882, 922]
+      lines: [947, 987]
       token_est: 524
       subsections:
         - title: 'Decision 001: Symbol identity'
-          lines: [884, 896]
+          lines: [949, 961]
           token_est: 201
         - title: 'Decision 002: Incremental indexing'
-          lines: [898, 909]
+          lines: [963, 974]
           token_est: 173
         - title: 'Decision 003: Storage and database model'
-          lines: [911, 922]
+          lines: [976, 987]
           token_est: 147
     - title: 'Blockers'
-      lines: [924, 928]
+      lines: [989, 993]
       token_est: 12
     - title: 'Assumptions'
-      lines: [930, 937]
+      lines: [995, 1002]
       token_est: 101
     - title: 'Unknowns'
-      lines: [939, 949]
+      lines: [1004, 1014]
       token_est: 181
     - title: 'Reference Index (verbatim URLs from source material)'
-      lines: [951, 1001]
+      lines: [1016, 1066]
       token_est: 106
     - title: 'Conclusion'
-      lines: [1003, 1009]
+      lines: [1068, 1074]
       token_est: 84
 ---
 
@@ -573,6 +577,31 @@ https://github.com/sourcegraph/scip-clang/blob/main/docs/CrossRepo.md).
 
 ---
 
+## REQ-006a: Unresolved reference surfacing
+
+Summary: The system MUST surface unresolved external references with explicit reasons.
+
+**Statement:**
+
+When package metadata or SCIP registry entries are missing, the indexer MUST emit
+`UnresolvedReference` nodes with `reason`, `packageName`, and `importPath`, and connect them via
+`REFERS_TO` edges. Queries MUST surface unresolved references instead of silently dropping them.
+
+**Rationale:**
+
+Explicit unresolved references allow agents to reason about gaps and avoid false confidence.
+
+**Measurable Fit Criteria:**
+
+- [ ] Missing package metadata yields `UnresolvedReference` nodes.
+- [ ] API responses include unresolved references where applicable.
+
+**Verification Method:**
+
+- Index a repo with a missing dependency and verify unresolved nodes and query output.
+
+---
+
 ## REQ-007: Handling renames and moves
 
 Summary: The system MUST preserve symbol identity across renames when semantics are unchanged and
@@ -640,7 +669,43 @@ natural-language summarization.
 
 **Statement:**
 
-The system MUST expose the following methods, returning plain objects/arrays with a `stale` flag:
+The system MUST expose the following methods, returning plain objects/arrays with `meta` (`stale`,
+`freshness`, and `capabilityIds`):
+
+```ts
+type QueryMeta = {
+  stale: boolean;
+  freshness: {
+    sourceRef: string;
+    snapshotId: string;
+    capturedAt: string;
+    stalenessReason?: string;
+    runId: string;
+    completeness: 'complete' | 'partial' | 'unknown';
+  };
+  capabilityIds: string[];
+};
+```
+
+```ts
+// Return capability discovery details for knowledge types and queries.
+function getCapabilities(): Promise<{
+  knowledgeTypes: Array<{
+    typeId: string;
+    schemaVersion: string;
+    conflictKeyPolicy?: string;
+  }>;
+  projections: Array<{
+    name: string;
+    ruleVersion: string;
+    supportedTypes: string[];
+  }>;
+  queries: Array<{
+    method: string;
+    requiredCapabilities: string[];
+  }>;
+}>;
+```
 
 ```ts
 // Return all places where the symbol is referenced.
@@ -657,7 +722,7 @@ function getSymbolReferences(
     referenceKind: 'call' | 'read' | 'write' | 'type';
     indirect: boolean;
   }>;
-  stale: boolean;
+  meta: QueryMeta;
 }>;
 ```
 
@@ -674,7 +739,7 @@ function getSymbolDefinition(symbolId: string): Promise<{
     range: { start: number; end: number };
     definitionKind: 'declaration' | 'definition' | 'ambient';
   }>;
-  stale: boolean;
+  meta: QueryMeta;
 }>;
 ```
 
@@ -691,7 +756,7 @@ function getSymbolImplementations(symbolId: string): Promise<{
     range: { start: number; end: number };
     relationKind: 'implements' | 'overrides';
   }>;
-  stale: boolean;
+  meta: QueryMeta;
 }>;
 ```
 
@@ -705,7 +770,7 @@ function getSymbolDependencies(symbolId: string): Promise<{
     targetSymbolId: string;
     relationship: 'call' | 'read' | 'write' | 'type' | 'inherit' | 'configuration';
   }>;
-  stale: boolean;
+  meta: QueryMeta;
 }>;
 ```
 
@@ -719,7 +784,7 @@ function getImpactOfChange(symbolId: string): Promise<{
     impactedSymbolId: string;
     relationship: 'calledBy' | 'overriddenBy' | 'implements' | 'reExportedBy' | 'testedBy';
   }>;
-  stale: boolean;
+  meta: QueryMeta;
 }>;
 ```
 
@@ -733,7 +798,7 @@ function findSimilarImplementations(symbolId: string): Promise<{
     implementationId: string;
     relationKind: 'implementsSameInterface' | 'extendsSameBase';
   }>;
-  stale: boolean;
+  meta: QueryMeta;
 }>;
 ```
 
@@ -748,7 +813,7 @@ function getExternalDependencies(symbolId: string): Promise<{
     version: string;
     symbols: string[]; // symbol IDs from the dependency
   }>;
-  stale: boolean;
+  meta: QueryMeta;
 }>;
 ```
 
@@ -768,7 +833,7 @@ function getTestsForSymbol(symbolId: string): Promise<{
     fileId: string;
     reason: string; // e.g. not referenced in any test
   }>;
-  stale: boolean;
+  meta: QueryMeta;
 }>;
 ```
 
@@ -783,7 +848,7 @@ function getRequiredModifications(featureInterfaceId: string): Promise<{
     symbolId: string;
     reason: 'implementInterface' | 'updateFactory' | 'addTest' | 'extendDocumentation';
   }>;
-  stale: boolean;
+  meta: QueryMeta;
 }>;
 ```
 
@@ -803,7 +868,7 @@ function getArchitecturalConstraints(symbolId: string): Promise<{
       range: { start: number; end: number };
     } | null;
   }>;
-  stale: boolean;
+  meta: QueryMeta;
 }>;
 ```
 
@@ -818,12 +883,12 @@ Agents require precise structural data without summarization, keyed by authorita
 **Measurable Fit Criteria:**
 
 - [ ] Each method returns only typed structures (no natural-language summaries).
-- [ ] Each method exposes a `stale` flag.
+- [ ] Each method exposes `meta` including stale and freshness metadata.
 - [ ] Indexed data accessed matches declared relationships.
 
 **Verification Method:**
 
-- Contract tests per API method validate shape, data sources, and stale flag.
+- Contract tests per API method validate shape, data sources, and meta fields.
 
 ---
 
