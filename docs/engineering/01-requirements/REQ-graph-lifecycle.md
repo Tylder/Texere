@@ -148,15 +148,6 @@ governance.
 
 ---
 
-## Related Requirements
-
-Summary: Lifecycle requirements must align with architecture and graph model.
-
-- REQ-graph-system-graph-system-architecture.md
-- REQ-graph-system-graph-knowledge-system.md
-
----
-
 ## Design Decisions
 
 | Field                  | Decision 001  |
