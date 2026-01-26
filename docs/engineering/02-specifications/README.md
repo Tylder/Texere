@@ -28,6 +28,7 @@ by multiple Specifications.
 - [`SPEC-graph-cli-app`](SPEC-graph-cli-app.md) (draft) - graph-cli-app
 - [`SPEC-graph-system-graph-ingestion-repo-ts`](SPEC-graph-system-graph-ingestion-repo-ts.md)
   (draft) - graph-ingestion-repo-ts
+- [`SPEC-graph-system-packages`](SPEC-graph-system-packages.md) (draft) - graph-packages
 
 ---
 

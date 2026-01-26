@@ -5,7 +5,7 @@ stability: stable
 auto_generated: true
 auto_generated_by: script/validate-docs.mjs
 auto_generated_on_every: git commit (pre-commit hook)
-last_updated: 2026-01-25
+last_updated: 2026-01-26
 do_not_edit_manually: true
 ---
 
@@ -44,6 +44,7 @@ grep "| SPEC.*active" below
 | `REQ-graph-system-graph-knowledge-system`             | REQ               | draft  | experimental | knowledge-graph  | graph-knowledge-system               | Graph-based project memory with lifecycle-traceable, queryable nodes and deterministic current/as-of views                                                                                                        |
 | `SPEC-graph-cli-app`                                  | SPEC              | draft  | experimental | graph-system     | graph-cli-app                        | Interactive CLI testing tool that grows with the graph system—add new commands as features are implemented                                                                                                        |
 | `SPEC-graph-system-graph-ingestion-repo-ts`           | SPEC              | draft  | experimental | graph-system     | graph-ingestion-repo-ts              | Requirements for a TypeScript-first, language-extensible repository indexing and query system                                                                                                                     |
+| `SPEC-graph-system-packages`                          | SPEC              | draft  | experimental | graph-system     | graph-packages                       | Defines scope and responsibilities for core graph system packages.                                                                                                                                                |
 | `SPEC-tooling-eslint-oxlint-hybrid-linting`           | SPEC              | active | stable       | tooling          | hybrid-linting                       | Hybrid linting with Oxlint for fast baseline checks and ESLint for type-aware validation and import ordering.                                                                                                     |
 | `SPEC-tooling-nx-composite-projects`                  | SPEC              | active | stable       | tooling          | nx-composite-projects                | Nx orchestrates builds for TypeScript composite projects using dependency graphs from tsconfig references and package.json.                                                                                       |
 | `SPEC-tooling-prettier-formatting-centralized`        | SPEC              | active | stable       | tooling          | prettier-formatting                  | Centralized Prettier config at the repo root; Prettier handles formatting only; ESLint owns import ordering.                                                                                                      |
@@ -55,4 +56,4 @@ grep "| SPEC.*active" below
 | `IMPL-PLAN-graph-system-vertical-slice-v0-2`          | IMPL-PLAN         | draft  | experimental | graph-system     | graph-vertical-slice-v0-2            | Implement the v0.2 vertical slice for repo ingestion with the full TypeScript profile and connector contract                                                                                                      |
 | `META-documentation-system`                           | META              | active | stable       | documentation    | system                               | Complete specification of the 5-type documentation system: IDEATION, REQ, SPEC, IMPL-PLAN, META                                                                                                                   |
 
-_Auto-generated: 2026-01-25_
+_Auto-generated: 2026-01-26_
