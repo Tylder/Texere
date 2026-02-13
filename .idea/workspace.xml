@@ -5,8 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a867493f-939d-46b6-8b6d-f2829a2d9d7f" name="Changes" comment="planning/discussion: Texere planning">
+      <change afterPath="$PROJECT_DIR$/docs/kg-redesign.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/memory-graph-audit.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/oh-my-opencode-integration.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/sqlite-benchmark-research.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.sisyphus/drafts/kg-redesign.md" beforeDir="false" afterPath="$PROJECT_DIR$/.sisyphus/drafts/kg-redesign.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/memorygraph.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/memorygraph.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,26 +42,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/dan/Texere&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;pnpm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "javascript.preferred.runtime.type.id": "node",
+    "last_opened_file_path": "/home/dan/Texere/docs",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "pnpm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/docs" />
       <recent name="$PROJECT_DIR$" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/docs" />
     </key>
   </component>
   <component name="SharedIndexes">
@@ -76,7 +85,7 @@
       <workItem from="1770992654498" duration="1702000" />
       <workItem from="1770995354516" duration="543000" />
       <workItem from="1770997499368" duration="1281000" />
-      <workItem from="1771009451578" duration="1382000" />
+      <workItem from="1771009451578" duration="3324000" />
     </task>
     <task id="LOCAL-00001" summary="clean">
       <option name="closed" value="true" />
@@ -94,7 +103,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771004902825</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="planning/discussion: Texere planning">
+      <option name="closed" value="true" />
+      <created>1771014039060</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1771014039060</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
