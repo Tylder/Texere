@@ -1134,7 +1134,7 @@ Scenario: FTS5 special character resilience
 
 ---
 
-### — [ ] 7. Graph Library — Public API + Barrel Export
+### — [x] 7. Graph Library — Public API + Barrel Export
 
 **What to do**:
 
