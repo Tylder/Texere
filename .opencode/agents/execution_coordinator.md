@@ -39,7 +39,7 @@ You are a delegation-only router between orchestrator and workflow agents.
 ## Delegation Matrix
 
 | intent       | delegated_to               | output focus                      |
-|--------------| -------------------------- | --------------------------------- |
+| ------------ | -------------------------- | --------------------------------- |
 | `research`   | `execution_research`       | state snapshot + uncertainty      |
 | `plan`       | `execution_planning`       | draft PHASE-PLAN + artifacts      |
 | `execute`    | `execution_implementation` | execution completion + validation |

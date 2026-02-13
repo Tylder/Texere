@@ -1,9 +1,7 @@
 {
-  "active_plan": "/home/dan/kg-mcp/.sisyphus/plans/kg-mcp-v2.md",
-  "started_at": "2026-02-12T16:24:45.686Z",
-  "session_ids": [
-    "ses_3ade15d6affeBs5JwNNlAHC0R5"
-  ],
-  "plan_name": "kg-mcp-v2",
+  "active_plan": "/home/dan/Texere/.sisyphus/plans/texere.md",
+  "started_at": "2026-02-13T21:59:03.918Z",
+  "session_ids": ["ses_3a79cccd8ffeZlzPKLrnvHNSpi"],
+  "plan_name": "texere",
   "agent": "atlas"
 }

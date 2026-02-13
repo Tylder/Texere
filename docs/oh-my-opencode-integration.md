@@ -11,10 +11,13 @@
 
 ### Oh-My-OpenCode Hook System
 
-- **`experimental.chat.messages.transform`** — Rewrites entire message array before LLM. Used by AGENTS.md, README, rules injection.
-- **`chat.message`** — Per-message hook with ContextCollector (priority-based dedup: critical → high → normal → low)
+- **`experimental.chat.messages.transform`** — Rewrites entire message array before LLM. Used by
+  AGENTS.md, README, rules injection.
+- **`chat.message`** — Per-message hook with ContextCollector (priority-based dedup: critical → high
+  → normal → low)
 - **`experimental.chat.system.transform`** — Modifies system prompt sections directly.
-- Existing patterns: `directoryReadmeInjector`, `rulesInjector`, `keywordDetector` all use ContextCollector
+- Existing patterns: `directoryReadmeInjector`, `rulesInjector`, `keywordDetector` all use
+  ContextCollector
 
 ### ContextCollector Pattern
 
@@ -36,13 +39,18 @@
 
 - **Strategy**: Hook in oh-my-opencode that talks to KG MCP server (Strategy A)
 - **Where**: Hook lives in oh-my-opencode codebase, uses MCP client to query KG
-- **Context selection**: LLM-driven — use a small/fast LLM call to analyze the user's message and determine what KG context is relevant, then inject that
+- **Context selection**: LLM-driven — use a small/fast LLM call to analyze the user's message and
+  determine what KG context is relevant, then inject that
 - **Inference model**: Haiku/Flash class (fast & cheap) for context-selection
-- **Placement**: Needs thorough OMO research — where does this give most value in the agent orchestration flow?
+- **Placement**: Needs thorough OMO research — where does this give most value in the agent
+  orchestration flow?
 - **Development**: Standalone OpenCode plugin (`@texere/opencode-kg`), no fork of OMO needed
-- **Runtime**: Plugin reads `.kg/knowledge-graph.db` directly (read-only). MCP server owns writes/ingestion.
-- **Code org**: Monorepo — kg-mcp repo hosts both the MCP server and the OpenCode plugin as separate packages, sharing query/DB-read code
-- **Retrieval strategy**: Hybrid — heuristics for file/symbol mentions, Haiku/Flash LLM for ambiguous messages
+- **Runtime**: Plugin reads `.kg/knowledge-graph.db` directly (read-only). MCP server owns
+  writes/ingestion.
+- **Code org**: Monorepo — kg-mcp repo hosts both the MCP server and the OpenCode plugin as separate
+  packages, sharing query/DB-read code
+- **Retrieval strategy**: Hybrid — heuristics for file/symbol mentions, Haiku/Flash LLM for
+  ambiguous messages
 - (pending) Exact hook point in OMO lifecycle
 - (pending) Fallback if KG server isn't running
 - (pending) Which agents benefit most from auto-injected KG context?
@@ -98,7 +106,8 @@
 - All hooks (chat.message, tool.execute.before/after, event) fire for sub-agent sessions
 - Sub-agent sessions are tracked in `subagentSessions` Set but NOT filtered from hooks
 - **CRITICAL TIMING**: chat.message fires AFTER initial prompt is sent — cannot modify first message
-- **IMPLICATION**: To inject KG context into the sub-agent's FIRST prompt, must inject via buildSystemContent() (system prompt construction), not via hooks
+- **IMPLICATION**: To inject KG context into the sub-agent's FIRST prompt, must inject via
+  buildSystemContent() (system prompt construction), not via hooks
 
 ### Token Budget: 50% of Remaining, Max 50k
 
@@ -110,23 +119,32 @@
 
 ### Agent Impact Tiers
 
-- **TIER 1 (Highest ROI)**: Explore (eliminate search tool calls), Librarian (pre-load library APIs), Sisyphus/Hephaestus (skip exploration phase)
-- **TIER 2**: Metis (better intent classification with conventions), Prometheus (module graph for planning), Atlas (verify against conventions)
-- **TIER 3**: Oracle (module graph for architecture advice), Momus (file structure for reference validation)
+- **TIER 1 (Highest ROI)**: Explore (eliminate search tool calls), Librarian (pre-load library
+  APIs), Sisyphus/Hephaestus (skip exploration phase)
+- **TIER 2**: Metis (better intent classification with conventions), Prometheus (module graph for
+  planning), Atlas (verify against conventions)
+- **TIER 3**: Oracle (module graph for architecture advice), Momus (file structure for reference
+  validation)
 
 ### Existing Injector Patterns
 
-- `directoryReadmeInjector`: Triggers on `tool.execute.after` for "read" tools. Walks directory tree UP from file being read. Full README content with dynamic truncation.
-- `rulesInjector`: Triggers on `tool.execute.after` for read/write/edit/multiedit. Glob-based rule matching with distance scoring (closer rules = higher priority).
-- `keywordDetector`: Triggers on `chat.message`. Regex pattern matching on user text. Directly modifies message parts (no ContextCollector).
-- `compactionContextInjector`: Triggers on `session.compacted`. Injects structured template for what to preserve during compaction.
-- `contextInjectorMessagesTransform`: `experimental.chat.messages.transform`. Consumes from ContextCollector, sorts by priority, inserts synthetic part before user text.
+- `directoryReadmeInjector`: Triggers on `tool.execute.after` for "read" tools. Walks directory tree
+  UP from file being read. Full README content with dynamic truncation.
+- `rulesInjector`: Triggers on `tool.execute.after` for read/write/edit/multiedit. Glob-based rule
+  matching with distance scoring (closer rules = higher priority).
+- `keywordDetector`: Triggers on `chat.message`. Regex pattern matching on user text. Directly
+  modifies message parts (no ContextCollector).
+- `compactionContextInjector`: Triggers on `session.compacted`. Injects structured template for what
+  to preserve during compaction.
+- `contextInjectorMessagesTransform`: `experimental.chat.messages.transform`. Consumes from
+  ContextCollector, sorts by priority, inserts synthetic part before user text.
 
 ### Context Flow in Delegation
 
 - Parent → Child: ONLY sessionID, messageID, agent, model passed
 - NO message history, NO tool results, NO context injections transferred
-- System prompt constructed from: skills + category prompt append. NO conventions, NO README, NO rules
+- System prompt constructed from: skills + category prompt append. NO conventions, NO README, NO
+  rules
 - Sub-agents start from ZERO codebase knowledge
 
 ## OMO Research Findings (Round 4) — CONFIRMED ARCHITECTURE
@@ -153,7 +171,8 @@
 
 - Plugin interface exposes `tool.execute.before` handler
 - No OMO source modification needed
-- Plugin intercepts task() calls, enriches prompt with KG context, sub-agent receives enriched prompt transparently
+- Plugin intercepts task() calls, enriches prompt with KG context, sub-agent receives enriched
+  prompt transparently
 
 ## Test Strategy (Confirmed: TDD)
 
@@ -167,7 +186,8 @@
 
 ### Mock Strategy
 
-- Research exact types from `@opencode-ai/plugin` package for tool.execute.before/after input/output shapes
+- Research exact types from `@opencode-ai/plugin` package for tool.execute.before/after input/output
+  shapes
 - Build mocks from those precise types
 
 ### Test Database
@@ -184,5 +204,6 @@
 
 ## Scope Boundaries
 
-- INCLUDE: OpenCode plugin with context injection + direct tools, monorepo restructure, shared query layer
+- INCLUDE: OpenCode plugin with context injection + direct tools, monorepo restructure, shared query
+  layer
 - EXCLUDE: Fixture overhaul (separate effort), MCP server changes (it stays as-is), new KG features

@@ -1,10 +1,13 @@
 ## Memory Protocol
 
 ### REQUIRED: Before Starting Work
+
 You MUST use `recall_memories` before any task. Query by project, tech, or task type.
 
 ### REQUIRED: Automatic Storage Triggers
+
 Store memories on ANY of:
+
 - **Git commit** → what was fixed/added
 - **Bug fix** → problem + solution
 - **Version release** → summarize changes
@@ -12,9 +15,11 @@ Store memories on ANY of:
 - **Pattern discovered** → reusable approach
 
 ### Timing Mode (default: on-commit)
+
 `memory_mode: immediate | on-commit | session-end`
 
 ### Memory Fields
+
 - **Type**: solution | problem | code_pattern | fix | error | workflow
 - **Title**: Specific, searchable (not generic)
 - **Content**: Accomplishment, decisions, patterns
@@ -29,6 +34,7 @@ Do NOT wait to be asked. Memory storage is automatic.
 This project uses MemoryGraph for team knowledge sharing.
 
 ### When to Store
+
 - Solutions to project-specific problems
 - Architecture decisions and rationale
 - Deployment procedures and gotchas
@@ -36,13 +42,17 @@ This project uses MemoryGraph for team knowledge sharing.
 - Bug fixes and root causes
 
 ### Tagging Convention
+
 Always include these tags:
+
 - Project name: "my-app"
 - Component: "auth", "api", "database", etc.
 - Type: "fix", "feature", "optimization", etc.
 
 ### Example
+
 When fixing a bug:
+
 1. Store the problem (type: problem)
 2. Store the solution (type: solution)
 3. Link them: solution SOLVES problem

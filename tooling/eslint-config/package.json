@@ -1,0 +1,30 @@
+{
+  "name": "@texere/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.js",
+    ".": "./base.js"
+  },
+  "main": "./base.js",
+  "dependencies": {
+    "@eslint/js": "9.28.0",
+    "eslint-config-prettier": "10.1.5",
+    "eslint-import-resolver-typescript": "4.4.3",
+    "eslint-plugin-check-file": "3.3.1",
+    "eslint-plugin-import": "2.31.0",
+    "eslint-plugin-n": "17.18.0",
+    "eslint-plugin-oxlint": "1.1.0",
+    "eslint-plugin-security": "3.0.1",
+    "eslint-plugin-unicorn": "59.0.1",
+    "globals": "16.1.0"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3",
+    "typescript-eslint": "8.33.0"
+  },
+  "peerDependencies": {
+    "eslint": ">=9"
+  }
+}

@@ -39,6 +39,7 @@ Given two or more UI screenshots, the agent must:
 
 - Identify **visual differences** (layout, spacing, typography, color, alignment, visibility).
 - Classify differences as:
+
   - Regression
   - Intentional change
   - Likely bug

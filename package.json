@@ -1,0 +1,33 @@
+{
+  "name": "texere",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "format": "prettier . --write --cache",
+    "format:check": "prettier . --check --cache",
+    "lint": "bash -lc 'set +e; oxlint; OX=$?; eslint .; ES=$?; if [ $OX -ne 0 ] || [ $ES -ne 0 ]; then exit 1; fi'",
+    "lint:fix": "eslint . --fix && oxlint --fix",
+    "quality": "bash -lc 'set +e; pnpm format:check; F=$?; pnpm lint; L=$?; pnpm typecheck; T=$?; pnpm test:unit; U=$?; if [ $F -ne 0 ] || [ $L -ne 0 ] || [ $T -ne 0 ] || [ $U -ne 0 ]; then exit 1; fi'",
+    "test:integration": "turbo run test:integration",
+    "test:unit": "turbo run test:unit",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@texere/eslint-config": "workspace:*",
+    "@texere/typescript-config": "workspace:*",
+    "@types/node": "22.15.29",
+    "eslint": "9.28.0",
+    "eslint-plugin-oxlint": "1.1.0",
+    "oxlint": "1.1.0",
+    "prettier": "3.5.3",
+    "prettier-plugin-packagejson": "2.5.10",
+    "turbo": "2.5.4",
+    "typescript": "5.8.3",
+    "typescript-eslint": "8.33.0",
+    "vitest": "3.2.3"
+  },
+  "packageManager": "pnpm@10.23.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

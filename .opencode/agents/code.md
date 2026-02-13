@@ -50,6 +50,7 @@ vitest.config._). Consult user first.
 Uses **two distinct todo lists** managed with the `todowrite` and `todoread` tools:
 
 1. **Main Task Todo List**: High-level implementation steps created during planning phase
+
    - Use `todowrite` to create/update with task steps, files, and dependencies
    - Use `todoread` before each coding phase to check progress
    - Mark items complete as you finish each implementation step
