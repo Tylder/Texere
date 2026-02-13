@@ -488,16 +488,18 @@ Each edge exists because a specific question requires it.
 - PARALLEL_TO → express parallelism in workflow/task node content
 - BLOCKS → express blocking in task/problem node content (or use PREVENTS for causal blocking)
 
-#### Edge Properties (per edge)
+#### Edge Properties (per edge) — REVISED Session 4
 
-Every edge carries these properties (from memory-graph, simplified):
-- `strength` (0.0-1.0): How strong is this relationship? Default varies by type.
+Every edge carries these properties (simplified from memory-graph — hard-delete model):
+- `strength` (0.0-1.0): How strong is this relationship? Default 0.5.
 - `confidence` (0.0-1.0): How sure are we this relationship exists? Default 0.8.
-- `context` (string, optional): Human-readable description of why this edge exists.
-- `valid_from` (datetime): When this relationship became true (bi-temporal).
-- `valid_until` (datetime, optional): When this relationship stopped being true. Null = still valid.
-- `recorded_at` (datetime): When we learned about this relationship (transaction time).
-- `invalidated_by` (string, optional): ID of edge that superseded this one.
+- `created_at` (integer): Unix ms UTC timestamp when edge was created.
+
+**Dropped** (Session 4 — hard-delete decision):
+- ~~`context`~~ — edge type + node content carries the details
+- ~~`valid_from`/`valid_until`~~ — no bi-temporal on edges
+- ~~`recorded_at`~~ — redundant with `created_at` when there's no soft-delete
+- ~~`invalidated_by`~~ — edges are hard-deleted, not superseded
 
 #### Edge Metadata (per type)
 
@@ -808,36 +810,30 @@ CREATE TABLE nodes (
 ```
 Session 3 changes: dropped `summary` (nodes are small), dropped `updated_at` (immutable), renamed `archived_at` → `invalidated_at`, added `embedding` column (unpopulated V1).
 
-**Edges (column names REVISED Session 3; full schema TBD — see Open Questions):**
+**Edges (REVISED Session 4 — hard delete, no temporal, simplified):**
 ```sql
 CREATE TABLE edges (
-  id             TEXT PRIMARY KEY,
-  source_id      TEXT NOT NULL REFERENCES nodes(id),  -- renamed from from_id
-  target_id      TEXT NOT NULL REFERENCES nodes(id),  -- renamed from to_id
-  type           TEXT NOT NULL,
-
-  -- ⚠️ OPEN QUESTION: How much of the below survives Session 3 simplification?
-  -- Node schema was simplified to just created_at + invalidated_at.
-  -- Edge schema may get the same treatment. See "Open Questions" section.
-
-  -- valid-time (default to recorded_at in V1)
-  valid_from     INTEGER NOT NULL,   -- unix ms UTC
-  valid_until    INTEGER,            -- NULL = open-ended
-
-  -- transaction-time
-  recorded_at    INTEGER NOT NULL,   -- when inserted into DB
-  invalidated_at INTEGER,            -- when soft-deleted
-
-  -- integrity
-  invalidated_by TEXT,               -- edge id that superseded this
-  strength       REAL DEFAULT 0.5,
-  confidence     REAL DEFAULT 0.8,
-  context        TEXT,               -- human-readable reason for this edge
-
-  CHECK (valid_until IS NULL OR valid_until > valid_from),
-  CHECK (invalidated_at IS NULL OR invalidated_at >= recorded_at)
+  id         TEXT PRIMARY KEY,
+  source_id  TEXT NOT NULL REFERENCES nodes(id),
+  target_id  TEXT NOT NULL REFERENCES nodes(id),
+  type       TEXT NOT NULL,
+  strength   REAL DEFAULT 0.5,   -- how strong is this relationship (0-1)
+  confidence REAL DEFAULT 0.8,   -- how sure are we it exists (0-1)
+  created_at INTEGER NOT NULL    -- unix ms UTC
 );
 ```
+
+**Session 4 simplification decisions:**
+- **Hard delete** — wrong edges are DELETEd, not soft-deleted. No `invalidated_at`.
+- **No bi-temporal** — dropped `valid_from`, `valid_until`, `recorded_at`, `invalidated_by`. Edge history is not worth the query cost in V1. `ALTER TABLE ADD COLUMN` if needed in V2.
+- **No `context`** — edge type already says what the relationship is. Node `content` carries the details.
+- **No `properties_json`** — no flexible schema needed on edges.
+- **Kept `strength` + `confidence`** — useful for ranking traversal results.
+
+**Why hard delete edges but soft-delete nodes?**
+- Nodes are historical facts ("we chose JWT" is true forever even after being deprecated)
+- Edges are structural claims ("this links to that") — when wrong, there's no historical value in keeping them
+- Hard-delete edges means no `WHERE invalidated_at IS NULL` on edge queries — simpler SQL, faster queries, no partial indexes needed on edges
 
 **Indexes (REVISED Session 3+4 — see "Index Strategy" section for authoritative version):**
 ```sql
@@ -846,36 +842,39 @@ CREATE TABLE edges (
 -- partial indexes on invalidated_at IS NULL.
 ```
 
-#### Core Query Predicates
+#### Core Query Predicates — REVISED Session 4
 
 ```sql
--- Current graph (default for all queries)
+-- Current nodes (default for all node queries)
 WHERE invalidated_at IS NULL
 
--- What agent knew at time T (transaction-time as-of)
-WHERE recorded_at <= :t AND (invalidated_at IS NULL OR invalidated_at > :t)
+-- Edges: no filter needed — all rows are current (hard-deleted when wrong)
+-- Just SELECT from edges directly
 
--- What was true at time T (valid-time as-of, V1.5+)
-WHERE valid_from <= :t AND (valid_until IS NULL OR valid_until > :t)
-
--- Full bi-temporal (known at T_tx about time T_valid) — just AND both
+-- What agent knew at time T (transaction-time as-of, node reconstruction)
+-- Nodes: created_at <= :t AND (invalidated_at IS NULL OR invalidated_at > :t)
+-- Edges: created_at <= :t (but hard-deleted edges are gone — only current edges visible)
+-- Note: hard-delete means we CANNOT reconstruct past edge states. This is an accepted trade-off.
 ```
 
-#### Edge Lifecycle
+#### Edge Lifecycle — REVISED Session 4 (Hard-Delete)
 
-1. **Create**: Insert row with `recorded_at=now`, `valid_from=now` (or caller-specified), `invalidated_at=NULL`
-2. **Invalidate**: Set `invalidated_at=now`, optionally set `invalidated_by=new_edge_id`. NEVER delete the row.
-3. **Supersede**: In single transaction: invalidate old edge + create new edge with `invalidated_by` pointing to new edge
-4. **Query history**: `get_edge_history(node_id)` returns all edges including invalidated, ordered by `valid_from`
-5. **What changed**: `what_changed(since)` returns edges where `recorded_at >= since` OR `invalidated_at >= since`
+1. **Create**: `INSERT` row with `created_at=now`, `strength`, `confidence`.
+2. **Delete**: `DELETE FROM edges WHERE id = ?`. Row is gone. No soft-delete, no tombstone.
+3. **Replace**: In single transaction: `DELETE` old edge + `INSERT` new edge. No `invalidated_by` pointer needed — old row doesn't exist.
+
+**Why hard-delete for edges** (Session 4 decision):
+- Nodes are historical facts worth preserving (a decision WAS made, even if wrong)
+- Edges are structural claims — a wrong edge has no historical value
+- Hard-delete = simpler SQL (no `WHERE invalidated_at IS NULL` on every edge query)
+- Hard-delete = faster queries (no soft-deleted rows to skip, no partial indexes needed)
+- Hard-delete = smaller DB (edge table stays lean)
 
 #### Pitfalls to Avoid (from research)
 1. **Time format drift**: Use unix ms UTC everywhere. Never mix text timestamps. (Source: Oracle consultation)
-2. **Half-open intervals**: `[valid_from, valid_until)` consistently — use `<` on valid_until, never `<=`. (Source: Oracle)
-3. **Invalidation races**: Always close old edge + create new edge in SAME SQLite transaction. (Source: Oracle)
-4. **Content mutation lies**: If nodes are mutable, PIT only reconstructs topology, not historical text. Accept this or make nodes immutable. (Source: Oracle — "either treat nodes as immutable or accept that PIT only reconstructs relationships/topology")
-5. **Soft-delete bloat**: At scale, soft-deleted rows pollute indexes. Partial index `WHERE invalidated_at IS NULL` mitigates this. (Source: EventSourcingDB blog)
-6. **Query overhead**: Soft-delete adds 20-40% overhead vs hard-delete. Acceptable for <10K nodes. (Source: Librarian research — performance benchmarks)
+2. **Content mutation lies**: Nodes are immutable, so PIT reconstruction is faithful for both topology AND content. (Source: Oracle)
+3. **Foreign key cascading**: Edges reference nodes. Nodes are never deleted (eternal). So FK cascading is not a concern — but `FOREIGN_KEYS = ON` still validates edge targets exist.
+4. **BEGIN IMMEDIATE**: Use for write transactions to avoid SQLITE_BUSY. Verify better-sqlite3's `.transaction()` default behavior during TDD.
 
 #### What's Deferred to V2+
 - Node bi-temporal validity (valid_from/valid_until on nodes)
@@ -883,6 +882,7 @@ WHERE valid_from <= :t AND (valid_until IS NULL OR valid_until > :t)
 - Full bi-temporal queries combining tx-time + valid-time
 - Snapshot tables / materialized views for large graph PIT
 - Node revision history table
+- Edge history / audit log (if needed)
 - Event sourcing / append-only event log
 
 ## Query Performance Research
@@ -1120,7 +1120,7 @@ WITH RECURSIVE graph_walk(node_id, depth) AS (
   -- Seed: start node's direct neighbors
   SELECT target_id, 1
   FROM edges
-  WHERE source_id = :start_id AND invalidated_at IS NULL
+  WHERE source_id = :start_id
 
   UNION ALL
 
@@ -1128,8 +1128,7 @@ WITH RECURSIVE graph_walk(node_id, depth) AS (
   SELECT e.target_id, gw.depth + 1
   FROM graph_walk gw
   JOIN edges e ON e.source_id = gw.node_id
-  WHERE e.invalidated_at IS NULL
-    AND gw.depth < :max_depth
+  WHERE gw.depth < :max_depth
 )
 SELECT DISTINCT n.*
 FROM nodes n
@@ -1137,6 +1136,7 @@ JOIN graph_walk gw ON n.id = gw.node_id
 WHERE n.invalidated_at IS NULL
 ORDER BY gw.depth;
 ```
+> **Note**: No `invalidated_at IS NULL` filter on edges — edges are hard-deleted so all rows in the table are current. Node filter still needed (nodes use soft-invalidation).
 
 **Why UNION ALL over UNION**: In Texere's sparse graph (degree 3-5, cycle density ~10-20%), UNION ALL + final DISTINCT is faster than per-step dedup. May revisit a few nodes in cyclic subgraphs, but depth limit caps total work. The wasted work from revisiting << the overhead of maintaining a B-tree for dedup on every recursive step.
 
@@ -1173,14 +1173,14 @@ CREATE INDEX idx_nodes_type ON nodes(type) WHERE invalidated_at IS NULL;
 -- Nodes: created_at for recency queries
 CREATE INDEX idx_nodes_created ON nodes(created_at) WHERE invalidated_at IS NULL;
 
--- Edges: current graph — THE critical indexes for recursive CTE performance
--- SQLite query planner confirmed to use these in recursive step (Session 4 EXPLAIN analysis)
-CREATE INDEX idx_edges_source_active ON edges(source_id, target_id) WHERE invalidated_at IS NULL;
-CREATE INDEX idx_edges_target_active ON edges(target_id, source_id) WHERE invalidated_at IS NULL;
+-- Edges: covering indexes for recursive CTE traversal (Session 4)
+-- No partial indexes needed — edges are hard-deleted, all rows are current
+CREATE INDEX idx_edges_source ON edges(source_id, target_id);
+CREATE INDEX idx_edges_target ON edges(target_id, source_id);
 
 -- Edges: type-filtered traversal (e.g., "only DEPRECATED_BY edges")
-CREATE INDEX idx_edges_source_type ON edges(source_id, type) WHERE invalidated_at IS NULL;
-CREATE INDEX idx_edges_target_type ON edges(target_id, type) WHERE invalidated_at IS NULL;
+CREATE INDEX idx_edges_source_type ON edges(source_id, type);
+CREATE INDEX idx_edges_target_type ON edges(target_id, type);
 
 -- Tags (denormalized)
 CREATE TABLE node_tags (
@@ -1208,7 +1208,7 @@ Sources: SQLite query planner docs, OneUptime blog (2026), High Performance SQLi
 class TextereDB {
   private stmts = {
     getNode: this.db.prepare('SELECT * FROM nodes WHERE id = ?'),
-    getEdges: this.db.prepare('SELECT * FROM edges WHERE source_id = ? AND invalidated_at IS NULL'),
+    getEdges: this.db.prepare('SELECT * FROM edges WHERE source_id = ?'),
     // ... cache all statements at class level
   };
 }
@@ -1492,7 +1492,7 @@ Graph structure enables push because it answers: **"given that the agent is touc
 | 2 | `texere_get_node` | Read node by ID | Optionally includes edges with `include_edges: true` |
 | 3 | `texere_invalidate_node` | Retract a node (Datomic `:db/retract`) | Sets `invalidated_at=now`. "Just wrong, no replacement." |
 | 4 | `texere_create_edge` | Link two nodes | DEPRECATED_BY type auto-sets `invalidated_at` on source node. |
-| 5 | `texere_invalidate_edge` | Soft-invalidate edge | Sets `invalidated_at=now`. Never deletes row. |
+| 5 | `texere_delete_edge` | Hard-delete edge | `DELETE FROM edges WHERE id = ?`. Row is gone. |
 | 6 | `texere_search` | FTS5 search + filters | BM25 ranking. Type/tag/importance filters. |
 | 7 | `texere_traverse` | Graph walk from node | Recursive CTE. Direction: outgoing/incoming/both. Max depth 5. |
 | 8 | `texere_about` | Compound: search + traverse | "Tell me everything about X." FTS5 finds seed nodes, traverses neighbors. |
@@ -1562,7 +1562,6 @@ Note: `file_context` (semantic) is a human description of a file's purpose, crea
 ### Edge Types (REVISED Session 3)
 
 > **V1: Semantic types only.** SUPERSEDES renamed to DEPRECATED_BY. Structural edges deferred to V2.
-> **Count: TBD** — see Open Questions (13 or 14 depending on whether SUPERSEDES→DEPRECATED_BY is a rename or a change).
 
 **Semantic (LLM/human-created) — V1:**
 RELATED_TO, CAUSES, SOLVES, REQUIRES, CONTRADICTS, BUILDS_ON, **DEPRECATED_BY** *(was SUPERSEDES)*, PREVENTS, VALIDATES, ALTERNATIVE_TO, MOTIVATED_BY, IMPLEMENTS, CONSTRAINS, ANCHORED_TO
@@ -1697,10 +1696,10 @@ ingest-typescript → ingest-core → graph
 
 ### IN — V1
 - **Monorepo**: pnpm + turborepo — `packages/graph/` + `apps/mcp/` + `skills/texere.md`
-- **Graph storage** + CRUD: immutable eternal nodes, edges with invalidation
+- **Graph storage** + CRUD: immutable eternal nodes, hard-delete edges
 - **17 semantic node types** in flat enum (structural deferred to V2)
 - **Semantic edge types** in flat enum (DEPRECATED_BY replaces SUPERSEDES; structural deferred to V2)
-- **9 MCP tools**: store_node, get_node, invalidate_node, create_edge, invalidate_edge, search, traverse, about, stats
+- **9 MCP tools**: store_node, get_node, invalidate_node, create_edge, delete_edge, search, traverse, about, stats
 - **Datomic-inspired node lifecycle**: immutable + eternal, `invalidated_at` column for fast filter, DEPRECATED_BY edges for replacement
 - **FTS5 search** (full-text on title + content + tags, BM25 ranking, 3 columns — no summary)
 - **Denormalized tags** (node_tags table, trigger-synced — INSERT/DELETE only, no UPDATE)
