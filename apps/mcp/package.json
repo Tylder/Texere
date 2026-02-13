@@ -1,0 +1,35 @@
+{
+  "name": "@texere/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "texere-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc -b tsconfig.json",
+    "check-types": "pnpm typecheck",
+    "lint": "eslint .",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "dev": "tsdown --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@texere/graph": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@texere/eslint-config": "workspace:*",
+    "@texere/typescript-config": "workspace:*",
+    "@types/node": "22.15.29",
+    "eslint": "9.28.0",
+    "tsdown": "0.20.3",
+    "typescript": "5.8.3",
+    "vitest": "3.2.3"
+  }
+}

@@ -5,3 +5,4 @@
 - 2026-02-13: `pnpm --filter @texere/graph test:unit` fails in this worktree due to pre-existing untracked `packages/graph/src/traverse.test.ts` importing missing `./traverse.js`; targeted search/sanitize tests pass.
 - 2026-02-13: FTS MATCH input with hyphenated bare terms can parse as expression syntax; tests should use sanitized alphanumeric no-match queries to avoid SQLite parser errors.
 - 2026-02-13: Follow-up verification now shows `pnpm --filter @texere/graph test:unit` passes after `packages/graph/src/traverse.ts` became present in the worktree; prior failure was transient to missing traverse implementation.
+- 2026-02-13: `tsdown` declaration generation failed in `apps/mcp` with project references (`rolldown-plugin-dts` issue); setting `dts: false` unblocked build and still produced the required `dist/index.js` artifact.

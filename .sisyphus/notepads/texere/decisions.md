@@ -4,3 +4,4 @@
 - 2026-02-13: Implemented FTS5 search join as \ with weighted ranking \ to satisfy rowid typing and relevance goals.
 - 2026-02-13: FTS search uses `JOIN nodes n ON n.rowid = nf.rowid AND n.invalidated_at IS NULL` plus `bm25(nodes_fts, 10.0, 1.0, 3.0)` to enforce rowid-safe joins and weighted relevance.
 - 2026-02-13: about() composes search() seed selection with per-seed traverse() and deduplicates by node id while preserving smallest discovered depth.
+- 2026-02-13: `apps/mcp/src/server.ts` uses `@modelcontextprotocol/sdk` low-level `Server` handlers (`tools/list`, `tools/call`) with `z.toJSONSchema` conversion so stdio MCP works without introducing extra transport or auth layers.

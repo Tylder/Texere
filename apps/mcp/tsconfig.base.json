@@ -1,0 +1,6 @@
+{
+  "extends": "@texere/typescript-config/node-library.json",
+  "compilerOptions": {
+    "baseUrl": "."
+  }
+}

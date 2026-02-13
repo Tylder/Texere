@@ -8,3 +8,5 @@
 - 2026-02-13: Recursive traversal in packages/graph/src/traverse.ts performs UNION ALL CTE expansion with MIN(depth) dedup and enforces default maxDepth=3 capped at 5.
 - 2026-02-13: Task 7 complete - TextereDB class wraps all operations (storeNode, getNode, invalidateNode, createEdge, deleteEdge, getEdgesForNode, search, traverse, about, stats, close). Barrel exports all public types. TSDoc generates clean .d.ts declarations. All 88 tests pass.
 - 2026-02-13: TDD workflow verified - RED (25 tests fail with 'TextereDB is not a constructor') → GREEN (all 88 tests pass after implementation). Build produces valid ESM with .d.ts declarations.
+- 2026-02-13: MCP app uses shared tool-definition objects (`inputSchema` + `execute`) so both MCP request handlers and unit tests exercise the exact same zod validation and execution path.
+- 2026-02-13: For strict optional typing in this workspace (`exactOptionalPropertyTypes`), map snake_case MCP inputs to graph options via conditional object spreads to avoid passing explicit `undefined`.

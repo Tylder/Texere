@@ -1201,7 +1201,7 @@ Scenario: FTS5 special character resilience
 
 ---
 
-### — [ ] 8. MCP Server
+### — [x] 8. MCP Server
 
 **What to do**:
 
