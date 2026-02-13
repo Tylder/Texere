@@ -87,14 +87,14 @@ across sessions.
 
 ### Definition of Done
 
-- [ ] `pnpm quality` passes (lint + typecheck + test + build across all packages)
-- [ ] `pnpm test:unit` — all unit tests pass with >70% coverage on `packages/graph/`
-- [ ] `pnpm test:integration` — MCP client→server→graph→SQLite round-trip works
-- [ ] `pnpm typecheck` — zero type errors across all packages
-- [ ] `pnpm lint` — zero lint errors (oxlint + eslint)
-- [ ] `pnpm format:check` — all files formatted
-- [ ] All 9 MCP tools respond correctly to valid and invalid input
-- [ ] `skills/texere.md` contains accurate tool schemas and usage examples
+- [x] `pnpm quality` passes (lint + typecheck + test + build across all packages)
+- [x] `pnpm test:unit` — all unit tests pass with >70% coverage on `packages/graph/`
+- [x] `pnpm test:integration` — MCP client→server→graph→SQLite round-trip works
+- [x] `pnpm typecheck` — zero type errors across all packages
+- [x] `pnpm lint` — zero lint errors (oxlint + eslint)
+- [x] `pnpm format:check` — all files formatted
+- [x] All 9 MCP tools respond correctly to valid and invalid input
+- [x] `skills/texere.md` contains accurate tool schemas and usage examples
 
 ### Must Have
 
@@ -516,22 +516,22 @@ db.pragma('wal_autocheckpoint = 1000');
 
 **Acceptance Criteria**:
 
-- [ ] `pnpm install` succeeds with no errors
-- [ ] `pnpm format:check` exits 0
-- [ ] `pnpm typecheck` exits 0 (no packages to check yet — should not error)
-- [ ] `pnpm lint` exits 0 (no source files yet — should not error)
-- [ ] `ls packages/ apps/ tooling/ skills/ agents/` — all directories exist
-- [ ] `cat tooling/typescript-config/base.json | grep '"strict": true'` — strict mode enabled
-- [ ] `cat tooling/typescript-config/base.json | grep '"noUncheckedIndexedAccess": true'` — safety
+- [x] `pnpm install` succeeds with no errors
+- [x] `pnpm format:check` exits 0
+- [x] `pnpm typecheck` exits 0 (no packages to check yet — should not error)
+- [x] `pnpm lint` exits 0 (no source files yet — should not error)
+- [x] `ls packages/ apps/ tooling/ skills/ agents/` — all directories exist
+- [x] `cat tooling/typescript-config/base.json | grep '"strict": true'` — strict mode enabled
+- [x] `cat tooling/typescript-config/base.json | grep '"noUncheckedIndexedAccess": true'` — safety
       flag
-- [ ] `cat tooling/typescript-config/base.json | grep '"exactOptionalPropertyTypes": true'` — safety
+- [x] `cat tooling/typescript-config/base.json | grep '"exactOptionalPropertyTypes": true'` — safety
       flag
-- [ ] `cat tooling/typescript-config/base.json | grep '"verbatimModuleSyntax": true'` — ESM
+- [x] `cat tooling/typescript-config/base.json | grep '"verbatimModuleSyntax": true'` — ESM
       enforcement
-- [ ] `cat .oxlintrc.json | grep '"correctness"'` — oxlint config exists
-- [ ] `cat prettier.config.mjs | grep 'singleQuote'` — prettier config exists
-- [ ] `cat turbo.json | grep '"build"'` — turbo pipeline exists
-- [ ] `cat pnpm-workspace.yaml` — workspace definition exists with packages/_, apps/_, tooling/\*
+- [x] `cat .oxlintrc.json | grep '"correctness"'` — oxlint config exists
+- [x] `cat prettier.config.mjs | grep 'singleQuote'` — prettier config exists
+- [x] `cat turbo.json | grep '"build"'` — turbo pipeline exists
+- [x] `cat pnpm-workspace.yaml` — workspace definition exists with packages/_, apps/_, tooling/\*
 
 **Agent-Executed QA Scenarios**:
 
@@ -672,18 +672,18 @@ Scenario: Quality gate runs without error on empty workspace
 
 **Acceptance Criteria**:
 
-- [ ] `pnpm --filter @texere/graph typecheck` exits 0
-- [ ] `pnpm --filter @texere/graph test:unit` — all tests pass
-- [ ] Test: `createDatabase(':memory:')` returns a db instance without throwing
-- [ ] Test: `db.pragma('foreign_keys')` returns `[{ foreign_keys: 1 }]`
-- [ ] Test: `SELECT name FROM sqlite_master WHERE type='table'` includes `nodes`, `edges`,
+- [x] `pnpm --filter @texere/graph typecheck` exits 0
+- [x] `pnpm --filter @texere/graph test:unit` — all tests pass
+- [x] Test: `createDatabase(':memory:')` returns a db instance without throwing
+- [x] Test: `db.pragma('foreign_keys')` returns `[{ foreign_keys: 1 }]`
+- [x] Test: `SELECT name FROM sqlite_master WHERE type='table'` includes `nodes`, `edges`,
       `node_tags`
-- [ ] Test: `SELECT name FROM sqlite_master WHERE type='table'` includes `nodes_fts`
-- [ ] Test: Node with `tags_json='["a","b"]'` creates 2 rows in `node_tags`
-- [ ] Test: Node with `tags_json='[]'` creates 0 rows in `node_tags`
-- [ ] Test: `NodeType` enum has exactly 17 values
-- [ ] Test: `EdgeType` enum has exactly 14 values
-- [ ] Tests FAIL when run before implementation files exist (TDD RED verified)
+- [x] Test: `SELECT name FROM sqlite_master WHERE type='table'` includes `nodes_fts`
+- [x] Test: Node with `tags_json='["a","b"]'` creates 2 rows in `node_tags`
+- [x] Test: Node with `tags_json='[]'` creates 0 rows in `node_tags`
+- [x] Test: `NodeType` enum has exactly 17 values
+- [x] Test: `EdgeType` enum has exactly 14 values
+- [x] Tests FAIL when run before implementation files exist (TDD RED verified)
 
 **Agent-Executed QA Scenarios**:
 
@@ -800,18 +800,18 @@ Scenario: Database schema creates all tables and indexes
 
 **Acceptance Criteria**:
 
-- [ ] `pnpm --filter @texere/graph test:unit` — all node tests pass
-- [ ] Test: storeNode returns node with nanoid ID (21 chars, URL-safe)
-- [ ] Test: storeNode sets created_at to current unix ms
-- [ ] Test: getNode returns exact same node
-- [ ] Test: getNode('nonexistent') returns null
-- [ ] Test: invalidateNode sets invalidated_at
-- [ ] Test: invalidateNode on already-invalidated is idempotent
-- [ ] Test: invalidateNode('nonexistent') throws
-- [ ] Test: storeNode with anchor_to creates ANCHORED_TO edge(s)
-- [ ] Test: FTS5 contains the node after storeNode (verified via raw SQL)
-- [ ] Test: node_tags populated after storeNode with tags
-- [ ] Tests FAIL when nodes.ts doesn't exist yet (TDD RED verified)
+- [x] `pnpm --filter @texere/graph test:unit` — all node tests pass
+- [x] Test: storeNode returns node with nanoid ID (21 chars, URL-safe)
+- [x] Test: storeNode sets created_at to current unix ms
+- [x] Test: getNode returns exact same node
+- [x] Test: getNode('nonexistent') returns null
+- [x] Test: invalidateNode sets invalidated_at
+- [x] Test: invalidateNode on already-invalidated is idempotent
+- [x] Test: invalidateNode('nonexistent') throws
+- [x] Test: storeNode with anchor_to creates ANCHORED_TO edge(s)
+- [x] Test: FTS5 contains the node after storeNode (verified via raw SQL)
+- [x] Test: node_tags populated after storeNode with tags
+- [x] Tests FAIL when nodes.ts doesn't exist yet (TDD RED verified)
 
 **Agent-Executed QA Scenarios**:
 
@@ -893,16 +893,16 @@ Scenario: Full node lifecycle
 
 **Acceptance Criteria**:
 
-- [ ] `pnpm --filter @texere/graph test:unit` — all edge tests pass
-- [ ] Test: createEdge returns edge with nanoid ID
-- [ ] Test: createEdge with invalid source_id throws
-- [ ] Test: createEdge with invalid target_id throws
-- [ ] Test: createEdge with source_id === target_id throws (CHECK constraint)
-- [ ] Test: DEPRECATED_BY auto-invalidates source node (invalidated_at non-null after edge creation)
-- [ ] Test: DEPRECATED_BY on already-invalidated node succeeds
-- [ ] Test: deleteEdge removes the row (`SELECT count(*) FROM edges WHERE id = ?` returns 0)
-- [ ] Test: getEdgesForNode with direction filtering works
-- [ ] Tests FAIL when edges.ts doesn't exist yet (TDD RED verified)
+- [x] `pnpm --filter @texere/graph test:unit` — all edge tests pass
+- [x] Test: createEdge returns edge with nanoid ID
+- [x] Test: createEdge with invalid source_id throws
+- [x] Test: createEdge with invalid target_id throws
+- [x] Test: createEdge with source_id === target_id throws (CHECK constraint)
+- [x] Test: DEPRECATED_BY auto-invalidates source node (invalidated_at non-null after edge creation)
+- [x] Test: DEPRECATED_BY on already-invalidated node succeeds
+- [x] Test: deleteEdge removes the row (`SELECT count(*) FROM edges WHERE id = ?` returns 0)
+- [x] Test: getEdgesForNode with direction filtering works
+- [x] Tests FAIL when edges.ts doesn't exist yet (TDD RED verified)
 
 **Agent-Executed QA Scenarios**:
 
@@ -997,14 +997,14 @@ Scenario: DEPRECATED_BY atomicity
 
 **Acceptance Criteria**:
 
-- [ ] `pnpm --filter @texere/graph test:unit` — all search tests pass
-- [ ] Test: search returns BM25-ranked results (title-match ranks higher than tags-only)
-- [ ] Test: invalidated nodes excluded from search results
-- [ ] Test: type/tag/importance filters work
-- [ ] Test: FTS5 special characters don't throw
-- [ ] Test: empty database search returns `[]`
-- [ ] Test: limit parameter works
-- [ ] Tests FAIL before search.ts exists (TDD RED verified)
+- [x] `pnpm --filter @texere/graph test:unit` — all search tests pass
+- [x] Test: search returns BM25-ranked results (title-match ranks higher than tags-only)
+- [x] Test: invalidated nodes excluded from search results
+- [x] Test: type/tag/importance filters work
+- [x] Test: FTS5 special characters don't throw
+- [x] Test: empty database search returns `[]`
+- [x] Test: limit parameter works
+- [x] Tests FAIL before search.ts exists (TDD RED verified)
 
 **Agent-Executed QA Scenarios**:
 
@@ -1115,16 +1115,16 @@ Scenario: FTS5 special character resilience
 
 **Acceptance Criteria**:
 
-- [ ] `pnpm --filter @texere/graph test:unit` — all traversal tests pass
-- [ ] Test: outgoing traversal returns correct nodes
-- [ ] Test: incoming traversal returns correct nodes
-- [ ] Test: both-direction traversal works
-- [ ] Test: maxDepth respected
-- [ ] Test: invalidated nodes excluded
-- [ ] Test: cycles handled without hanging
-- [ ] Test: about() combines search + traverse
-- [ ] Test: stats() returns correct counts
-- [ ] Tests FAIL before traverse.ts exists (TDD RED verified)
+- [x] `pnpm --filter @texere/graph test:unit` — all traversal tests pass
+- [x] Test: outgoing traversal returns correct nodes
+- [x] Test: incoming traversal returns correct nodes
+- [x] Test: both-direction traversal works
+- [x] Test: maxDepth respected
+- [x] Test: invalidated nodes excluded
+- [x] Test: cycles handled without hanging
+- [x] Test: about() combines search + traverse
+- [x] Test: stats() returns correct counts
+- [x] Tests FAIL before traverse.ts exists (TDD RED verified)
 
 **Commit**: YES
 
@@ -1185,12 +1185,12 @@ Scenario: FTS5 special character resilience
 
 **Acceptance Criteria**:
 
-- [ ] `pnpm --filter @texere/graph build` exits 0
-- [ ] `packages/graph/dist/index.js` exists and is valid ESM
-- [ ] `packages/graph/dist/index.d.ts` exports `TextereDB`, `Node`, `Edge`, `NodeType`, `EdgeType`
-- [ ] Test: `new TextereDB(':memory:')` works
-- [ ] Test: all 9 operations accessible via class methods
-- [ ] Test: `db.close()` works without error
+- [x] `pnpm --filter @texere/graph build` exits 0
+- [x] `packages/graph/dist/index.js` exists and is valid ESM
+- [x] `packages/graph/dist/index.d.ts` exports `TextereDB`, `Node`, `Edge`, `NodeType`, `EdgeType`
+- [x] Test: `new TextereDB(':memory:')` works
+- [x] Test: all 9 operations accessible via class methods
+- [x] Test: `db.close()` works without error
 
 **Commit**: YES
 
@@ -1284,16 +1284,16 @@ Scenario: FTS5 special character resilience
 
 **Acceptance Criteria**:
 
-- [ ] `pnpm --filter @texere/mcp typecheck` exits 0
-- [ ] `pnpm --filter @texere/mcp test:unit` — all tool tests pass
-- [ ] `pnpm --filter @texere/mcp build` exits 0 and produces `dist/index.js`
-- [ ] Test: server registers exactly 9 tools (list tool names, assert count)
-- [ ] Test: each tool validates input via zod schema
-- [ ] Test: invalid input returns structured error (not crash)
-- [ ] Test: texere_store_node → texere_get_node round-trip works
-- [ ] Test: texere_search returns results after storing nodes
-- [ ] Tests FAIL before tool implementations exist (TDD RED verified)
-- [ ] Workspace import: `import { TextereDB } from '@texere/graph'` resolves in apps/mcp
+- [x] `pnpm --filter @texere/mcp typecheck` exits 0
+- [x] `pnpm --filter @texere/mcp test:unit` — all tool tests pass
+- [x] `pnpm --filter @texere/mcp build` exits 0 and produces `dist/index.js`
+- [x] Test: server registers exactly 9 tools (list tool names, assert count)
+- [x] Test: each tool validates input via zod schema
+- [x] Test: invalid input returns structured error (not crash)
+- [x] Test: texere_store_node → texere_get_node round-trip works
+- [x] Test: texere_search returns results after storing nodes
+- [x] Tests FAIL before tool implementations exist (TDD RED verified)
+- [x] Workspace import: `import { TextereDB } from '@texere/graph'` resolves in apps/mcp
 
 **Agent-Executed QA Scenarios**:
 
@@ -1376,14 +1376,14 @@ Scenario: Cross-package import resolution
 
 **Acceptance Criteria**:
 
-- [ ] `skills/texere.md` exists and is <500 lines
-- [ ] Contains all 17 node types with brief descriptions
-- [ ] Contains all 14 edge types with brief descriptions
-- [ ] Contains usage examples for all 9 tools
-- [ ] Contains at least 3 "common pattern" workflows
-- [ ] Contains at least 2 anti-patterns to avoid
-- [ ] No implementation details (SQL, TypeScript) leak into the skill file
-- [ ] No placeholder text — all examples use realistic data
+- [x] `skills/texere.md` exists and is <500 lines
+- [x] Contains all 17 node types with brief descriptions
+- [x] Contains all 14 edge types with brief descriptions
+- [x] Contains usage examples for all 9 tools
+- [x] Contains at least 3 "common pattern" workflows
+- [x] Contains at least 2 anti-patterns to avoid
+- [x] No implementation details (SQL, TypeScript) leak into the skill file
+- [x] No placeholder text — all examples use realistic data
 
 **Commit**: YES
 
@@ -1452,15 +1452,15 @@ Scenario: Cross-package import resolution
 
 **Acceptance Criteria**:
 
-- [ ] `pnpm test:integration` — all integration tests pass
-- [ ] `pnpm quality` exits 0 (format + lint + typecheck + test + build)
-- [ ] `pnpm --filter @texere/graph test:unit -- --coverage` shows >70% line coverage
-- [ ] `pnpm lint` — zero errors (both oxlint and eslint)
-- [ ] `pnpm typecheck` — zero errors
-- [ ] `pnpm build` — all packages build successfully
-- [ ] MCP round-trip: store → get → search → traverse works end-to-end
-- [ ] DEPRECATED_BY flow: store → deprecate → search excludes old node
-- [ ] Skill file tool names match actual MCP tool registrations
+- [x] `pnpm test:integration` — all integration tests pass
+- [x] `pnpm quality` exits 0 (format + lint + typecheck + test + build)
+- [x] `pnpm --filter @texere/graph test:unit -- --coverage` shows >70% line coverage
+- [x] `pnpm lint` — zero errors (both oxlint and eslint)
+- [x] `pnpm typecheck` — zero errors
+- [x] `pnpm build` — all packages build successfully
+- [x] MCP round-trip: store → get → search → traverse works end-to-end
+- [x] DEPRECATED_BY flow: store → deprecate → search excludes old node
+- [x] Skill file tool names match actual MCP tool registrations
 
 **Agent-Executed QA Scenarios**:
 
@@ -1530,11 +1530,11 @@ pnpm lint                       # Expected: 0 errors (oxlint + eslint)
 
 ### Final Checklist
 
-- [ ] All "Must Have" present (immutable nodes, hard-delete edges, FTS5, CTE, 9 tools, strict TS,
+- [x] All "Must Have" present (immutable nodes, hard-delete edges, FTS5, CTE, 9 tools, strict TS,
       TDD)
-- [ ] All "Must NOT Have" absent (no update_node, no delete_node, no bi-temporal edges, no bulk ops,
+- [x] All "Must NOT Have" absent (no update_node, no delete_node, no bi-temporal edges, no bulk ops,
       no >9 tools)
-- [ ] All tests pass with >70% coverage
-- [ ] V2/V3 structure ready (packages/, apps/, agents/ directories exist)
-- [ ] Skill file accurate and <500 lines
-- [ ] All commits follow conventional commit format
+- [x] All tests pass with >70% coverage
+- [x] V2/V3 structure ready (packages/, apps/, agents/ directories exist)
+- [x] Skill file accurate and <500 lines
+- [x] All commits follow conventional commit format
