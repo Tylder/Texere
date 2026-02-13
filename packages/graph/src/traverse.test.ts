@@ -55,9 +55,17 @@ describe('traverse', () => {
   });
 
   it("follows both directions with traverse({ direction: 'both', maxDepth: 2 })", () => {
-    const incoming = storeNode(db, { type: NodeType.Problem, title: 'Incoming', content: 'Incoming' });
+    const incoming = storeNode(db, {
+      type: NodeType.Problem,
+      title: 'Incoming',
+      content: 'Incoming',
+    });
     const start = storeNode(db, { type: NodeType.Decision, title: 'Start', content: 'Start' });
-    const outgoing = storeNode(db, { type: NodeType.Solution, title: 'Outgoing', content: 'Outgoing' });
+    const outgoing = storeNode(db, {
+      type: NodeType.Solution,
+      title: 'Outgoing',
+      content: 'Outgoing',
+    });
 
     createEdge(db, { source_id: incoming.id, target_id: start.id, type: EdgeType.Causes });
     createEdge(db, { source_id: start.id, target_id: outgoing.id, type: EdgeType.Solves });
@@ -238,7 +246,11 @@ describe('about', () => {
       content: 'SQLite usage',
     });
 
-    createEdge(db, { source_id: seed.id, target_id: matchingNeighbor.id, type: EdgeType.RelatedTo });
+    createEdge(db, {
+      source_id: seed.id,
+      target_id: matchingNeighbor.id,
+      type: EdgeType.RelatedTo,
+    });
 
     const result = about(db, { query: 'SQLite', maxDepth: 2 });
     const ids = result.map((row) => row.node.id);
@@ -268,9 +280,17 @@ describe('stats', () => {
   });
 
   it('returns node and edge totals plus by-type breakdowns and invalidated count', () => {
-    const decision = storeNode(db, { type: NodeType.Decision, title: 'Decision', content: 'Decision' });
+    const decision = storeNode(db, {
+      type: NodeType.Decision,
+      title: 'Decision',
+      content: 'Decision',
+    });
     const problem = storeNode(db, { type: NodeType.Problem, title: 'Problem', content: 'Problem' });
-    const solution = storeNode(db, { type: NodeType.Solution, title: 'Solution', content: 'Solution' });
+    const solution = storeNode(db, {
+      type: NodeType.Solution,
+      title: 'Solution',
+      content: 'Solution',
+    });
 
     createEdge(db, { source_id: decision.id, target_id: solution.id, type: EdgeType.Solves });
     createEdge(db, { source_id: problem.id, target_id: decision.id, type: EdgeType.Causes });

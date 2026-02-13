@@ -1,3 +1,6 @@
-- 2026-02-13: Environment-level build-script approval can prevent native dependency setup for new workspace packages; package-level verification should include native module load checks early.
-- 2026-02-13: Unrelated untracked `packages/graph/src/traverse.test.ts` prevents package-wide unit test command from passing until Task 6 implementation adds `src/traverse.ts`.
-- 2026-02-13: Prior unit-test blocker from missing `traverse.ts` is currently resolved in this worktree (all graph unit tests pass).
+- 2026-02-13: Environment-level build-script approval can prevent native dependency setup for new
+  workspace packages; package-level verification should include native module load checks early.
+- 2026-02-13: Unrelated untracked `packages/graph/src/traverse.test.ts` prevents package-wide unit
+  test command from passing until Task 6 implementation adds `src/traverse.ts`.
+- 2026-02-13: Prior unit-test blocker from missing `traverse.ts` is currently resolved in this
+  worktree (all graph unit tests pass).

@@ -1,5 +1,6 @@
-import { EdgeType, NodeType, type AboutOptions } from '@texere/graph';
 import { z } from 'zod';
+
+import { EdgeType, NodeType, type AboutOptions } from '@texere/graph';
 
 import { ok } from './helpers.js';
 import type { ToolDefinition } from './types.js';

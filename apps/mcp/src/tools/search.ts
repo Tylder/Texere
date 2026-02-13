@@ -1,5 +1,6 @@
-import { NodeType } from '@texere/graph';
 import { z } from 'zod';
+
+import { NodeType } from '@texere/graph';
 
 import { ok } from './helpers.js';
 import type { ToolDefinition } from './types.js';

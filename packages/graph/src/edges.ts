@@ -35,7 +35,9 @@ const getStatements = (db: Database.Database): Statements => {
       INSERT INTO edges (id, source_id, target_id, type, strength, confidence, created_at)
       VALUES (@id, @source_id, @target_id, @type, @strength, @confidence, @created_at)
     `),
-    invalidateNode: db.prepare('UPDATE nodes SET invalidated_at = ? WHERE id = ? AND invalidated_at IS NULL'),
+    invalidateNode: db.prepare(
+      'UPDATE nodes SET invalidated_at = ? WHERE id = ? AND invalidated_at IS NULL',
+    ),
     deleteEdge: db.prepare('DELETE FROM edges WHERE id = ?'),
     getOutgoing: db.prepare(`
       SELECT id, source_id, target_id, type, strength, confidence, created_at
@@ -90,7 +92,11 @@ export const deleteEdge = (db: Database.Database, id: string): boolean => {
   return result.changes > 0;
 };
 
-export const getEdgesForNode = (db: Database.Database, nodeId: string, direction: EdgeDirection): Edge[] => {
+export const getEdgesForNode = (
+  db: Database.Database,
+  nodeId: string,
+  direction: EdgeDirection,
+): Edge[] => {
   const statements = getStatements(db);
 
   if (direction === 'outgoing') {

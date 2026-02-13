@@ -1,12 +1,29 @@
-- 2026-02-13: For NodeNext packages in this repo, source imports in `src/*.ts` need explicit `.js` extensions to satisfy TypeScript project builds.
-- 2026-02-13: Vitest with `ssr.external: ['better-sqlite3']` is required so native module loading stays externalized during test transforms.
-- 2026-02-13: In , cache per-database prepared statements in a WeakMap and use  to enforce BEGIN IMMEDIATE write semantics for immutable node operations.
-- 2026-02-13: In `packages/graph/src/nodes.ts`, cache per-database prepared statements in a WeakMap and use `db.transaction(...).immediate()` to enforce BEGIN IMMEDIATE write semantics for immutable node operations.
-- 2026-02-13: In `packages/graph/src/edges.ts`, DEPRECATED_BY edge creation should run inside `db.transaction(...).immediate()` and update `nodes.invalidated_at` in the same transaction for atomic edge+node mutation.
-- 2026-02-13: In \, keep BM25 in outer FTS query and apply tag filters via a joined subquery on \; using \ directly with \ triggers SQLite context errors.
-- 2026-02-13: In `packages/graph/src/search.ts`, keep BM25 in the outer FTS query and apply tag filters through a joined `node_tags` subquery; direct outer `GROUP BY` with `bm25()` can fail with context errors.
-- 2026-02-13: Recursive traversal in packages/graph/src/traverse.ts performs UNION ALL CTE expansion with MIN(depth) dedup and enforces default maxDepth=3 capped at 5.
-- 2026-02-13: Task 7 complete - TextereDB class wraps all operations (storeNode, getNode, invalidateNode, createEdge, deleteEdge, getEdgesForNode, search, traverse, about, stats, close). Barrel exports all public types. TSDoc generates clean .d.ts declarations. All 88 tests pass.
-- 2026-02-13: TDD workflow verified - RED (25 tests fail with 'TextereDB is not a constructor') → GREEN (all 88 tests pass after implementation). Build produces valid ESM with .d.ts declarations.
-- 2026-02-13: MCP app uses shared tool-definition objects (`inputSchema` + `execute`) so both MCP request handlers and unit tests exercise the exact same zod validation and execution path.
-- 2026-02-13: For strict optional typing in this workspace (`exactOptionalPropertyTypes`), map snake_case MCP inputs to graph options via conditional object spreads to avoid passing explicit `undefined`.
+- 2026-02-13: For NodeNext packages in this repo, source imports in `src/*.ts` need explicit `.js`
+  extensions to satisfy TypeScript project builds.
+- 2026-02-13: Vitest with `ssr.external: ['better-sqlite3']` is required so native module loading
+  stays externalized during test transforms.
+- 2026-02-13: In , cache per-database prepared statements in a WeakMap and use to enforce BEGIN
+  IMMEDIATE write semantics for immutable node operations.
+- 2026-02-13: In `packages/graph/src/nodes.ts`, cache per-database prepared statements in a WeakMap
+  and use `db.transaction(...).immediate()` to enforce BEGIN IMMEDIATE write semantics for immutable
+  node operations.
+- 2026-02-13: In `packages/graph/src/edges.ts`, DEPRECATED_BY edge creation should run inside
+  `db.transaction(...).immediate()` and update `nodes.invalidated_at` in the same transaction for
+  atomic edge+node mutation.
+- 2026-02-13: In \, keep BM25 in outer FTS query and apply tag filters via a joined subquery on \;
+  using \ directly with \ triggers SQLite context errors.
+- 2026-02-13: In `packages/graph/src/search.ts`, keep BM25 in the outer FTS query and apply tag
+  filters through a joined `node_tags` subquery; direct outer `GROUP BY` with `bm25()` can fail with
+  context errors.
+- 2026-02-13: Recursive traversal in packages/graph/src/traverse.ts performs UNION ALL CTE expansion
+  with MIN(depth) dedup and enforces default maxDepth=3 capped at 5.
+- 2026-02-13: Task 7 complete - TextereDB class wraps all operations (storeNode, getNode,
+  invalidateNode, createEdge, deleteEdge, getEdgesForNode, search, traverse, about, stats, close).
+  Barrel exports all public types. TSDoc generates clean .d.ts declarations. All 88 tests pass.
+- 2026-02-13: TDD workflow verified - RED (25 tests fail with 'TextereDB is not a constructor') →
+  GREEN (all 88 tests pass after implementation). Build produces valid ESM with .d.ts declarations.
+- 2026-02-13: MCP app uses shared tool-definition objects (`inputSchema` + `execute`) so both MCP
+  request handlers and unit tests exercise the exact same zod validation and execution path.
+- 2026-02-13: For strict optional typing in this workspace (`exactOptionalPropertyTypes`), map
+  snake_case MCP inputs to graph options via conditional object spreads to avoid passing explicit
+  `undefined`.

@@ -1794,9 +1794,9 @@ grouping (package, namespace, directory) | Code indexer |
 
 > **V1: Semantic types only.** SUPERSEDES renamed to DEPRECATED_BY. Structural edges deferred to V2.
 
-**Semantic (LLM/human-created) — V1:** RELATED_TO, CAUSES, SOLVES, REQUIRES, CONTRADICTS, BUILDS_ON,
-**DEPRECATED_BY** _(was SUPERSEDES)_, PREVENTS, VALIDATES, ALTERNATIVE_TO, MOTIVATED_BY, IMPLEMENTS,
-CONSTRAINS, ANCHORED_TO
+**Semantic (LLM/human-created) — V1:** RELATED*TO, CAUSES, SOLVES, REQUIRES, CONTRADICTS, BUILDS_ON,
+**DEPRECATED_BY** *(was SUPERSEDES)\_, PREVENTS, VALIDATES, ALTERNATIVE_TO, MOTIVATED_BY,
+IMPLEMENTS, CONSTRAINS, ANCHORED_TO
 
 **Structural (deferred to V2 — code indexer):** | Edge | Meaning | Created By |
 |------|---------|------------| | `DEFINED_IN` | Symbol → File where defined | Indexer | |
@@ -2235,8 +2235,8 @@ That's it. OpenCode auto-installs via Bun, caches in `~/.opencode/cache/`.
 - **17 semantic node types** in V1: task, code_pattern, problem, solution, project, technology,
   error, fix, command, file_context, workflow, general, conversation, decision, requirement,
   constraint, research
-- **Semantic edge types** in V1: RELATED_TO, CAUSES, SOLVES, REQUIRES, CONTRADICTS, BUILDS_ON,
-  **DEPRECATED_BY** _(was SUPERSEDES)_, PREVENTS, VALIDATES, ALTERNATIVE_TO, MOTIVATED_BY,
+- **Semantic edge types** in V1: RELATED*TO, CAUSES, SOLVES, REQUIRES, CONTRADICTS, BUILDS_ON,
+  **DEPRECATED_BY** *(was SUPERSEDES)\_, PREVENTS, VALIDATES, ALTERNATIVE_TO, MOTIVATED_BY,
   IMPLEMENTS, CONSTRAINS, ANCHORED_TO
 - **Structural types DEFERRED to V2**: file, symbol, module nodes + DEFINED_IN, REFERENCED_IN,
   IMPORTS, EXTENDS, HAS_MEMBER, CALLS edges

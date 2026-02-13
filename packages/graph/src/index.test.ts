@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { EdgeType, NodeType } from './types.js';
+
 import { TextereDB } from './index.js';
 
 describe('TextereDB', () => {

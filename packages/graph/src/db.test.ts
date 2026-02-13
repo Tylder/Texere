@@ -23,9 +23,9 @@ describe('createDatabase', () => {
   it('creates required tables including FTS table', () => {
     const db = createDatabase(':memory:');
 
-    const rows = db
-      .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
-      .all() as Array<{ name: string }>;
+    const rows = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as Array<{
+      name: string;
+    }>;
     const tableNames = rows.map((row) => row.name);
 
     expect(tableNames).toContain('nodes');
@@ -53,7 +53,9 @@ describe('createDatabase', () => {
       created_at: Date.now(),
     });
 
-    const row = db.prepare('SELECT COUNT(*) AS count FROM node_tags WHERE node_id = ?').get('node-1') as {
+    const row = db
+      .prepare('SELECT COUNT(*) AS count FROM node_tags WHERE node_id = ?')
+      .get('node-1') as {
       count: number;
     };
     expect(row.count).toBe(2);
@@ -78,7 +80,9 @@ describe('createDatabase', () => {
       created_at: Date.now(),
     });
 
-    const row = db.prepare('SELECT COUNT(*) AS count FROM node_tags WHERE node_id = ?').get('node-2') as {
+    const row = db
+      .prepare('SELECT COUNT(*) AS count FROM node_tags WHERE node_id = ?')
+      .get('node-2') as {
       count: number;
     };
     expect(row.count).toBe(0);
@@ -103,7 +107,9 @@ describe('createDatabase', () => {
       created_at: Date.now(),
     });
 
-    const row = db.prepare('SELECT rowid FROM nodes_fts WHERE rowid = 1').get() as { rowid: number } | undefined;
+    const row = db.prepare('SELECT rowid FROM nodes_fts WHERE rowid = 1').get() as
+      | { rowid: number }
+      | undefined;
     expect(row?.rowid).toBe(1);
 
     db.close();

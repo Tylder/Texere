@@ -13,7 +13,10 @@ export const getNodeTool: ToolDefinition<typeof inputSchema> = {
   description: 'Read node by ID with optional edges.',
   inputSchema,
   execute: ({ db }, input) => {
-    const node = input.include_edges === undefined ? db.getNode(input.id) : db.getNode(input.id, { includeEdges: input.include_edges });
+    const node =
+      input.include_edges === undefined
+        ? db.getNode(input.id)
+        : db.getNode(input.id, { includeEdges: input.include_edges });
 
     return ok({ node });
   },

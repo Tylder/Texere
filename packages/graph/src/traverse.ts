@@ -37,8 +37,9 @@ const toMaxDepth = (maxDepth: number | undefined): number => {
   return Math.min(MAX_DEPTH_CAP, Math.max(0, Math.trunc(maxDepth)));
 };
 
-const getDirection = (direction: TraverseOptions['direction']): NonNullable<TraverseOptions['direction']> =>
-  direction ?? 'outgoing';
+const getDirection = (
+  direction: TraverseOptions['direction'],
+): NonNullable<TraverseOptions['direction']> => direction ?? 'outgoing';
 
 const toResults = (rows: TraverseRow[]): TraverseResult[] =>
   rows.map(({ depth, ...node }) => ({
@@ -46,7 +47,10 @@ const toResults = (rows: TraverseRow[]): TraverseResult[] =>
     depth,
   }));
 
-const buildWalkSql = (direction: NonNullable<TraverseOptions['direction']>, hasEdgeType: boolean): string => {
+const buildWalkSql = (
+  direction: NonNullable<TraverseOptions['direction']>,
+  hasEdgeType: boolean,
+): string => {
   const edgeTypeFilter = hasEdgeType ? 'AND e.type = @edgeType' : '';
 
   if (direction === 'incoming') {
@@ -286,12 +290,16 @@ export const stats = (db: Database.Database): Stats => {
   const invalidated = db
     .prepare('SELECT COUNT(*) AS count FROM nodes WHERE invalidated_at IS NOT NULL')
     .get() as { count: number };
-  const nodeByTypeRows = db.prepare('SELECT type, COUNT(*) AS count FROM nodes GROUP BY type').all() as Array<{
+  const nodeByTypeRows = db
+    .prepare('SELECT type, COUNT(*) AS count FROM nodes GROUP BY type')
+    .all() as Array<{
     type: string;
     count: number;
   }>;
   const edgeTotal = db.prepare('SELECT COUNT(*) AS count FROM edges').get() as { count: number };
-  const edgeByTypeRows = db.prepare('SELECT type, COUNT(*) AS count FROM edges GROUP BY type').all() as Array<{
+  const edgeByTypeRows = db
+    .prepare('SELECT type, COUNT(*) AS count FROM edges GROUP BY type')
+    .all() as Array<{
     type: string;
     count: number;
   }>;

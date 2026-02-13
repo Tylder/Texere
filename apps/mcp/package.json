@@ -12,11 +12,12 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc -b tsconfig.json",
     "check-types": "pnpm typecheck",
+    "dev": "tsdown --watch",
     "lint": "eslint .",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:unit": "vitest run --config vitest.unit.config.ts",
-    "dev": "tsdown --watch"
+    "typecheck": "tsc -b tsconfig.json"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

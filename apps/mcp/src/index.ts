@@ -4,6 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+
 import { TextereDB } from '@texere/graph';
 
 import { createTexereMcpServer } from './server.js';

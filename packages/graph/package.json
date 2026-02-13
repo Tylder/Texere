@@ -2,8 +2,8 @@
   "name": "@texere/graph",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "sideEffects": false,
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -20,12 +20,12 @@
   ],
   "scripts": {
     "build": "tsc -b tsconfig.lib.json",
-    "typecheck": "tsc -b tsconfig.json",
     "check-types": "pnpm typecheck",
     "lint": "eslint .",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:unit:dev": "vitest --config vitest.unit.config.ts",
-    "test:integration": "vitest run --config vitest.unit.config.ts --include '**/*.integration.test.ts'"
+    "typecheck": "tsc -b tsconfig.json"
   },
   "dependencies": {
     "better-sqlite3": "^12.4.1",

@@ -7,7 +7,7 @@ export default mergeConfig(
   defineConfig({
     test: {
       include: ['src/**/*.test.ts'],
-      exclude: ['src/**/*.integration.test.ts', 'dist/**', '**/node_modules/**'],
+      exclude: ['src/**/*.int.test.ts', 'dist/**', '**/node_modules/**'],
     },
   }),
 );

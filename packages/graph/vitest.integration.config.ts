@@ -13,7 +13,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['src/**/*.test.ts'],
-    exclude: ['src/**/*.int.test.ts', 'dist/**', '**/node_modules/**'],
+    include: ['src/**/*.int.test.ts'],
+    exclude: ['dist/**', '**/node_modules/**'],
   },
 });

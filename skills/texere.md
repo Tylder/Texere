@@ -2,13 +2,20 @@
 
 ## What is Texere?
 
-Texere is a **persistent knowledge graph for LLM coding agents**, designed to store and retrieve structured knowledge across sessions. Unlike conversation memory (ephemeral, session-bound) or file systems (unstructured, no semantic relationships), Texere provides immutable, semantically-typed nodes connected by meaningful edges. Use Texere when you need to: (1) preserve decisions, requirements, or constraints across sessions, (2) link solutions to problems they solve, (3) anchor knowledge to specific code locations, (4) track what's been deprecated or replaced, or (5) build a queryable web of project knowledge that survives beyond a single conversation.
+Texere is a **persistent knowledge graph for LLM coding agents**, designed to store and retrieve
+structured knowledge across sessions. Unlike conversation memory (ephemeral, session-bound) or file
+systems (unstructured, no semantic relationships), Texere provides immutable, semantically-typed
+nodes connected by meaningful edges. Use Texere when you need to: (1) preserve decisions,
+requirements, or constraints across sessions, (2) link solutions to problems they solve, (3) anchor
+knowledge to specific code locations, (4) track what's been deprecated or replaced, or (5) build a
+queryable web of project knowledge that survives beyond a single conversation.
 
 ---
 
 ## Node Type Chooser
 
 **Decision Tree:**
+
 ```
 Is it about CODE? → code_pattern (reusable pattern) | file_context (specific location)
 Is it a PROBLEM? → problem (abstract) | error (concrete) | constraint (restriction)
@@ -23,55 +30,57 @@ Otherwise → general
 
 **Quick Reference:**
 
-| Type | Example |
-|------|---------|
-| `code_pattern` | "Use dependency injection for database access" |
-| `file_context` | "src/db/schema.ts contains all table definitions" |
-| `problem` | "Need to handle concurrent writes to SQLite" |
-| `error` | "TypeError: Cannot read property 'id' of undefined at line 42" |
-| `constraint` | "Cannot use cloud APIs — must be fully local-first" |
-| `solution` | "Use WAL mode + IMMEDIATE transactions for concurrency" |
-| `fix` | "Added null check before accessing node.id" |
-| `task` | "Implement texere_traverse with recursive CTE" |
-| `decision` | "Use SQLite over PostgreSQL for simplicity and portability" |
-| `requirement` | "System must support full-text search with BM25 ranking" |
-| `project` | "Texere: Knowledge graph MCP server for LLM agents" |
-| `technology` | "better-sqlite3: Synchronous SQLite bindings for Node.js" |
-| `workflow` | "Deploy flow: test → build → push → tag" |
-| `command` | "pnpm turbo build --filter=@texere/server" |
-| `research` | "sqlite-vec has 6,891 stars, works with better-sqlite3" |
-| `conversation` | "User prefers functional style over classes" |
-| `general` | "Project started on 2026-02-13" |
+| Type           | Example                                                        |
+| -------------- | -------------------------------------------------------------- |
+| `code_pattern` | "Use dependency injection for database access"                 |
+| `file_context` | "src/db/schema.ts contains all table definitions"              |
+| `problem`      | "Need to handle concurrent writes to SQLite"                   |
+| `error`        | "TypeError: Cannot read property 'id' of undefined at line 42" |
+| `constraint`   | "Cannot use cloud APIs — must be fully local-first"            |
+| `solution`     | "Use WAL mode + IMMEDIATE transactions for concurrency"        |
+| `fix`          | "Added null check before accessing node.id"                    |
+| `task`         | "Implement texere_traverse with recursive CTE"                 |
+| `decision`     | "Use SQLite over PostgreSQL for simplicity and portability"    |
+| `requirement`  | "System must support full-text search with BM25 ranking"       |
+| `project`      | "Texere: Knowledge graph MCP server for LLM agents"            |
+| `technology`   | "better-sqlite3: Synchronous SQLite bindings for Node.js"      |
+| `workflow`     | "Deploy flow: test → build → push → tag"                       |
+| `command`      | "pnpm turbo build --filter=@texere/server"                     |
+| `research`     | "sqlite-vec has 6,891 stars, works with better-sqlite3"        |
+| `conversation` | "User prefers functional style over classes"                   |
+| `general`      | "Project started on 2026-02-13"                                |
 
 ---
 
 ## Edge Type Chooser
 
-| Type | Direction | Use When | Example |
-|------|-----------|----------|---------|
-| `RELATED_TO` | ↔ | General association | `(research: "SQLite benchmarks") ↔ (research: "PostgreSQL benchmarks")` |
-| `CAUSES` | → | X leads to Y | `(problem: "Missing API key") → (error: "AuthenticationError")` |
-| `SOLVES` | → | X resolves Y | `(solution: "Use WAL mode") → (problem: "Database locked errors")` |
-| `REQUIRES` | → | X depends on Y | `(task: "Deploy to prod") → (task: "Pass all tests")` |
-| `CONTRADICTS` | ↔ | X conflicts with Y | `(research: "SQLite faster") ↔ (research: "PostgreSQL faster")` |
-| `BUILDS_ON` | → | X extends Y | `(solution: "Add connection pooling") → (solution: "Use WAL mode")` |
-| `DEPRECATED_BY` | → | Y replaces X (auto-invalidates X) | `(decision: "Use REST") → (decision: "Use GraphQL")` |
-| `PREVENTS` | → | X stops Y | `(constraint: "No network in tests") → (problem: "Flaky tests")` |
-| `VALIDATES` | → | X confirms Y | `(research: "Benchmark shows 10x speedup") → (decision: "Use FTS5")` |
-| `ALTERNATIVE_TO` | ↔ | X and Y are options | `(decision: "Use JWT") ↔ (decision: "Use sessions")` |
-| `MOTIVATED_BY` | → | Y is reason for X | `(decision: "Use SQLite") → (requirement: "Must work offline")` |
-| `IMPLEMENTS` | → | X realizes Y | `(file_context: "src/db/connection.ts") → (decision: "Use WAL mode")` |
-| `CONSTRAINS` | → | X limits Y | `(constraint: "Node.js 18+") → (technology: "better-sqlite3")` |
-| `ANCHORED_TO` | → | X is relevant to code Y | `(decision: "Use nanoid for IDs") → (file_context: "src/db/schema.ts")` |
+| Type             | Direction | Use When                          | Example                                                                  |
+| ---------------- | --------- | --------------------------------- | ------------------------------------------------------------------------ |
+| `RELATED_TO`     | ↔        | General association               | `(research: "SQLite benchmarks") ↔ (research: "PostgreSQL benchmarks")` |
+| `CAUSES`         | →         | X leads to Y                      | `(problem: "Missing API key") → (error: "AuthenticationError")`          |
+| `SOLVES`         | →         | X resolves Y                      | `(solution: "Use WAL mode") → (problem: "Database locked errors")`       |
+| `REQUIRES`       | →         | X depends on Y                    | `(task: "Deploy to prod") → (task: "Pass all tests")`                    |
+| `CONTRADICTS`    | ↔        | X conflicts with Y                | `(research: "SQLite faster") ↔ (research: "PostgreSQL faster")`         |
+| `BUILDS_ON`      | →         | X extends Y                       | `(solution: "Add connection pooling") → (solution: "Use WAL mode")`      |
+| `DEPRECATED_BY`  | →         | Y replaces X (auto-invalidates X) | `(decision: "Use REST") → (decision: "Use GraphQL")`                     |
+| `PREVENTS`       | →         | X stops Y                         | `(constraint: "No network in tests") → (problem: "Flaky tests")`         |
+| `VALIDATES`      | →         | X confirms Y                      | `(research: "Benchmark shows 10x speedup") → (decision: "Use FTS5")`     |
+| `ALTERNATIVE_TO` | ↔        | X and Y are options               | `(decision: "Use JWT") ↔ (decision: "Use sessions")`                    |
+| `MOTIVATED_BY`   | →         | Y is reason for X                 | `(decision: "Use SQLite") → (requirement: "Must work offline")`          |
+| `IMPLEMENTS`     | →         | X realizes Y                      | `(file_context: "src/db/connection.ts") → (decision: "Use WAL mode")`    |
+| `CONSTRAINS`     | →         | X limits Y                        | `(constraint: "Node.js 18+") → (technology: "better-sqlite3")`           |
+| `ANCHORED_TO`    | →         | X is relevant to code Y           | `(decision: "Use nanoid for IDs") → (file_context: "src/db/schema.ts")`  |
 
 ---
 
 ## Tool Usage Examples
 
 ### 1. texere_store_node
+
 Create immutable node. Optionally auto-create ANCHORED_TO edges.
 
 **Store a decision:**
+
 ```json
 {
   "type": "decision",
@@ -83,9 +92,11 @@ Create immutable node. Optionally auto-create ANCHORED_TO edges.
   "anchor_to": ["src/db/connection.ts", "src/db/schema.ts"]
 }
 ```
+
 Returns: `{ id: "abc123xyz", created_at: 1707868800000 }`
 
 **Store an error:**
+
 ```json
 {
   "type": "error",
@@ -99,6 +110,7 @@ Returns: `{ id: "abc123xyz", created_at: 1707868800000 }`
 ---
 
 ### 2. texere_get_node
+
 Read node by ID. Optionally include edges.
 
 ```json
@@ -106,6 +118,7 @@ Read node by ID. Optionally include edges.
 ```
 
 Returns:
+
 ```json
 {
   "id": "abc123xyz",
@@ -117,7 +130,14 @@ Returns:
   "created_at": 1707868800000,
   "invalidated_at": null,
   "edges": {
-    "outgoing": [{ "id": "edge001", "type": "MOTIVATED_BY", "target_id": "req456", "target_title": "Must work offline" }],
+    "outgoing": [
+      {
+        "id": "edge001",
+        "type": "MOTIVATED_BY",
+        "target_id": "req456",
+        "target_title": "Must work offline"
+      }
+    ],
     "incoming": []
   }
 }
@@ -126,6 +146,7 @@ Returns:
 ---
 
 ### 3. texere_invalidate_node
+
 Mark node as invalidated (soft delete). Use when knowledge is wrong with no replacement.
 
 ```json
@@ -135,22 +156,27 @@ Mark node as invalidated (soft delete). Use when knowledge is wrong with no repl
 ---
 
 ### 4. texere_create_edge
+
 Link two nodes. DEPRECATED_BY auto-invalidates source node.
 
 **Link solution to problem:**
+
 ```json
 { "source_id": "sol789", "target_id": "prob456", "type": "SOLVES", "strength": 0.9 }
 ```
 
 **Deprecate old decision:**
+
 ```json
 { "source_id": "old_decision_123", "target_id": "new_decision_456", "type": "DEPRECATED_BY" }
 ```
+
 Note: Automatically sets `invalidated_at` on `old_decision_123`.
 
 ---
 
 ### 5. texere_delete_edge
+
 Hard-delete edge (when relationship was wrong).
 
 ```json
@@ -160,24 +186,29 @@ Hard-delete edge (when relationship was wrong).
 ---
 
 ### 6. texere_search
+
 Full-text search with BM25 ranking. Filter by type, tags, importance.
 
 **Search for timeout-related errors:**
+
 ```json
 { "query": "timeout", "type": "error", "limit": 5 }
 ```
 
 **Search high-importance decisions about database:**
+
 ```json
 { "query": "database", "type": "decision", "min_importance": 0.8, "limit": 10 }
 ```
 
 **Search by tag:**
+
 ```json
 { "query": "", "tags": ["architecture", "database"], "limit": 20 }
 ```
 
 Returns:
+
 ```json
 {
   "results": [
@@ -196,26 +227,36 @@ Returns:
 ---
 
 ### 7. texere_traverse
+
 Recursive graph traversal from starting node. Max depth 5.
 
 **Find outgoing edges (what this affects):**
+
 ```json
 { "start_id": "decision_123", "direction": "outgoing", "max_depth": 2 }
 ```
 
 **Find incoming edges (what affects this):**
+
 ```json
 { "start_id": "problem_456", "direction": "incoming", "max_depth": 3 }
 ```
 
 **Filter by edge types:**
+
 ```json
-{ "start_id": "solution_789", "direction": "both", "max_depth": 2, "edge_types": ["SOLVES", "REQUIRES"] }
+{
+  "start_id": "solution_789",
+  "direction": "both",
+  "max_depth": 2,
+  "edge_types": ["SOLVES", "REQUIRES"]
+}
 ```
 
 ---
 
 ### 8. texere_about
+
 Compound query: FTS5 search finds seeds, then traverse neighbors.
 
 ```json
@@ -225,6 +266,7 @@ Compound query: FTS5 search finds seeds, then traverse neighbors.
 ---
 
 ### 9. texere_stats
+
 Get node/edge counts by type. Quick health check.
 
 ```json
@@ -232,6 +274,7 @@ Get node/edge counts by type. Quick health check.
 ```
 
 Returns:
+
 ```json
 {
   "nodes": {
@@ -377,6 +420,7 @@ texere_create_edge({
 ### Anti-Pattern 1: Storing Transient Information
 
 **DON'T:**
+
 ```json
 texere_store_node({
   "type": "general",
@@ -385,9 +429,11 @@ texere_store_node({
 })
 ```
 
-**WHY:** Texere is for **persistent, reusable knowledge**. Transient facts (current time, temporary state, session-specific data) belong in conversation memory, not the knowledge graph.
+**WHY:** Texere is for **persistent, reusable knowledge**. Transient facts (current time, temporary
+state, session-specific data) belong in conversation memory, not the knowledge graph.
 
-**DO:** Use conversation memory for ephemeral context. Only store knowledge that's useful across sessions.
+**DO:** Use conversation memory for ephemeral context. Only store knowledge that's useful across
+sessions.
 
 ---
 
@@ -396,6 +442,7 @@ texere_store_node({
 **DON'T:** Store without checking if node already exists.
 
 **DO:** Always search first:
+
 ```json
 // 1. Search
 texere_search({ "query": "SQLite storage", "type": "decision", "limit": 5 })
@@ -409,6 +456,7 @@ texere_search({ "query": "SQLite storage", "type": "decision", "limit": 5 })
 ### Anti-Pattern 3: Using Wrong Edge Types
 
 **DON'T:**
+
 ```json
 texere_create_edge({
   "source_id": "task_deploy",
@@ -418,6 +466,7 @@ texere_create_edge({
 ```
 
 **DO:**
+
 ```json
 texere_create_edge({
   "source_id": "task_deploy",
@@ -433,6 +482,7 @@ texere_create_edge({
 **DON'T:** Store code snippets.
 
 **DO:** Store the pattern/principle and anchor to file:
+
 ```json
 texere_store_node({
   "type": "code_pattern",
@@ -448,30 +498,37 @@ texere_store_node({
 ## Schema Quick Reference
 
 ### Node Fields
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `type` | string | ✅ | — | One of 17 node types |
-| `title` | string | ✅ | — | Short descriptive title |
-| `content` | string | ✅ | — | Detailed content |
-| `tags` | string[] | No | `[]` | Array of tag strings |
-| `importance` | number | No | `0.5` | 0.0–1.0 (how critical) |
-| `confidence` | number | No | `0.8` | 0.0–1.0 (how certain) |
-| `anchor_to` | string[] | No | — | File paths (creates ANCHORED_TO edges) |
+
+| Field        | Type     | Required | Default | Description                            |
+| ------------ | -------- | -------- | ------- | -------------------------------------- |
+| `type`       | string   | ✅       | —       | One of 17 node types                   |
+| `title`      | string   | ✅       | —       | Short descriptive title                |
+| `content`    | string   | ✅       | —       | Detailed content                       |
+| `tags`       | string[] | No       | `[]`    | Array of tag strings                   |
+| `importance` | number   | No       | `0.5`   | 0.0–1.0 (how critical)                 |
+| `confidence` | number   | No       | `0.8`   | 0.0–1.0 (how certain)                  |
+| `anchor_to`  | string[] | No       | —       | File paths (creates ANCHORED_TO edges) |
 
 ### Edge Fields
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `source_id` | string | ✅ | — | Source node ID |
-| `target_id` | string | ✅ | — | Target node ID |
-| `type` | string | ✅ | — | One of 14 edge types |
-| `strength` | number | No | `0.5` | 0.0–1.0 (how strong) |
-| `confidence` | number | No | `0.8` | 0.0–1.0 (how certain) |
+
+| Field        | Type   | Required | Default | Description           |
+| ------------ | ------ | -------- | ------- | --------------------- |
+| `source_id`  | string | ✅       | —       | Source node ID        |
+| `target_id`  | string | ✅       | —       | Target node ID        |
+| `type`       | string | ✅       | —       | One of 14 edge types  |
+| `strength`   | number | No       | `0.5`   | 0.0–1.0 (how strong)  |
+| `confidence` | number | No       | `0.8`   | 0.0–1.0 (how certain) |
 
 ### Node Types (17)
-`task`, `code_pattern`, `problem`, `solution`, `project`, `technology`, `error`, `fix`, `command`, `file_context`, `workflow`, `general`, `conversation`, `decision`, `requirement`, `constraint`, `research`
+
+`task`, `code_pattern`, `problem`, `solution`, `project`, `technology`, `error`, `fix`, `command`,
+`file_context`, `workflow`, `general`, `conversation`, `decision`, `requirement`, `constraint`,
+`research`
 
 ### Edge Types (14)
-`RELATED_TO`, `CAUSES`, `SOLVES`, `REQUIRES`, `CONTRADICTS`, `BUILDS_ON`, `DEPRECATED_BY`, `PREVENTS`, `VALIDATES`, `ALTERNATIVE_TO`, `MOTIVATED_BY`, `IMPLEMENTS`, `CONSTRAINS`, `ANCHORED_TO`
+
+`RELATED_TO`, `CAUSES`, `SOLVES`, `REQUIRES`, `CONTRADICTS`, `BUILDS_ON`, `DEPRECATED_BY`,
+`PREVENTS`, `VALIDATES`, `ALTERNATIVE_TO`, `MOTIVATED_BY`, `IMPLEMENTS`, `CONSTRAINS`, `ANCHORED_TO`
 
 ---
 

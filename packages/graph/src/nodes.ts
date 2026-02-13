@@ -103,7 +103,9 @@ const getStatements = (db: Database.Database): Statements => {
       ORDER BY created_at ASC
     `),
     getInvalidationState: db.prepare('SELECT invalidated_at FROM nodes WHERE id = ?'),
-    setInvalidatedAt: db.prepare('UPDATE nodes SET invalidated_at = ? WHERE id = ? AND invalidated_at IS NULL'),
+    setInvalidatedAt: db.prepare(
+      'UPDATE nodes SET invalidated_at = ? WHERE id = ? AND invalidated_at IS NULL',
+    ),
     insertFileContextNode: db.prepare(`
       INSERT OR IGNORE INTO nodes (
         id,
@@ -215,7 +217,9 @@ export const invalidateNode = (db: Database.Database, id: string): void => {
   const statements = getStatements(db);
 
   db.transaction(() => {
-    const existing = statements.getInvalidationState.get(id) as { invalidated_at: number | null } | undefined;
+    const existing = statements.getInvalidationState.get(id) as
+      | { invalidated_at: number | null }
+      | undefined;
     if (!existing) {
       throw new Error(`Node not found: ${id}`);
     }

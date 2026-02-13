@@ -181,7 +181,9 @@ describe('node CRUD', () => {
       tags: ['a', 'b', 'c'],
     });
 
-    const row = db.prepare('SELECT COUNT(*) AS count FROM node_tags WHERE node_id = ?').get(node.id) as {
+    const row = db
+      .prepare('SELECT COUNT(*) AS count FROM node_tags WHERE node_id = ?')
+      .get(node.id) as {
       count: number;
     };
 
@@ -196,7 +198,9 @@ describe('node CRUD', () => {
       tags: [],
     });
 
-    const row = db.prepare('SELECT COUNT(*) AS count FROM node_tags WHERE node_id = ?').get(node.id) as {
+    const row = db
+      .prepare('SELECT COUNT(*) AS count FROM node_tags WHERE node_id = ?')
+      .get(node.id) as {
       count: number;
     };
 

@@ -1393,7 +1393,7 @@ Scenario: Cross-package import resolution
 
 ---
 
-### — [ ] 10. Integration Tests + Quality Gate
+### — [x] 10. Integration Tests + Quality Gate
 
 **What to do**:
 

@@ -1,7 +1,7 @@
-import { z } from 'zod';
-
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
+
 import type { TextereDB } from '@texere/graph';
 
 import { executeToolDefinition, TOOL_DEFINITIONS, TOOL_NAMES } from './tools/index.js';
@@ -12,7 +12,9 @@ const serverInfo = {
   version: '0.0.0',
 };
 
-const listTools = () => ({
+const listTools = (): {
+  tools: Array<{ name: string; description: string; inputSchema: unknown }>;
+} => ({
   tools: TOOL_DEFINITIONS.map((definition) => ({
     name: definition.name,
     description: definition.description,
@@ -31,7 +33,20 @@ const unknownTool = (name: string): ToolCallResult => ({
   },
 });
 
-export const createTexereMcpServer = (db: TextereDB) => {
+type ToolCallRequest = {
+  params: {
+    name: string;
+    arguments?: Record<string, unknown>;
+  };
+};
+
+export const createTexereMcpServer = (
+  db: TextereDB,
+): {
+  server: Server;
+  toolNames: ReadonlyArray<string>;
+  callTool: (name: string, input: unknown) => Promise<ToolCallResult>;
+} => {
   const server = new Server(serverInfo, {
     capabilities: {
       tools: {},
@@ -47,10 +62,13 @@ export const createTexereMcpServer = (db: TextereDB) => {
     return executeToolDefinition(definition, { db }, input);
   };
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => listTools());
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    return (await callTool(request.params.name, request.params.arguments ?? {})) as any;
-  });
+  server.setRequestHandler(ListToolsRequestSchema, () => listTools());
+  const callToolHandler = async (request: ToolCallRequest): Promise<ToolCallResult> => {
+    return callTool(request.params.name, request.params.arguments ?? {});
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- MCP SDK handler type mismatch
+  server.setRequestHandler(CallToolRequestSchema, callToolHandler as any);
 
   return {
     server,
