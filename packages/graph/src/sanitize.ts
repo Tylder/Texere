@@ -5,7 +5,7 @@ export const sanitizeFtsQuery = (input: string): string => {
     return '';
   }
 
-  const withoutQuotes = input.replaceAll('"', ' ').replace(/[(){}\[\]]/g, ' ');
+  const withoutQuotes = input.replaceAll('"', ' ').replace(/[(){}[\]]/g, ' ');
   const tokens = withoutQuotes
     .split(/\s+/)
     .filter((token) => token.length > 0)

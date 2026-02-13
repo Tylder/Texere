@@ -11,7 +11,8 @@ export interface TraverseResult {
 }
 
 export interface AboutOptions
-  extends Pick<SearchOptions, 'query' | 'type' | 'tags' | 'minImportance' | 'limit'>,
+  extends
+    Pick<SearchOptions, 'query' | 'type' | 'tags' | 'minImportance' | 'limit'>,
     Omit<TraverseOptions, 'startId'> {}
 
 export interface Stats {

@@ -15,18 +15,18 @@
   "devDependencies": {
     "@texere/eslint-config": "workspace:*",
     "@texere/typescript-config": "workspace:*",
-    "@types/node": "22.15.29",
-    "eslint": "9.28.0",
-    "eslint-plugin-oxlint": "1.1.0",
-    "oxlint": "1.1.0",
-    "prettier": "3.5.3",
-    "prettier-plugin-packagejson": "2.5.10",
-    "turbo": "2.5.4",
-    "typescript": "5.8.3",
-    "typescript-eslint": "8.33.0",
-    "vitest": "3.2.3"
+    "@types/node": "25.2.3",
+    "eslint": "9.39.2",
+    "eslint-plugin-oxlint": "1.46.0",
+    "oxlint": "1.47.0",
+    "prettier": "3.8.1",
+    "prettier-plugin-packagejson": "3.0.0",
+    "turbo": "2.8.8",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.55.0",
+    "vitest": "4.0.18"
   },
-  "packageManager": "pnpm@10.23.0",
+  "packageManager": "pnpm@10.29.3",
   "engines": {
     "node": ">=20"
   }

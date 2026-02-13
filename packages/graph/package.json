@@ -28,16 +28,16 @@
     "typecheck": "tsc -b tsconfig.json"
   },
   "dependencies": {
-    "better-sqlite3": "^12.4.1",
+    "better-sqlite3": "^12.6.2",
     "nanoid": "^5.1.6"
   },
   "devDependencies": {
     "@texere/eslint-config": "workspace:*",
     "@texere/typescript-config": "workspace:*",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "22.15.29",
-    "eslint": "9.28.0",
-    "typescript": "5.8.3",
-    "vitest": "3.2.3"
+    "@types/node": "25.2.3",
+    "eslint": "9.39.2",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
   }
 }

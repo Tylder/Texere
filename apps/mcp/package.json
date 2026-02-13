@@ -27,10 +27,10 @@
   "devDependencies": {
     "@texere/eslint-config": "workspace:*",
     "@texere/typescript-config": "workspace:*",
-    "@types/node": "22.15.29",
-    "eslint": "9.28.0",
+    "@types/node": "25.2.3",
+    "eslint": "9.39.2",
     "tsdown": "0.20.3",
-    "typescript": "5.8.3",
-    "vitest": "3.2.3"
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
   }
 }
