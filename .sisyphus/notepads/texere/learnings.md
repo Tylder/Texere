@@ -1,0 +1,4 @@
+- 2026-02-13: For NodeNext packages in this repo, source imports in `src/*.ts` need explicit `.js` extensions to satisfy TypeScript project builds.
+- 2026-02-13: Vitest with `ssr.external: ['better-sqlite3']` is required so native module loading stays externalized during test transforms.
+- 2026-02-13: In , cache per-database prepared statements in a WeakMap and use  to enforce BEGIN IMMEDIATE write semantics for immutable node operations.
+- 2026-02-13: In `packages/graph/src/nodes.ts`, cache per-database prepared statements in a WeakMap and use `db.transaction(...).immediate()` to enforce BEGIN IMMEDIATE write semantics for immutable node operations.

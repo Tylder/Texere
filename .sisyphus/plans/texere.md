@@ -404,7 +404,7 @@ db.pragma('wal_autocheckpoint = 1000');
 
 ## TODOs
 
-### — [ ] 1. Monorepo Foundation + Quality Tooling
+### — [x] 1. Monorepo Foundation + Quality Tooling
 
 **What to do**:
 
@@ -567,7 +567,7 @@ Scenario: Quality gate runs without error on empty workspace
 
 ---
 
-### — [ ] 2. Graph Library — Schema + Database Layer
+### — [x] 2. Graph Library — Schema + Database Layer
 
 **What to do**:
 
@@ -722,7 +722,7 @@ Scenario: Database schema creates all tables and indexes
 
 ---
 
-### — [ ] 3. Graph Library — Node CRUD
+### — [x] 3. Graph Library — Node CRUD
 
 **What to do**:
 
@@ -1327,7 +1327,7 @@ Scenario: Cross-package import resolution
 
 ---
 
-### — [ ] 9. Skill File — LLM Quick Reference Guide
+### — [x] 9. Skill File — LLM Quick Reference Guide
 
 **What to do**:
 

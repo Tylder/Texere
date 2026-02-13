@@ -1,0 +1,3 @@
+- 2026-02-13: `pnpm install` initially skipped `better-sqlite3` build scripts in this environment, causing missing native binding errors in DB tests.
+- 2026-02-13: Running `pnpm --filter @texere/graph exec npm rebuild better-sqlite3 --build-from-source` restored the native binding and unblocked tests.
+- 2026-02-13: While appending to learnings, shell interpolation produced one malformed note entry (missing inline-code text). A corrected entry was appended immediately after it.

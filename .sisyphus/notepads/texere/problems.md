@@ -1,0 +1,1 @@
+- 2026-02-13: Environment-level build-script approval can prevent native dependency setup for new workspace packages; package-level verification should include native module load checks early.
