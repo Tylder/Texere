@@ -1,0 +1,43 @@
+{
+  "name": "@texere/graph",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "@texere/source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -b tsconfig.lib.json",
+    "typecheck": "tsc -b tsconfig.json",
+    "check-types": "pnpm typecheck",
+    "lint": "eslint .",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:unit:dev": "vitest --config vitest.unit.config.ts",
+    "test:integration": "vitest run --config vitest.unit.config.ts --include '**/*.integration.test.ts'"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "nanoid": "^5.1.6"
+  },
+  "devDependencies": {
+    "@texere/eslint-config": "workspace:*",
+    "@texere/typescript-config": "workspace:*",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "22.15.29",
+    "eslint": "9.28.0",
+    "typescript": "5.8.3",
+    "vitest": "3.2.3"
+  }
+}
