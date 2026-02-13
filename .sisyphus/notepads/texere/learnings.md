@@ -27,3 +27,12 @@
 - 2026-02-13: For strict optional typing in this workspace (`exactOptionalPropertyTypes`), map
   snake_case MCP inputs to graph options via conditional object spreads to avoid passing explicit
   `undefined`.
+- 2026-02-14: Integration test files must use .int.test.ts suffix (not .integration.test.ts) to
+  comply with check-file/filename-naming-convention eslint rule pattern.
+- 2026-02-14: Vitest mergeConfig merges test.exclude arrays; integration config must be standalone
+  (not merged from base) to avoid inheriting base's .int.test.ts exclusion.
+- 2026-02-14: Coverage on packages/graph is 92% lines (97% on src/ files). All 9 skill file tool
+  names match MCP tool registrations exactly.
+- 2026-02-14: Pre-existing lint errors in apps/mcp/src/server.ts (import order, missing return
+  types, any cast) required fixes to make pnpm quality pass; these were auto-fixable import order +
+  manual return type annotations + eslint-disable for unavoidable MCP SDK type mismatch.
