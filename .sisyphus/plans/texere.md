@@ -927,7 +927,7 @@ Scenario: DEPRECATED_BY atomicity
 
 ---
 
-### — [ ] 5. Graph Library — FTS5 Search
+### — [x] 5. Graph Library — FTS5 Search
 
 **What to do**:
 
@@ -1035,7 +1035,7 @@ Scenario: FTS5 special character resilience
 
 ---
 
-### — [ ] 6. Graph Library — CTE Traversal
+### — [x] 6. Graph Library — CTE Traversal
 
 **What to do**:
 

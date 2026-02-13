@@ -3,3 +3,6 @@
 - 2026-02-13: In , cache per-database prepared statements in a WeakMap and use  to enforce BEGIN IMMEDIATE write semantics for immutable node operations.
 - 2026-02-13: In `packages/graph/src/nodes.ts`, cache per-database prepared statements in a WeakMap and use `db.transaction(...).immediate()` to enforce BEGIN IMMEDIATE write semantics for immutable node operations.
 - 2026-02-13: In `packages/graph/src/edges.ts`, DEPRECATED_BY edge creation should run inside `db.transaction(...).immediate()` and update `nodes.invalidated_at` in the same transaction for atomic edge+node mutation.
+- 2026-02-13: In \, keep BM25 in outer FTS query and apply tag filters via a joined subquery on \; using \ directly with \ triggers SQLite context errors.
+- 2026-02-13: In `packages/graph/src/search.ts`, keep BM25 in the outer FTS query and apply tag filters through a joined `node_tags` subquery; direct outer `GROUP BY` with `bm25()` can fail with context errors.
+- 2026-02-13: Recursive traversal in packages/graph/src/traverse.ts performs UNION ALL CTE expansion with MIN(depth) dedup and enforces default maxDepth=3 capped at 5.
