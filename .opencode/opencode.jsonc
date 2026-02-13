@@ -1,0 +1,61 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": true,
+  "instructions": [
+    "docs/engineering/README.md",
+    "docs/engineering/DOCUMENT-REGISTRY.md",
+    ".opencode/tools-available.md",
+    "docs/engineering/meta/META-reference-system.md",
+  ],
+  "agent": {
+    "explore": {
+      "disable": true,
+    },
+  },
+  "permission": {
+    "external_directory": {
+      "/tmp*": "allow",
+    },
+    "edit": {
+      "/tmp*": "allow",
+    },
+    "read": {
+      "/tmp*": "allow",
+    },
+  },
+  "mcp": {
+    "memory-graph": {
+      "enabled": true,
+      "type": "local",
+      "command": ["memorygraph"],
+    },
+    "serena": {
+      "enabled": true,
+      "type": "local",
+      "command": [
+        "uvx",
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide",
+      ],
+    },
+    "playwright": {
+      "enabled": false,
+      "type": "local",
+      "command": ["npx", "@playwright/mcp@latest"],
+    },
+    "jetbrains": {
+      "enabled": true,
+      "type": "remote",
+      "url": "http://localhost:64342/sse",
+    },
+    "jetbrains-debugger": {
+      "enabled": false,
+      "type": "remote",
+      "url": "http://localhost:29193/debugger-mcp/sse",
+    },
+  },
+}
