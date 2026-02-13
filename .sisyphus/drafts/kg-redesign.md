@@ -20,13 +20,6 @@ KG should be the system that ensures agents **always have the right information 
   - Is the primary interface for interrogating and adding knowledge
 - **Code ingest**: Secondary, mainly to allow KG to link requirements/ADRs/problems/issues to code symbols/files
 
-## Open Questions
-1. What specific knowledge types matter most? (requirements, ADRs, problems, issues, constraints, domain knowledge — which kills productivity most when forgotten?)
-2. How is the orchestrator triggered? (dedicated session / inline "remember this" / both?)
-3. How do coding agents consume KG at work time? (auto-inject / explicit query / both?)
-4. Data model: What are the entities and relationships?
-5. How does knowledge stay current? (versioning, deprecation, conflict resolution)
-
 ## Research Findings
 
 ### Current KG Architecture (what exists today)
@@ -40,7 +33,7 @@ KG should be the system that ensures agents **always have the right information 
 - **Connector pattern**: Pluggable language support (currently TypeScript only)
 
 ### Gap Analysis: Current vs Vision
-The current system is a **code structure indexer**. The vision is a **knowledge management system**. The gap is massive:
+The current system is a **code structure indexer**. The vision is a **knowledge management system**. T he gap is massive:
 
 | Aspect | Current | Vision |
 |--------|---------|--------|
@@ -140,7 +133,7 @@ Three fundamentally different kinds of knowledge, each with different truth stat
 
 ### Pattern 1: nodes + relationships (memory-graph project)
 ```sql
-nodes(id, label, properties JSON, created_at, updated_at)
+nodes(id, label, properties JSON, created_at)
 relationships(id, from_id, to_id, rel_type, properties JSON, 
               valid_from, valid_until, recorded_at, invalidated_by)
 ```
@@ -1309,22 +1302,554 @@ Graph structure enables push because it answers: **"given that the agent is touc
 
 **Build order**: Graph structure first (it solves the hardest problem). Embeddings second. LLM reformulation is nearly free once the other two exist.
 
-## V1 Scope (DECIDED)
+## Design Decisions (Session 2 — Feb 13 2026)
+
+### Terminology: Nodes/Edges Everywhere
+- **Schema**: `nodes`, `edges`, `node_tags` (graph-correct internals)
+- **MCP tools**: `texere_store_node`, `texere_create_edge`, etc.
+- **Agent prompts**: "node", "edge" consistently
+- No "facts", "memories", or "relationships" — one vocabulary everywhere
+
+### Database Location: Per-Repo
+- **Path**: `.texere/texere.db` inside each repository
+- **Implication**: No `project_path` column needed — DB is inherently scoped to one repo
+- **File paths**: Always relative to repo root (e.g., `src/auth/jwt.ts`)
+- **Trade-off**: No cross-project queries. Each repo is isolated. Acceptable for V1.
+
+### Context: Dropped Entirely
+- **No `context_json` column** on nodes table
+- All context expressed through the graph structure:
+  - File links → ANCHORED_TO edges to file_context/file nodes
+  - Languages/frameworks → RELATED_TO edges to technology nodes
+  - Git info → in node content if important
+- Schema is maximally simple: no JSON blobs to query into
+
+### MCP Tool Set (10 tools)
+
+| # | Tool | Purpose | Notes |
+|---|------|---------|-------|
+| 1 | `texere_store_node` | Create node | Auto-creates ANCHORED_TO edges for `anchor_to: string[]` param. Finds-or-creates file_context/file nodes. |
+| 2 | `texere_get_node` | Get node by ID | Optionally includes edges with `include_edges: true` |
+| 4 | `texere_delete_node` | Delete node | Cascade-invalidates all edges |
+| 5 | `texere_create_edge` | Link two nodes | Validates 14-type enum. Sets temporal fields. |
+| 6 | `texere_invalidate_edge` | Soft-delete edge | Sets `invalidated_at=now`. Never deletes row. |
+| 7 | `texere_search` | FTS5 search + filters | BM25 ranking. Type/tag/importance filters. |
+| 8 | `texere_traverse` | Graph walk from node | Recursive CTE. Direction: outgoing/incoming/both. Max depth 10. |
+| 9 | `texere_about` | Compound: search + traverse | "Tell me everything about X." FTS5 finds nodes, then traverses their neighbors. |
+| 10 | `texere_stats` | Node/edge counts by type | Quick health check |
+
+- **Type discovery**: Baked into skill file (LLM Quick Reference Guide). No `list_types` tool — agents have types in context.
+- **Auto-anchor**: `texere_store_node` accepts optional `anchor_to: string[]` (file paths). For each, finds or creates a file/file_context node and creates ANCHORED_TO edge.
+- **Dropped from old plan**: `texere_history` (temporal audit is niche for V1)
+
+### Tag Sync: SQLite Triggers
+- `node_tags` table synced via INSERT/UPDATE/DELETE triggers on `nodes` table
+- Same pattern as FTS5 sync triggers
+- No application code needed for tag management
+
+### Embedding Column: In V1 Schema
+- `embedding BLOB` column exists in V1 DDL but is NULL/unpopulated
+- Ready for V1.5 sqlite-vec without schema migration
+
+### Two Knowledge Layers (CRITICAL DESIGN)
+
+**Layer 1: Structural Code Graph (Automatic, No LLM)**
+- Code indexer parses repos → extracts symbols, definitions, references, imports, hierarchy
+- Produces: `file` nodes, `symbol` nodes, and structural edges
+- 100% deterministic, language-specific parsing (Tree-sitter based)
+- No LLM involvement
+
+**Layer 2: Semantic Knowledge Graph (LLM-assisted, Human-driven)**
+- Orchestrator agent captures: decisions, research, constraints, problems, solutions
+- Human and agents create: meaning, rationale, links between concepts
+- LLM chooses node types and edge types using the Quick Reference Guide
+
+**Connection**: Semantic layer links TO structural layer via ANCHORED_TO edges.
+```
+decision("14 edge types") --ANCHORED_TO--> symbol(RelationshipType enum)
+                                                |
+                                                ↓ DEFINED_IN (auto)
+                                            file(models.py)
+                                                |
+                                                ↓ IMPORTS (auto)
+                                            file(sqlite_database.py)
+```
+Agent querying "what do I know about RelationshipType?" gets BOTH:
+- Structural: where defined, where used, its members (automatic)
+- Semantic: why we simplified from 35 to 14, the rationale, the constraints (human-entered)
+
+### Node Types: 20 Total (17 Semantic + 3 Structural)
+
+Flat enum. Structural types are automatic (created by indexer). Semantic types are LLM/human-chosen.
+
+**Structural (automatic, indexer-created):**
+| Type | What It Represents | Created By |
+|------|-------------------|------------|
+| `file` | A source code file | Code indexer |
+| `symbol` | A function, class, enum, type, variable, method, field | Code indexer |
+| `module` | A logical grouping (package, namespace, directory) | Code indexer |
+
+**Semantic (LLM/human-created):**
+(Same 17 as before: task, code_pattern, problem, solution, project, technology, error, fix, command, file_context, workflow, general, conversation, decision, requirement, constraint, research)
+
+Note: `file_context` (semantic) coexists with `file` (structural). `file_context` = human description of a file's purpose. `file` = indexer-created record of a file's existence with metadata. An agent might create both for the same file, linked by RELATED_TO.
+
+### Edge Types: 20 Total (14 Semantic + 6 Structural)
+
+**Structural (automatic, indexer-created):**
+| Edge | Meaning | Created By |
+|------|---------|------------|
+| `DEFINED_IN` | Symbol → File where defined | Indexer |
+| `REFERENCED_IN` | Symbol → File where used | Indexer (semantic analysis, V1.5 for TS) |
+| `IMPORTS` | File → File (import relationship) | Indexer |
+| `EXTENDS` | Symbol → Symbol (inheritance) | Indexer |
+| `HAS_MEMBER` | Symbol → Symbol (enum members, class methods/fields) | Indexer |
+| `CALLS` | Symbol → Symbol (function call graph) | Indexer (semantic analysis, V1.5 for TS) |
+
+**Semantic (LLM/human-created):**
+(Same 14 as before: RELATED_TO, CAUSES, SOLVES, REQUIRES, CONTRADICTS, BUILDS_ON, SUPERSEDES, PREVENTS, VALIDATES, ALTERNATIVE_TO, MOTIVATED_BY, IMPLEMENTS, CONSTRAINS, ANCHORED_TO)
+
+### Monorepo Architecture (DECIDED)
+
+**Workspace**: pnpm + turborepo
+
+```
+texere/
+├── packages/
+│   ├── graph/              — SQLite storage, CRUD, FTS5, search, schema, types
+│   ├── mcp/                — MCP server, tool handlers, CLI entry point  
+│   ├── ingest-core/        — Indexer interface, Tree-sitter utils, graph writer, file discovery
+│   └── ingest-typescript/  — TS/JS indexer (V1)
+├── agents/
+│   └── texere.md           — Orchestrator agent
+├── skills/
+│   └── texere.md           — Skill file
+├── package.json            — Workspace root
+├── pnpm-workspace.yaml
+└── turbo.json
+```
+
+**Dependency graph:**
+```
+ingest-typescript → ingest-core → graph
+                                    ↑
+                        mcp ────────┘
+```
+
+**V1 ships**: TypeScript indexer only. Python indexer in V1.5.
+
+### Code Indexer Design
+
+**Core contract** (`@texere/ingest-core`):
+```typescript
+interface LanguageIndexer {
+  language: string;
+  extensions: string[];
+  extractSymbols(filePath: string, content: string): SymbolDef[];
+  extractStructure(filePath: string, content: string): StructuralEdge[];
+  extractImports(filePath: string, content: string): ImportEdge[];
+}
+```
+
+**What Tree-sitter V1 gets automatically (no semantic analysis):**
+- ✅ DEFINED_IN (symbol → file where defined)
+- ✅ HAS_MEMBER (enum → members, class → methods/fields)
+- ✅ EXTENDS (class → parent class, from syntax `class X extends Y`)
+- ✅ IMPORTS (file → file, from import/require statements)
+- ❌ REFERENCED_IN (needs semantic analysis — V1.5 with TS Language Service)
+- ❌ CALLS (needs type resolution — V1.5 with TS Language Service)
+
+**V1.5 adds**: TypeScript Language Service for REFERENCED_IN + CALLS (TS/JS only).
+**V2 adds**: SCIP indexers for multi-language semantic analysis.
+
+### Revised Schema (nodes table — no context_json)
+
+```sql
+CREATE TABLE nodes (
+  id           TEXT PRIMARY KEY,
+  type         TEXT NOT NULL,      -- 20 types (flat enum)
+  title        TEXT NOT NULL,
+  content      TEXT NOT NULL,
+  summary      TEXT,
+  tags_json    TEXT,               -- JSON array, synced to node_tags via trigger
+  importance   REAL DEFAULT 0.5,
+  confidence   REAL DEFAULT 0.8,
+  embedding    BLOB,              -- V1.5: unpopulated
+  created_at   INTEGER NOT NULL,  -- unix ms UTC
+  archived_at  INTEGER            -- optional soft-archive
+);
+```
+
+Note: Structural metadata (symbol_kind, file_path, start_line, end_line, language) is encoded in node type + title + content + tags. Symbol nodes use title="SymbolName", tags=["function","typescript","src/auth/jwt.ts"], content includes location. No extra columns — keeps schema unified for both layers.
+
+### Plugin Architecture (DECIDED)
+
+**Texere is BOTH a plugin AND an MCP server**, sharing the same graph library.
+
+**Inside opencode**: Plugin registers tools + lifecycle hooks → uses `@texere/graph` directly (in-process)
+**Outside opencode**: MCP server exposes tools via stdio → uses `@texere/graph` directly (MCP protocol)
+
+**Monorepo packages:**
+```
+packages/
+├── graph/              — SQLite storage, CRUD, FTS5, search (LIBRARY)
+├── plugin/             — opencode plugin: hooks + tool registration (PRIMARY)
+├── mcp/                — MCP server for non-opencode clients (SECONDARY)
+├── ingest-core/        — Indexer interface, Tree-sitter utils, file discovery
+└── ingest-typescript/  — TS/JS indexer (V1)
+```
+
+**Dependency graph:**
+```
+ingest-typescript → ingest-core → graph
+                                    ↑
+                        plugin ─────┤
+                        mcp ────────┘
+```
+
+**Plugin hooks Texere uses:**
+
+| Hook | What It Does | Texere Use Case | V1? |
+|------|-------------|----------------|-----|
+| `tool` (registration) | Register custom tools | All Texere tools as native opencode tools (no MCP overhead) | ✅ V1 |
+| `tool.execute.before` | Before ANY tool runs | Agent reads file → inject anchored knowledge | V1.5 |
+| `tool.execute.after` | After tool returns | Capture research from explore/librarian agents | V1.5 |
+| `experimental.chat.system.transform` | Modify system prompt | Inject project constraints + active decisions | V1.5 |
+| `experimental.session.compacting` | Add context to compaction | Ensure critical knowledge survives compaction | V1.5 |
+| `chat.message` | On user message | Search KG for topic-relevant context | V2 |
+| `event` | All system events | Track file edits, branch switches | V2 |
+
+**V1 plugin scope**: Tool registration only (same tools available via plugin OR MCP). Hook-based push deferred to V1.5.
+**Why**: Tool registration is simple and proven. Hook-based push requires careful design to avoid context bloat and performance issues. Ship tools first, add smart push after we have real usage data.
+
+**Plugin registration** (in opencode.json):
+```json
+{
+  "plugin": ["@texere/plugin"]
+}
+```
+
+**Sources:**
+- opencode plugin API: `@opencode-ai/plugin` v1.1.65
+- Plugin loading: opencode/src/plugin/index.ts (trigger function iterates all hooks)
+- Hook signatures: @opencode-ai/plugin/dist/index.d.ts
+- Tool registration: @opencode-ai/plugin/dist/tool.d.ts
+- Sub-agent interception confirmed: tool.execute.before fires for "task" tool
+
+## V1 Scope (REVISED — Feb 13 2026)
 
 ### IN — V1
-- Graph storage + CRUD (nodes, relationships, bi-temporal tracking)
-- Relationship types + management (typed edges, cycle detection, invalidation)
-- FTS5 search (full-text on content + tags + titles)
-- MCP server + tools (agent-facing interface)
-- Orchestrator agent(s) for ingestion (oh-my-opencode primary agent)
-- Lightweight code-anchoring (file/module paths on nodes, ANCHORED_TO relationships, "what do I know about auth.ts?" works)
-- Embedding column in schema (exists but not populated — design for V1.5)
+- **Monorepo**: pnpm + turborepo, 5 packages (graph, plugin, mcp, ingest-core, ingest-typescript)
+- **Graph storage** + CRUD (nodes, edges, bi-temporal edges, eternal nodes)
+- **20 node types** (17 semantic + 3 structural) in flat enum
+- **20 edge types** (14 semantic + 6 structural) in flat enum
+- **FTS5 search** (full-text on content + tags + titles, bm25 ranking)
+- **Denormalized tags** (node_tags table, trigger-synced)
+- **10 MCP tools** (store, get, update, delete, create_edge, invalidate_edge, search, traverse, about, stats)
+- **Orchestrator agent** for ingestion (oh-my-opencode primary agent)
+- **Code indexer**: Tree-sitter based, TypeScript/JS only in V1
+  - Extracts: symbols, definitions, imports, hierarchy, members
+  - Does NOT extract: cross-file references, call graph (needs semantic analysis → V1.5)
+- **Per-repo database** at `.texere/texere.db`
+- **Embedding column** in schema (unpopulated, ready for V1.5)
+- **Skill file** with LLM Quick Reference Guide for node/edge type selection
 
 ### OUT — V2+
-- Embedding population + sqlite-vec vector search (V1.5 — schema ready, not implemented)
-- Automatic push/injection (hooks, auto-context, file-open triggers)
-- Deep code-anchoring (symbol-level, line numbers, AST references)
-- Community detection / GraphRAG summaries
-- Advanced analytics (clustering, bridge detection, graph metrics)
-- Export/import
-- Migration tools
+- Embedding population + sqlite-vec vector search (V1.5)
+- Cross-file REFERENCED_IN + CALLS edges via TS Language Service (V1.5)
+- Python indexer (V1.5)
+- Automatic push/injection (hooks, auto-context, file-open triggers) (V2)
+- SCIP-based multi-language semantic indexing (V2)
+- Community detection / GraphRAG summaries (V2)
+- Advanced analytics (clustering, bridge detection) (V2)
+- Export/import (V2)
+- Migration tools (V2)
+
+## Plugin Packaging Research (Feb 13 2026)
+
+### Sources
+- `/home/dan/conduit-ai/libs/provider-registry/vendor/opencode/packages/opencode/src/plugin/index.ts` — Plugin loading mechanism
+- `/home/dan/conduit-ai/libs/provider-registry/vendor/opencode/packages/opencode/src/config/config.ts` — Config schema
+- `/home/dan/conduit-ai/libs/provider-registry/vendor/opencode/packages/plugin/src/index.ts` — Plugin API types
+- `/home/dan/conduit-ai/libs/provider-registry/vendor/opencode/packages/plugin/src/tool.ts` — Tool helper
+- `/home/dan/conduit-ai/libs/provider-registry/vendor/opencode/packages/plugin/src/example.ts` — Example plugin
+- `/home/dan/conduit-ai/reference_repos/opencode-anthropic-auth-master/` — Real published plugin example
+
+### How OpenCode Discovers and Loads Plugins
+
+1. Reads `opencode.json` / `opencode.jsonc` from project root or `.opencode/`
+2. Merges plugins from config layers (global → project → inline), deduplicates by canonical name
+3. For each plugin specifier:
+   - **`file://` URL**: Direct dynamic `import()`
+   - **npm package** (e.g., `@texere/plugin@1.0.0`): Install to `~/.opencode/cache/node_modules/` via `BunProc.install()`, then import
+4. Executes all exported functions matching `Plugin` type, collects returned `Hooks`
+
+**Key loading code:**
+```typescript
+// From plugin/index.ts lines 51-90
+for (let plugin of plugins) {
+  if (!plugin.startsWith("file://")) {
+    const lastAtIndex = plugin.lastIndexOf("@")
+    const pkg = lastAtIndex > 0 ? plugin.substring(0, lastAtIndex) : plugin
+    const version = lastAtIndex > 0 ? plugin.substring(lastAtIndex + 1) : "latest"
+    plugin = await BunProc.install(pkg, version)
+  }
+  const mod = await import(plugin)
+  for (const [_name, fn] of Object.entries<PluginInstance>(mod)) {
+    const init = await fn(input)
+    hooks.push(init)
+  }
+}
+```
+
+### Plugin Config Schema
+
+```typescript
+// From config.ts line 886
+plugin: z.string().array().optional()
+```
+
+**Supported formats:**
+
+| Format | Example | How Resolved |
+|--------|---------|-------------|
+| npm package | `@texere/plugin` | Installs latest from npm |
+| npm + version | `@texere/plugin@1.0.0` | Installs exact version |
+| file:// URL | `file:///path/to/plugin.js` | Direct import |
+| Relative path | `./plugins/my-plugin.js` | Resolved via `import.meta.resolve` |
+
+### What Plugins Must Export
+
+```typescript
+type Plugin = (input: PluginInput) => Promise<Hooks>
+
+type PluginInput = {
+  client: ReturnType<typeof createOpencodeClient>
+  project: Project
+  directory: string
+  worktree: string
+  serverUrl: URL
+  $: BunShell
+}
+```
+
+- Export one or more **named functions** matching `Plugin` type (all will be executed)
+- Return `Hooks` object with any subset of available hooks
+- Can use `tool()` helper from `@opencode-ai/plugin` for Zod-validated tool definitions
+
+### Real Example: opencode-anthropic-auth (published npm plugin)
+
+**Structure:**
+```
+opencode-anthropic-auth/
+├── package.json
+├── index.mjs        ← entry point (ESM, no build step!)
+├── bun.lock
+└── .github/workflows/publish.yml
+```
+
+**package.json:**
+```json
+{
+  "name": "opencode-anthropic-auth",
+  "version": "0.0.9",
+  "main": "./index.mjs",
+  "devDependencies": { "@opencode-ai/plugin": "^0.4.45" },
+  "dependencies": { "@openauthjs/openauth": "^0.4.3" }
+}
+```
+
+**Key observations:**
+- Ships `.mjs` directly (no build step, no TypeScript compilation)
+- `@opencode-ai/plugin` in devDependencies (types only at dev time)
+- Can have external dependencies
+- Named export (not default)
+
+### How BunProc.install Works
+
+1. Location: `~/.opencode/cache/node_modules/{package-name}`
+2. Checks if already cached with same version
+3. Uses `bun add --force --exact --cwd ~/.opencode/cache pkg@version`
+4. File lock ensures single concurrent install
+5. Returns absolute path to installed module
+
+### Native Dependencies (e.g., better-sqlite3)
+
+**Status: Supported.** Bun handles native module compilation. Plugins CAN have native deps.
+
+**Considerations:**
+- Bun compiles native addons automatically
+- better-sqlite3 ships prebuilt binaries for common platforms
+- Installation may be slower (compilation if no prebuilt available)
+- Must test on target platforms
+
+### DECISION: @texere/plugin Package Structure
+
+```
+packages/plugin/
+├── src/
+│   └── index.ts          ← Plugin entry, registers tools + hooks
+├── dist/                  ← Compiled output (tsc)
+├── package.json
+└── tsconfig.json
+```
+
+**package.json:**
+```json
+{
+  "name": "@texere/plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" } },
+  "files": ["dist"],
+  "scripts": { "build": "tsc", "typecheck": "tsc --noEmit" },
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.1.65",
+    "@texere/graph": "workspace:*"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "^22.0.0",
+    "typescript": "^5.8.0"
+  }
+}
+```
+
+**tsconfig.json:**
+```json
+{
+  "extends": "@tsconfig/node22/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "preserve",
+    "declaration": true,
+    "moduleResolution": "bundler"
+  },
+  "include": ["src"]
+}
+```
+
+**src/index.ts (skeleton):**
+```typescript
+import type { Plugin } from "@opencode-ai/plugin"
+import { tool } from "@opencode-ai/plugin"
+
+export const TexerePlugin: Plugin = async ({ directory }) => {
+  // Initialize @texere/graph with database at {directory}/.texere/texere.db
+  return {
+    tool: {
+      texere_store_node: tool({ /* ... */ }),
+      texere_search: tool({ /* ... */ }),
+      texere_traverse: tool({ /* ... */ }),
+      // ... all 10 tools
+    },
+    // V1.5: Add hooks
+    // "tool.execute.before": async (input, output) => { ... },
+    // "experimental.chat.system.transform": async (input, output) => { ... },
+  }
+}
+```
+
+### User Installation (end-user experience)
+
+**For opencode users:**
+```jsonc
+// opencode.json or opencode.jsonc
+{
+  "plugin": ["@texere/plugin@1.0.0"]
+}
+```
+That's it. OpenCode auto-installs via Bun, caches in `~/.opencode/cache/`.
+
+**For local development:**
+```jsonc
+{
+  "plugin": ["file:///path/to/texere/packages/plugin/dist/index.js"]
+}
+```
+
+### Key Implications for Monorepo
+
+1. **@texere/plugin depends on @texere/graph** (`workspace:*` in monorepo, resolved version when published)
+2. **@texere/graph bundles better-sqlite3** as dependency → native dep flows through to plugin
+3. **When published to npm**: Must publish @texere/graph FIRST, then @texere/plugin with resolved version
+4. **When used locally**: `file://` URL works directly, pnpm workspace resolves @texere/graph
+5. **@texere/mcp** is separate — standalone MCP server binary, not a plugin. For non-opencode clients.
+
+## Session 3 Decisions (Feb 13 2026)
+
+### Version Boundaries (FINAL)
+
+| Version | What Ships |
+|---------|-----------|
+| **V1** | `packages/graph/` + `apps/mcp/` + `skills/texere.md`. TDD. Any agent uses via MCP. |
+| **V2** | `packages/ingest-*/` — file/doc ingestion (broader than code). |
+| **V3** | `apps/plugin/` (opencode plugin + hooks) + `agents/texere.md` (orchestrator agent). |
+
+### Architecture (FINAL)
+- **Monorepo from V1**: pnpm workspaces + turborepo
+- **packages/ = libraries, apps/ = applications**
+- V1 structure:
+  ```
+  texere/
+  ├── packages/graph/       ← Library: types, schema, CRUD, FTS5, search
+  ├── apps/mcp/             ← App: MCP server, tool handlers, CLI
+  ├── skills/texere.md      ← Skill file (LLM Quick Reference Guide)
+  ├── package.json, pnpm-workspace.yaml, turbo.json
+  ```
+
+### V1 Types (FINAL)
+- **17 semantic node types** in V1: task, code_pattern, problem, solution, project, technology, error, fix, command, file_context, workflow, general, conversation, decision, requirement, constraint, research
+- **14 semantic edge types** in V1: RELATED_TO, CAUSES, SOLVES, REQUIRES, CONTRADICTS, BUILDS_ON, SUPERSEDES, PREVENTS, VALIDATES, ALTERNATIVE_TO, MOTIVATED_BY, IMPLEMENTS, CONSTRAINS, ANCHORED_TO
+- **Structural types DEFERRED to V2**: file, symbol, module nodes + DEFINED_IN, REFERENCED_IN, IMPORTS, EXTENDS, HAS_MEMBER, CALLS edges
+
+### Test Strategy (FINAL)
+- **TDD**: Red → Green → Refactor, always
+- **Framework**: vitest
+
+### Knowledge Capture & Doc Ingest (V1)
+- Any agent can use Texere MCP tools for knowledge capture
+- **Doc ingest is V1** — agent reads a doc, extracts nodes/edges, stores via MCP tools
+- Same pattern as memory-graph today — no special ingest tool, no parser, the LLM IS the intelligence
+- Skill file teaches agents the ingestion workflow (read → identify atomic facts → store nodes → create edges)
+- No dedicated orchestrator agent (V3)
+- No opencode plugin (V3)
+
+### Plugin is an App, not a Package (CONFIRMED)
+- `apps/plugin/` not `packages/plugin/`
+- Same for MCP server: `apps/mcp/`
+
+### Code Ingest Discussion (DEFERRED to V2 planning)
+- Files can be more than just code — docs, markdown, whatever
+- Prefers full `referenced_in` — Tree-sitter alone may not be sufficient
+- Needs further discussion during V2 planning
+
+## Bun vs Node.js Research (Feb 13 2026, Session 3)
+
+### Finding: Bun is Runtime, Not Required Build Tool
+
+**OpenCode architecture:**
+- `bin/opencode` = Node.js launcher script
+- Launches a **compiled Bun standalone binary** (`Bun.build({ compile: true })`)
+- Plugins are `import()`'d inside the Bun process → execute in Bun runtime
+
+**Plugin loading flow** (plugin/index.ts:79):
+```typescript
+const mod = await import(plugin)  // Standard ESM import, inside Bun runtime
+```
+
+**Key evidence:**
+- Plugin SDK (`@opencode-ai/plugin`) builds with `tsc`, tsconfig extends `@tsconfig/node22`
+- `tool()` helper is 100% standard zod + TypeScript (no Bun APIs)
+- `$: BunShell` is passed to plugins but optional to use
+- `BunProc.install()` uses `bun add` to install npm packages (opencode's side, not plugin's)
+
+### DECISION: Build with tsc, run in Bun
+
+- **Plugin package** (`@texere/plugin`): Build with `tsc` → standard ESM output (matches opencode plugin SDK pattern)
+- **MCP server** (`@texere/mcp`): Build with `tsup` → bundled for standalone use
+- **Graph library** (`@texere/graph`): Build with `tsc` → consumed by both plugin and mcp
+- **No Bun-specific APIs in plugin code** — use standard Node.js APIs for portability
+- **better-sqlite3 works in Bun** — native addon support confirmed
+- **ESM mandatory** — `"type": "module"` everywhere

@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a867493f-939d-46b6-8b6d-f2829a2d9d7f" name="Changes" comment="clean">
-      <change afterPath="$PROJECT_DIR$/memorygraph.md" afterDir="false" />
+    <list default="true" id="a867493f-939d-46b6-8b6d-f2829a2d9d7f" name="Changes" comment="planning/discussion: Texere planning">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.sisyphus/drafts/kg-redesign.md" beforeDir="false" afterPath="$PROJECT_DIR$/.sisyphus/drafts/kg-redesign.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,6 +75,8 @@
       <updated>1770992651514</updated>
       <workItem from="1770992654498" duration="1702000" />
       <workItem from="1770995354516" duration="543000" />
+      <workItem from="1770997499368" duration="1281000" />
+      <workItem from="1771009451578" duration="1382000" />
     </task>
     <task id="LOCAL-00001" summary="clean">
       <option name="closed" value="true" />
@@ -83,7 +86,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770992820445</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="planning/discussion: Texere planning">
+      <option name="closed" value="true" />
+      <created>1771004902825</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1771004902825</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -91,6 +102,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="clean" />
-    <option name="LAST_COMMIT_MESSAGE" value="clean" />
+    <MESSAGE value="planning/discussion: Texere planning" />
+    <option name="LAST_COMMIT_MESSAGE" value="planning/discussion: Texere planning" />
   </component>
 </project>
