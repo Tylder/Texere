@@ -1,2 +1,3 @@
 - 2026-02-13: Implemented schema as one `SCHEMA_DDL` SQL batch with `CREATE IF NOT EXISTS` for fresh initialization idempotence.
 - 2026-02-13: Kept only INSERT/DELETE FTS5 triggers and INSERT-only tag sync trigger to align with immutable node model.
+- 2026-02-13: Edge deletion in graph package is hard-delete only (`DELETE FROM edges WHERE id = ?`), returning boolean via SQLite changes count.

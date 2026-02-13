@@ -838,7 +838,7 @@ Scenario: Full node lifecycle
 
 ---
 
-### — [ ] 4. Graph Library — Edge CRUD
+### — [x] 4. Graph Library — Edge CRUD
 
 **What to do**:
 

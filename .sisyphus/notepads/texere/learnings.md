@@ -2,3 +2,4 @@
 - 2026-02-13: Vitest with `ssr.external: ['better-sqlite3']` is required so native module loading stays externalized during test transforms.
 - 2026-02-13: In , cache per-database prepared statements in a WeakMap and use  to enforce BEGIN IMMEDIATE write semantics for immutable node operations.
 - 2026-02-13: In `packages/graph/src/nodes.ts`, cache per-database prepared statements in a WeakMap and use `db.transaction(...).immediate()` to enforce BEGIN IMMEDIATE write semantics for immutable node operations.
+- 2026-02-13: In `packages/graph/src/edges.ts`, DEPRECATED_BY edge creation should run inside `db.transaction(...).immediate()` and update `nodes.invalidated_at` in the same transaction for atomic edge+node mutation.
