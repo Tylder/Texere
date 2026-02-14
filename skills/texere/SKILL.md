@@ -25,6 +25,53 @@ queryable web of project knowledge that survives beyond a single conversation.
 
 ---
 
+## Required Workflow: Search Before Creating
+
+**You MUST search the graph before creating any node.** Creating nodes without first understanding
+existing state leads to duplicates, missed connections, and graph degradation.
+
+**Mandatory workflow for every node creation:**
+
+1. **Search first** using `texere_search` or `texere_about` with terms from your intended node's
+   title and tags
+2. **Review results** for three critical questions:
+   - **Duplicates**: Does an equivalent node already exist? → Use it, don't duplicate
+   - **Deprecation**: Does an outdated version exist? → Create new node, then link with
+     `DEPRECATED_BY` edge to invalidate the old one
+   - **Connections**: Are there related nodes this should connect to? → Note their IDs for edge
+     creation
+3. **Create the node** with `texere_store_node` only after reviewing search results
+4. **Create edges immediately** to link the new node to related nodes identified in step 2
+
+**Why this matters**: The graph's value comes from connections, not isolated nodes. Searching first
+ensures you see the existing graph structure, avoid duplicates, identify deprecation opportunities,
+and discover edge candidates. Skipping this step produces a fragmented collection of notes instead
+of a connected knowledge web.
+
+**Example**:
+
+```json
+// 1. Search first
+texere_search({ "query": "SQLite storage concurrency", "type": "decision", "limit": 10 })
+
+// 2. Review: Found "Use SQLite with WAL mode" (decision_abc) and "Handle database locking" (problem_xyz)
+
+// 3. Create node
+texere_store_node({
+  "type": "solution",
+  "title": "Add connection pooling for concurrent writes",
+  "content": "Implemented connection pool with max 5 connections...",
+  "tags": ["sqlite", "concurrency", "performance"]
+})
+// Returns: { id: "solution_123" }
+
+// 4. Create edges to nodes found in search
+texere_create_edge({ "source_id": "solution_123", "target_id": "problem_xyz", "type": "SOLVES" })
+texere_create_edge({ "source_id": "solution_123", "target_id": "decision_abc", "type": "BUILDS_ON" })
+```
+
+---
+
 ## Node Type Chooser
 
 **Decision Tree:**
@@ -450,18 +497,25 @@ sessions.
 
 ---
 
-### Anti-Pattern 2: Creating Duplicate Nodes
+### Anti-Pattern 2: Creating Nodes Without Searching First
 
-**DON'T:** Store without checking if node already exists.
+**DON'T:** Call `texere_store_node` without first searching for existing nodes.
 
-**DO:** Always search first:
+**WHY:** Creates duplicates, misses deprecation opportunities, and results in isolated nodes with no
+edges. The graph becomes a fragmented note collection instead of a connected knowledge web.
+
+**DO:** Follow the required workflow (see "Required Workflow: Search Before Creating" section
+above):
 
 ```json
 // 1. Search
 texere_search({ "query": "SQLite storage", "type": "decision", "limit": 5 })
 
-// 2. If found, use existing node ID or update via DEPRECATED_BY
-// 3. If not found, then store new node
+// 2. Review results: duplicate? deprecation candidate? edge opportunities?
+// 3. If found equivalent, use existing node ID
+// 4. If found outdated version, create new + DEPRECATED_BY edge
+// 5. If not found, store new node
+// 6. Create edges to related nodes discovered in search
 ```
 
 ---
@@ -547,10 +601,11 @@ texere_store_node({
 
 ## Tips for Effective Use
 
-1. **Search before storing** — Avoid duplicates
+1. **ALWAYS search before creating** — Required workflow (see above): find duplicates, identify
+   deprecation candidates, discover edge opportunities
 2. **Use specific node types** — Don't default to `general`
 3. **Anchor to code** — Use `anchor_to` or `ANCHORED_TO` edges
-4. **Link related knowledge** — Build a web of connections
+4. **Link related knowledge** — Build a web of connections (edges are what make Texere valuable)
 5. **Use importance/confidence** — Higher values = more critical/certain
 6. **Tag consistently** — Lowercase, hyphenated (e.g., `database`, `error-handling`)
 7. **Write for future you** — Clear enough to understand months later
