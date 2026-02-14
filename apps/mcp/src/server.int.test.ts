@@ -422,7 +422,7 @@ describe('MCP server integration', () => {
       const parsed = ListToolsResultSchema.safeParse(listToolsResult);
       expect(parsed.success).toBe(true);
 
-      expect(listToolsResult.tools).toHaveLength(12);
+      expect(listToolsResult.tools).toHaveLength(14);
 
       for (const tool of listToolsResult.tools) {
         const inputSchema = tool.inputSchema as Record<string, unknown>;
@@ -435,8 +435,8 @@ describe('MCP server integration', () => {
   describe('source provenance workflow', () => {
     it('links a finding to its source and discovers both via traverse and tag search', async () => {
       const source = await storeNode(mcp, {
-        type: NodeType.Artifact,
-        role: NodeRole.Source,
+        type: NodeType.Source,
+        role: NodeRole.WebUrl,
         title: 'Hono framework documentation',
         content: 'Official Hono web framework docs at hono.dev',
         tags: ['url:hono.dev/docs', 'kind:web_url'],
@@ -679,7 +679,7 @@ describe('MCP server integration', () => {
       expect(initResponse.result.serverInfo).toBeDefined();
 
       expect(toolsResponse).toBeDefined();
-      expect(toolsResponse.result.tools).toHaveLength(12);
+      expect(toolsResponse.result.tools).toHaveLength(14);
 
       for (const tool of toolsResponse.result.tools as Array<Record<string, unknown>>) {
         expect(typeof tool.name).toBe('string');
