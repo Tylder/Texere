@@ -465,4 +465,211 @@ describe('MCP server integration', () => {
       expect(hasObjectBranch(createEdgeSchema.properties?.edges?.anyOf)).toBe(true);
     });
   });
+
+  describe('source provenance workflow', () => {
+    it('links a finding to its source and discovers both via traverse and tag search', async () => {
+      const source = await storeNode(mcp, {
+        type: NodeType.Artifact,
+        role: NodeRole.Source,
+        title: 'Hono framework documentation',
+        content: 'Official Hono web framework docs at hono.dev',
+        tags: ['url:hono.dev/docs', 'kind:web_url'],
+      });
+      expect(source.isError).toBeUndefined();
+
+      const finding = await storeNode(mcp, {
+        type: NodeType.Knowledge,
+        role: NodeRole.Finding,
+        title: 'Hono supports middleware chaining',
+        content: 'Hono allows composing middleware via c.next() similar to Express',
+        tags: ['hono', 'middleware'],
+      });
+      expect(finding.isError).toBeUndefined();
+
+      const edgeResult = await mcp.callTool('texere_create_edge', {
+        edges: {
+          source_id: getNodeId(finding),
+          target_id: getNodeId(source),
+          type: EdgeType.BasedOn,
+        },
+      });
+      expect(edgeResult.isError).toBeUndefined();
+
+      const traversed = await mcp.callTool('texere_traverse', {
+        start_id: getNodeId(source),
+        direction: 'incoming',
+        max_depth: 1,
+      });
+      expect(traversed.isError).toBeUndefined();
+      const traverseNodes = (traversed.structuredContent as any).results;
+      const traverseIds = traverseNodes.map((r: any) => r.node.id);
+      expect(traverseIds).toContain(getNodeId(finding));
+
+      const tagSearch = await mcp.callTool('texere_search', {
+        query: '',
+        tags: ['url:hono.dev/docs'],
+        tag_mode: 'all',
+        limit: 10,
+      });
+      expect(tagSearch.isError).toBeUndefined();
+      const tagResults = (tagSearch.structuredContent as any).results;
+      const tagIds = tagResults.map((r: any) => r.id);
+      expect(tagIds).toContain(getNodeId(source));
+    });
+  });
+
+  describe('concept hierarchy with IS_A and ABOUT edges', () => {
+    it('builds a concept tree and traverses it at depth 2', async () => {
+      const framework = await storeNode(mcp, {
+        type: NodeType.Artifact,
+        role: NodeRole.Concept,
+        title: 'Web Framework',
+        content: 'A software framework for building web applications',
+        tags: ['concept', 'web'],
+      });
+
+      const router = await storeNode(mcp, {
+        type: NodeType.Artifact,
+        role: NodeRole.Concept,
+        title: 'HTTP Router',
+        content: 'Component that maps HTTP requests to handlers',
+        tags: ['concept', 'routing'],
+      });
+
+      const hono = await storeNode(mcp, {
+        type: NodeType.Artifact,
+        role: NodeRole.Technology,
+        title: 'Hono',
+        content: 'Ultrafast web framework for the edge',
+        tags: ['hono', 'framework'],
+      });
+
+      await mcp.callTool('texere_create_edge', {
+        edges: {
+          source_id: getNodeId(router),
+          target_id: getNodeId(framework),
+          type: EdgeType.IsA,
+        },
+      });
+
+      await mcp.callTool('texere_create_edge', {
+        edges: {
+          source_id: getNodeId(hono),
+          target_id: getNodeId(router),
+          type: EdgeType.About,
+        },
+      });
+
+      const traversed = await mcp.callTool('texere_traverse', {
+        start_id: getNodeId(framework),
+        direction: 'incoming',
+        max_depth: 2,
+      });
+      expect(traversed.isError).toBeUndefined();
+      const nodes = (traversed.structuredContent as any).results;
+      expect(nodes).toHaveLength(2);
+
+      const nodeIds = nodes.map((r: any) => r.node.id);
+      expect(nodeIds).toContain(getNodeId(router));
+      expect(nodeIds).toContain(getNodeId(hono));
+
+      const routerResult = nodes.find((r: any) => r.node.id === getNodeId(router));
+      expect(routerResult.depth).toBe(1);
+
+      const honoResult = nodes.find((r: any) => r.node.id === getNodeId(hono));
+      expect(honoResult.depth).toBe(2);
+    });
+  });
+
+  describe('RELATED_TO catch-all edge', () => {
+    it('connects loosely related nodes and discovers them via traverse', async () => {
+      const nodeA = await storeNode(mcp, {
+        type: NodeType.Knowledge,
+        role: NodeRole.Finding,
+        title: 'Edge functions reduce latency',
+        content: 'Running code at the edge cuts response time by 40%',
+        tags: ['edge', 'performance'],
+      });
+
+      const nodeB = await storeNode(mcp, {
+        type: NodeType.Knowledge,
+        role: NodeRole.Finding,
+        title: 'CDN caching improves throughput',
+        content: 'Static assets served from CDN reduce origin load',
+        tags: ['cdn', 'performance'],
+      });
+
+      const edgeResult = await mcp.callTool('texere_create_edge', {
+        edges: {
+          source_id: getNodeId(nodeA),
+          target_id: getNodeId(nodeB),
+          type: EdgeType.RelatedTo,
+        },
+      });
+      expect(edgeResult.isError).toBeUndefined();
+
+      const traversed = await mcp.callTool('texere_traverse', {
+        start_id: getNodeId(nodeA),
+        direction: 'outgoing',
+        max_depth: 1,
+      });
+      expect(traversed.isError).toBeUndefined();
+      const nodes = (traversed.structuredContent as any).results;
+      const nodeIds = nodes.map((r: any) => r.node.id);
+      expect(nodeIds).toContain(getNodeId(nodeB));
+    });
+  });
+
+  describe('pitfall role for knowledge nodes', () => {
+    it('stores and retrieves a pitfall node with correct type and role', async () => {
+      const pitfall = await storeNode(mcp, {
+        type: NodeType.Knowledge,
+        role: NodeRole.Pitfall,
+        title: 'Do not use SELECT * in production queries',
+        content: 'SELECT * prevents index-only scans and transfers unnecessary data',
+        tags: ['sql', 'performance', 'pitfall'],
+        importance: 0.8,
+      });
+      expect(pitfall.isError).toBeUndefined();
+
+      const searchResult = await mcp.callTool('texere_search', {
+        query: 'SELECT production',
+        type: NodeType.Knowledge,
+        limit: 10,
+      });
+      expect(searchResult.isError).toBeUndefined();
+      const results = (searchResult.structuredContent as any).results;
+      const ids = results.map((r: any) => r.id);
+      expect(ids).toContain(getNodeId(pitfall));
+
+      const fetched = await mcp.callTool('texere_get_node', { id: getNodeId(pitfall) });
+      expect(fetched.isError).toBeUndefined();
+      const node = (fetched.structuredContent as any).node;
+      expect(node.type).toBe(NodeType.Knowledge);
+      expect(node.role).toBe(NodeRole.Pitfall);
+      expect(node.title).toBe('Do not use SELECT * in production queries');
+      expect(node.importance).toBe(0.8);
+    });
+  });
+
+  describe('source parameter backward compatibility', () => {
+    it('accepts the deprecated source field without error', async () => {
+      const result = await storeNode(mcp, {
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Use WAL mode for SQLite',
+        content: 'WAL mode enables concurrent reads during writes',
+        source: 'internal',
+      });
+      expect(result.isError).toBeUndefined();
+
+      const nodeId = getNodeId(result);
+      const fetched = await mcp.callTool('texere_get_node', { id: nodeId });
+      expect(fetched.isError).toBeUndefined();
+      const node = (fetched.structuredContent as any).node;
+      expect(node.id).toBe(nodeId);
+      expect(node.type).toBe(NodeType.Knowledge);
+      expect(node.role).toBe(NodeRole.Decision);
+    });
+  });
 });
