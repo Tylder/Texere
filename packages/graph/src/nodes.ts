@@ -24,6 +24,7 @@ export interface StoreNodeInput {
   status?: NodeStatus;
   scope?: NodeScope;
   anchor_to?: string[];
+  sources?: string[];
 }
 
 export interface StoreNodeOptions {
@@ -138,6 +139,7 @@ const insertNodeWithAnchors = (
   statements: Statements,
   node: Node,
   anchorPaths: string[],
+  sources: string[],
   now: number,
 ): void => {
   statements.insertNode.run(node);
@@ -165,6 +167,37 @@ const insertNodeWithAnchors = (
       source_id: node.id,
       target_id: targetId,
       type: EdgeType.AnchoredTo,
+      strength: 1,
+      confidence: 1,
+      created_at: now,
+    });
+  }
+
+  for (const source of sources) {
+    const isUrl = source.startsWith('http://') || source.startsWith('https://');
+    const sourceNodeId = isUrl ? `source:web:${source}` : `source:file:${source}`;
+    const sourceRole = isUrl ? NodeRole.WebUrl : NodeRole.FilePath;
+
+    statements.insertFileContextNode.run({
+      id: sourceNodeId,
+      type: NodeType.Source,
+      role: sourceRole,
+      title: source,
+      content: source,
+      tags_json: '[]',
+      importance: 0.5,
+      confidence: 1.0,
+      status: NodeStatus.Active,
+      scope: NodeScope.Project,
+      created_at: now,
+      invalidated_at: null,
+    });
+
+    statements.insertAnchoredEdge.run({
+      id: nanoid(),
+      source_id: node.id,
+      target_id: sourceNodeId,
+      type: EdgeType.BasedOn,
       strength: 1,
       confidence: 1,
       created_at: now,
@@ -257,7 +290,13 @@ export function storeNode(
 
   db.transaction(() => {
     for (let i = 0; i < nodes.length; i++) {
-      insertNodeWithAnchors(statements, nodes[i]!, inputs[i]!.anchor_to ?? [], now);
+      insertNodeWithAnchors(
+        statements,
+        nodes[i]!,
+        inputs[i]!.anchor_to ?? [],
+        inputs[i]!.sources ?? [],
+        now,
+      );
     }
   }).immediate();
 

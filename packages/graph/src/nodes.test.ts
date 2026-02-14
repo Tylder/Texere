@@ -374,3 +374,83 @@ describe('duplicate warning', () => {
     expect('warning' in result[0]!).toBe(false);
   });
 });
+
+describe('sources field', () => {
+  let db: Database.Database;
+
+  beforeEach(() => {
+    db = createDatabase(':memory:');
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('URL source creates source/web_url node and BASED_ON edge', () => {
+    const node = storeNode(db, decision({ tags: [], sources: ['https://example.com/api'] }));
+
+    const edge = db
+      .prepare(
+        `
+          SELECT e.type, e.target_id, n.type AS target_type, n.role AS target_role
+          FROM edges e
+          JOIN nodes n ON n.id = e.target_id
+          WHERE e.source_id = ? AND e.type = ?
+        `,
+      )
+      .get(node.id, EdgeType.BasedOn) as
+      | {
+          type: string;
+          target_id: string;
+          target_type: string;
+          target_role: string;
+        }
+      | undefined;
+
+    expect(edge).toBeDefined();
+    expect(edge!.target_id).toBe('source:web:https://example.com/api');
+    expect(edge!.target_type).toBe(NodeType.Source);
+    expect(edge!.target_role).toBe(NodeRole.WebUrl);
+  });
+
+  it('file path source creates source/file_path node and BASED_ON edge', () => {
+    const node = storeNode(db, decision({ tags: [], sources: ['/docs/design.md'] }));
+
+    const edge = db
+      .prepare(
+        `
+          SELECT e.type, e.target_id, n.type AS target_type, n.role AS target_role
+          FROM edges e
+          JOIN nodes n ON n.id = e.target_id
+          WHERE e.source_id = ? AND e.type = ?
+        `,
+      )
+      .get(node.id, EdgeType.BasedOn) as
+      | {
+          type: string;
+          target_id: string;
+          target_type: string;
+          target_role: string;
+        }
+      | undefined;
+
+    expect(edge).toBeDefined();
+    expect(edge!.target_id).toBe('source:file:/docs/design.md');
+    expect(edge!.target_type).toBe(NodeType.Source);
+    expect(edge!.target_role).toBe(NodeRole.FilePath);
+  });
+
+  it('duplicate source URLs use INSERT OR IGNORE (only 1 source node)', () => {
+    storeNode(db, decision({ tags: [], sources: ['https://example.com/api'] }));
+    storeNode(
+      db,
+      decision({ title: 'Another node', tags: [], sources: ['https://example.com/api'] }),
+    );
+
+    const count = db
+      .prepare('SELECT COUNT(*) AS c FROM nodes WHERE id = ?')
+      .get('source:web:https://example.com/api') as { c: number };
+
+    expect(count.c).toBe(1);
+  });
+});

@@ -1,4 +1,4 @@
-// Core node types (6 values)
+// Core node types (7 values)
 export enum NodeType {
   Knowledge = 'knowledge',
   Issue = 'issue',
@@ -6,9 +6,10 @@ export enum NodeType {
   Artifact = 'artifact',
   Context = 'context',
   Meta = 'meta',
+  Source = 'source',
 }
 
-// Node roles (23 values) - constrained by type
+// Node roles (26 values) - constrained by type
 export enum NodeRole {
   // Knowledge roles (7)
   Constraint = 'constraint',
@@ -30,14 +31,19 @@ export enum NodeRole {
   Task = 'task',
   Workflow = 'workflow',
 
-  // Artifact roles (7)
+  // Artifact roles (6)
   CodePattern = 'code_pattern',
   Concept = 'concept',
   Example = 'example',
   FileContext = 'file_context',
   Project = 'project',
-  Source = 'source',
   Technology = 'technology',
+
+  // Source roles (4)
+  WebUrl = 'web_url',
+  FilePath = 'file_path',
+  Repository = 'repository',
+  ApiDoc = 'api_doc',
 
   // Context roles (1)
   Conversation = 'conversation',
@@ -105,11 +111,11 @@ export const VALID_ROLES_BY_TYPE: Record<NodeType, NodeRole[]> = {
     NodeRole.Example,
     NodeRole.FileContext,
     NodeRole.Project,
-    NodeRole.Source,
     NodeRole.Technology,
   ],
   [NodeType.Context]: [NodeRole.Conversation],
   [NodeType.Meta]: [NodeRole.System],
+  [NodeType.Source]: [NodeRole.WebUrl, NodeRole.FilePath, NodeRole.Repository, NodeRole.ApiDoc],
 };
 
 // Validation function

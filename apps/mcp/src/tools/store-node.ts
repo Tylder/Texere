@@ -16,6 +16,7 @@ const nodeSchema = z.object({
   status: z.nativeEnum(NodeStatus).optional(),
   scope: z.nativeEnum(NodeScope).optional(),
   anchor_to: z.array(z.string().min(1)).optional(),
+  sources: z.array(z.string().min(1)).optional(),
 });
 
 const singleInputSchema = nodeSchema.extend({
@@ -41,6 +42,7 @@ const toNodeInput = (item: z.infer<typeof nodeSchema>): StoreNodeInput => {
   if (item.status !== undefined) nodeInput.status = item.status;
   if (item.scope !== undefined) nodeInput.scope = item.scope;
   if (item.anchor_to !== undefined) nodeInput.anchor_to = item.anchor_to;
+  if (item.sources !== undefined) nodeInput.sources = item.sources;
 
   return nodeInput;
 };

@@ -291,11 +291,11 @@ describe('Texere MCP tools', () => {
     expect((result.structuredContent as any).stats.nodes.total).toBeGreaterThanOrEqual(1);
   });
 
-  it('accepts v1.2 roles (source, concept, pitfall)', async () => {
+  it('accepts v1.2 roles (web_url, concept, pitfall)', async () => {
     const results = await Promise.all([
       mcp.callTool('texere_store_node', {
-        type: NodeType.Artifact,
-        role: NodeRole.Source,
+        type: NodeType.Source,
+        role: NodeRole.WebUrl,
         title: 'External API docs',
         content: 'https://example.com/api',
       }),
@@ -316,7 +316,7 @@ describe('Texere MCP tools', () => {
     for (const r of results) {
       expect(r.isError).toBeUndefined();
     }
-    expect((results[0].structuredContent as any).node.role).toBe(NodeRole.Source);
+    expect((results[0].structuredContent as any).node.role).toBe(NodeRole.WebUrl);
     expect((results[1].structuredContent as any).node.role).toBe(NodeRole.Concept);
     expect((results[2].structuredContent as any).node.role).toBe(NodeRole.Pitfall);
   });

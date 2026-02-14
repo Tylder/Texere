@@ -12,12 +12,12 @@ import {
 } from './types';
 
 describe('graph types', () => {
-  it('has exactly 6 node types', () => {
-    expect(Object.values(NodeType)).toHaveLength(6);
+  it('has exactly 7 node types', () => {
+    expect(Object.values(NodeType)).toHaveLength(7);
   });
 
-  it('has exactly 23 node roles', () => {
-    expect(Object.values(NodeRole)).toHaveLength(23);
+  it('has exactly 26 node roles', () => {
+    expect(Object.values(NodeRole)).toHaveLength(26);
   });
 
   it('has exactly 16 edge types', () => {
@@ -25,7 +25,7 @@ describe('graph types', () => {
   });
 
   it('has new v1.2 node roles', () => {
-    expect(NodeRole.Source).toBe('source');
+    expect(NodeType.Source).toBe('source');
     expect(NodeRole.Concept).toBe('concept');
     expect(NodeRole.Pitfall).toBe('pitfall');
   });
@@ -38,8 +38,8 @@ describe('graph types', () => {
   });
 
   describe('type-role constraint matrix', () => {
-    it('has all 6 node types in VALID_ROLES_BY_TYPE', () => {
-      expect(Object.keys(VALID_ROLES_BY_TYPE)).toHaveLength(6);
+    it('has all 7 node types in VALID_ROLES_BY_TYPE', () => {
+      expect(Object.keys(VALID_ROLES_BY_TYPE)).toHaveLength(7);
     });
 
     it('knowledge type has 7 valid roles', () => {
@@ -54,8 +54,8 @@ describe('graph types', () => {
       expect(VALID_ROLES_BY_TYPE[NodeType.Action]).toHaveLength(5);
     });
 
-    it('artifact type has 7 valid roles', () => {
-      expect(VALID_ROLES_BY_TYPE[NodeType.Artifact]).toHaveLength(7);
+    it('artifact type has 6 valid roles', () => {
+      expect(VALID_ROLES_BY_TYPE[NodeType.Artifact]).toHaveLength(6);
     });
 
     it('context type has 1 valid role', () => {
@@ -91,14 +91,22 @@ describe('graph types', () => {
       expect(isValidTypeRole(NodeType.Action, NodeRole.Command)).toBe(true);
     });
 
-    it('accepts valid artifact type-role pairs', () => {
+    it('artifact type has 6 valid roles (Source removed)', () => {
       expect(isValidTypeRole(NodeType.Artifact, NodeRole.CodePattern)).toBe(true);
       expect(isValidTypeRole(NodeType.Artifact, NodeRole.Concept)).toBe(true);
       expect(isValidTypeRole(NodeType.Artifact, NodeRole.Example)).toBe(true);
       expect(isValidTypeRole(NodeType.Artifact, NodeRole.FileContext)).toBe(true);
       expect(isValidTypeRole(NodeType.Artifact, NodeRole.Project)).toBe(true);
-      expect(isValidTypeRole(NodeType.Artifact, NodeRole.Source)).toBe(true);
       expect(isValidTypeRole(NodeType.Artifact, NodeRole.Technology)).toBe(true);
+      expect(isValidTypeRole(NodeType.Artifact, NodeRole.WebUrl)).toBe(false);
+    });
+
+    it('source type has 4 valid roles', () => {
+      expect(VALID_ROLES_BY_TYPE[NodeType.Source]).toHaveLength(4);
+      expect(isValidTypeRole(NodeType.Source, NodeRole.WebUrl)).toBe(true);
+      expect(isValidTypeRole(NodeType.Source, NodeRole.FilePath)).toBe(true);
+      expect(isValidTypeRole(NodeType.Source, NodeRole.Repository)).toBe(true);
+      expect(isValidTypeRole(NodeType.Source, NodeRole.ApiDoc)).toBe(true);
     });
 
     it('accepts valid context type-role pairs', () => {
