@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { EdgeType, isValidTypeRole, NodeRole, NodeType, VALID_ROLES_BY_TYPE } from './types';
+import {
+  EdgeType,
+  isValidTypeRole,
+  NodeRole,
+  NodeType,
+  VALID_ROLES_BY_TYPE,
+  type Node,
+  type SearchMode,
+  type SearchOptions,
+} from './types';
 
 describe('graph types', () => {
   it('has exactly 6 node types', () => {
@@ -107,6 +116,23 @@ describe('graph types', () => {
       expect(isValidTypeRole(NodeType.Artifact, NodeRole.Error)).toBe(false);
       expect(isValidTypeRole(NodeType.Context, NodeRole.Task)).toBe(false);
       expect(isValidTypeRole(NodeType.Meta, NodeRole.Decision)).toBe(false);
+    });
+  });
+
+  describe('v2 schema types', () => {
+    it('Node interface does not have embedding property', () => {
+      const node = {} as Node;
+      expect('embedding' in node).toBe(false);
+    });
+
+    it('SearchOptions accepts mode field', () => {
+      const opts: SearchOptions = { query: 'test', mode: 'hybrid' };
+      expect(opts.mode).toBe('hybrid');
+    });
+
+    it('SearchMode accepts all valid values', () => {
+      const modes: SearchMode[] = ['auto', 'keyword', 'semantic', 'hybrid'];
+      expect(modes).toHaveLength(4);
     });
   });
 });

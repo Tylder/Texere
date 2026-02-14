@@ -28,8 +28,10 @@
     "typecheck": "tsc -b tsconfig.json"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.5.1",
     "better-sqlite3": "^12.6.2",
-    "nanoid": "^5.1.6"
+    "nanoid": "^5.1.6",
+    "sqlite-vec": "^0.1.6"
   },
   "devDependencies": {
     "@texere/eslint-config": "workspace:*",

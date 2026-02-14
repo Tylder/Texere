@@ -23,7 +23,6 @@ export interface StoreNodeInput {
   confidence?: number;
   status?: NodeStatus;
   scope?: NodeScope;
-  embedding?: Uint8Array | Buffer | null;
   anchor_to?: string[];
 }
 
@@ -52,11 +51,11 @@ const MAX_BATCH_SIZE = 50;
 
 const NODE_COLUMNS = `id, type, role, title, content, tags_json,
     importance, confidence, status, scope,
-    created_at, invalidated_at, embedding`;
+    created_at, invalidated_at`;
 
 const NODE_PARAMS = `@id, @type, @role, @title, @content, @tags_json,
     @importance, @confidence, @status, @scope,
-    @created_at, @invalidated_at, @embedding`;
+    @created_at, @invalidated_at`;
 
 type Statements = {
   insertNode: Database.Statement;
@@ -133,7 +132,6 @@ const buildNode = (input: StoreNodeInput, now: number): Node => ({
   scope: input.scope ?? NodeScope.Project,
   created_at: now,
   invalidated_at: null,
-  embedding: input.embedding ?? null,
 });
 
 const insertNodeWithAnchors = (
@@ -160,7 +158,6 @@ const insertNodeWithAnchors = (
       scope: NodeScope.File,
       created_at: now,
       invalidated_at: null,
-      embedding: null,
     });
 
     statements.insertAnchoredEdge.run({

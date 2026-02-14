@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { ListToolsResultSchema } from '@modelcontextprotocol/sdk/types.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { EdgeType, NodeRole, NodeType, TextereDB } from '@texere/graph';
+import { EdgeType, NodeRole, NodeType, Texere } from '@texere/graph';
 
 import { createTexereMcpServer } from './server.js';
 import type { ToolCallResult } from './tools/types.js';
@@ -54,11 +54,11 @@ const hasTopLevelUnion = (schema: unknown): boolean => {
 };
 
 describe('MCP server integration', () => {
-  let db: TextereDB;
+  let db: Texere;
   let mcp: McpServer;
 
   beforeEach(() => {
-    db = new TextereDB(':memory:');
+    db = new Texere(':memory:');
     mcp = createTexereMcpServer(db);
   });
 

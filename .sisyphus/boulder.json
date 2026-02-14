@@ -1,9 +1,7 @@
 {
-  "active_plan": "/home/dan/Texere/.sisyphus/plans/v1.1-schema-refinement.md",
-  "started_at": "2026-02-14T11:39:17.315Z",
-  "session_ids": [
-    "ses_3a4bafc94ffetIJfr4RK36ImnR"
-  ],
-  "plan_name": "v1.1-schema-refinement",
+  "active_plan": "/home/dan/Texere/.sisyphus/plans/v2-qc-fixes.md",
+  "started_at": "2026-02-14T18:54:30.000Z",
+  "session_ids": ["ses_3a3164bbfffeFVyBdxuvVn3ZNh"],
+  "plan_name": "v2-qc-fixes",
   "agent": "atlas"
 }

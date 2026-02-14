@@ -18,6 +18,23 @@ const store = (db: Database.Database, overrides: Partial<StoreNodeInput> = {}) =
     ...overrides,
   } as StoreNodeInput);
 
+const embeddingOf = (first: number, second = 0): Float32Array => {
+  const embedding = new Float32Array(384);
+  embedding[0] = first;
+  embedding[1] = second;
+  return embedding;
+};
+
+const toBuffer = (embedding: Float32Array): Buffer =>
+  Buffer.from(embedding.buffer, embedding.byteOffset, embedding.byteLength);
+
+const storeEmbedding = (db: Database.Database, nodeId: string, embedding: Float32Array): void => {
+  db.prepare('INSERT OR REPLACE INTO nodes_vec(node_id, embedding) VALUES (?, ?)').run(
+    nodeId,
+    toBuffer(embedding),
+  );
+};
+
 describe('search', () => {
   let db: Database.Database;
 
@@ -400,5 +417,90 @@ describe('search', () => {
   it('returns empty array for empty query with no filters', () => {
     store(db, { title: 'Some node', content: 'Some content.', tags: ['test'] });
     expect(search(db, { query: '' })).toEqual([]);
+  });
+
+  it('semantic mode finds vocabulary-mismatched content', () => {
+    const authNode = store(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Chose JWT for authentication',
+      content: 'We use JSON Web Tokens with 24h expiry for stateless auth',
+      tags: ['auth'],
+    });
+    const unrelatedNode = store(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Redis caching',
+      content: 'Cache invalidation and TTL policy',
+      tags: ['cache'],
+    });
+
+    storeEmbedding(db, authNode.id, embeddingOf(0, 1));
+    storeEmbedding(db, unrelatedNode.id, embeddingOf(1, 0));
+
+    const results = search(
+      db,
+      { query: 'session management approach', mode: 'semantic' },
+      embeddingOf(0, 1),
+    );
+
+    expect(results.some((r) => r.id === authNode.id)).toBe(true);
+    expect(results[0]?.search_mode).toBe('semantic');
+  });
+
+  it('hybrid mode boosts nodes that match keyword and semantic signals', () => {
+    const bothNode = store(db, {
+      title: 'JWT auth architecture',
+      content: 'Session management with token rotation and refresh',
+      tags: ['auth'],
+    });
+    const keywordOnlyNode = store(db, {
+      title: 'JWT session session session',
+      content: 'JWT session persistence details for operators',
+      tags: ['ops'],
+    });
+    const semanticOnlyNode = store(db, {
+      title: 'Access token strategy',
+      content: 'Stateless authentication lifecycle planning',
+      tags: ['auth'],
+    });
+
+    storeEmbedding(db, bothNode.id, embeddingOf(1, 0));
+    storeEmbedding(db, keywordOnlyNode.id, embeddingOf(0, 1));
+    storeEmbedding(db, semanticOnlyNode.id, embeddingOf(0.9, 0.1));
+
+    const results = search(db, { query: 'JWT session', mode: 'hybrid' }, embeddingOf(1, 0));
+
+    expect(results[0]?.id).toBe(bothNode.id);
+    expect(results[0]?.search_mode).toBe('hybrid');
+    expect(results[0]?.match_fields).toContain('semantic');
+  });
+
+  it('auto mode detects keyword for short uppercase queries', () => {
+    const jwtNode = store(db, {
+      title: 'JWT authentication',
+      content: 'Token verification flow',
+      tags: ['auth'],
+    });
+
+    const results = search(db, { query: 'JWT' });
+
+    expect(results[0]?.id).toBe(jwtNode.id);
+    expect(results[0]?.search_mode).toBe('keyword');
+  });
+
+  it('auto mode detects semantic for question queries', () => {
+    const authNode = store(db, {
+      title: 'Chose JWT for authentication',
+      content: 'We use JSON Web Tokens with rotating refresh tokens',
+      tags: ['auth'],
+    });
+
+    storeEmbedding(db, authNode.id, embeddingOf(0, 1));
+
+    const results = search(db, { query: 'How does session management work?' }, embeddingOf(0, 1));
+
+    expect(results.some((r) => r.id === authNode.id)).toBe(true);
+    expect(results[0]?.search_mode).toBe('semantic');
   });
 });

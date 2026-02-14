@@ -1,9 +1,15 @@
 import type Database from 'better-sqlite3';
 
 import { sanitizeFtsQueryStrict } from './sanitize.js';
-import type { Edge, Node, SearchOptions, SearchResult } from './types.js';
+import type { Edge, Node, SearchMode, SearchOptions, SearchResult } from './types.js';
 
 type RawSearchRow = Node & { rank: number };
+type RawSemanticRow = Node & { distance: number };
+
+const RRF_K = 60;
+const QUESTION_PREFIX_RE = /^(how|why|what|when)\b/i;
+
+type ResolvedSearchMode = Exclude<SearchMode, 'auto'>;
 
 const NODE_COLUMNS = `
   n.id,
@@ -17,8 +23,7 @@ const NODE_COLUMNS = `
   n.status,
   n.scope,
   n.created_at,
-  n.invalidated_at,
-  n.embedding
+  n.invalidated_at
 `;
 
 const extractTerms = (query: string): string[] =>
@@ -40,6 +45,99 @@ const detectMatchFields = (node: Node, terms: string[]): string[] => {
 };
 
 const normalizeRank = (rank: number): number => 1 / (1 + Math.abs(rank));
+
+const normalizeDistance = (distance: number, minDistance: number, maxDistance: number): number => {
+  if (maxDistance <= minDistance) return 1;
+  const normalized = (distance - minDistance) / (maxDistance - minDistance);
+  return Math.max(0, Math.min(1, 1 - normalized));
+};
+
+const hasVectorRows = (db: Database.Database): boolean => {
+  const row = db.prepare('SELECT COUNT(*) AS count FROM nodes_vec').get() as { count: number };
+  return row.count > 0;
+};
+
+export const detectSearchMode = (query: string): ResolvedSearchMode => {
+  const trimmed = query.trim();
+  const tokens = trimmed.length === 0 ? [] : trimmed.split(/\s+/);
+
+  if (
+    tokens.length >= 1 &&
+    tokens.length <= 3 &&
+    tokens.some((token) => /[A-Z]/.test(token) && token === token.toUpperCase())
+  ) {
+    return 'keyword';
+  }
+
+  if (QUESTION_PREFIX_RE.test(trimmed)) {
+    return 'semantic';
+  }
+
+  if (tokens.length === 1) {
+    return 'keyword';
+  }
+
+  return 'hybrid';
+};
+
+const resolveSearchMode = (options: SearchOptions): ResolvedSearchMode => {
+  if (options.mode && options.mode !== 'auto') {
+    return options.mode;
+  }
+
+  return detectSearchMode(options.query);
+};
+
+const fuseHybridResults = (
+  keywordResults: SearchResult[],
+  semanticResults: SearchResult[],
+  limit: number,
+): SearchResult[] => {
+  const fused = new Map<
+    string,
+    {
+      base: SearchResult;
+      score: number;
+      fields: Set<string>;
+    }
+  >();
+
+  keywordResults.forEach((result, index) => {
+    fused.set(result.id, {
+      base: result,
+      score: 1 / (RRF_K + index + 1),
+      fields: new Set(result.match_fields),
+    });
+  });
+
+  semanticResults.forEach((result, index) => {
+    const existing = fused.get(result.id);
+    const scoreDelta = 1 / (RRF_K + index + 1);
+
+    if (existing) {
+      existing.score += scoreDelta;
+      existing.fields.add('semantic');
+      return;
+    }
+
+    fused.set(result.id, {
+      base: result,
+      score: scoreDelta,
+      fields: new Set(['semantic']),
+    });
+  });
+
+  return Array.from(fused.values())
+    .map(({ base, score, fields }) => ({
+      ...base,
+      rank: score,
+      match_quality: score,
+      match_fields: Array.from(fields),
+      search_mode: 'hybrid' as const,
+    }))
+    .sort((left, right) => right.match_quality - left.match_quality)
+    .slice(0, limit);
+};
 
 const buildTagJoin = (
   tags: string[],
@@ -130,11 +228,16 @@ const getRelationships = (
   return result;
 };
 
-export const search = (db: Database.Database, options: SearchOptions): SearchResult[] => {
+export const search = (
+  db: Database.Database,
+  options: SearchOptions,
+  queryEmbedding?: Float32Array,
+): SearchResult[] => {
   const rawQuery = options.query.trim();
   const tags = options.tags?.filter((t) => t.length > 0) ?? [];
   const hasTagFilter = tags.length > 0;
   const hasFtsQuery = rawQuery.length > 0;
+  const mode = resolveSearchMode(options);
   const tagMode = options.tagMode ?? 'all';
   const limit = options.limit ?? 20;
 
@@ -166,7 +269,65 @@ export const search = (db: Database.Database, options: SearchOptions): SearchRes
     whereClauses.push('n.importance >= @minImportance');
   }
 
+  if (mode === 'hybrid') {
+    const keywordResults = search(db, { ...options, mode: 'keyword' }, queryEmbedding);
+
+    if (!hasFtsQuery || !queryEmbedding || !hasVectorRows(db)) {
+      return keywordResults;
+    }
+
+    const semanticResults = search(db, { ...options, mode: 'semantic' }, queryEmbedding);
+    return fuseHybridResults(keywordResults, semanticResults, limit);
+  }
+
   let rows: RawSearchRow[];
+
+  if (mode === 'semantic' && hasFtsQuery && queryEmbedding && hasVectorRows(db)) {
+    const semanticWhere = whereClauses.length > 0 ? whereClauses.join(' AND ') : '1=1';
+    const embeddingBuffer = Buffer.from(
+      queryEmbedding.buffer,
+      queryEmbedding.byteOffset,
+      queryEmbedding.byteLength,
+    );
+
+    const semanticSql = `
+      WITH vec_matches AS (
+        SELECT node_id, distance
+        FROM nodes_vec
+        WHERE embedding MATCH @queryEmbedding AND k = @limit
+      )
+      SELECT ${NODE_COLUMNS},
+        vm.distance AS distance
+      FROM vec_matches vm
+      JOIN nodes n ON n.id = vm.node_id AND n.invalidated_at IS NULL
+      ${tagJoin}
+      WHERE ${semanticWhere}
+      ORDER BY vm.distance ASC
+      LIMIT @limit
+    `;
+
+    const semanticRows = db.prepare(semanticSql).all({
+      ...params,
+      queryEmbedding: embeddingBuffer,
+    }) as RawSemanticRow[];
+
+    if (semanticRows.length === 0) return [];
+
+    const nodeIds = semanticRows.map((row) => row.id);
+    const relationships = getRelationships(db, nodeIds);
+    const distances = semanticRows.map((row) => row.distance);
+    const minDistance = Math.min(...distances);
+    const maxDistance = Math.max(...distances);
+
+    return semanticRows.map(({ distance, ...node }) => ({
+      ...node,
+      rank: distance,
+      match_quality: normalizeDistance(distance, minDistance, maxDistance),
+      match_fields: ['semantic'],
+      search_mode: 'semantic',
+      relationships: relationships.get(node.id) ?? { incoming: [], outgoing: [] },
+    }));
+  }
 
   if (hasFtsQuery) {
     // FTS path: BM25 weights = title 10.0, content 1.0, tags 3.0, role 5.0
@@ -222,6 +383,7 @@ export const search = (db: Database.Database, options: SearchOptions): SearchRes
     ...node,
     rank,
     match_quality: normalizeRank(rank),
+    search_mode: 'keyword',
     match_fields: hasFtsQuery
       ? detectMatchFields(node as Node, queryTerms)
       : hasTagFilter

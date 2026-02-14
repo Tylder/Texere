@@ -1,0 +1,230 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { EdgeType, NodeRole, NodeType } from './types.js';
+
+import { Texere } from './index.js';
+
+describe('Integration: Semantic Search End-to-End', () => {
+  let db: Texere;
+
+  beforeEach(() => {
+    db = new Texere(':memory:');
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  describe('vocabulary mismatch (semantic mode)', () => {
+    it('finds JWT authentication node via "login session management" query', async () => {
+      const authNode = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Authentication uses JWT tokens',
+        content: 'We use JSON Web Tokens with 24h expiry for stateless authentication',
+        tags: ['auth'],
+      });
+
+      db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Redis caching strategy',
+        content: 'Use Redis for cache invalidation with TTL policy',
+        tags: ['cache'],
+      });
+
+      const results = await db.search({
+        query: 'login session management',
+        mode: 'semantic',
+      });
+
+      expect(results.some((r) => r.id === authNode.id)).toBe(true);
+      expect(results[0]?.search_mode).toBe('semantic');
+    }, 30_000);
+
+    it('finds PostgreSQL node via "how is data stored" query', async () => {
+      const dbNode = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Database uses PostgreSQL',
+        content: 'PostgreSQL with connection pooling and read replicas for data persistence',
+        tags: ['database'],
+      });
+
+      db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'CI/CD pipeline configuration',
+        content: 'GitHub Actions for continuous integration and deployment workflow',
+        tags: ['ci'],
+      });
+
+      const results = await db.search({
+        query: 'how is data stored',
+        mode: 'semantic',
+      });
+
+      expect(results.some((r) => r.id === dbNode.id)).toBe(true);
+    }, 30_000);
+  });
+
+  describe('keyword regression (V1 behavior)', () => {
+    it('finds JWT node via exact keyword "JWT"', async () => {
+      const authNode = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'JWT authentication',
+        content: 'Token-based auth with JWT',
+        tags: ['auth'],
+      });
+
+      const results = await db.search({
+        query: 'JWT',
+        mode: 'keyword',
+      });
+
+      expect(results.some((r) => r.id === authNode.id)).toBe(true);
+      expect(results[0]?.search_mode).toBe('keyword');
+    });
+  });
+
+  describe('hybrid RRF boost', () => {
+    it('boosts nodes matching both keyword AND semantic over keyword-only', async () => {
+      const dualMatchNode = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'JWT session management',
+        content: 'JWT tokens for session handling and user authentication',
+        tags: ['auth'],
+      });
+
+      // FTS5 implicit AND: "JWT session" requires BOTH tokens in document.
+      // This node has "JWT" but not "session" → keyword miss, semantic only.
+      db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'JWT library comparison',
+        content: 'Comparing jose and jsonwebtoken npm packages for JWT parsing',
+        tags: ['auth'],
+      });
+
+      const results = await db.search({
+        query: 'JWT session',
+        mode: 'hybrid',
+      });
+
+      expect(results[0]?.id).toBe(dualMatchNode.id);
+      expect(results[0]?.search_mode).toBe('hybrid');
+    }, 30_000);
+  });
+
+  describe('invalidation exclusion', () => {
+    it('excludes invalidated node from all search modes', async () => {
+      const invalidatedNode = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Deprecated authentication method',
+        content: 'Old authentication approach using basic auth',
+        tags: ['auth'],
+      });
+
+      db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Finding,
+        title: 'API rate limiting policy',
+        content: 'Rate limiting set to 100 requests per minute',
+        tags: ['api'],
+      });
+
+      db.invalidateNode(invalidatedNode.id);
+
+      const keywordResults = await db.search({ query: 'authentication', mode: 'keyword' });
+      const semanticResults = await db.search({
+        query: 'authentication approach',
+        mode: 'semantic',
+      });
+      const hybridResults = await db.search({ query: 'authentication', mode: 'hybrid' });
+
+      expect(keywordResults.every((r) => r.id !== invalidatedNode.id)).toBe(true);
+      expect(semanticResults.every((r) => r.id !== invalidatedNode.id)).toBe(true);
+      expect(hybridResults.every((r) => r.id !== invalidatedNode.id)).toBe(true);
+    }, 30_000);
+  });
+
+  describe('about() integration (search + traversal)', () => {
+    it('finds seed via keyword search and traverses to connected nodes', async () => {
+      // decision --RESOLVES--> problem <--RESOLVES-- solution
+      const decision = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'JWT authentication decision',
+        content: 'Chose JWT tokens with 24h expiry for authentication',
+        tags: ['auth'],
+      });
+
+      const problem = db.storeNode({
+        type: NodeType.Issue,
+        role: NodeRole.Problem,
+        title: 'Stateful sessions problem',
+        content: 'Server memory issues with stateful sessions',
+        tags: ['sessions'],
+      });
+
+      const solution = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Solution,
+        title: 'Stateless token solution',
+        content: 'Stateless auth via signed tokens',
+        tags: ['auth'],
+      });
+
+      db.createEdge({ source_id: decision.id, target_id: problem.id, type: EdgeType.Resolves });
+      db.createEdge({ source_id: solution.id, target_id: problem.id, type: EdgeType.Resolves });
+
+      const results = await db.about({
+        query: 'authentication',
+        direction: 'both',
+        maxDepth: 2,
+      });
+
+      const ids = results.map((r) => r.node.id);
+      expect(ids).toContain(decision.id);
+      expect(ids).toContain(problem.id);
+      expect(ids).toContain(solution.id);
+    });
+
+    it('semantic search seeds + manual traverse reaches connected nodes', async () => {
+      const decision = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Use JWT for authentication',
+        content: 'JWT tokens with 24h expiry for stateless auth',
+        tags: ['auth'],
+      });
+
+      const problem = db.storeNode({
+        type: NodeType.Issue,
+        role: NodeRole.Problem,
+        title: 'Stateful sessions memory problem',
+        content: 'Server memory issues with sessions',
+        tags: ['sessions'],
+      });
+
+      db.createEdge({ source_id: decision.id, target_id: problem.id, type: EdgeType.Resolves });
+
+      const seeds = await db.search({
+        query: 'login session management',
+        mode: 'semantic',
+      });
+      expect(seeds.some((r) => r.id === decision.id)).toBe(true);
+
+      const traversed = db.traverse({
+        startId: decision.id,
+        direction: 'outgoing',
+        maxDepth: 2,
+      });
+      const traversedIds = traversed.map((r) => r.node.id);
+      expect(traversedIds).toContain(problem.id);
+    }, 30_000);
+  });
+});

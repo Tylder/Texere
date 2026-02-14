@@ -659,6 +659,7 @@ This fixes the bug where `search({ query: '', tags: ['sqlite'] })` returned noth
 **Final Status**: ✅ ALL 7 TASKS COMPLETED
 
 ### Test Results
+
 - **Graph Package**: 137/137 tests passing (9 test files)
 - **MCP Package**: 13/13 tests passing (1 test file)
 - **Build**: Successful (zero errors)
@@ -672,7 +673,7 @@ This fixes the bug where `search({ query: '', tags: ['sqlite'] })` returned noth
    - SearchResult type with explainability fields
    - 3 facet enums (NodeSource, NodeStatus, NodeScope)
 
-2. ✅ **Schema DDL & Migration** (Task 2)  
+2. ✅ **Schema DDL & Migration** (Task 2)
    - Added role, source, status, scope columns to nodes table
    - Rebuilt FTS5 with role column indexed
    - Updated triggers for new columns
@@ -758,4 +759,3 @@ This fixes the bug where `search({ query: '', tags: ['sqlite'] })` returned noth
    - tag_mode for flexible tag filtering
    - replace_node for atomic updates
 4. **Read updated SKILL.md**: All changes documented for agent consumption
-

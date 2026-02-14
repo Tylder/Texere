@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { EdgeType, NodeRole, NodeType, TextereDB } from './index.js';
+import { EdgeType, NodeRole, NodeType, Texere } from './index.js';
 import type { Node } from './index.js';
 
 describe('Graph package integration', () => {
   describe('package import', () => {
-    it('import { TextereDB } from @texere/graph works', () => {
-      expect(TextereDB).toBeDefined();
-      expect(typeof TextereDB).toBe('function');
+    it('import { Texere } from @texere/graph works', () => {
+      expect(Texere).toBeDefined();
+      expect(typeof Texere).toBe('function');
     });
 
     it('import { NodeType, NodeRole, EdgeType } from @texere/graph works', () => {
@@ -21,17 +21,17 @@ describe('Graph package integration', () => {
   });
 
   describe('full workflow: create DB -> store -> edges -> search -> traverse -> close', () => {
-    let db: TextereDB;
+    let db: Texere;
 
     beforeEach(() => {
-      db = new TextereDB(':memory:');
+      db = new Texere(':memory:');
     });
 
     afterEach(() => {
       db.close();
     });
 
-    it('runs complete graph lifecycle end-to-end', () => {
+    it('runs complete graph lifecycle end-to-end', async () => {
       const problem = db.storeNode({
         type: NodeType.Issue,
         role: NodeRole.Problem,
@@ -93,7 +93,7 @@ describe('Graph package integration', () => {
       expect(retrieved).toBeDefined();
       expect(retrieved!.id).toBe(problem.id);
 
-      const searchResults = db.search({ query: 'WAL mode transactions' });
+      const searchResults = await db.search({ query: 'WAL mode transactions' });
       expect(searchResults.length).toBeGreaterThan(0);
       const foundIds = searchResults.map((node: Node) => node.id);
       expect(foundIds).toContain(solution.id);
@@ -107,7 +107,7 @@ describe('Graph package integration', () => {
       const traverseNodeIds = traverseResults.map((r) => r.node.id);
       expect(traverseNodeIds).toContain(solution.id);
 
-      const aboutResults = db.about({
+      const aboutResults = await db.about({
         query: 'contention',
         direction: 'both',
         maxDepth: 2,
@@ -138,10 +138,10 @@ describe('Graph package integration', () => {
   });
 
   describe('replaceNode', () => {
-    let db: TextereDB;
+    let db: Texere;
 
     beforeEach(() => {
-      db = new TextereDB(':memory:');
+      db = new Texere(':memory:');
     });
 
     afterEach(() => {

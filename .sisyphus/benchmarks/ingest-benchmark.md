@@ -35,8 +35,8 @@ patterns, constraints, and relationships.
 
 Ingest these two Texere project documents:
 
-- `docs/kg-redesign.md`
-- `docs/memory-graph-audit.md`
+- `docs/search-comparison-llm-ux.md`
+- `docs/sqlite-benchmark-research.md`
 
 **Task**: Create nodes and edges representing the decisions, problems, requirements, constraints,
 research findings, and technologies discussed. Build a graph that captures what these documents

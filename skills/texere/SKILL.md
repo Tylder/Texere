@@ -29,20 +29,24 @@ connections, graph degradation.
 **Why**: Graph value = connections. Searching first prevents duplicates, identifies deprecation
 opportunities, discovers edge candidates.
 
-## FTS5 Search Tips
+## Search Tips
 
-**What works:** Simple words, quoted phrases (`"exact phrase"`), boolean `OR`, tag-based filtering.
+**Keyword search (mode: 'keyword'):** Works with simple words, quoted phrases (`"exact phrase"`),
+boolean `OR`, tag-based filtering. Dots, hyphens, colons, slashes may cause syntax errors.
 
-**What breaks:** Dots (`c.req.param`), hyphens (`multi-runtime`), colons, slashes → cause
-`fts5: syntax error`.
+**Semantic search (mode: 'auto' or 'semantic'):** Finds conceptually related content even with
+vocabulary mismatches. Use for exploratory queries like "session management" to find JWT, OAuth,
+authentication patterns.
 
-**Recovery:** When FTS fails, use tag-based search (`query: ""` with `tags` filter). Simplify query
-by removing punctuation, using individual words. Use quoted phrases for multi-word matches.
+**Recovery:** When keyword search fails, try semantic mode or tag-based search (`query: ""` with
+`tags` filter).
 
-**Example:**
+**Examples:**
 
-- ❌ Fails: `{ "query": "c.req.param" }` → `fts5: syntax error`
-- ✅ Works: `{ "query": "", "tags": ["hono", "request"] }` or `{ "query": "req param" }`
+- Keyword: `{ "query": "database locked", "mode": "keyword" }`
+- Semantic: `{ "query": "session management", "mode": "semantic" }` → finds JWT, OAuth, auth
+  patterns
+- Tag search: `{ "query": "", "tags": ["hono", "request"] }`
 
 ## Type + Role Decision Tree
 
@@ -230,13 +234,14 @@ Hard-delete edge by ID.
 
 ### 7. texere_search
 
-FTS5 full-text search with BM25 ranking, type/role/tag/importance filters. Returns match quality and
-relationships.
+Keyword and semantic search with BM25 ranking, type/role/tag/importance filters. Searches
+automatically find semantically related content even without exact keyword matches. Returns match
+quality and relationships.
 
-**Args:** `query` (string, required — supports FTS5 syntax: phrases `"exact"`, boolean `OR`/`AND`),
-`type` (NodeType | NodeType[], optional), `role` (NodeRole, optional), `tags` (string[], optional),
-`tag_mode` ("all" | "any", default: "all" — AND vs OR), `min_importance` (number, 0.0–1.0,
-optional), `limit` (number, default: 20, max: 100)
+**Args:** `query` (string, required), `type` (NodeType | NodeType[], optional), `role` (NodeRole,
+optional), `tags` (string[], optional), `tag_mode` ("all" | "any", default: "all" — AND vs OR),
+`mode` (string, optional — "auto" (default) detects best strategy; "keyword" forces exact matching),
+`min_importance` (number, 0.0–1.0, optional), `limit` (number, default: 20, max: 100)
 
 **Returns:**
 `{ results: [{ id, type, role, title, content, tags, importance, rank, match_quality, match_fields, relationships: { incoming: [...], outgoing: [...] } }] }`
@@ -245,7 +250,8 @@ optional), `limit` (number, default: 20, max: 100)
 
 - Basic: `{ "query": "timeout", "type": "issue", "role": "error", "limit": 5 }`
 - Tag search (AND): `{ "query": "", "tags": ["architecture", "database"], "tag_mode": "all" }`
-- Phrase search: `{ "query": "\"database locked\"", "type": "issue" }`
+- Semantic search: `{ "query": "session management", "mode": "auto" }` (finds JWT, OAuth, etc.)
+- Keyword-only: `{ "query": "database locked", "mode": "keyword" }` (exact matches only)
 
 ### 8. texere_traverse
 

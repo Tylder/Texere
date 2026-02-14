@@ -131,7 +131,6 @@ export interface Node {
   scope?: NodeScope;
   created_at: number;
   invalidated_at: number | null;
-  embedding: Uint8Array | Buffer | null;
 }
 
 export interface Edge {
@@ -153,11 +152,14 @@ export interface SearchResult extends Node {
   rank: number;
   match_quality: number;
   match_fields: string[];
+  search_mode: SearchMode;
   relationships: {
     incoming: Edge[];
     outgoing: Edge[];
   };
 }
+
+export type SearchMode = 'auto' | 'keyword' | 'semantic' | 'hybrid';
 
 export interface SearchOptions {
   query: string;
@@ -167,6 +169,7 @@ export interface SearchOptions {
   tagMode?: 'all' | 'any';
   minImportance?: number;
   limit?: number;
+  mode?: SearchMode;
 }
 
 export interface TraverseOptions {
@@ -175,3 +178,11 @@ export interface TraverseOptions {
   maxDepth?: number;
   edgeType?: EdgeType;
 }
+
+export interface AboutOptions
+  extends
+    Pick<
+      SearchOptions,
+      'query' | 'type' | 'tags' | 'tagMode' | 'minImportance' | 'limit' | 'role' | 'mode'
+    >,
+    Omit<TraverseOptions, 'startId'> {}

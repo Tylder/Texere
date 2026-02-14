@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { EdgeType, NodeRole, NodeType, TextereDB } from '@texere/graph';
+import { EdgeType, NodeRole, NodeType, Texere } from '@texere/graph';
 
 import { createTexereMcpServer } from './server.js';
 import { TOOL_DEFINITIONS } from './tools/index.js';
@@ -21,11 +21,11 @@ const TOOL_NAMES = [
 ] as const;
 
 describe('Texere MCP tools', () => {
-  let db: TextereDB;
+  let db: Texere;
   let mcp: ReturnType<typeof createTexereMcpServer>;
 
   beforeEach(() => {
-    db = new TextereDB(':memory:');
+    db = new Texere(':memory:');
     mcp = createTexereMcpServer(db);
   });
 

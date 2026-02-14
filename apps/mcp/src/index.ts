@@ -5,7 +5,7 @@ import { dirname, resolve } from 'node:path';
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
-import { TextereDB } from '@texere/graph';
+import { Texere } from '@texere/graph';
 
 import { createTexereMcpServer } from './server.js';
 
@@ -35,7 +35,7 @@ export const start = async (argv: string[]): Promise<void> => {
 
   await mkdir(dirname(absoluteDbPath), { recursive: true });
 
-  const db = new TextereDB(absoluteDbPath);
+  const db = new Texere(absoluteDbPath);
   const mcp = createTexereMcpServer(db);
   const transport = new StdioServerTransport();
 

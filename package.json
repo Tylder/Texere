@@ -29,5 +29,12 @@
   "packageManager": "pnpm@10.29.3",
   "engines": {
     "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "onnxruntime-node",
+      "protobufjs",
+      "sharp"
+    ]
   }
 }

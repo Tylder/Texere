@@ -40,3 +40,4 @@ logs/
 
 # Prettier cache
 .prettiercache
+.texere/

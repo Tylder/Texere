@@ -16,13 +16,15 @@ const inputSchema = z.object({
   direction: z.enum(['outgoing', 'incoming', 'both']).optional(),
   max_depth: z.number().int().min(0).max(5).optional(),
   edge_type: z.nativeEnum(EdgeType).optional(),
+  mode: z.enum(['auto', 'keyword', 'semantic', 'hybrid']).optional().default('auto'),
 });
 
 export const aboutTool: ToolDefinition<typeof inputSchema> = {
   name: 'texere_about',
-  description: 'Search for seeds, then traverse their neighborhood.',
+  description:
+    'Search for seeds with optional semantic/hybrid modes, then traverse their neighborhood.',
   inputSchema,
-  execute: ({ db }, input) => {
+  execute: async ({ db }, input) => {
     const aboutOptions: AboutOptions = {
       query: input.query,
     };
@@ -54,8 +56,11 @@ export const aboutTool: ToolDefinition<typeof inputSchema> = {
     if (input.edge_type !== undefined) {
       aboutOptions.edgeType = input.edge_type;
     }
+    if (input.mode !== undefined) {
+      aboutOptions.mode = input.mode;
+    }
 
-    const results = db.about(aboutOptions);
+    const results = await db.about(aboutOptions);
 
     return ok({ results });
   },

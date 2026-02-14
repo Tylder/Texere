@@ -20,7 +20,7 @@ describe('createDatabase', () => {
     db.close();
   });
 
-  it('creates required tables including FTS table', () => {
+  it('creates required tables including FTS and vec0 tables', () => {
     const db = createDatabase(':memory:');
 
     const rows = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as Array<{
@@ -32,6 +32,17 @@ describe('createDatabase', () => {
     expect(tableNames).toContain('edges');
     expect(tableNames).toContain('node_tags');
     expect(tableNames).toContain('nodes_fts');
+    expect(tableNames).toContain('nodes_vec');
+
+    db.close();
+  });
+
+  it('loads sqlite-vec extension and vec_version() returns a version string', () => {
+    const db = createDatabase(':memory:');
+
+    const row = db.prepare('SELECT vec_version() AS version').get() as { version: string };
+    expect(typeof row.version).toBe('string');
+    expect(row.version.length).toBeGreaterThan(0);
 
     db.close();
   });

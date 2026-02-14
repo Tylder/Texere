@@ -11,8 +11,7 @@ CREATE TABLE IF NOT EXISTS nodes (
   status TEXT NOT NULL DEFAULT 'active',
   scope TEXT NOT NULL DEFAULT 'project',
   created_at INTEGER NOT NULL,
-  invalidated_at INTEGER,
-  embedding BLOB
+  invalidated_at INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS edges (
@@ -71,5 +70,17 @@ BEGIN
   INSERT INTO node_tags(node_id, tag)
   SELECT new.id, value
   FROM json_each(new.tags_json);
+END;
+
+CREATE VIRTUAL TABLE IF NOT EXISTS nodes_vec USING vec0(
+  node_id TEXT PRIMARY KEY,
+  embedding float[384]
+);
+
+CREATE TRIGGER IF NOT EXISTS nodes_vec_invalidate
+AFTER UPDATE OF invalidated_at ON nodes
+WHEN new.invalidated_at IS NOT NULL AND old.invalidated_at IS NULL
+BEGIN
+  DELETE FROM nodes_vec WHERE node_id = old.id;
 END;
 `;

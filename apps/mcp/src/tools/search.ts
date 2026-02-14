@@ -13,13 +13,15 @@ const inputSchema = z.object({
   tag_mode: z.enum(['all', 'any']).optional(),
   min_importance: z.number().min(0).max(1).optional(),
   limit: z.number().int().min(1).max(100).optional(),
+  mode: z.enum(['auto', 'keyword', 'semantic', 'hybrid']).optional().default('auto'),
 });
 
 export const searchTool: ToolDefinition<typeof inputSchema> = {
   name: 'texere_search',
-  description: 'FTS5 search with type/tag/importance filters.',
+  description:
+    'FTS5 search with BM25 ranking, type/role/tag/importance filters. Supports keyword, semantic, and hybrid search modes.',
   inputSchema,
-  execute: ({ db }, input) => {
+  execute: async ({ db }, input) => {
     const searchOptions = {
       query: input.query,
       ...(input.type !== undefined ? { type: input.type } : {}),
@@ -28,8 +30,9 @@ export const searchTool: ToolDefinition<typeof inputSchema> = {
       ...(input.tag_mode !== undefined ? { tagMode: input.tag_mode } : {}),
       ...(input.min_importance !== undefined ? { minImportance: input.min_importance } : {}),
       ...(input.limit !== undefined ? { limit: input.limit } : {}),
+      ...(input.mode !== undefined ? { mode: input.mode } : {}),
     };
-    const results = db.search(searchOptions);
+    const results = await db.search(searchOptions);
 
     return ok({ results });
   },

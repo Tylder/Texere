@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { EdgeType, NodeRole, NodeType } from './types.js';
 
-import { TextereDB } from './index.js';
+import { Texere } from './index.js';
 
-describe('TextereDB', () => {
-  let db: TextereDB;
+describe('Texere', () => {
+  let db: Texere;
 
   beforeEach(() => {
-    db = new TextereDB(':memory:');
+    db = new Texere(':memory:');
   });
 
   afterEach(() => {
@@ -18,7 +18,7 @@ describe('TextereDB', () => {
   describe('constructor', () => {
     it('creates a working database instance', () => {
       expect(db).toBeDefined();
-      expect(db).toBeInstanceOf(TextereDB);
+      expect(db).toBeInstanceOf(Texere);
     });
   });
 
@@ -273,7 +273,7 @@ describe('TextereDB', () => {
   });
 
   describe('search operations', () => {
-    it('search finds nodes by query', () => {
+    it('search finds nodes by query', async () => {
       db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
@@ -290,12 +290,12 @@ describe('TextereDB', () => {
         tags: ['logging'],
       });
 
-      const results = db.search({ query: 'authentication' });
+      const results = await db.search({ query: 'authentication', mode: 'keyword' });
       expect(results).toHaveLength(1);
       expect(results[0].title).toBe('Implement authentication');
     });
 
-    it('search filters by type and role', () => {
+    it('search filters by type and role', async () => {
       db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
@@ -310,13 +310,17 @@ describe('TextereDB', () => {
         content: 'Auth solution',
       });
 
-      const results = db.search({ query: 'auth', type: NodeType.Action, role: NodeRole.Solution });
+      const results = await db.search({
+        query: 'auth',
+        type: NodeType.Action,
+        role: NodeRole.Solution,
+      });
       expect(results).toHaveLength(1);
       expect(results[0].type).toBe(NodeType.Action);
       expect(results[0].role).toBe(NodeRole.Solution);
     });
 
-    it('search filters by tags', () => {
+    it('search filters by tags', async () => {
       db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
@@ -333,12 +337,12 @@ describe('TextereDB', () => {
         tags: ['auth'],
       });
 
-      const results = db.search({ query: 'Task', tags: ['auth', 'security'] });
+      const results = await db.search({ query: 'Task', tags: ['auth', 'security'] });
       expect(results).toHaveLength(1);
       expect(results[0].title).toBe('Task 1');
     });
 
-    it('search filters by minImportance', () => {
+    it('search filters by minImportance', async () => {
       db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
@@ -355,12 +359,12 @@ describe('TextereDB', () => {
         importance: 0.3,
       });
 
-      const results = db.search({ query: 'task', minImportance: 0.7 });
+      const results = await db.search({ query: 'task', minImportance: 0.7 });
       expect(results).toHaveLength(1);
       expect(results[0].title).toBe('Important task');
     });
 
-    it('search respects limit option', () => {
+    it('search respects limit option', async () => {
       for (let i = 0; i < 10; i++) {
         db.storeNode({
           type: NodeType.Action,
@@ -370,7 +374,7 @@ describe('TextereDB', () => {
         });
       }
 
-      const results = db.search({ query: 'Task', limit: 5 });
+      const results = await db.search({ query: 'Task', limit: 5 });
       expect(results).toHaveLength(5);
     });
   });
@@ -485,7 +489,7 @@ describe('TextereDB', () => {
   });
 
   describe('about operations', () => {
-    it('about combines search and traverse', () => {
+    it('about combines search and traverse', async () => {
       const problem = db.storeNode({
         type: NodeType.Issue,
         role: NodeRole.Problem,
@@ -508,14 +512,14 @@ describe('TextereDB', () => {
         type: EdgeType.Resolves,
       });
 
-      const results = db.about({ query: 'authentication', direction: 'outgoing' });
+      const results = await db.about({ query: 'authentication', direction: 'outgoing' });
       expect(results.length).toBeGreaterThan(0);
       const nodeIds = results.map((r) => r.node.id);
       expect(nodeIds).toContain(problem.id);
       expect(nodeIds).toContain(solution.id);
     });
 
-    it('about respects search filters', () => {
+    it('about respects search filters', async () => {
       db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
@@ -532,7 +536,11 @@ describe('TextereDB', () => {
         tags: ['auth'],
       });
 
-      const results = db.about({ query: 'auth', type: NodeType.Action, role: NodeRole.Solution });
+      const results = await db.about({
+        query: 'auth',
+        type: NodeType.Action,
+        role: NodeRole.Solution,
+      });
       expect(results).toHaveLength(1);
       expect(results[0].node.type).toBe(NodeType.Action);
       expect(results[0].node.role).toBe(NodeRole.Solution);
@@ -589,7 +597,7 @@ describe('TextereDB', () => {
 
   describe('close operations', () => {
     it('close closes the database without error', () => {
-      const testDb = new TextereDB(':memory:');
+      const testDb = new Texere(':memory:');
       expect(() => testDb.close()).not.toThrow();
     });
   });

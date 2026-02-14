@@ -2,7 +2,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
-import type { TextereDB } from '@texere/graph';
+import type { Texere } from '@texere/graph';
 
 import { executeToolDefinition, TOOL_DEFINITIONS, TOOL_NAMES } from './tools/index.js';
 import type { ToolCallResult } from './tools/index.js';
@@ -44,7 +44,7 @@ type ToolCallRequest = {
 };
 
 export const createTexereMcpServer = (
-  db: TextereDB,
+  db: Texere,
 ): {
   server: Server;
   toolNames: ReadonlyArray<string>;

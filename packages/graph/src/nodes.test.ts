@@ -51,7 +51,6 @@ describe('node CRUD', () => {
     expect(node.scope).toBe(NodeScope.Project);
     expect(typeof node.created_at).toBe('number');
     expect(node.invalidated_at).toBeNull();
-    expect(node.embedding).toBeNull();
   });
 
   it('getNode returns the stored node', () => {
@@ -97,6 +96,26 @@ describe('node CRUD', () => {
 
   it('invalidateNode for unknown id throws', () => {
     expect(() => invalidateNode(db, 'nonexistent')).toThrow(/not found/i);
+  });
+
+  it('invalidation trigger deletes from nodes_vec', () => {
+    const node = storeNode(db, decision({ tags: [] }));
+
+    db.prepare('INSERT INTO nodes_vec (node_id, embedding) VALUES (?, zeroblob(1536))').run(
+      node.id,
+    );
+
+    const before = db
+      .prepare('SELECT COUNT(*) AS c FROM nodes_vec WHERE node_id = ?')
+      .get(node.id) as { c: number };
+    expect(before.c).toBe(1);
+
+    invalidateNode(db, node.id);
+
+    const after = db
+      .prepare('SELECT COUNT(*) AS c FROM nodes_vec WHERE node_id = ?')
+      .get(node.id) as { c: number };
+    expect(after.c).toBe(0);
   });
 
   it('storeNode with anchor_to creates ANCHORED_TO edge to artifact/file_context node', () => {

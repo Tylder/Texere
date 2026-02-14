@@ -1,9 +1,12 @@
 import Database from 'better-sqlite3';
+import * as sqliteVec from 'sqlite-vec';
 
 import { SCHEMA_DDL } from './schema.js';
 
 export const createDatabase = (path: string): Database.Database => {
   const db = new Database(path);
+
+  sqliteVec.load(db);
 
   db.pragma('journal_mode = WAL');
   db.pragma('synchronous = NORMAL');

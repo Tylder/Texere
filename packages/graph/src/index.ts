@@ -10,6 +10,7 @@ import {
   type EdgeDirection,
   type MinimalEdge,
 } from './edges.js';
+import { Embedder } from './embedder.js';
 import {
   getNode as getNodeImpl,
   invalidateNode as invalidateNodeImpl,
@@ -27,7 +28,7 @@ import {
   type ReplaceNodeInput,
   type ReplaceNodeOptions,
 } from './replace-node.js';
-import { search as searchImpl } from './search.js';
+import { detectSearchMode, search as searchImpl } from './search.js';
 import {
   about as aboutImpl,
   stats as statsImpl,
@@ -45,25 +46,24 @@ import {
   type Edge,
   type Node,
   type NodeTag,
+  type SearchMode,
   type SearchOptions,
   type SearchResult,
   type TraverseOptions,
 } from './types.js';
 
 /**
- * TextereDB - Main database class for the Texere graph library
+ * Texere - Main database class for the Texere graph library
  *
  * Provides a high-level API for managing nodes, edges, search, and traversal operations.
  */
-export class TextereDB {
+export class Texere {
   private db: Database.Database;
+  private embedder: Embedder;
 
-  /**
-   * Creates a new TextereDB instance
-   * @param dbPath - Path to the database file (use ':memory:' for in-memory database)
-   */
   constructor(dbPath: string) {
     this.db = createDatabase(dbPath);
+    this.embedder = new Embedder(this.db);
   }
 
   storeNode(
@@ -77,8 +77,11 @@ export class TextereDB {
     input: StoreNodeInput | StoreNodeInput[],
     options?: StoreNodeOptions,
   ): StoreNodeResult | MinimalNode | Node[] | MinimalNode[] {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-    return (storeNodeImpl as any)(this.db, input, options);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const result = (storeNodeImpl as any)(this.db, input, options);
+    this.embedder.schedulePending();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return result;
   }
 
   /**
@@ -106,8 +109,11 @@ export class TextereDB {
     options: ReplaceNodeOptions & { minimal: true },
   ): MinimalNode;
   replaceNode(input: ReplaceNodeInput, options?: ReplaceNodeOptions): Node | MinimalNode {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-    return (replaceNodeImpl as any)(this.db, input, options);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const result = (replaceNodeImpl as any)(this.db, input, options);
+    this.embedder.schedulePending();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return result;
   }
 
   createEdge(input: CreateEdgeInput, options?: CreateEdgeOptions & { minimal?: false }): Edge;
@@ -144,12 +150,16 @@ export class TextereDB {
     return getEdgesForNodeImpl(this.db, nodeId, direction);
   }
 
-  /**
-   * Search for nodes using full-text search
-   * @param options - Search options
-   * @returns Array of matching nodes
-   */
-  search(options: SearchOptions): SearchResult[] {
+  async search(options: SearchOptions): Promise<SearchResult[]> {
+    const mode =
+      options.mode && options.mode !== 'auto' ? options.mode : detectSearchMode(options.query);
+
+    if (mode === 'semantic' || mode === 'hybrid') {
+      await this.embedder.flushPending();
+      const queryEmbedding = await this.embedder.embed(options.query);
+      return searchImpl(this.db, options, queryEmbedding);
+    }
+
     return searchImpl(this.db, options);
   }
 
@@ -167,7 +177,16 @@ export class TextereDB {
    * @param options - Combined search and traversal options
    * @returns Array of traverse results with depth information
    */
-  about(options: AboutOptions): TraverseResult[] {
+  async about(options: AboutOptions): Promise<TraverseResult[]> {
+    const mode =
+      options.mode && options.mode !== 'auto' ? options.mode : detectSearchMode(options.query);
+
+    if (mode === 'semantic' || mode === 'hybrid') {
+      await this.embedder.flushPending();
+      const queryEmbedding = await this.embedder.embed(options.query);
+      return aboutImpl(this.db, options, queryEmbedding);
+    }
+
     return aboutImpl(this.db, options);
   }
 
@@ -179,10 +198,8 @@ export class TextereDB {
     return statsImpl(this.db);
   }
 
-  /**
-   * Close the database connection
-   */
   close(): void {
+    this.embedder.destroy();
     this.db.close();
   }
 }
@@ -203,6 +220,7 @@ export type {
   CreateEdgeOptions,
   MinimalEdge,
   EdgeDirection,
+  SearchMode,
   SearchOptions,
   SearchResult,
   TraverseOptions,

@@ -1,7 +1,9 @@
 import type Database from 'better-sqlite3';
 
 import { search } from './search.js';
-import type { EdgeType, Node, SearchOptions, TraverseOptions } from './types.js';
+import type { AboutOptions, EdgeType, Node, SearchOptions, TraverseOptions } from './types.js';
+
+export type { AboutOptions } from './types.js';
 
 type TraverseRow = Node & { depth: number };
 
@@ -9,11 +11,6 @@ export interface TraverseResult {
   node: Node;
   depth: number;
 }
-
-export interface AboutOptions
-  extends
-    Pick<SearchOptions, 'query' | 'type' | 'tags' | 'tagMode' | 'minImportance' | 'limit' | 'role'>,
-    Omit<TraverseOptions, 'startId'> {}
 
 export interface Stats {
   nodes: {
@@ -80,7 +77,6 @@ const buildWalkSql = (
         n.confidence,
         n.created_at,
         n.invalidated_at,
-        n.embedding,
         MIN(gw.depth) AS depth
       FROM graph_walk gw
       JOIN nodes n ON n.id = gw.node_id
@@ -94,8 +90,7 @@ const buildWalkSql = (
         n.importance,
         n.confidence,
         n.created_at,
-        n.invalidated_at,
-        n.embedding
+        n.invalidated_at
       ORDER BY depth ASC, n.created_at ASC
     `;
   }
@@ -141,7 +136,6 @@ const buildWalkSql = (
         n.confidence,
         n.created_at,
         n.invalidated_at,
-        n.embedding,
         MIN(gw.depth) AS depth
       FROM graph_walk gw
       JOIN nodes n ON n.id = gw.node_id
@@ -155,8 +149,7 @@ const buildWalkSql = (
         n.importance,
         n.confidence,
         n.created_at,
-        n.invalidated_at,
-        n.embedding
+        n.invalidated_at
       ORDER BY depth ASC, n.created_at ASC
     `;
   }
@@ -186,7 +179,6 @@ const buildWalkSql = (
       n.confidence,
       n.created_at,
       n.invalidated_at,
-      n.embedding,
       MIN(gw.depth) AS depth
     FROM graph_walk gw
     JOIN nodes n ON n.id = gw.node_id
@@ -200,8 +192,7 @@ const buildWalkSql = (
       n.importance,
       n.confidence,
       n.created_at,
-      n.invalidated_at,
-      n.embedding
+      n.invalidated_at
     ORDER BY depth ASC, n.created_at ASC
   `;
 };
@@ -228,7 +219,11 @@ export const traverse = (db: Database.Database, options: TraverseOptions): Trave
   return toResults(rows);
 };
 
-export const about = (db: Database.Database, options: AboutOptions): TraverseResult[] => {
+export const about = (
+  db: Database.Database,
+  options: AboutOptions,
+  queryEmbedding?: Float32Array,
+): TraverseResult[] => {
   const searchOptions: SearchOptions = { query: options.query };
   if (options.type !== undefined) {
     searchOptions.type = options.type;
@@ -248,8 +243,11 @@ export const about = (db: Database.Database, options: AboutOptions): TraverseRes
   if (options.role !== undefined) {
     searchOptions.role = options.role;
   }
+  if (options.mode !== undefined) {
+    searchOptions.mode = options.mode;
+  }
 
-  const seeds = search(db, searchOptions);
+  const seeds = search(db, searchOptions, queryEmbedding);
 
   if (seeds.length === 0) {
     return [];
