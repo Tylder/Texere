@@ -100,7 +100,7 @@ style", meta/system = "Graph initialized 2026-02-14"
 
 ### 1. texere_store_node
 
-Create immutable node(s). Supports batch (max 50), minimal mode, auto-creates ANCHORED_TO edges.
+Create a single immutable node with optional anchors. Auto-creates ANCHORED_TO edges.
 
 **Arguments:**
 
@@ -111,17 +111,13 @@ Create immutable node(s). Supports batch (max 50), minimal mode, auto-creates AN
 - `tags`: string[] (optional) — Array of tag strings
 - `importance`: number (optional, default: 0.5) — 0.0–1.0, how critical
 - `confidence`: number (optional, default: 0.8) — 0.0–1.0, how certain
-
 - `status`: NodeStatus (optional, default: "active") — "proposed" | "active" | "deprecated" |
   "invalidated"
 - `scope`: NodeScope (optional, default: "project") — "project" | "module" | "file" | "session"
 - `anchor_to`: string[] (optional) — File paths (creates ANCHORED_TO edges)
 - `minimal`: boolean (optional, default: false) — Return only `{ id }` instead of full node
 
-**Batch input:** Array of node objects (max 50, atomic). Omit `minimal` for batch.
-
-**Returns:** `{ node: { id, type, role, ... } }` or `{ nodes: [...] }` for batch or
-`{ node: { id } }` for minimal.
+**Returns:** `{ node: { id, type, role, ... } }` or `{ node: { id } }` for minimal.
 
 **Example:**
 
@@ -139,7 +135,31 @@ Create immutable node(s). Supports batch (max 50), minimal mode, auto-creates AN
 
 ---
 
-### 2. texere_get_node
+### 2. texere_store_nodes
+
+Create multiple immutable nodes atomically (max 50).
+
+**Arguments:**
+
+- `nodes`: array (required) — Array of node objects (same fields as texere_store_node, max 50)
+- `minimal`: boolean (optional, default: false) — Return only `{ id }` per node
+
+**Returns:** `{ nodes: [{ id, type, role, ... }, ...] }`
+
+**Example:**
+
+```json
+{
+  "nodes": [
+    { "type": "action", "role": "task", "title": "Task A", "content": "..." },
+    { "type": "action", "role": "task", "title": "Task B", "content": "..." }
+  ]
+}
+```
+
+---
+
+### 3. texere_get_node
 
 Read node by ID with optional edges.
 
@@ -158,7 +178,7 @@ Read node by ID with optional edges.
 
 ---
 
-### 3. texere_invalidate_node
+### 4. texere_invalidate_node
 
 Mark node as invalidated (soft delete). Use when knowledge is wrong with no replacement.
 
@@ -176,7 +196,7 @@ Mark node as invalidated (soft delete). Use when knowledge is wrong with no repl
 
 ---
 
-### 4. texere_replace_node
+### 5. texere_replace_node
 
 Atomically replace node: create new node, create REPLACES edge, invalidate old node.
 
@@ -215,30 +235,46 @@ Atomically replace node: create new node, create REPLACES edge, invalidate old n
 
 ---
 
-### 5. texere_create_edge
+### 6. texere_create_edge
 
-Create edge(s) between nodes. Supports batch (max 50, atomic). REPLACES auto-invalidates source.
+Create a single edge between two nodes. REPLACES auto-invalidates source.
 
 **Arguments:**
 
-- `edges`: EdgeInput | EdgeInput[] (required) — Single edge or array (max 50)
-  - `source_id`: string (required) — Source node ID
-  - `target_id`: string (required) — Target node ID
-  - `type`: EdgeType (required) — One of 16 edge types (see table above)
-  - `strength`: number (optional, default: 0.5) — 0.0–1.0
-  - `confidence`: number (optional, default: 0.8) — 0.0–1.0
+- `source_id`: string (required) — Source node ID
+- `target_id`: string (required) — Target node ID
+- `type`: EdgeType (required) — One of 16 edge types (see table above)
+- `strength`: number (optional, default: 0.5) — 0.0–1.0
+- `confidence`: number (optional, default: 0.8) — 0.0–1.0
 - `minimal`: boolean (optional, default: false) — Return only `{ id }`
 
-**Returns:** `{ edge: { id, ... } }` or `{ edges: [...] }` for batch or `{ edge: { id } }` for
-minimal
+**Returns:** `{ edge: { id, ... } }` or `{ edge: { id } }` for minimal
 
 **Example:**
 
 ```json
-{ "edges": { "source_id": "sol789", "target_id": "prob456", "type": "RESOLVES", "strength": 0.9 } }
+{ "source_id": "sol789", "target_id": "prob456", "type": "RESOLVES", "strength": 0.9 }
 ```
 
-**Batch example:**
+---
+
+### 7. texere_create_edges
+
+Create multiple edges atomically (max 50). REPLACES auto-invalidates source.
+
+**Arguments:**
+
+- `edges`: array (required) — Array of edge objects (max 50)
+  - `source_id`: string (required) — Source node ID
+  - `target_id`: string (required) — Target node ID
+  - `type`: EdgeType (required) — One of 16 edge types
+  - `strength`: number (optional, default: 0.5) — 0.0–1.0
+  - `confidence`: number (optional, default: 0.8) — 0.0–1.0
+- `minimal`: boolean (optional, default: false) — Return only `{ id }` per edge
+
+**Returns:** `{ edges: [{ id, ... }, ...] }`
+
+**Example:**
 
 ```json
 {
@@ -251,7 +287,7 @@ minimal
 
 ---
 
-### 6. texere_delete_edge
+### 8. texere_delete_edge
 
 Hard-delete edge by ID.
 
@@ -269,7 +305,7 @@ Hard-delete edge by ID.
 
 ---
 
-### 7. texere_search
+### 9. texere_search
 
 FTS5 full-text search with BM25 ranking, type/role/tag/importance filters. Returns match quality and
 relationships.
@@ -314,7 +350,7 @@ relationships.
 
 ---
 
-### 8. texere_traverse
+### 10. texere_traverse
 
 Recursive graph traversal from start node. Max depth 5.
 
@@ -342,7 +378,7 @@ Recursive graph traversal from start node. Max depth 5.
 
 ---
 
-### 9. texere_about
+### 11. texere_about
 
 Compound query: FTS5 search finds seeds, then traverse their neighborhood.
 
@@ -369,7 +405,7 @@ Compound query: FTS5 search finds seeds, then traverse their neighborhood.
 
 ---
 
-### 10. texere_stats
+### 12. texere_stats
 
 Get node/edge counts by type and role. Quick health check.
 

@@ -12,51 +12,15 @@ const serverInfo = {
   version: '0.0.0',
 };
 
-const normalizeInputSchema = (schema: unknown, isRoot = true): unknown => {
-  if (typeof schema !== 'object' || schema === null) {
-    return schema;
-  }
-
-  const obj = schema as Record<string, unknown>;
-  const result: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(obj)) {
-    if (key === 'properties' && typeof value === 'object' && value !== null) {
-      const props = value as Record<string, unknown>;
-      result[key] = Object.fromEntries(
-        Object.entries(props).map(([propKey, propValue]) => [
-          propKey,
-          normalizeInputSchema(propValue, false),
-        ]),
-      );
-    } else if (key === 'anyOf' && Array.isArray(value)) {
-      result[key] = value.map((item) => normalizeInputSchema(item, false));
-    } else if (key === 'items') {
-      result[key] = normalizeInputSchema(value, false);
-    } else if (key === 'additionalProperties' && typeof value === 'object') {
-      result[key] = normalizeInputSchema(value, false);
-    } else {
-      result[key] = value;
-    }
-  }
-
-  if (isRoot && result['type'] !== 'object' && Array.isArray(result['anyOf'])) {
-    result['type'] = 'object';
-  }
-
-  return result;
-};
-
 const listTools = (): {
   tools: Array<{ name: string; description: string; inputSchema: unknown }>;
 } => ({
   tools: TOOL_DEFINITIONS.map((definition) => {
     const jsonSchema = z.toJSONSchema(definition.inputSchema);
-    const inputSchema = normalizeInputSchema(jsonSchema);
     return {
       name: definition.name,
       description: definition.description,
-      inputSchema,
+      inputSchema: jsonSchema,
     };
   }),
 });

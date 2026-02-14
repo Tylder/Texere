@@ -7,10 +7,12 @@ import { TOOL_DEFINITIONS } from './tools/index.js';
 
 const TOOL_NAMES = [
   'texere_store_node',
+  'texere_store_nodes',
   'texere_get_node',
   'texere_invalidate_node',
   'texere_replace_node',
   'texere_create_edge',
+  'texere_create_edges',
   'texere_delete_edge',
   'texere_search',
   'texere_traverse',
@@ -31,13 +33,13 @@ describe('Texere MCP tools', () => {
     db.close();
   });
 
-  it('registers exactly 10 tools', () => {
+  it('registers exactly 12 tools', () => {
     expect(mcp.toolNames).toEqual(TOOL_NAMES);
-    expect(mcp.toolNames).toHaveLength(10);
+    expect(mcp.toolNames).toHaveLength(12);
   });
 
   it('exposes zod input schema for each tool', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(10);
+    expect(TOOL_DEFINITIONS).toHaveLength(12);
 
     for (const definition of TOOL_DEFINITIONS) {
       expect(typeof definition.inputSchema.safeParse).toBe('function');
@@ -144,11 +146,9 @@ describe('Texere MCP tools', () => {
     const targetId = (newNode.structuredContent as any).node.id as string;
 
     const edgeResult = await mcp.callTool('texere_create_edge', {
-      edges: {
-        source_id: sourceId,
-        target_id: targetId,
-        type: EdgeType.Replaces,
-      },
+      source_id: sourceId,
+      target_id: targetId,
+      type: EdgeType.Replaces,
     });
 
     expect(edgeResult.isError).toBeUndefined();
@@ -179,11 +179,9 @@ describe('Texere MCP tools', () => {
     });
 
     const edge = await mcp.callTool('texere_create_edge', {
-      edges: {
-        source_id: (source.structuredContent as any).node.id,
-        target_id: (target.structuredContent as any).node.id,
-        type: EdgeType.Extends,
-      },
+      source_id: (source.structuredContent as any).node.id,
+      target_id: (target.structuredContent as any).node.id,
+      type: EdgeType.Extends,
     });
 
     const deleted = await mcp.callTool('texere_delete_edge', {
@@ -233,11 +231,9 @@ describe('Texere MCP tools', () => {
     const neighborId = (neighbor.structuredContent as any).node.id as string;
 
     await mcp.callTool('texere_create_edge', {
-      edges: {
-        source_id: startId,
-        target_id: neighborId,
-        type: EdgeType.Resolves,
-      },
+      source_id: startId,
+      target_id: neighborId,
+      type: EdgeType.Resolves,
     });
 
     const traversed = await mcp.callTool('texere_traverse', {
@@ -266,11 +262,9 @@ describe('Texere MCP tools', () => {
     });
 
     await mcp.callTool('texere_create_edge', {
-      edges: {
-        source_id: (fix.structuredContent as any).node.id,
-        target_id: (problem.structuredContent as any).node.id,
-        type: EdgeType.Resolves,
-      },
+      source_id: (fix.structuredContent as any).node.id,
+      target_id: (problem.structuredContent as any).node.id,
+      type: EdgeType.Resolves,
     });
 
     const result = await mcp.callTool('texere_about', {
@@ -344,14 +338,63 @@ describe('Texere MCP tools', () => {
 
     for (let i = 0; i < edgeTypes.length; i++) {
       const result = await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: ids[i],
-          target_id: ids[i + 1],
-          type: edgeTypes[i],
-        },
+        source_id: ids[i],
+        target_id: ids[i + 1],
+        type: edgeTypes[i],
       });
       expect(result.isError).toBeUndefined();
       expect((result.structuredContent as any).edge.type).toBe(edgeTypes[i]);
     }
+  });
+
+  it('texere_store_nodes batch creates multiple nodes', async () => {
+    const result = await mcp.callTool('texere_store_nodes', {
+      nodes: [
+        { type: NodeType.Action, role: NodeRole.Task, title: 'Batch A', content: 'A' },
+        { type: NodeType.Action, role: NodeRole.Task, title: 'Batch B', content: 'B' },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    const nodes = (result.structuredContent as any).nodes;
+    expect(nodes).toHaveLength(2);
+    expect(nodes[0].title).toBe('Batch A');
+    expect(nodes[1].title).toBe('Batch B');
+  });
+
+  it('texere_create_edges batch creates multiple edges', async () => {
+    const nodeA = await mcp.callTool('texere_store_node', {
+      type: NodeType.Action,
+      role: NodeRole.Task,
+      title: 'A',
+      content: 'A',
+    });
+    const nodeB = await mcp.callTool('texere_store_node', {
+      type: NodeType.Action,
+      role: NodeRole.Task,
+      title: 'B',
+      content: 'B',
+    });
+    const nodeC = await mcp.callTool('texere_store_node', {
+      type: NodeType.Action,
+      role: NodeRole.Task,
+      title: 'C',
+      content: 'C',
+    });
+
+    const idA = (nodeA.structuredContent as any).node.id as string;
+    const idB = (nodeB.structuredContent as any).node.id as string;
+    const idC = (nodeC.structuredContent as any).node.id as string;
+
+    const result = await mcp.callTool('texere_create_edges', {
+      edges: [
+        { source_id: idA, target_id: idB, type: EdgeType.DependsOn },
+        { source_id: idB, target_id: idC, type: EdgeType.DependsOn },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    const edges = (result.structuredContent as any).edges;
+    expect(edges).toHaveLength(2);
   });
 });

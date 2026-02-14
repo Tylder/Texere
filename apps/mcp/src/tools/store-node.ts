@@ -5,7 +5,7 @@ import { NodeRole, NodeScope, NodeStatus, NodeType, type StoreNodeInput } from '
 import { ok } from './helpers.js';
 import type { ToolDefinition } from './types.js';
 
-const singleNodeSchema = z.object({
+const nodeSchema = z.object({
   type: z.nativeEnum(NodeType),
   role: z.nativeEnum(NodeRole),
   title: z.string().min(1),
@@ -18,12 +18,16 @@ const singleNodeSchema = z.object({
   anchor_to: z.array(z.string().min(1)).optional(),
 });
 
-const inputSchema = z.union([
-  singleNodeSchema.extend({ minimal: z.boolean().optional() }),
-  z.array(singleNodeSchema).min(1).max(50),
-]);
+const singleInputSchema = nodeSchema.extend({
+  minimal: z.boolean().optional(),
+});
 
-const toNodeInput = (item: z.infer<typeof singleNodeSchema>): StoreNodeInput => {
+const batchInputSchema = z.object({
+  nodes: z.array(nodeSchema).min(1).max(50),
+  minimal: z.boolean().optional(),
+});
+
+const toNodeInput = (item: z.infer<typeof nodeSchema>): StoreNodeInput => {
   const nodeInput: StoreNodeInput = {
     type: item.type,
     role: item.role,
@@ -41,20 +45,25 @@ const toNodeInput = (item: z.infer<typeof singleNodeSchema>): StoreNodeInput => 
   return nodeInput;
 };
 
-export const storeNodeTool: ToolDefinition<typeof inputSchema> = {
+export const storeNodeTool: ToolDefinition<typeof singleInputSchema> = {
   name: 'texere_store_node',
-  description: 'Create immutable node and optional anchors.',
-  inputSchema,
+  description: 'Create a single immutable node with optional anchors.',
+  inputSchema: singleInputSchema,
   execute: ({ db }, input) => {
-    if (Array.isArray(input)) {
-      const nodeInputs = input.map(toNodeInput);
-      const nodes = db.storeNode(nodeInputs);
-      return ok({ nodes } as unknown as Record<string, unknown>);
-    }
-
     const nodeInput = toNodeInput(input);
     const minimal = input.minimal ?? false;
     const result = minimal ? db.storeNode(nodeInput, { minimal: true }) : db.storeNode(nodeInput);
     return ok({ node: result } as unknown as Record<string, unknown>);
+  },
+};
+
+export const storeNodesTool: ToolDefinition<typeof batchInputSchema> = {
+  name: 'texere_store_nodes',
+  description: 'Create multiple immutable nodes atomically (max 50).',
+  inputSchema: batchInputSchema,
+  execute: ({ db }, input) => {
+    const nodeInputs = input.nodes.map(toNodeInput);
+    const nodes = db.storeNode(nodeInputs);
+    return ok({ nodes } as unknown as Record<string, unknown>);
   },
 };

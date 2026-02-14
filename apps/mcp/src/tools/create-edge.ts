@@ -5,7 +5,7 @@ import { EdgeType } from '@texere/graph';
 import { ok } from './helpers.js';
 import type { ToolDefinition } from './types.js';
 
-const edgeInputSchema = z.object({
+const edgeSchema = z.object({
   source_id: z.string().min(1),
   target_id: z.string().min(1),
   type: z.nativeEnum(EdgeType),
@@ -13,30 +13,36 @@ const edgeInputSchema = z.object({
   confidence: z.number().min(0).max(1).optional(),
 });
 
-const inputSchema = z.object({
-  edges: z.union([edgeInputSchema, z.array(edgeInputSchema).min(1).max(50)]),
+const singleInputSchema = edgeSchema.extend({
   minimal: z.boolean().optional(),
 });
 
-export const createEdgeTool: ToolDefinition<typeof inputSchema> = {
+const batchInputSchema = z.object({
+  edges: z.array(edgeSchema).min(1).max(50),
+  minimal: z.boolean().optional(),
+});
+
+export const createEdgeTool: ToolDefinition<typeof singleInputSchema> = {
   name: 'texere_create_edge',
-  description:
-    'Create an edge between two nodes. Accepts a single edge object or an array (max 50, atomic). Use minimal: true to return only { id }.',
-  inputSchema,
+  description: 'Create a single edge between two nodes.',
+  inputSchema: singleInputSchema,
   execute: ({ db }, input) => {
-    const isBatch = Array.isArray(input.edges);
+    const { minimal, ...edgeData } = input;
     const createEdge = db.createEdge.bind(db) as (...args: unknown[]) => unknown;
-    const raw = createEdge(
-      isBatch ? input.edges : input.edges,
-      input.minimal ? { minimal: true } : undefined,
-    );
-
-    if (isBatch) {
-      const results = raw as Array<{ id: string }>;
-      return ok({ edges: input.minimal ? results.map((e) => ({ id: e.id })) : results });
-    }
-
+    const raw = createEdge(edgeData, minimal ? { minimal: true } : undefined);
     const result = raw as { id: string };
-    return ok({ edge: input.minimal ? { id: result.id } : result });
+    return ok({ edge: minimal ? { id: result.id } : result });
+  },
+};
+
+export const createEdgesTool: ToolDefinition<typeof batchInputSchema> = {
+  name: 'texere_create_edges',
+  description: 'Create multiple edges atomically (max 50).',
+  inputSchema: batchInputSchema,
+  execute: ({ db }, input) => {
+    const createEdge = db.createEdge.bind(db) as (...args: unknown[]) => unknown;
+    const raw = createEdge(input.edges, input.minimal ? { minimal: true } : undefined);
+    const results = raw as Array<{ id: string }>;
+    return ok({ edges: input.minimal ? results.map((e) => ({ id: e.id })) : results });
   },
 };

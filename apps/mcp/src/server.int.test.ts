@@ -46,18 +46,11 @@ const listToolsViaServer = async (
   return result as { tools: Array<Record<string, unknown>> };
 };
 
-const hasObjectBranch = (schema: unknown): boolean => {
-  if (!Array.isArray(schema)) {
-    return false;
-  }
+const FORBIDDEN_SCHEMA_KEYWORDS = ['anyOf', 'oneOf', 'allOf'];
 
-  return schema.some(
-    (branch) =>
-      typeof branch === 'object' &&
-      branch !== null &&
-      !Array.isArray(branch) &&
-      (branch as { type?: unknown }).type === 'object',
-  );
+const hasTopLevelUnion = (schema: unknown): boolean => {
+  if (typeof schema !== 'object' || schema === null) return false;
+  return FORBIDDEN_SCHEMA_KEYWORDS.some((kw) => kw in (schema as Record<string, unknown>));
 };
 
 describe('MCP server integration', () => {
@@ -131,19 +124,15 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(solution),
-          target_id: getNodeId(problem),
-          type: EdgeType.Resolves,
-        },
+        source_id: getNodeId(solution),
+        target_id: getNodeId(problem),
+        type: EdgeType.Resolves,
       });
 
       await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(fix),
-          target_id: getNodeId(solution),
-          type: EdgeType.Extends,
-        },
+        source_id: getNodeId(fix),
+        target_id: getNodeId(solution),
+        type: EdgeType.Extends,
       });
 
       const searchResult = await mcp.callTool('texere_search', {
@@ -183,19 +172,15 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(root),
-          target_id: getNodeId(child),
-          type: EdgeType.DependsOn,
-        },
+        source_id: getNodeId(root),
+        target_id: getNodeId(child),
+        type: EdgeType.DependsOn,
       });
 
       await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(child),
-          target_id: getNodeId(grandchild),
-          type: EdgeType.DependsOn,
-        },
+        source_id: getNodeId(child),
+        target_id: getNodeId(grandchild),
+        type: EdgeType.DependsOn,
       });
 
       const traversed = await mcp.callTool('texere_traverse', {
@@ -239,11 +224,9 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(solution),
-          target_id: getNodeId(problem),
-          type: EdgeType.Resolves,
-        },
+        source_id: getNodeId(solution),
+        target_id: getNodeId(problem),
+        type: EdgeType.Resolves,
       });
 
       const aboutResult = await mcp.callTool('texere_about', {
@@ -290,11 +273,9 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(solution),
-          target_id: getNodeId(problem),
-          type: EdgeType.Resolves,
-        },
+        source_id: getNodeId(solution),
+        target_id: getNodeId(problem),
+        type: EdgeType.Resolves,
       });
 
       const statsResult = await mcp.callTool('texere_stats', {});
@@ -328,11 +309,9 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(oldDecision),
-          target_id: getNodeId(newDecision),
-          type: EdgeType.Replaces,
-        },
+        source_id: getNodeId(oldDecision),
+        target_id: getNodeId(newDecision),
+        type: EdgeType.Replaces,
       });
 
       const oldNode = await mcp.callTool('texere_get_node', { id: getNodeId(oldDecision) });
@@ -437,37 +416,19 @@ describe('MCP server integration', () => {
   });
 
   describe('tools/list schema regression', () => {
-    it('returns client-acceptable JSON schemas and preserves object branches in unions', async () => {
+    it('every tool has type:object at root with no top-level anyOf/oneOf/allOf', async () => {
       const listToolsResult = await listToolsViaServer(mcp);
 
       const parsed = ListToolsResultSchema.safeParse(listToolsResult);
       expect(parsed.success).toBe(true);
 
-      expect(listToolsResult.tools).toHaveLength(10);
+      expect(listToolsResult.tools).toHaveLength(12);
 
       for (const tool of listToolsResult.tools) {
-        const inputSchema = tool.inputSchema as { type?: unknown; anyOf?: unknown };
-        const hasValidRoot =
-          inputSchema.type === 'object' ||
-          (Array.isArray(inputSchema.anyOf) && inputSchema.anyOf.length > 0);
-        expect(hasValidRoot).toBe(true);
+        const inputSchema = tool.inputSchema as Record<string, unknown>;
+        expect(inputSchema.type).toBe('object');
+        expect(hasTopLevelUnion(inputSchema)).toBe(false);
       }
-
-      const storeNodeSchema = listToolsResult.tools.find(
-        (tool) => tool.name === 'texere_store_node',
-      )?.inputSchema as { anyOf?: unknown };
-      expect(hasObjectBranch(storeNodeSchema.anyOf)).toBe(true);
-
-      const createEdgeSchema = listToolsResult.tools.find(
-        (tool) => tool.name === 'texere_create_edge',
-      )?.inputSchema as {
-        properties?: {
-          edges?: {
-            anyOf?: unknown;
-          };
-        };
-      };
-      expect(hasObjectBranch(createEdgeSchema.properties?.edges?.anyOf)).toBe(true);
     });
   });
 
@@ -492,11 +453,9 @@ describe('MCP server integration', () => {
       expect(finding.isError).toBeUndefined();
 
       const edgeResult = await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(finding),
-          target_id: getNodeId(source),
-          type: EdgeType.BasedOn,
-        },
+        source_id: getNodeId(finding),
+        target_id: getNodeId(source),
+        type: EdgeType.BasedOn,
       });
       expect(edgeResult.isError).toBeUndefined();
 
@@ -550,19 +509,15 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(router),
-          target_id: getNodeId(framework),
-          type: EdgeType.IsA,
-        },
+        source_id: getNodeId(router),
+        target_id: getNodeId(framework),
+        type: EdgeType.IsA,
       });
 
       await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(hono),
-          target_id: getNodeId(router),
-          type: EdgeType.About,
-        },
+        source_id: getNodeId(hono),
+        target_id: getNodeId(router),
+        type: EdgeType.About,
       });
 
       const traversed = await mcp.callTool('texere_traverse', {
@@ -605,11 +560,9 @@ describe('MCP server integration', () => {
       });
 
       const edgeResult = await mcp.callTool('texere_create_edge', {
-        edges: {
-          source_id: getNodeId(nodeA),
-          target_id: getNodeId(nodeB),
-          type: EdgeType.RelatedTo,
-        },
+        source_id: getNodeId(nodeA),
+        target_id: getNodeId(nodeB),
+        type: EdgeType.RelatedTo,
       });
       expect(edgeResult.isError).toBeUndefined();
 
@@ -726,24 +679,16 @@ describe('MCP server integration', () => {
       expect(initResponse.result.serverInfo).toBeDefined();
 
       expect(toolsResponse).toBeDefined();
-      expect(toolsResponse.result.tools).toHaveLength(10);
+      expect(toolsResponse.result.tools).toHaveLength(12);
 
       for (const tool of toolsResponse.result.tools as Array<Record<string, unknown>>) {
         expect(typeof tool.name).toBe('string');
         expect(typeof tool.inputSchema).toBe('object');
 
-        const schema = tool.inputSchema as { type?: string; anyOf?: unknown[] };
-        const hasValidRoot =
-          schema.type === 'object' || (Array.isArray(schema.anyOf) && schema.anyOf.length > 0);
-        expect(hasValidRoot).toBe(true);
+        const schema = tool.inputSchema as Record<string, unknown>;
+        expect(schema.type).toBe('object');
+        expect(hasTopLevelUnion(schema)).toBe(false);
       }
-
-      const storeNodeTool = (toolsResponse.result.tools as Array<Record<string, unknown>>).find(
-        (t) => t.name === 'texere_store_node',
-      );
-      expect(hasObjectBranch((storeNodeTool?.inputSchema as { anyOf?: unknown })?.anyOf)).toBe(
-        true,
-      );
     });
   });
 });
