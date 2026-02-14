@@ -8,33 +8,36 @@ export enum NodeType {
   Meta = 'meta',
 }
 
-// Node roles (20 values) - constrained by type
+// Node roles (23 values) - constrained by type
 export enum NodeRole {
-  // Knowledge roles (6)
-  Decision = 'decision',
-  Requirement = 'requirement',
+  // Knowledge roles (7)
   Constraint = 'constraint',
-  Principle = 'principle',
+  Decision = 'decision',
   Finding = 'finding',
+  Pitfall = 'pitfall',
+  Principle = 'principle',
+  Requirement = 'requirement',
   Research = 'research',
 
   // Issue roles (2)
-  Problem = 'problem',
   Error = 'error',
+  Problem = 'problem',
 
   // Action roles (5)
-  Task = 'task',
-  Solution = 'solution',
-  Fix = 'fix',
-  Workflow = 'workflow',
   Command = 'command',
+  Fix = 'fix',
+  Solution = 'solution',
+  Task = 'task',
+  Workflow = 'workflow',
 
-  // Artifact roles (5)
-  Example = 'example',
+  // Artifact roles (7)
   CodePattern = 'code_pattern',
-  Technology = 'technology',
-  Project = 'project',
+  Concept = 'concept',
+  Example = 'example',
   FileContext = 'file_context',
+  Project = 'project',
+  Source = 'source',
+  Technology = 'technology',
 
   // Context roles (1)
   Conversation = 'conversation',
@@ -43,7 +46,7 @@ export enum NodeRole {
   System = 'system',
 }
 
-// Facet enums
+/** @deprecated Use artifact/source nodes instead of the source enum. Will be removed in v2.0. */
 export enum NodeSource {
   Internal = 'internal',
   External = 'external',
@@ -63,46 +66,53 @@ export enum NodeScope {
   Session = 'session',
 }
 
-// Edge types (12 values)
+// Edge types (16 values)
 export enum EdgeType {
-  Resolves = 'RESOLVES',
+  About = 'ABOUT',
+  AlternativeTo = 'ALTERNATIVE_TO',
+  AnchoredTo = 'ANCHORED_TO',
+  BasedOn = 'BASED_ON',
   Causes = 'CAUSES',
-  DependsOn = 'DEPENDS_ON',
-  Extends = 'EXTENDS',
   Constrains = 'CONSTRAINS',
   Contradicts = 'CONTRADICTS',
-  Replaces = 'REPLACES',
-  AnchoredTo = 'ANCHORED_TO',
-  AlternativeTo = 'ALTERNATIVE_TO',
+  DependsOn = 'DEPENDS_ON',
   ExampleOf = 'EXAMPLE_OF',
-  Supports = 'SUPPORTS',
+  Extends = 'EXTENDS',
+  IsA = 'IS_A',
   PartOf = 'PART_OF',
+  RelatedTo = 'RELATED_TO',
+  Replaces = 'REPLACES',
+  Resolves = 'RESOLVES',
+  Supports = 'SUPPORTS',
 }
 
 // Type-role constraint matrix
 export const VALID_ROLES_BY_TYPE: Record<NodeType, NodeRole[]> = {
   [NodeType.Knowledge]: [
-    NodeRole.Decision,
-    NodeRole.Requirement,
     NodeRole.Constraint,
-    NodeRole.Principle,
+    NodeRole.Decision,
     NodeRole.Finding,
+    NodeRole.Pitfall,
+    NodeRole.Principle,
+    NodeRole.Requirement,
     NodeRole.Research,
   ],
-  [NodeType.Issue]: [NodeRole.Problem, NodeRole.Error],
+  [NodeType.Issue]: [NodeRole.Error, NodeRole.Problem],
   [NodeType.Action]: [
-    NodeRole.Task,
-    NodeRole.Solution,
-    NodeRole.Fix,
-    NodeRole.Workflow,
     NodeRole.Command,
+    NodeRole.Fix,
+    NodeRole.Solution,
+    NodeRole.Task,
+    NodeRole.Workflow,
   ],
   [NodeType.Artifact]: [
-    NodeRole.Example,
     NodeRole.CodePattern,
-    NodeRole.Technology,
-    NodeRole.Project,
+    NodeRole.Concept,
+    NodeRole.Example,
     NodeRole.FileContext,
+    NodeRole.Project,
+    NodeRole.Source,
+    NodeRole.Technology,
   ],
   [NodeType.Context]: [NodeRole.Conversation],
   [NodeType.Meta]: [NodeRole.System],

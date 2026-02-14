@@ -7,12 +7,25 @@ describe('graph types', () => {
     expect(Object.values(NodeType)).toHaveLength(6);
   });
 
-  it('has exactly 20 node roles', () => {
-    expect(Object.values(NodeRole)).toHaveLength(20);
+  it('has exactly 23 node roles', () => {
+    expect(Object.values(NodeRole)).toHaveLength(23);
   });
 
-  it('has exactly 12 edge types', () => {
-    expect(Object.values(EdgeType)).toHaveLength(12);
+  it('has exactly 16 edge types', () => {
+    expect(Object.values(EdgeType)).toHaveLength(16);
+  });
+
+  it('has new v1.2 node roles', () => {
+    expect(NodeRole.Source).toBe('source');
+    expect(NodeRole.Concept).toBe('concept');
+    expect(NodeRole.Pitfall).toBe('pitfall');
+  });
+
+  it('has new v1.2 edge types', () => {
+    expect(EdgeType.BasedOn).toBe('BASED_ON');
+    expect(EdgeType.RelatedTo).toBe('RELATED_TO');
+    expect(EdgeType.About).toBe('ABOUT');
+    expect(EdgeType.IsA).toBe('IS_A');
   });
 
   describe('type-role constraint matrix', () => {
@@ -20,8 +33,8 @@ describe('graph types', () => {
       expect(Object.keys(VALID_ROLES_BY_TYPE)).toHaveLength(6);
     });
 
-    it('knowledge type has 6 valid roles', () => {
-      expect(VALID_ROLES_BY_TYPE[NodeType.Knowledge]).toHaveLength(6);
+    it('knowledge type has 7 valid roles', () => {
+      expect(VALID_ROLES_BY_TYPE[NodeType.Knowledge]).toHaveLength(7);
     });
 
     it('issue type has 2 valid roles', () => {
@@ -32,8 +45,8 @@ describe('graph types', () => {
       expect(VALID_ROLES_BY_TYPE[NodeType.Action]).toHaveLength(5);
     });
 
-    it('artifact type has 5 valid roles', () => {
-      expect(VALID_ROLES_BY_TYPE[NodeType.Artifact]).toHaveLength(5);
+    it('artifact type has 7 valid roles', () => {
+      expect(VALID_ROLES_BY_TYPE[NodeType.Artifact]).toHaveLength(7);
     });
 
     it('context type has 1 valid role', () => {
@@ -52,6 +65,7 @@ describe('graph types', () => {
       expect(isValidTypeRole(NodeType.Knowledge, NodeRole.Constraint)).toBe(true);
       expect(isValidTypeRole(NodeType.Knowledge, NodeRole.Principle)).toBe(true);
       expect(isValidTypeRole(NodeType.Knowledge, NodeRole.Finding)).toBe(true);
+      expect(isValidTypeRole(NodeType.Knowledge, NodeRole.Pitfall)).toBe(true);
       expect(isValidTypeRole(NodeType.Knowledge, NodeRole.Research)).toBe(true);
     });
 
@@ -69,11 +83,13 @@ describe('graph types', () => {
     });
 
     it('accepts valid artifact type-role pairs', () => {
-      expect(isValidTypeRole(NodeType.Artifact, NodeRole.Example)).toBe(true);
       expect(isValidTypeRole(NodeType.Artifact, NodeRole.CodePattern)).toBe(true);
-      expect(isValidTypeRole(NodeType.Artifact, NodeRole.Technology)).toBe(true);
-      expect(isValidTypeRole(NodeType.Artifact, NodeRole.Project)).toBe(true);
+      expect(isValidTypeRole(NodeType.Artifact, NodeRole.Concept)).toBe(true);
+      expect(isValidTypeRole(NodeType.Artifact, NodeRole.Example)).toBe(true);
       expect(isValidTypeRole(NodeType.Artifact, NodeRole.FileContext)).toBe(true);
+      expect(isValidTypeRole(NodeType.Artifact, NodeRole.Project)).toBe(true);
+      expect(isValidTypeRole(NodeType.Artifact, NodeRole.Source)).toBe(true);
+      expect(isValidTypeRole(NodeType.Artifact, NodeRole.Technology)).toBe(true);
     });
 
     it('accepts valid context type-role pairs', () => {
