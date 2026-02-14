@@ -1,169 +1,140 @@
 ---
 name: texere
 description:
-  Persistent knowledge graph for LLM agents - store typed nodes (decisions, problems, solutions)
-  with semantic edges (SOLVES, REQUIRES, ANCHORED_TO). Use for cross-session memory, linking
-  solutions to problems, anchoring to code, deprecation tracking.
-license: MIT
+  Persistent knowledge graph for LLM agents - store typed nodes (type+role pairs like
+  knowledge/decision) with semantic edges (RESOLVES, DEPENDS_ON, ANCHORED_TO). Use for cross-session
+  memory, linking solutions to problems, anchoring to code, deprecation tracking.
 compatibility: opencode
-metadata:
-  author: dan
-  category: knowledge-management
 ---
 
-# Texere: LLM Quick Reference Guide
+# Texere: LLM Agent Knowledge Graph
 
-## What is Texere?
+Persistent, immutable knowledge graph with typed nodes and semantic edges. Survives sessions. Use
+when: (1) preserve decisions/requirements across sessions, (2) link solutions to problems, (3)
+anchor knowledge to code, (4) track deprecation, (5) build queryable project knowledge.
 
-Texere is a **persistent knowledge graph for LLM coding agents**, designed to store and retrieve
-structured knowledge across sessions. Unlike conversation memory (ephemeral, session-bound) or file
-systems (unstructured, no semantic relationships), Texere provides immutable, semantically-typed
-nodes connected by meaningful edges. Use Texere when you need to: (1) preserve decisions,
-requirements, or constraints across sessions, (2) link solutions to problems they solve, (3) anchor
-knowledge to specific code locations, (4) track what's been deprecated or replaced, or (5) build a
-queryable web of project knowledge that survives beyond a single conversation.
+## Mandatory Workflow: Search Before Creating
 
----
+**ALWAYS search before creating nodes.** Creating without searching = duplicates, missed
+connections, graph degradation.
 
-## Required Workflow: Search Before Creating
+**Required steps:**
 
-**You MUST search the graph before creating any node.** Creating nodes without first understanding
-existing state leads to duplicates, missed connections, and graph degradation.
+1. **Search first**: `texere_search` or `texere_about` with terms from intended node title/tags
+2. **Review results**: Check for (a) duplicates → use existing, (b) outdated versions → use
+   `texere_replace_node`, (c) related nodes → note IDs for edges
+3. **Create node**: `texere_store_node` only after reviewing search results
+4. **Create edges immediately**: Link new node to related nodes from step 2
 
-**Mandatory workflow for every node creation:**
+**Why**: Graph value = connections. Searching first prevents duplicates, identifies deprecation
+opportunities, discovers edge candidates.
 
-1. **Search first** using `texere_search` or `texere_about` with terms from your intended node's
-   title and tags
-2. **Review results** for three critical questions:
-   - **Duplicates**: Does an equivalent node already exist? → Use it, don't duplicate
-   - **Deprecation**: Does an outdated version exist? → Create new node, then link with
-     `DEPRECATED_BY` edge to invalidate the old one
-   - **Connections**: Are there related nodes this should connect to? → Note their IDs for edge
-     creation
-3. **Create the node** with `texere_store_node` only after reviewing search results
-4. **Create edges immediately** to link the new node to related nodes identified in step 2
+## Type + Role Decision Tree
 
-**Why this matters**: The graph's value comes from connections, not isolated nodes. Searching first
-ensures you see the existing graph structure, avoid duplicates, identify deprecation opportunities,
-and discover edge candidates. Skipping this step produces a fragmented collection of notes instead
-of a connected knowledge web.
+6 types, 23 roles. Each type constrains valid roles.
 
-**Example**:
-
-```json
-// 1. Search first
-texere_search({ "query": "SQLite storage concurrency", "type": "decision", "limit": 10 })
-
-// 2. Review: Found "Use SQLite with WAL mode" (decision_abc) and "Handle database locking" (problem_xyz)
-
-// 3. Create node
-texere_store_node({
-  "type": "solution",
-  "title": "Add connection pooling for concurrent writes",
-  "content": "Implemented connection pool with max 5 connections...",
-  "tags": ["sqlite", "concurrency", "performance"]
-})
-// Returns: { id: "solution_123" }
-
-// 4. Create edges to nodes found in search
-texere_create_edge({ "source_id": "solution_123", "target_id": "problem_xyz", "type": "SOLVES" })
-texere_create_edge({ "source_id": "solution_123", "target_id": "decision_abc", "type": "BUILDS_ON" })
-```
-
----
-
-## Node Type Chooser
-
-**Decision Tree:**
+**Decision tree:**
 
 ```
-Is it about CODE? → code_pattern (reusable pattern) | file_context (specific location)
-Is it a PROBLEM? → problem (abstract) | error (concrete) | constraint (restriction)
-Is it a SOLUTION? → solution (conceptual) | fix (concrete)
-Is it WORK? → task
-Is it a DECISION/REQUIREMENT? → decision (choice+rationale) | requirement (must-have) | constraint (must-not)
-Is it ENVIRONMENTAL? → project | technology | workflow | command
-Is it EXTERNAL? → research
-Is it CONVERSATION? → conversation
-Otherwise → general
+KNOWLEDGE? → type: knowledge, role: constraint | decision | finding | pitfall | principle | requirement | research
+PROBLEM? → type: issue, role: problem | error
+ACTION? → type: action, role: task | solution | fix | workflow | command
+ARTIFACT? → type: artifact, role: example | code_pattern | technology | project | file_context | concept | source
+CONVERSATION? → type: context, role: conversation
+SYSTEM? → type: meta, role: system
 ```
 
-**Quick Reference:**
+**Type-role matrix:**
 
-| Type           | Example                                                        |
-| -------------- | -------------------------------------------------------------- |
-| `code_pattern` | "Use dependency injection for database access"                 |
-| `file_context` | "src/db/schema.ts contains all table definitions"              |
-| `problem`      | "Need to handle concurrent writes to SQLite"                   |
-| `error`        | "TypeError: Cannot read property 'id' of undefined at line 42" |
-| `constraint`   | "Cannot use cloud APIs — must be fully local-first"            |
-| `solution`     | "Use WAL mode + IMMEDIATE transactions for concurrency"        |
-| `fix`          | "Added null check before accessing node.id"                    |
-| `task`         | "Implement texere_traverse with recursive CTE"                 |
-| `decision`     | "Use SQLite over PostgreSQL for simplicity and portability"    |
-| `requirement`  | "System must support full-text search with BM25 ranking"       |
-| `project`      | "Texere: Knowledge graph MCP server for LLM agents"            |
-| `technology`   | "better-sqlite3: Synchronous SQLite bindings for Node.js"      |
-| `workflow`     | "Deploy flow: test → build → push → tag"                       |
-| `command`      | "pnpm turbo build --filter=@texere/server"                     |
-| `research`     | "sqlite-vec has 6,891 stars, works with better-sqlite3"        |
-| `conversation` | "User prefers functional style over classes"                   |
-| `general`      | "Project started on 2026-02-13"                                |
+| Type      | Valid Roles (23 total)                                                        |
+| --------- | ----------------------------------------------------------------------------- |
+| knowledge | constraint, decision, finding, pitfall, principle, requirement, research (7)  |
+| issue     | error, problem (2)                                                            |
+| action    | command, fix, solution, task, workflow (5)                                    |
+| artifact  | code_pattern, concept, example, file_context, project, source, technology (7) |
+| context   | conversation (1)                                                              |
+| meta      | system (1)                                                                    |
 
----
+**Role examples:** knowledge/decision = "Use SQLite", knowledge/requirement = "Must support FTS",
+knowledge/constraint = "No cloud APIs", knowledge/principle = "Validate type-role pairs",
+knowledge/finding = "BM25 improves relevance 40%", knowledge/research = "sqlite-vec benchmarks",
+knowledge/pitfall = "Avoid LIKE for FTS", issue/problem = "Handle concurrent writes", issue/error =
+"TypeError at line 42", action/task = "Implement traverse", action/solution = "Use WAL mode",
+action/fix = "Added null check", action/workflow = "test → build → deploy", action/command = "pnpm
+turbo build", artifact/example = "FTS5 phrase search", artifact/code_pattern = "Use dependency
+injection", artifact/technology = "better-sqlite3 bindings", artifact/project = "Texere knowledge
+graph", artifact/file_context = "schema.ts definitions", artifact/concept = "BM25 ranking
+algorithm", artifact/source = "Okapi BM25 paper", context/conversation = "User prefers functional
+style", meta/system = "Graph initialized 2026-02-14"
 
-## Edge Type Chooser
+## Edge Selection Guide
 
-| Type             | Direction | Use When                          | Example                                                                 |
-| ---------------- | --------- | --------------------------------- | ----------------------------------------------------------------------- |
-| `RELATED_TO`     | ↔         | General association               | `(research: "SQLite benchmarks") ↔ (research: "PostgreSQL benchmarks")` |
-| `CAUSES`         | →         | X leads to Y                      | `(problem: "Missing API key") → (error: "AuthenticationError")`         |
-| `SOLVES`         | →         | X resolves Y                      | `(solution: "Use WAL mode") → (problem: "Database locked errors")`      |
-| `REQUIRES`       | →         | X depends on Y                    | `(task: "Deploy to prod") → (task: "Pass all tests")`                   |
-| `CONTRADICTS`    | ↔         | X conflicts with Y                | `(research: "SQLite faster") ↔ (research: "PostgreSQL faster")`         |
-| `BUILDS_ON`      | →         | X extends Y                       | `(solution: "Add connection pooling") → (solution: "Use WAL mode")`     |
-| `DEPRECATED_BY`  | →         | Y replaces X (auto-invalidates X) | `(decision: "Use REST") → (decision: "Use GraphQL")`                    |
-| `PREVENTS`       | →         | X stops Y                         | `(constraint: "No network in tests") → (problem: "Flaky tests")`        |
-| `VALIDATES`      | →         | X confirms Y                      | `(research: "Benchmark shows 10x speedup") → (decision: "Use FTS5")`    |
-| `ALTERNATIVE_TO` | ↔         | X and Y are options               | `(decision: "Use JWT") ↔ (decision: "Use sessions")`                    |
-| `MOTIVATED_BY`   | →         | Y is reason for X                 | `(decision: "Use SQLite") → (requirement: "Must work offline")`         |
-| `IMPLEMENTS`     | →         | X realizes Y                      | `(file_context: "src/db/connection.ts") → (decision: "Use WAL mode")`   |
-| `CONSTRAINS`     | →         | X limits Y                        | `(constraint: "Node.js 18+") → (technology: "better-sqlite3")`          |
-| `ANCHORED_TO`    | →         | X is relevant to code Y           | `(decision: "Use nanoid for IDs") → (file_context: "src/db/schema.ts")` |
+16 edge types. Choose most specific type.
 
----
+| Type           | Direction | Semantics                                     | Example                                                       |
+| -------------- | --------- | --------------------------------------------- | ------------------------------------------------------------- |
+| RESOLVES       | →         | X fixes/solves Y                              | (solution: "Use WAL") → (problem: "Database locked")          |
+| CAUSES         | →         | X leads to Y                                  | (problem: "Missing API key") → (error: "AuthError")           |
+| DEPENDS_ON     | →         | X requires Y                                  | (task: "Deploy") → (task: "Pass tests")                       |
+| EXTENDS        | →         | X builds on Y                                 | (solution: "Add pooling") → (solution: "Use WAL")             |
+| CONSTRAINS     | →         | X limits Y                                    | (constraint: "Node.js 18+") → (tech: "better-sqlite3")        |
+| CONTRADICTS    | ↔         | X conflicts with Y                            | (research: "SQLite faster") ↔ (research: "Postgres faster")   |
+| REPLACES       | →         | X replaces Y (auto-invalidates Y)             | (decision: "Use GraphQL") → (decision: "Use REST")            |
+| ANCHORED_TO    | →         | X is relevant to code Y                       | (decision: "Use nanoid") → (file_context: "schema.ts")        |
+| ALTERNATIVE_TO | ↔         | X and Y are options                           | (decision: "Use JWT") ↔ (decision: "Use sessions")            |
+| EXAMPLE_OF     | →         | X demonstrates Y                              | (example: "FTS5 phrase") → (code_pattern: "FTS patterns")     |
+| SUPPORTS       | →         | X helps Y (weaker than RESOLVES)              | (finding: "WAL improves concurrency") → (decision: "Use WAL") |
+| PART_OF        | →         | X is component of Y                           | (file_context: "nodes.ts") → (project: "Texere")              |
+| ABOUT          | →         | X describes/documents Y                       | (research: "BM25 paper") → (concept: "BM25 ranking")          |
+| BASED_ON       | →         | X derived from Y                              | (decision: "Use SQLite") → (research: "DB comparison")        |
+| IS_A           | →         | X is instance/subtype of Y                    | (tech: "better-sqlite3") → (concept: "SQLite bindings")       |
+| RELATED_TO     | ↔         | X and Y are related (use specific type first) | (tech: "SQLite") ↔ (tech: "PostgreSQL")                       |
 
-## Tool Usage Examples
+**Compound semantics:**
+
+- `RESOLVES` = fixes problem OR confirms solution works
+- `REPLACES` = auto-invalidates target node (sets `invalidated_at`)
+- `ANCHORED_TO` = links knowledge to file paths (auto-created via `anchor_to` param)
+
+## Tool Reference
 
 ### 1. texere_store_node
 
-Create immutable node. Optionally auto-create ANCHORED_TO edges.
+Create immutable node(s). Supports batch (max 50), minimal mode, auto-creates ANCHORED_TO edges.
 
-**Store a decision:**
+**Arguments:**
+
+- `type`: NodeType (required) — One of: knowledge, issue, action, artifact, context, meta
+- `role`: NodeRole (required) — One of 23 roles (see matrix above)
+- `title`: string (required) — Short descriptive title
+- `content`: string (required) — Detailed content
+- `tags`: string[] (optional) — Array of tag strings
+- `importance`: number (optional, default: 0.5) — 0.0–1.0, how critical
+- `confidence`: number (optional, default: 0.8) — 0.0–1.0, how certain
+- `source`: NodeSource (optional, default: "internal") — "internal" | "external" (deprecated, use
+  artifact/source instead)
+- `status`: NodeStatus (optional, default: "active") — "proposed" | "active" | "deprecated" |
+  "invalidated"
+- `scope`: NodeScope (optional, default: "project") — "project" | "module" | "file" | "session"
+- `anchor_to`: string[] (optional) — File paths (creates ANCHORED_TO edges)
+- `minimal`: boolean (optional, default: false) — Return only `{ id }` instead of full node
+
+**Batch input:** Array of node objects (max 50, atomic). Omit `minimal` for batch.
+
+**Returns:** `{ node: { id, type, role, ... } }` or `{ nodes: [...] }` for batch or
+`{ node: { id } }` for minimal.
+
+**Example:**
 
 ```json
 {
-  "type": "decision",
-  "title": "Use SQLite with WAL mode for graph storage",
-  "content": "After evaluating PostgreSQL vs SQLite, chose SQLite because: (1) simpler deployment (single file), (2) sufficient performance for expected scale (<100k nodes), (3) better-sqlite3 provides synchronous API. WAL mode enables concurrent reads.",
-  "tags": ["database", "architecture", "sqlite"],
+  "type": "knowledge",
+  "role": "decision",
+  "title": "Use SQLite with WAL",
+  "content": "...",
+  "tags": ["db"],
   "importance": 0.9,
-  "confidence": 0.85,
-  "anchor_to": ["src/db/connection.ts", "src/db/schema.ts"]
-}
-```
-
-Returns: `{ id: "abc123xyz", created_at: 1707868800000 }`
-
-**Store an error:**
-
-```json
-{
-  "type": "error",
-  "title": "TypeError: Cannot read property 'id' of undefined",
-  "content": "Stack trace: at storeNode (src/tools/store-node.ts:42:18). Occurred when node parameter was null due to failed validation.",
-  "tags": ["bug", "validation", "typescript"],
-  "importance": 0.7
+  "anchor_to": ["src/db/connection.ts"]
 }
 ```
 
@@ -171,36 +142,19 @@ Returns: `{ id: "abc123xyz", created_at: 1707868800000 }`
 
 ### 2. texere_get_node
 
-Read node by ID. Optionally include edges.
+Read node by ID with optional edges.
+
+**Arguments:**
+
+- `id`: string (required) — Node ID
+- `include_edges`: boolean (optional, default: false) — Include incoming/outgoing edges
+
+**Returns:** `{ node: { id, type, role, ..., edges?: { incoming: [...], outgoing: [...] } } }`
+
+**Example:**
 
 ```json
-{ "id": "abc123xyz", "include_edges": true }
-```
-
-Returns:
-
-```json
-{
-  "id": "abc123xyz",
-  "type": "decision",
-  "title": "Use SQLite with WAL mode for graph storage",
-  "content": "After evaluating PostgreSQL vs SQLite...",
-  "tags": ["database", "architecture", "sqlite"],
-  "importance": 0.9,
-  "created_at": 1707868800000,
-  "invalidated_at": null,
-  "edges": {
-    "outgoing": [
-      {
-        "id": "edge001",
-        "type": "MOTIVATED_BY",
-        "target_id": "req456",
-        "target_title": "Must work offline"
-      }
-    ],
-    "incoming": []
-  }
-}
+{ "id": "abc123", "include_edges": true }
 ```
 
 ---
@@ -209,35 +163,106 @@ Returns:
 
 Mark node as invalidated (soft delete). Use when knowledge is wrong with no replacement.
 
+**Arguments:**
+
+- `id`: string (required) — Node ID to invalidate
+
+**Returns:** `{ node: { id, ..., invalidated_at: <timestamp> } }`
+
+**Example:**
+
 ```json
-{ "id": "abc123xyz" }
+{ "id": "abc123" }
 ```
 
 ---
 
-### 4. texere_create_edge
+### 4. texere_replace_node
 
-Link two nodes. DEPRECATED_BY auto-invalidates source node.
+Atomically replace node: create new node, create REPLACES edge, invalidate old node.
 
-**Link solution to problem:**
+**Arguments:**
+
+- `old_id`: string (required) — ID of node to replace
+- `type`: NodeType (required) — One of: knowledge, issue, action, artifact, context, meta
+- `role`: NodeRole (required) — One of 23 roles
+- `title`: string (required) — Short descriptive title
+- `content`: string (required) — Detailed content
+- `tags`: string[] (optional) — Array of tag strings
+- `importance`: number (optional, default: 0.5) — 0.0–1.0
+- `confidence`: number (optional, default: 0.8) — 0.0–1.0
+- `source`: NodeSource (optional, default: "internal") — "internal" | "external"
+- `status`: NodeStatus (optional, default: "active") — "proposed" | "active" | "deprecated" |
+  "invalidated"
+- `scope`: NodeScope (optional, default: "project") — "project" | "module" | "file" | "session"
+- `anchor_to`: string[] (optional) — File paths
+- `minimal`: boolean (optional, default: false) — Return only `{ id }`
+
+**Returns:** `{ node: { id, ... } }` or `{ node: { id } }` for minimal
+
+**Example:**
 
 ```json
-{ "source_id": "sol789", "target_id": "prob456", "type": "SOLVES", "strength": 0.9 }
+{
+  "old_id": "old_decision_123",
+  "type": "knowledge",
+  "role": "decision",
+  "title": "Use GraphQL",
+  "content": "...",
+  "tags": ["api"],
+  "importance": 0.9
+}
 ```
-
-**Deprecate old decision:**
-
-```json
-{ "source_id": "old_decision_123", "target_id": "new_decision_456", "type": "DEPRECATED_BY" }
-```
-
-Note: Automatically sets `invalidated_at` on `old_decision_123`.
 
 ---
 
-### 5. texere_delete_edge
+### 5. texere_create_edge
 
-Hard-delete edge (when relationship was wrong).
+Create edge(s) between nodes. Supports batch (max 50, atomic). REPLACES auto-invalidates source.
+
+**Arguments:**
+
+- `edges`: EdgeInput | EdgeInput[] (required) — Single edge or array (max 50)
+  - `source_id`: string (required) — Source node ID
+  - `target_id`: string (required) — Target node ID
+  - `type`: EdgeType (required) — One of 16 edge types (see table above)
+  - `strength`: number (optional, default: 0.5) — 0.0–1.0
+  - `confidence`: number (optional, default: 0.8) — 0.0–1.0
+- `minimal`: boolean (optional, default: false) — Return only `{ id }`
+
+**Returns:** `{ edge: { id, ... } }` or `{ edges: [...] }` for batch or `{ edge: { id } }` for
+minimal
+
+**Example:**
+
+```json
+{ "edges": { "source_id": "sol789", "target_id": "prob456", "type": "RESOLVES", "strength": 0.9 } }
+```
+
+**Batch example:**
+
+```json
+{
+  "edges": [
+    { "source_id": "a", "target_id": "b", "type": "DEPENDS_ON" },
+    { "source_id": "c", "target_id": "d", "type": "EXTENDS" }
+  ]
+}
+```
+
+---
+
+### 6. texere_delete_edge
+
+Hard-delete edge by ID.
+
+**Arguments:**
+
+- `id`: string (required) — Edge ID
+
+**Returns:** `{ deleted: true }`
+
+**Example:**
 
 ```json
 { "id": "edge_xyz" }
@@ -245,79 +270,99 @@ Hard-delete edge (when relationship was wrong).
 
 ---
 
-### 6. texere_search
+### 7. texere_search
 
-Full-text search with BM25 ranking. Filter by type, tags, importance.
+FTS5 full-text search with BM25 ranking, type/role/tag/importance filters. Returns match quality and
+relationships.
 
-**Search for timeout-related errors:**
+**Arguments:**
+
+- `query`: string (required) — Search query (supports FTS5 syntax: phrases `"exact"`, boolean
+  `OR`/`AND`)
+- `type`: NodeType | NodeType[] (optional) — Filter by single or multiple types
+- `role`: NodeRole (optional) — Filter by specific role
+- `tags`: string[] (optional) — Filter by tags
+- `tag_mode`: "all" | "any" (optional, default: "all") — Tag matching logic (AND vs OR)
+- `min_importance`: number (optional) — Minimum importance threshold (0.0–1.0)
+- `limit`: number (optional, default: 20, max: 100) — Max results
+
+**Returns:**
+`{ results: [{ id, type, role, title, content, tags, importance, rank, match_quality, match_fields, relationships: { incoming: [...], outgoing: [...] } }] }`
+
+**Example:**
 
 ```json
-{ "query": "timeout", "type": "error", "limit": 5 }
+{ "query": "timeout", "type": "issue", "role": "error", "limit": 5 }
 ```
 
-**Search high-importance decisions about database:**
+**Tag search (AND):**
 
 ```json
-{ "query": "database", "type": "decision", "min_importance": 0.8, "limit": 10 }
+{ "query": "", "tags": ["architecture", "database"], "tag_mode": "all", "limit": 20 }
 ```
 
-**Search by tag:**
+**Tag search (OR):**
 
 ```json
-{ "query": "", "tags": ["architecture", "database"], "limit": 20 }
+{ "query": "performance", "tags": ["sqlite", "postgres"], "tag_mode": "any", "limit": 10 }
 ```
 
-Returns:
+**FTS5 phrase search:**
 
 ```json
-{
-  "results": [
-    {
-      "id": "abc123",
-      "type": "decision",
-      "title": "Use SQLite with WAL mode for graph storage",
-      "tags": ["database", "architecture", "sqlite"],
-      "importance": 0.9,
-      "rank": 2.45
-    }
-  ]
-}
+{ "query": "\"database locked\"", "type": "issue", "limit": 5 }
 ```
 
 ---
 
-### 7. texere_traverse
+### 8. texere_traverse
 
-Recursive graph traversal from starting node. Max depth 5.
+Recursive graph traversal from start node. Max depth 5.
 
-**Find outgoing edges (what this affects):**
+**Arguments:**
+
+- `start_id`: string (required) — Starting node ID
+- `direction`: "outgoing" | "incoming" | "both" (optional, default: "outgoing") — Traversal
+  direction
+- `max_depth`: number (optional, default: 3, max: 5) — Maximum traversal depth
+- `edge_type`: EdgeType (optional) — Filter by specific edge type
+
+**Returns:** `{ results: [{ node: {...}, edge: {...}, depth: number }] }`
+
+**Example (outgoing):**
 
 ```json
 { "start_id": "decision_123", "direction": "outgoing", "max_depth": 2 }
 ```
 
-**Find incoming edges (what affects this):**
+**Example (filter by edge type):**
 
 ```json
-{ "start_id": "problem_456", "direction": "incoming", "max_depth": 3 }
-```
-
-**Filter by edge types:**
-
-```json
-{
-  "start_id": "solution_789",
-  "direction": "both",
-  "max_depth": 2,
-  "edge_types": ["SOLVES", "REQUIRES"]
-}
+{ "start_id": "solution_789", "direction": "both", "max_depth": 2, "edge_type": "RESOLVES" }
 ```
 
 ---
 
-### 8. texere_about
+### 9. texere_about
 
-Compound query: FTS5 search finds seeds, then traverse neighbors.
+Compound query: FTS5 search finds seeds, then traverse their neighborhood.
+
+**Arguments:**
+
+- `query`: string (required) — Search query
+- `type`: NodeType | NodeType[] (optional) — Filter by type(s)
+- `role`: NodeRole (optional) — Filter by role
+- `tags`: string[] (optional) — Filter by tags
+- `tag_mode`: "all" | "any" (optional, default: "all") — Tag matching logic
+- `min_importance`: number (optional) — Minimum importance
+- `limit`: number (optional, default: 20, max: 100) — Max seed results
+- `direction`: "outgoing" | "incoming" | "both" (optional, default: "both") — Traversal direction
+- `max_depth`: number (optional, default: 1, max: 5) — Traversal depth
+- `edge_type`: EdgeType (optional) — Filter by edge type
+
+**Returns:** `{ results: [{ seed: {...}, neighbors: [...] }] }`
+
+**Example:**
 
 ```json
 { "query": "concurrency", "max_depth": 2, "limit": 10 }
@@ -325,290 +370,120 @@ Compound query: FTS5 search finds seeds, then traverse neighbors.
 
 ---
 
-### 9. texere_stats
+### 10. texere_stats
 
-Get node/edge counts by type. Quick health check.
+Get node/edge counts by type and role. Quick health check.
+
+**Arguments:** None (empty object `{}`)
+
+**Returns:**
+`{ stats: { nodes: { total, current, by_type: {...}, by_role: {...} }, edges: { total, by_type: {...} } } }`
+
+**Example:**
 
 ```json
 {}
 ```
 
-Returns:
+## Source Provenance Workflow
 
-```json
-{
-  "nodes": {
-    "total": 142,
-    "current": 138,
-    "by_type": { "decision": 23, "requirement": 15, "problem": 18, "solution": 20 }
-  },
-  "edges": {
-    "total": 256,
-    "by_type": { "SOLVES": 45, "REQUIRES": 38, "MOTIVATED_BY": 32, "ANCHORED_TO": 50 }
-  }
-}
-```
+Track external sources: (1) Create `artifact/source` node, (2) Create derived knowledge node, (3)
+Link with `BASED_ON` edge.
 
----
+## Concept Hierarchy Workflow
 
-## Common Patterns
-
-### Pattern 1: Store Decision and Anchor to Code
-
-```json
-// 1. Store with anchor_to
-texere_store_node({
-  "type": "decision",
-  "title": "Use dependency injection for database access",
-  "content": "All database operations go through a Repository interface injected via constructor. Enables testing with mock repositories.",
-  "tags": ["architecture", "di", "testing"],
-  "importance": 0.85,
-  "anchor_to": ["src/repos/node-repository.ts", "src/repos/edge-repository.ts"]
-})
-
-// 2. Link to motivating requirement
-texere_create_edge({
-  "source_id": "<decision_id>",
-  "target_id": "<requirement_id>",
-  "type": "MOTIVATED_BY",
-  "strength": 0.9
-})
-```
-
----
-
-### Pattern 2: Record Bug Fix (Error → Fix → SOLVES)
-
-```json
-// 1. Store error
-texere_store_node({
-  "type": "error",
-  "title": "Database locked error during concurrent writes",
-  "content": "Error: SQLITE_BUSY: database is locked. Occurred when multiple tools tried to write simultaneously.",
-  "tags": ["sqlite", "concurrency", "bug"],
-  "importance": 0.8,
-  "anchor_to": ["src/db/connection.ts"]
-})
-// Returns: { id: "error_abc" }
-
-// 2. Store fix
-texere_store_node({
-  "type": "fix",
-  "title": "Enable WAL mode and use IMMEDIATE transactions",
-  "content": "Changed db.pragma('journal_mode = WAL') and wrapped all writes in db.transaction(() => {...}, { immediate: true }).",
-  "tags": ["sqlite", "concurrency", "wal"],
-  "importance": 0.8,
-  "anchor_to": ["src/db/connection.ts"]
-})
-// Returns: { id: "fix_xyz" }
-
-// 3. Link fix to error
-texere_create_edge({
-  "source_id": "fix_xyz",
-  "target_id": "error_abc",
-  "type": "SOLVES",
-  "strength": 1.0
-})
-```
-
----
-
-### Pattern 3: Replace Outdated Knowledge (DEPRECATED_BY)
-
-```json
-// 1. Store new decision
-texere_store_node({
-  "type": "decision",
-  "title": "Use GraphQL API instead of REST",
-  "content": "Switching from REST to GraphQL because: (1) clients need flexible queries, (2) reduces over-fetching, (3) better TypeScript integration.",
-  "tags": ["api", "graphql", "architecture"],
-  "importance": 0.9
-})
-// Returns: { id: "new_decision_123" }
-
-// 2. Find old decision
-texere_search({ "query": "REST API", "type": "decision", "limit": 5 })
-// Returns: { results: [{ id: "old_decision_456", ... }] }
-
-// 3. Create DEPRECATED_BY edge
-texere_create_edge({
-  "source_id": "old_decision_456",
-  "target_id": "new_decision_123",
-  "type": "DEPRECATED_BY"
-})
-// Automatically invalidates old_decision_456
-```
-
----
-
-### Pattern 4: Link Research to Decision
-
-```json
-// 1. Store research
-texere_store_node({
-  "type": "research",
-  "title": "SQLite vs PostgreSQL performance comparison",
-  "content": "Benchmarked both for expected workload. SQLite with WAL: 1200 reads/sec, 800 writes/sec. PostgreSQL: 1500 reads/sec, 1000 writes/sec. For our scale, SQLite is sufficient.",
-  "tags": ["benchmark", "database", "performance"],
-  "importance": 0.7
-})
-// Returns: { id: "research_789" }
-
-// 2. Store decision
-texere_store_node({
-  "type": "decision",
-  "title": "Use SQLite for graph storage",
-  "content": "Chose SQLite over PostgreSQL. Performance is sufficient for expected scale, and deployment is simpler.",
-  "tags": ["database", "architecture"],
-  "importance": 0.9
-})
-// Returns: { id: "decision_101" }
-
-// 3. Link decision to research
-texere_create_edge({
-  "source_id": "decision_101",
-  "target_id": "research_789",
-  "type": "MOTIVATED_BY",
-  "strength": 0.9
-})
-```
+Build taxonomies: (1) Create parent `artifact/concept` node, (2) Create child nodes, (3) Link with
+`IS_A` (subtype) or `PART_OF` (component). Use `ABOUT` edge to link documentation to concepts.
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Storing Transient Information
+### 1. Storing Transient Information
 
-**DON'T:**
+❌ **DON'T:** Store ephemeral facts (current time, temporary state, session data) ✅ **DO:** Use
+conversation memory for transient context. Texere = persistent, reusable knowledge.
 
-```json
-texere_store_node({
-  "type": "general",
-  "title": "Current temperature is 72°F",
-  "content": "The temperature right now is 72 degrees Fahrenheit."
-})
-```
+### 2. Creating Nodes Without Searching
 
-**WHY:** Texere is for **persistent, reusable knowledge**. Transient facts (current time, temporary
-state, session-specific data) belong in conversation memory, not the knowledge graph.
+❌ **DON'T:** Call `texere_store_node` without searching first ✅ **DO:** Follow mandatory workflow
+(search → review → create → link)
 
-**DO:** Use conversation memory for ephemeral context. Only store knowledge that's useful across
-sessions.
+### 3. Using Wrong Edge Types
 
----
+❌ **DON'T:** `{ "source_id": "task_deploy", "target_id": "task_test", "type": "RESOLVES" }`
+(RESOLVES = fixes problems) ✅ **DO:**
+`{ "source_id": "task_deploy", "target_id": "task_test", "type": "DEPENDS_ON" }` (deploy depends on
+tests)
 
-### Anti-Pattern 2: Creating Nodes Without Searching First
+### 4. Storing Code Instead of Knowledge
 
-**DON'T:** Call `texere_store_node` without first searching for existing nodes.
-
-**WHY:** Creates duplicates, misses deprecation opportunities, and results in isolated nodes with no
-edges. The graph becomes a fragmented note collection instead of a connected knowledge web.
-
-**DO:** Follow the required workflow (see "Required Workflow: Search Before Creating" section
-above):
+❌ **DON'T:** Store code snippets in content ✅ **DO:** Store pattern/principle + anchor to file:
 
 ```json
-// 1. Search
-texere_search({ "query": "SQLite storage", "type": "decision", "limit": 5 })
-
-// 2. Review results: duplicate? deprecation candidate? edge opportunities?
-// 3. If found equivalent, use existing node ID
-// 4. If found outdated version, create new + DEPRECATED_BY edge
-// 5. If not found, store new node
-// 6. Create edges to related nodes discovered in search
-```
-
----
-
-### Anti-Pattern 3: Using Wrong Edge Types
-
-**DON'T:**
-
-```json
-texere_create_edge({
-  "source_id": "task_deploy",
-  "target_id": "task_test",
-  "type": "SOLVES"  // ❌ Wrong! SOLVES is for fixing problems
-})
-```
-
-**DO:**
-
-```json
-texere_create_edge({
-  "source_id": "task_deploy",
-  "target_id": "task_test",
-  "type": "REQUIRES"  // ✅ Correct! Deploy depends on tests
-})
-```
-
----
-
-### Anti-Pattern 4: Storing Code Instead of Knowledge
-
-**DON'T:** Store code snippets.
-
-**DO:** Store the pattern/principle and anchor to file:
-
-```json
-texere_store_node({
-  "type": "code_pattern",
-  "title": "Use prepared statements for all database queries",
-  "content": "All SQLite queries use db.prepare() for performance and SQL injection prevention.",
-  "tags": ["database", "security", "performance"],
+{
+  "type": "artifact",
+  "role": "code_pattern",
+  "title": "Use prepared statements",
+  "content": "All queries use db.prepare() for performance and security",
+  "tags": ["database", "security"],
   "anchor_to": ["src/db/queries.ts"]
-})
+}
 ```
 
----
+### 5. Missing Edges After Creation
 
-## Schema Quick Reference
+❌ **DON'T:** Create node and stop (isolated node = low value) ✅ **DO:** Create edges immediately
+to related nodes from search results
 
-### Node Fields
+### 6. Using RELATED_TO Instead of Specific Type
 
-| Field        | Type     | Required | Default | Description                            |
-| ------------ | -------- | -------- | ------- | -------------------------------------- |
-| `type`       | string   | ✅       | —       | One of 17 node types                   |
-| `title`      | string   | ✅       | —       | Short descriptive title                |
-| `content`    | string   | ✅       | —       | Detailed content                       |
-| `tags`       | string[] | No       | `[]`    | Array of tag strings                   |
-| `importance` | number   | No       | `0.5`   | 0.0–1.0 (how critical)                 |
-| `confidence` | number   | No       | `0.8`   | 0.0–1.0 (how certain)                  |
-| `anchor_to`  | string[] | No       | —       | File paths (creates ANCHORED_TO edges) |
+❌ **DON'T:** Default to `RELATED_TO` for all relationships ✅ **DO:** Choose most specific edge
+type (RESOLVES, DEPENDS_ON, EXTENDS, etc.)
 
-### Edge Fields
+## Quick Reference
 
-| Field        | Type   | Required | Default | Description           |
-| ------------ | ------ | -------- | ------- | --------------------- |
-| `source_id`  | string | ✅       | —       | Source node ID        |
-| `target_id`  | string | ✅       | —       | Target node ID        |
-| `type`       | string | ✅       | —       | One of 14 edge types  |
-| `strength`   | number | No       | `0.5`   | 0.0–1.0 (how strong)  |
-| `confidence` | number | No       | `0.8`   | 0.0–1.0 (how certain) |
+**Node Types (6):** knowledge, issue, action, artifact, context, meta
 
-### Node Types (17)
+**Node Roles (23):**
 
-`task`, `code_pattern`, `problem`, `solution`, `project`, `technology`, `error`, `fix`, `command`,
-`file_context`, `workflow`, `general`, `conversation`, `decision`, `requirement`, `constraint`,
-`research`
+- Knowledge (7): constraint, decision, finding, pitfall, principle, requirement, research
+- Issue (2): error, problem
+- Action (5): command, fix, solution, task, workflow
+- Artifact (7): code_pattern, concept, example, file_context, project, source, technology
+- Context (1): conversation
+- Meta (1): system
 
-### Edge Types (14)
+**Edge Types (16):** ABOUT, ALTERNATIVE_TO, ANCHORED_TO, BASED_ON, CAUSES, CONSTRAINS, CONTRADICTS,
+DEPENDS_ON, EXAMPLE_OF, EXTENDS, IS_A, PART_OF, RELATED_TO, REPLACES, RESOLVES, SUPPORTS
 
-`RELATED_TO`, `CAUSES`, `SOLVES`, `REQUIRES`, `CONTRADICTS`, `BUILDS_ON`, `DEPRECATED_BY`,
-`PREVENTS`, `VALIDATES`, `ALTERNATIVE_TO`, `MOTIVATED_BY`, `IMPLEMENTS`, `CONSTRAINS`, `ANCHORED_TO`
+**Node Status (4):** proposed, active, deprecated, invalidated
 
----
+**Node Scope (4):** project, module, file, session
 
-## Tips for Effective Use
+**Node Source (2, deprecated):** internal, external
 
-1. **ALWAYS search before creating** — Required workflow (see above): find duplicates, identify
-   deprecation candidates, discover edge opportunities
-2. **Use specific node types** — Don't default to `general`
-3. **Anchor to code** — Use `anchor_to` or `ANCHORED_TO` edges
-4. **Link related knowledge** — Build a web of connections (edges are what make Texere valuable)
-5. **Use importance/confidence** — Higher values = more critical/certain
-6. **Tag consistently** — Lowercase, hyphenated (e.g., `database`, `error-handling`)
-7. **Write for future you** — Clear enough to understand months later
-8. **Deprecate, don't delete** — Use `DEPRECATED_BY` instead of invalidating
-9. **Traverse to discover** — Use `texere_traverse` or `texere_about`
-10. **Check stats** — Use `texere_stats` to understand graph structure
+**Tag Modes (2):** all (AND), any (OR)
+
+**Traversal Directions (3):** outgoing, incoming, both
+
+**Field Defaults:**
+
+- importance: 0.5
+- confidence: 0.8
+- status: "active"
+- scope: "project"
+- source: "internal"
+- tag_mode: "all"
+- direction: "outgoing" (traverse), "both" (about)
+- max_depth: 3 (traverse), 1 (about)
+- limit: 20 (search/about)
+- minimal: false
+
+**Limits:**
+
+- Batch nodes: max 50
+- Batch edges: max 50
+- Search limit: max 100
+- Traverse depth: max 5
+- About depth: max 5
