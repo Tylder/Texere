@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import type Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -11,7 +12,6 @@ const makeNode = (
   db: Database.Database,
   opts: { type: NodeType; role: NodeRole; title: string; content: string; tags?: string[] },
 ) => storeNode(db, opts);
-
 const toDepthById = (rows: Array<{ node: { id: string }; depth: number }>): Map<string, number> =>
   new Map(rows.map((row) => [row.node.id, row.depth]));
 

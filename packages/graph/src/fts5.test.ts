@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import BetterSqlite3 from 'better-sqlite3';
+import Database from 'better-sqlite3';
+import { describe, it } from 'vitest';
 
 describe('fts5 syntax', () => {
   it('tests which queries cause errors', () => {
-    const db = new BetterSqlite3(':memory:');
-    db.exec("CREATE VIRTUAL TABLE t USING fts5(title, content)");
+    const db = new Database(':memory:');
+    db.exec('CREATE VIRTUAL TABLE t USING fts5(title, content)');
     db.exec("INSERT INTO t VALUES ('foo bar', 'test content')");
 
     const queries = ['foo AND AND bar', 'foo OR OR bar', 'foo (( bar', '"unmatched', 'NOT NOT foo'];

@@ -78,7 +78,8 @@ export class TextereDB {
     input: StoreNodeInput | StoreNodeInput[],
     options?: StoreNodeOptions,
   ): StoreNodeResult | MinimalNode | Node[] | MinimalNode[] {
-    return (storeNodeImpl as Function)(this.db, input, options);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return (storeNodeImpl as any)(this.db, input, options);
   }
 
   /**
@@ -106,7 +107,8 @@ export class TextereDB {
     options: ReplaceNodeOptions & { minimal: true },
   ): MinimalNode;
   replaceNode(input: ReplaceNodeInput, options?: ReplaceNodeOptions): Node | MinimalNode {
-    return (replaceNodeImpl as Function)(this.db, input, options);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return (replaceNodeImpl as any)(this.db, input, options);
   }
 
   createEdge(input: CreateEdgeInput, options?: CreateEdgeOptions & { minimal?: false }): Edge;
@@ -120,7 +122,8 @@ export class TextereDB {
     input: CreateEdgeInput | CreateEdgeInput[],
     options?: CreateEdgeOptions,
   ): Edge | MinimalEdge | Edge[] | MinimalEdge[] {
-    return (createEdgeImpl as Function)(this.db, input, options);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return (createEdgeImpl as any)(this.db, input, options);
   }
 
   /**
