@@ -9,6 +9,43 @@ export const EMBEDDING_DIM = 384;
 
 const MODEL_ID = 'Xenova/all-MiniLM-L6-v2';
 const DEFAULT_DEBOUNCE_MS = 10_000;
+
+/**
+ * Build embedding text by combining title, content, and selective novel tags.
+ * Novel tags are those that don't appear as substrings in the title+content.
+ * @param title - Node title
+ * @param content - Node content
+ * @param tagsJson - JSON string of tags array, e.g. '["tag1","tag2"]'
+ * @returns Formatted text for embedding: "title\nnovel_tags\ncontent" or "title\ncontent"
+ */
+export function buildEmbeddingText(title: string, content: string, tagsJson: string): string {
+  let tags: string[] = [];
+
+  // Parse tags from JSON string
+  if (tagsJson && tagsJson.trim()) {
+    try {
+      const parsed = JSON.parse(tagsJson);
+      if (Array.isArray(parsed)) {
+        tags = parsed;
+      }
+    } catch {
+      // Gracefully handle invalid JSON
+      tags = [];
+    }
+  }
+
+  // Create searchable text (lowercase for comparison)
+  const searchText = `${title} ${content}`.toLowerCase();
+
+  // Filter to novel tags: tags that don't appear as substrings in searchText
+  const novelTags = tags.filter((tag) => !searchText.includes(tag.toLowerCase())).slice(0, 3); // Take max 3 novel tags
+
+  // Build result
+  if (novelTags.length > 0) {
+    return `${title}\n${novelTags.join(' ')}\n${content}`;
+  }
+  return `${title}\n${content}`;
+}
 export class Embedder {
   private db: Database.Database;
   private debounceMs: number;
@@ -48,12 +85,14 @@ export class Embedder {
 
   async embedNode(nodeId: string): Promise<void> {
     const row = this.db
-      .prepare('SELECT title, content FROM nodes WHERE id = ? AND invalidated_at IS NULL')
-      .get(nodeId) as { title: string; content: string } | undefined;
+      .prepare(
+        'SELECT title, content, tags_json FROM nodes WHERE id = ? AND invalidated_at IS NULL',
+      )
+      .get(nodeId) as { title: string; content: string; tags_json: string } | undefined;
 
     if (!row) return;
 
-    const text = `${row.title} ${row.content}`;
+    const text = buildEmbeddingText(row.title, row.content, row.tags_json);
     const embedding = await this.embed(text);
 
     this.db
@@ -64,15 +103,15 @@ export class Embedder {
   async embedPending(): Promise<number> {
     const pending = this.db
       .prepare(
-        `SELECT n.id, n.title, n.content FROM nodes n
+        `SELECT n.id, n.title, n.content, n.tags_json FROM nodes n
          LEFT JOIN nodes_vec nv ON n.id = nv.node_id
          WHERE nv.node_id IS NULL AND n.invalidated_at IS NULL`,
       )
-      .all() as Array<{ id: string; title: string; content: string }>;
+      .all() as Array<{ id: string; title: string; content: string; tags_json: string }>;
 
     if (pending.length === 0) return 0;
 
-    const texts = pending.map((row) => `${row.title} ${row.content}`);
+    const texts = pending.map((row) => buildEmbeddingText(row.title, row.content, row.tags_json));
     const embeddings = await this.embedBatch(texts);
 
     const insert = this.db.prepare(

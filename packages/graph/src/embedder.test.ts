@@ -2,7 +2,7 @@ import type Database from 'better-sqlite3';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createDatabase } from './db';
-import { Embedder, EMBEDDING_DIM } from './embedder';
+import { buildEmbeddingText, Embedder, EMBEDDING_DIM } from './embedder';
 import { invalidateNode, storeNode, type StoreNodeInput } from './nodes';
 import { NodeRole, NodeType } from './types';
 
@@ -15,6 +15,52 @@ const testNode = (overrides: Partial<StoreNodeInput> = {}): StoreNodeInput => ({
 });
 
 describe('Embedder', { timeout: 120_000 }, () => {
+  describe('buildEmbeddingText', () => {
+    it('includes novel tags that do not appear in title or content', () => {
+      const result = buildEmbeddingText('Auth', 'JWT tokens', '["security","auth"]');
+      expect(result).toBe('Auth\nsecurity\nJWT tokens');
+    });
+
+    it('excludes tags that appear in title', () => {
+      const result = buildEmbeddingText('SQLite WAL', 'write-ahead logging', '["sqlite","wal"]');
+      expect(result).toBe('SQLite WAL\nwrite-ahead logging');
+    });
+
+    it('handles empty tags array', () => {
+      const result = buildEmbeddingText('Title', 'Content', '[]');
+      expect(result).toBe('Title\nContent');
+    });
+
+    it('gracefully handles invalid JSON tags', () => {
+      const result = buildEmbeddingText('Title', 'Content', '');
+      expect(result).toBe('Title\nContent');
+    });
+
+    it('limits to maximum 3 novel tags', () => {
+      const result = buildEmbeddingText('X', 'Y', '["a","b","c","d","e"]');
+      expect(result).toBe('X\na b c\nY');
+    });
+
+    it('filters tags that appear in content', () => {
+      const result = buildEmbeddingText(
+        'Title',
+        'uses redis and postgres',
+        '["redis","postgres","caching"]',
+      );
+      expect(result).toBe('Title\ncaching\nuses redis and postgres');
+    });
+
+    it('is case-insensitive when matching tags', () => {
+      const result = buildEmbeddingText('MyTitle', 'content', '["mytitle","CONTENT","novel"]');
+      expect(result).toBe('MyTitle\nnovel\ncontent');
+    });
+
+    it('handles malformed JSON gracefully', () => {
+      const result = buildEmbeddingText('Title', 'Content', '{invalid json}');
+      expect(result).toBe('Title\nContent');
+    });
+  });
+
   describe('embedding generation', () => {
     let embedder: Embedder;
     let db: Database.Database;
