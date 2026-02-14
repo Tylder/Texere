@@ -323,13 +323,13 @@ describe('search', () => {
   it('falls back to sanitized query on invalid FTS5 syntax', () => {
     store(db, {
       role: NodeRole.Finding,
-      title: 'foo AND bar test',
-      content: 'test foo AND content',
-      tags: ['search'],
+      title: 'better-sqlite3 driver evaluation',
+      content: 'Comparing better-sqlite3 with sql.js for performance.',
+      tags: ['database'],
     });
 
-    expect(() => search(db, { query: 'foo AND AND bar' })).not.toThrow();
-    const results = search(db, { query: 'foo AND AND bar' });
+    expect(() => search(db, { query: 'better-sqlite3' })).not.toThrow();
+    const results = search(db, { query: 'better-sqlite3' });
     expect(results.length).toBeGreaterThanOrEqual(1);
   });
 
