@@ -12,7 +12,7 @@ export interface TraverseResult {
 
 export interface AboutOptions
   extends
-    Pick<SearchOptions, 'query' | 'type' | 'tags' | 'minImportance' | 'limit'>,
+    Pick<SearchOptions, 'query' | 'type' | 'tags' | 'tagMode' | 'minImportance' | 'limit' | 'role'>,
     Omit<TraverseOptions, 'startId'> {}
 
 export interface Stats {
@@ -241,6 +241,12 @@ export const about = (db: Database.Database, options: AboutOptions): TraverseRes
   }
   if (options.limit !== undefined) {
     searchOptions.limit = options.limit;
+  }
+  if (options.tagMode !== undefined) {
+    searchOptions.tagMode = options.tagMode;
+  }
+  if (options.role !== undefined) {
+    searchOptions.role = options.role;
   }
 
   const seeds = search(db, searchOptions);

@@ -1,14 +1,16 @@
 import { z } from 'zod';
 
-import { EdgeType, NodeType, type AboutOptions } from '@texere/graph';
+import { EdgeType, NodeRole, NodeType, type AboutOptions } from '@texere/graph';
 
 import { ok } from './helpers.js';
 import type { ToolDefinition } from './types.js';
 
 const inputSchema = z.object({
   query: z.string().min(1),
-  type: z.nativeEnum(NodeType).optional(),
+  type: z.union([z.nativeEnum(NodeType), z.array(z.nativeEnum(NodeType))]).optional(),
+  role: z.nativeEnum(NodeRole).optional(),
   tags: z.array(z.string().min(1)).optional(),
+  tag_mode: z.enum(['all', 'any']).optional(),
   min_importance: z.number().min(0).max(1).optional(),
   limit: z.number().int().min(1).max(100).optional(),
   direction: z.enum(['outgoing', 'incoming', 'both']).optional(),
@@ -28,8 +30,14 @@ export const aboutTool: ToolDefinition<typeof inputSchema> = {
     if (input.type !== undefined) {
       aboutOptions.type = input.type;
     }
+    if (input.role !== undefined) {
+      aboutOptions.role = input.role;
+    }
     if (input.tags !== undefined) {
       aboutOptions.tags = input.tags;
+    }
+    if (input.tag_mode !== undefined) {
+      aboutOptions.tagMode = input.tag_mode;
     }
     if (input.min_importance !== undefined) {
       aboutOptions.minImportance = input.min_importance;

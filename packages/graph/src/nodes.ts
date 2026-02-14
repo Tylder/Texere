@@ -1,24 +1,64 @@
 import type Database from 'better-sqlite3';
 import { nanoid } from 'nanoid';
 
-import { EdgeType, NodeType, type Edge, type Node } from './types.js';
+import { sanitizeFtsQueryStrict } from './sanitize.js';
+import {
+  EdgeType,
+  NodeRole,
+  NodeScope,
+  NodeSource,
+  NodeStatus,
+  NodeType,
+  isValidTypeRole,
+  type Edge,
+  type Node,
+} from './types.js';
 
 export interface StoreNodeInput {
   type: NodeType;
+  role: NodeRole;
   title: string;
   content: string;
   tags?: string[];
   importance?: number;
   confidence?: number;
+  source?: NodeSource;
+  status?: NodeStatus;
+  scope?: NodeScope;
   embedding?: Uint8Array | Buffer | null;
   anchor_to?: string[];
+}
+
+export interface StoreNodeOptions {
+  minimal?: boolean;
 }
 
 export interface GetNodeOptions {
   includeEdges?: boolean;
 }
 
+export type MinimalNode = Pick<Node, 'id'>;
+
+export interface SimilarNode {
+  id: string;
+  title: string;
+  type: NodeType;
+  role: NodeRole;
+}
+
+export type StoreNodeResult = Node & { warning?: { similar_nodes: SimilarNode[] } };
+
 export type NodeWithEdges = Node & { edges: Edge[] };
+
+const MAX_BATCH_SIZE = 50;
+
+const NODE_COLUMNS = `id, type, role, title, content, tags_json,
+    importance, confidence, source, status, scope,
+    created_at, invalidated_at, embedding`;
+
+const NODE_PARAMS = `@id, @type, @role, @title, @content, @tags_json,
+    @importance, @confidence, @source, @status, @scope,
+    @created_at, @invalidated_at, @embedding`;
 
 type Statements = {
   insertNode: Database.Statement;
@@ -29,6 +69,7 @@ type Statements = {
   setInvalidatedAt: Database.Statement;
   insertFileContextNode: Database.Statement;
   insertAnchoredEdge: Database.Statement;
+  searchSimilarTitle: Database.Statement;
 };
 
 const statementsByDb = new WeakMap<Database.Database, Statements>();
@@ -41,60 +82,13 @@ const getStatements = (db: Database.Database): Statements => {
 
   const statements: Statements = {
     insertNode: db.prepare(`
-      INSERT INTO nodes (
-        id,
-        type,
-        title,
-        content,
-        tags_json,
-        importance,
-        confidence,
-        created_at,
-        invalidated_at,
-        embedding
-      ) VALUES (
-        @id,
-        @type,
-        @title,
-        @content,
-        @tags_json,
-        @importance,
-        @confidence,
-        @created_at,
-        @invalidated_at,
-        @embedding
-      )
+      INSERT INTO nodes (${NODE_COLUMNS}) VALUES (${NODE_PARAMS})
     `),
     getNode: db.prepare(`
-      SELECT
-        id,
-        type,
-        title,
-        content,
-        tags_json,
-        importance,
-        confidence,
-        created_at,
-        invalidated_at,
-        embedding
-      FROM nodes
-      WHERE id = ?
+      SELECT ${NODE_COLUMNS} FROM nodes WHERE id = ?
     `),
     getNodeWithRowId: db.prepare(`
-      SELECT
-        rowid,
-        id,
-        type,
-        title,
-        content,
-        tags_json,
-        importance,
-        confidence,
-        created_at,
-        invalidated_at,
-        embedding
-      FROM nodes
-      WHERE id = ?
+      SELECT rowid, ${NODE_COLUMNS} FROM nodes WHERE id = ?
     `),
     getNodeEdges: db.prepare(`
       SELECT id, source_id, target_id, type, strength, confidence, created_at
@@ -107,33 +101,20 @@ const getStatements = (db: Database.Database): Statements => {
       'UPDATE nodes SET invalidated_at = ? WHERE id = ? AND invalidated_at IS NULL',
     ),
     insertFileContextNode: db.prepare(`
-      INSERT OR IGNORE INTO nodes (
-        id,
-        type,
-        title,
-        content,
-        tags_json,
-        importance,
-        confidence,
-        created_at,
-        invalidated_at,
-        embedding
-      ) VALUES (
-        @id,
-        @type,
-        @title,
-        @content,
-        @tags_json,
-        @importance,
-        @confidence,
-        @created_at,
-        @invalidated_at,
-        @embedding
-      )
+      INSERT OR IGNORE INTO nodes (${NODE_COLUMNS}) VALUES (${NODE_PARAMS})
     `),
     insertAnchoredEdge: db.prepare(`
       INSERT INTO edges (id, source_id, target_id, type, strength, confidence, created_at)
       VALUES (@id, @source_id, @target_id, @type, @strength, @confidence, @created_at)
+    `),
+    searchSimilarTitle: db.prepare(`
+      SELECT n.id, n.title, n.type, n.role
+      FROM nodes n
+      WHERE n.rowid IN (
+        SELECT rowid FROM nodes_fts WHERE nodes_fts MATCH ?
+      )
+      AND n.invalidated_at IS NULL
+      LIMIT 5
     `),
   };
 
@@ -141,57 +122,169 @@ const getStatements = (db: Database.Database): Statements => {
   return statements;
 };
 
-export const storeNode = (db: Database.Database, input: StoreNodeInput): Node => {
+const buildNode = (input: StoreNodeInput, now: number): Node => ({
+  id: nanoid(),
+  type: input.type,
+  role: input.role,
+  title: input.title,
+  content: input.content,
+  tags_json: JSON.stringify(input.tags ?? []),
+  importance: input.importance ?? 0.5,
+  confidence: input.confidence ?? 0.8,
+  source: input.source ?? NodeSource.Internal,
+  status: input.status ?? NodeStatus.Active,
+  scope: input.scope ?? NodeScope.Project,
+  created_at: now,
+  invalidated_at: null,
+  embedding: input.embedding ?? null,
+});
+
+const insertNodeWithAnchors = (
+  statements: Statements,
+  node: Node,
+  anchorPaths: string[],
+  now: number,
+): void => {
+  statements.insertNode.run(node);
+
+  for (const anchorPath of anchorPaths) {
+    const targetId = `file_context:${anchorPath}`;
+
+    statements.insertFileContextNode.run({
+      id: targetId,
+      type: NodeType.Artifact,
+      role: NodeRole.FileContext,
+      title: anchorPath,
+      content: anchorPath,
+      tags_json: '[]',
+      importance: 0.5,
+      confidence: 0.8,
+      source: NodeSource.Internal,
+      status: NodeStatus.Active,
+      scope: NodeScope.File,
+      created_at: now,
+      invalidated_at: null,
+      embedding: null,
+    });
+
+    statements.insertAnchoredEdge.run({
+      id: nanoid(),
+      source_id: node.id,
+      target_id: targetId,
+      type: EdgeType.AnchoredTo,
+      strength: 1,
+      confidence: 1,
+      created_at: now,
+    });
+  }
+};
+
+const findSimilarNodes = (statements: Statements, title: string): SimilarNode[] | undefined => {
+  const sanitized = sanitizeFtsQueryStrict(title);
+  if (sanitized.length === 0) {
+    return undefined;
+  }
+
+  const titleQuery = sanitized
+    .split(/\s+/)
+    .map((t) => `title:${t}`)
+    .join(' ');
+
+  try {
+    const similar = statements.searchSimilarTitle.all(titleQuery) as SimilarNode[];
+    return similar.length > 0 ? similar : undefined;
+  } catch {
+    // FTS5 query errors are non-blocking for duplicate detection
+    return undefined;
+  }
+};
+
+// Single input overloads
+export function storeNode(
+  db: Database.Database,
+  input: StoreNodeInput,
+  options?: StoreNodeOptions & { minimal?: false },
+): StoreNodeResult;
+export function storeNode(
+  db: Database.Database,
+  input: StoreNodeInput,
+  options: StoreNodeOptions & { minimal: true },
+): MinimalNode;
+
+// Batch input overloads
+export function storeNode(
+  db: Database.Database,
+  input: StoreNodeInput[],
+  options?: StoreNodeOptions & { minimal?: false },
+): Node[];
+export function storeNode(
+  db: Database.Database,
+  input: StoreNodeInput[],
+  options: StoreNodeOptions & { minimal: true },
+): MinimalNode[];
+
+// Implementation
+export function storeNode(
+  db: Database.Database,
+  input: StoreNodeInput | StoreNodeInput[],
+  options?: StoreNodeOptions,
+): StoreNodeResult | MinimalNode | Node[] | MinimalNode[] {
+  const isBatch = Array.isArray(input);
+  const inputs = isBatch ? input : [input];
+
+  if (inputs.length === 0) {
+    throw new Error('at least one node required');
+  }
+  if (inputs.length > MAX_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded (${MAX_BATCH_SIZE})`);
+  }
+
+  // Pre-validate all type-role combinations before opening transaction
+  for (const inp of inputs) {
+    if (!isValidTypeRole(inp.type, inp.role)) {
+      throw new Error(`invalid type-role combination: type="${inp.type}" role="${inp.role}"`);
+    }
+  }
+
   const statements = getStatements(db);
   const now = Date.now();
-  const node: Node = {
-    id: nanoid(),
-    type: input.type,
-    title: input.title,
-    content: input.content,
-    tags_json: JSON.stringify(input.tags ?? []),
-    importance: input.importance ?? 0.5,
-    confidence: input.confidence ?? 0.8,
-    created_at: now,
-    invalidated_at: null,
-    embedding: input.embedding ?? null,
-  };
+  const minimal = options?.minimal ?? false;
 
-  const anchorTargets = input.anchor_to ?? [];
+  // Duplicate warning: single, non-minimal, no anchor_to only
+  let similarNodes: SimilarNode[] | undefined;
+  if (!isBatch && !minimal) {
+    const singleInput = inputs[0]!;
+    const hasAnchors = (singleInput.anchor_to?.length ?? 0) > 0;
+    if (!hasAnchors) {
+      similarNodes = findSimilarNodes(statements, singleInput.title);
+    }
+  }
+
+  const nodes: Node[] = inputs.map((inp) => buildNode(inp, now));
 
   db.transaction(() => {
-    statements.insertNode.run(node);
-
-    for (const anchorPath of anchorTargets) {
-      const targetId = `file_context:${anchorPath}`;
-
-      statements.insertFileContextNode.run({
-        id: targetId,
-        type: NodeType.FileContext,
-        title: anchorPath,
-        content: anchorPath,
-        tags_json: '[]',
-        importance: 0.5,
-        confidence: 0.8,
-        created_at: now,
-        invalidated_at: null,
-        embedding: null,
-      });
-
-      statements.insertAnchoredEdge.run({
-        id: nanoid(),
-        source_id: node.id,
-        target_id: targetId,
-        type: EdgeType.AnchoredTo,
-        strength: 1,
-        confidence: 1,
-        created_at: now,
-      });
+    for (let i = 0; i < nodes.length; i++) {
+      insertNodeWithAnchors(statements, nodes[i]!, inputs[i]!.anchor_to ?? [], now);
     }
   }).immediate();
 
-  return node;
-};
+  if (isBatch) {
+    if (minimal) {
+      return nodes.map((n) => ({ id: n.id }));
+    }
+    return nodes;
+  }
+
+  if (minimal) {
+    return { id: nodes[0]!.id };
+  }
+
+  if (similarNodes) {
+    return { ...nodes[0]!, warning: { similar_nodes: similarNodes } };
+  }
+
+  return nodes[0]! as StoreNodeResult;
+}
 
 export const getNode = (
   db: Database.Database,

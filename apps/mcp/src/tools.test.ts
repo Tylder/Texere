@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { EdgeType, NodeType, TextereDB } from '@texere/graph';
+import { EdgeType, NodeRole, NodeType, TextereDB } from '@texere/graph';
 
 import { createTexereMcpServer } from './server.js';
 import { TOOL_DEFINITIONS } from './tools/index.js';
@@ -9,6 +9,7 @@ const TOOL_NAMES = [
   'texere_store_node',
   'texere_get_node',
   'texere_invalidate_node',
+  'texere_replace_node',
   'texere_create_edge',
   'texere_delete_edge',
   'texere_search',
@@ -30,13 +31,13 @@ describe('Texere MCP tools', () => {
     db.close();
   });
 
-  it('registers exactly 9 tools', () => {
+  it('registers exactly 10 tools', () => {
     expect(mcp.toolNames).toEqual(TOOL_NAMES);
-    expect(mcp.toolNames).toHaveLength(9);
+    expect(mcp.toolNames).toHaveLength(10);
   });
 
   it('exposes zod input schema for each tool', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(9);
+    expect(TOOL_DEFINITIONS).toHaveLength(10);
 
     for (const definition of TOOL_DEFINITIONS) {
       expect(typeof definition.inputSchema.safeParse).toBe('function');
@@ -45,7 +46,8 @@ describe('Texere MCP tools', () => {
 
   it('texere_store_node accepts valid input and returns a node', async () => {
     const result = await mcp.callTool('texere_store_node', {
-      type: NodeType.Task,
+      type: NodeType.Action,
+      role: NodeRole.Task,
       title: 'MCP node',
       content: 'Created from tool',
       tags: ['mcp'],
@@ -55,7 +57,8 @@ describe('Texere MCP tools', () => {
     expect(result.isError).toBeUndefined();
     expect(result.structuredContent).toMatchObject({
       node: {
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'MCP node',
       },
     });
@@ -63,7 +66,8 @@ describe('Texere MCP tools', () => {
 
   it('texere_store_node rejects invalid input with structured error', async () => {
     const result = await mcp.callTool('texere_store_node', {
-      type: NodeType.Task,
+      type: NodeType.Action,
+      role: NodeRole.Task,
       content: 'Missing title',
     });
 
@@ -77,7 +81,8 @@ describe('Texere MCP tools', () => {
 
   it('texere_store_node -> texere_get_node round-trip works', async () => {
     const stored = await mcp.callTool('texere_store_node', {
-      type: NodeType.Decision,
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
       title: 'Round trip',
       content: 'Store then get',
     });
@@ -107,7 +112,8 @@ describe('Texere MCP tools', () => {
 
   it('texere_invalidate_node sets invalidated_at timestamp', async () => {
     const stored = await mcp.callTool('texere_store_node', {
-      type: NodeType.Problem,
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
       title: 'Wrong assumption',
       content: 'Needs invalidation',
     });
@@ -120,14 +126,16 @@ describe('Texere MCP tools', () => {
     expect((fetched.structuredContent as any).node.invalidated_at).not.toBeNull();
   });
 
-  it('texere_create_edge returns edge and DEPRECATED_BY invalidates source node', async () => {
+  it('texere_create_edge returns edge and REPLACES invalidates source node', async () => {
     const oldNode = await mcp.callTool('texere_store_node', {
-      type: NodeType.Decision,
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
       title: 'Old decision',
       content: 'Deprecated decision',
     });
     const newNode = await mcp.callTool('texere_store_node', {
-      type: NodeType.Decision,
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
       title: 'New decision',
       content: 'Replacement decision',
     });
@@ -136,9 +144,11 @@ describe('Texere MCP tools', () => {
     const targetId = (newNode.structuredContent as any).node.id as string;
 
     const edgeResult = await mcp.callTool('texere_create_edge', {
-      source_id: sourceId,
-      target_id: targetId,
-      type: EdgeType.DeprecatedBy,
+      edges: {
+        source_id: sourceId,
+        target_id: targetId,
+        type: EdgeType.Replaces,
+      },
     });
 
     expect(edgeResult.isError).toBeUndefined();
@@ -146,7 +156,7 @@ describe('Texere MCP tools', () => {
       edge: {
         source_id: sourceId,
         target_id: targetId,
-        type: EdgeType.DeprecatedBy,
+        type: EdgeType.Replaces,
       },
     });
 
@@ -156,20 +166,24 @@ describe('Texere MCP tools', () => {
 
   it('texere_delete_edge removes edge', async () => {
     const source = await mcp.callTool('texere_store_node', {
-      type: NodeType.Task,
+      type: NodeType.Action,
+      role: NodeRole.Task,
       title: 'Source',
       content: 'Source content',
     });
     const target = await mcp.callTool('texere_store_node', {
-      type: NodeType.Task,
+      type: NodeType.Action,
+      role: NodeRole.Task,
       title: 'Target',
       content: 'Target content',
     });
 
     const edge = await mcp.callTool('texere_create_edge', {
-      source_id: (source.structuredContent as any).node.id,
-      target_id: (target.structuredContent as any).node.id,
-      type: EdgeType.RelatedTo,
+      edges: {
+        source_id: (source.structuredContent as any).node.id,
+        target_id: (target.structuredContent as any).node.id,
+        type: EdgeType.Extends,
+      },
     });
 
     const deleted = await mcp.callTool('texere_delete_edge', {
@@ -181,7 +195,8 @@ describe('Texere MCP tools', () => {
 
   it('texere_search returns results after storing nodes', async () => {
     await mcp.callTool('texere_store_node', {
-      type: NodeType.Solution,
+      type: NodeType.Action,
+      role: NodeRole.Solution,
       title: 'Use immediate transactions',
       content: 'Fixes write contention',
       tags: ['sqlite', 'concurrency'],
@@ -190,7 +205,7 @@ describe('Texere MCP tools', () => {
 
     const result = await mcp.callTool('texere_search', {
       query: 'immediate transactions',
-      type: NodeType.Solution,
+      type: NodeType.Action,
       tags: ['sqlite'],
       min_importance: 0.5,
       limit: 5,
@@ -202,12 +217,14 @@ describe('Texere MCP tools', () => {
 
   it('texere_traverse returns neighbors', async () => {
     const start = await mcp.callTool('texere_store_node', {
-      type: NodeType.Problem,
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
       title: 'Traversal start',
       content: 'Root node',
     });
     const neighbor = await mcp.callTool('texere_store_node', {
-      type: NodeType.Solution,
+      type: NodeType.Action,
+      role: NodeRole.Solution,
       title: 'Traversal neighbor',
       content: 'Neighbor node',
     });
@@ -216,9 +233,11 @@ describe('Texere MCP tools', () => {
     const neighborId = (neighbor.structuredContent as any).node.id as string;
 
     await mcp.callTool('texere_create_edge', {
-      source_id: startId,
-      target_id: neighborId,
-      type: EdgeType.RelatedTo,
+      edges: {
+        source_id: startId,
+        target_id: neighborId,
+        type: EdgeType.Resolves,
+      },
     });
 
     const traversed = await mcp.callTool('texere_traverse', {
@@ -234,20 +253,24 @@ describe('Texere MCP tools', () => {
 
   it('texere_about returns search plus traversal context', async () => {
     const problem = await mcp.callTool('texere_store_node', {
-      type: NodeType.Problem,
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
       title: 'Auth timeout problem',
       content: 'User login times out',
     });
     const fix = await mcp.callTool('texere_store_node', {
-      type: NodeType.Fix,
+      type: NodeType.Action,
+      role: NodeRole.Fix,
       title: 'Increase DB timeout',
       content: 'Use longer busy timeout',
     });
 
     await mcp.callTool('texere_create_edge', {
-      source_id: (fix.structuredContent as any).node.id,
-      target_id: (problem.structuredContent as any).node.id,
-      type: EdgeType.Solves,
+      edges: {
+        source_id: (fix.structuredContent as any).node.id,
+        target_id: (problem.structuredContent as any).node.id,
+        type: EdgeType.Resolves,
+      },
     });
 
     const result = await mcp.callTool('texere_about', {
@@ -263,7 +286,8 @@ describe('Texere MCP tools', () => {
 
   it('texere_stats returns counts', async () => {
     await mcp.callTool('texere_store_node', {
-      type: NodeType.Task,
+      type: NodeType.Action,
+      role: NodeRole.Task,
       title: 'Task one',
       content: 'Task content',
     });

@@ -5,7 +5,12 @@ import { createDatabase } from './db.js';
 import { createEdge } from './edges.js';
 import { invalidateNode, storeNode } from './nodes.js';
 import { about, stats, traverse } from './traverse.js';
-import { EdgeType, NodeType } from './types.js';
+import { EdgeType, NodeRole, NodeType } from './types.js';
+
+const makeNode = (
+  db: Database.Database,
+  opts: { type: NodeType; role: NodeRole; title: string; content: string; tags?: string[] },
+) => storeNode(db, opts);
 
 const toDepthById = (rows: Array<{ node: { id: string }; depth: number }>): Map<string, number> =>
   new Map(rows.map((row) => [row.node.id, row.depth]));
@@ -22,14 +27,34 @@ describe('traverse', () => {
   });
 
   it("follows outgoing edges with traverse({ direction: 'outgoing', maxDepth: 2 })", () => {
-    const start = storeNode(db, { type: NodeType.Decision, title: 'Start', content: 'Start' });
-    const depth1 = storeNode(db, { type: NodeType.Solution, title: 'Depth1', content: 'Depth1' });
-    const depth2 = storeNode(db, { type: NodeType.Problem, title: 'Depth2', content: 'Depth2' });
-    const depth3 = storeNode(db, { type: NodeType.Technology, title: 'Depth3', content: 'Depth3' });
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Start',
+      content: 'Start',
+    });
+    const depth1 = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Depth1',
+      content: 'Depth1',
+    });
+    const depth2 = makeNode(db, {
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
+      title: 'Depth2',
+      content: 'Depth2',
+    });
+    const depth3 = makeNode(db, {
+      type: NodeType.Artifact,
+      role: NodeRole.Technology,
+      title: 'Depth3',
+      content: 'Depth3',
+    });
 
-    createEdge(db, { source_id: start.id, target_id: depth1.id, type: EdgeType.Solves });
-    createEdge(db, { source_id: depth1.id, target_id: depth2.id, type: EdgeType.Requires });
-    createEdge(db, { source_id: depth2.id, target_id: depth3.id, type: EdgeType.BuildsOn });
+    createEdge(db, { source_id: start.id, target_id: depth1.id, type: EdgeType.Resolves });
+    createEdge(db, { source_id: depth1.id, target_id: depth2.id, type: EdgeType.DependsOn });
+    createEdge(db, { source_id: depth2.id, target_id: depth3.id, type: EdgeType.Extends });
 
     const result = traverse(db, { startId: start.id, direction: 'outgoing', maxDepth: 2 });
     const depthById = toDepthById(result);
@@ -40,12 +65,27 @@ describe('traverse', () => {
   });
 
   it("follows incoming edges with traverse({ direction: 'incoming', maxDepth: 2 })", () => {
-    const upstream2 = storeNode(db, { type: NodeType.Problem, title: 'Upstream2', content: 'U2' });
-    const upstream1 = storeNode(db, { type: NodeType.Solution, title: 'Upstream1', content: 'U1' });
-    const start = storeNode(db, { type: NodeType.Decision, title: 'Start', content: 'Start' });
+    const upstream2 = makeNode(db, {
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
+      title: 'Upstream2',
+      content: 'U2',
+    });
+    const upstream1 = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Upstream1',
+      content: 'U1',
+    });
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Start',
+      content: 'Start',
+    });
 
     createEdge(db, { source_id: upstream1.id, target_id: start.id, type: EdgeType.Causes });
-    createEdge(db, { source_id: upstream2.id, target_id: upstream1.id, type: EdgeType.Requires });
+    createEdge(db, { source_id: upstream2.id, target_id: upstream1.id, type: EdgeType.DependsOn });
 
     const result = traverse(db, { startId: start.id, direction: 'incoming', maxDepth: 2 });
     const depthById = toDepthById(result);
@@ -55,20 +95,27 @@ describe('traverse', () => {
   });
 
   it("follows both directions with traverse({ direction: 'both', maxDepth: 2 })", () => {
-    const incoming = storeNode(db, {
-      type: NodeType.Problem,
+    const incoming = makeNode(db, {
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
       title: 'Incoming',
       content: 'Incoming',
     });
-    const start = storeNode(db, { type: NodeType.Decision, title: 'Start', content: 'Start' });
-    const outgoing = storeNode(db, {
-      type: NodeType.Solution,
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Start',
+      content: 'Start',
+    });
+    const outgoing = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
       title: 'Outgoing',
       content: 'Outgoing',
     });
 
     createEdge(db, { source_id: incoming.id, target_id: start.id, type: EdgeType.Causes });
-    createEdge(db, { source_id: start.id, target_id: outgoing.id, type: EdgeType.Solves });
+    createEdge(db, { source_id: start.id, target_id: outgoing.id, type: EdgeType.Resolves });
 
     const result = traverse(db, { startId: start.id, direction: 'both', maxDepth: 2 });
     const ids = new Set(result.map((row) => row.node.id));
@@ -78,14 +125,34 @@ describe('traverse', () => {
   });
 
   it('respects maxDepth and excludes nodes beyond it', () => {
-    const start = storeNode(db, { type: NodeType.Decision, title: 'Start', content: 'Start' });
-    const d1 = storeNode(db, { type: NodeType.Solution, title: 'D1', content: 'D1' });
-    const d2 = storeNode(db, { type: NodeType.Solution, title: 'D2', content: 'D2' });
-    const d3 = storeNode(db, { type: NodeType.Solution, title: 'D3', content: 'D3' });
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Start',
+      content: 'Start',
+    });
+    const d1 = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'D1',
+      content: 'D1',
+    });
+    const d2 = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'D2',
+      content: 'D2',
+    });
+    const d3 = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'D3',
+      content: 'D3',
+    });
 
-    createEdge(db, { source_id: start.id, target_id: d1.id, type: EdgeType.Solves });
-    createEdge(db, { source_id: d1.id, target_id: d2.id, type: EdgeType.Solves });
-    createEdge(db, { source_id: d2.id, target_id: d3.id, type: EdgeType.Solves });
+    createEdge(db, { source_id: start.id, target_id: d1.id, type: EdgeType.Resolves });
+    createEdge(db, { source_id: d1.id, target_id: d2.id, type: EdgeType.Resolves });
+    createEdge(db, { source_id: d2.id, target_id: d3.id, type: EdgeType.Resolves });
 
     const result = traverse(db, { startId: start.id, maxDepth: 2 });
     const ids = new Set(result.map((row) => row.node.id));
@@ -96,16 +163,27 @@ describe('traverse', () => {
   });
 
   it('excludes invalidated nodes from traversal output', () => {
-    const start = storeNode(db, { type: NodeType.Decision, title: 'Start', content: 'Start' });
-    const active = storeNode(db, { type: NodeType.Solution, title: 'Active', content: 'Active' });
-    const invalidated = storeNode(db, {
-      type: NodeType.Problem,
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Start',
+      content: 'Start',
+    });
+    const active = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Active',
+      content: 'Active',
+    });
+    const invalidated = makeNode(db, {
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
       title: 'Invalidated',
       content: 'Invalidated',
     });
 
-    createEdge(db, { source_id: start.id, target_id: active.id, type: EdgeType.Solves });
-    createEdge(db, { source_id: active.id, target_id: invalidated.id, type: EdgeType.Requires });
+    createEdge(db, { source_id: start.id, target_id: active.id, type: EdgeType.Resolves });
+    createEdge(db, { source_id: active.id, target_id: invalidated.id, type: EdgeType.DependsOn });
     invalidateNode(db, invalidated.id);
 
     const result = traverse(db, { startId: start.id, maxDepth: 3 });
@@ -121,19 +199,39 @@ describe('traverse', () => {
   });
 
   it('returns empty when start node has no edges', () => {
-    const lonely = storeNode(db, { type: NodeType.Decision, title: 'Lonely', content: 'Lonely' });
+    const lonely = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Lonely',
+      content: 'Lonely',
+    });
     const result = traverse(db, { startId: lonely.id });
     expect(result).toEqual([]);
   });
 
   it('handles cycles without infinite recursion via depth limit', () => {
-    const a = storeNode(db, { type: NodeType.Decision, title: 'A', content: 'A' });
-    const b = storeNode(db, { type: NodeType.Decision, title: 'B', content: 'B' });
-    const c = storeNode(db, { type: NodeType.Decision, title: 'C', content: 'C' });
+    const a = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'A',
+      content: 'A',
+    });
+    const b = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'B',
+      content: 'B',
+    });
+    const c = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'C',
+      content: 'C',
+    });
 
-    createEdge(db, { source_id: a.id, target_id: b.id, type: EdgeType.RelatedTo });
-    createEdge(db, { source_id: b.id, target_id: c.id, type: EdgeType.RelatedTo });
-    createEdge(db, { source_id: c.id, target_id: a.id, type: EdgeType.RelatedTo });
+    createEdge(db, { source_id: a.id, target_id: b.id, type: EdgeType.Extends });
+    createEdge(db, { source_id: b.id, target_id: c.id, type: EdgeType.Extends });
+    createEdge(db, { source_id: c.id, target_id: a.id, type: EdgeType.Extends });
 
     const result = traverse(db, { startId: a.id, direction: 'outgoing', maxDepth: 4 });
     const ids = new Set(result.map((row) => row.node.id));
@@ -144,14 +242,29 @@ describe('traverse', () => {
   });
 
   it('applies edge type filter when provided', () => {
-    const start = storeNode(db, { type: NodeType.Decision, title: 'Start', content: 'Start' });
-    const solves = storeNode(db, { type: NodeType.Solution, title: 'Solves', content: 'Solves' });
-    const causes = storeNode(db, { type: NodeType.Problem, title: 'Causes', content: 'Causes' });
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Start',
+      content: 'Start',
+    });
+    const solves = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Solves',
+      content: 'Solves',
+    });
+    const causes = makeNode(db, {
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
+      title: 'Causes',
+      content: 'Causes',
+    });
 
-    createEdge(db, { source_id: start.id, target_id: solves.id, type: EdgeType.Solves });
+    createEdge(db, { source_id: start.id, target_id: solves.id, type: EdgeType.Resolves });
     createEdge(db, { source_id: start.id, target_id: causes.id, type: EdgeType.Causes });
 
-    const result = traverse(db, { startId: start.id, edgeType: EdgeType.Solves, maxDepth: 2 });
+    const result = traverse(db, { startId: start.id, edgeType: EdgeType.Resolves, maxDepth: 2 });
     const ids = new Set(result.map((row) => row.node.id));
 
     expect(ids.has(solves.id)).toBe(true);
@@ -159,16 +272,41 @@ describe('traverse', () => {
   });
 
   it('uses default maxDepth of 3 when maxDepth is omitted', () => {
-    const start = storeNode(db, { type: NodeType.Decision, title: 'Start', content: 'Start' });
-    const d1 = storeNode(db, { type: NodeType.Decision, title: 'D1', content: 'D1' });
-    const d2 = storeNode(db, { type: NodeType.Decision, title: 'D2', content: 'D2' });
-    const d3 = storeNode(db, { type: NodeType.Decision, title: 'D3', content: 'D3' });
-    const d4 = storeNode(db, { type: NodeType.Decision, title: 'D4', content: 'D4' });
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Start',
+      content: 'Start',
+    });
+    const d1 = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'D1',
+      content: 'D1',
+    });
+    const d2 = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'D2',
+      content: 'D2',
+    });
+    const d3 = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'D3',
+      content: 'D3',
+    });
+    const d4 = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'D4',
+      content: 'D4',
+    });
 
-    createEdge(db, { source_id: start.id, target_id: d1.id, type: EdgeType.RelatedTo });
-    createEdge(db, { source_id: d1.id, target_id: d2.id, type: EdgeType.RelatedTo });
-    createEdge(db, { source_id: d2.id, target_id: d3.id, type: EdgeType.RelatedTo });
-    createEdge(db, { source_id: d3.id, target_id: d4.id, type: EdgeType.RelatedTo });
+    createEdge(db, { source_id: start.id, target_id: d1.id, type: EdgeType.Extends });
+    createEdge(db, { source_id: d1.id, target_id: d2.id, type: EdgeType.Extends });
+    createEdge(db, { source_id: d2.id, target_id: d3.id, type: EdgeType.Extends });
+    createEdge(db, { source_id: d3.id, target_id: d4.id, type: EdgeType.Extends });
 
     const result = traverse(db, { startId: start.id, direction: 'outgoing' });
     const ids = new Set(result.map((row) => row.node.id));
@@ -181,14 +319,19 @@ describe('traverse', () => {
 
   it('caps maxDepth at 5 when input exceeds limit', () => {
     const nodes = Array.from({ length: 7 }, (_, idx) =>
-      storeNode(db, { type: NodeType.Decision, title: `N${idx}`, content: `N${idx}` }),
+      makeNode(db, {
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: `N${idx}`,
+        content: `N${idx}`,
+      }),
     );
 
     for (let idx = 0; idx < nodes.length - 1; idx += 1) {
       createEdge(db, {
         source_id: nodes[idx]!.id,
         target_id: nodes[idx + 1]!.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
     }
 
@@ -212,19 +355,21 @@ describe('about', () => {
   });
 
   it('finds seed nodes via FTS and traverses neighbors', () => {
-    const seed = storeNode(db, {
-      type: NodeType.Technology,
+    const seed = makeNode(db, {
+      type: NodeType.Artifact,
+      role: NodeRole.Technology,
       title: 'SQLite recursion',
       content: 'Recursive CTE patterns',
       tags: ['sqlite'],
     });
-    const neighbor = storeNode(db, {
-      type: NodeType.Decision,
+    const neighbor = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
       title: 'Use CTE traversal',
       content: 'Decision referencing SQLite',
     });
 
-    createEdge(db, { source_id: seed.id, target_id: neighbor.id, type: EdgeType.BuildsOn });
+    createEdge(db, { source_id: seed.id, target_id: neighbor.id, type: EdgeType.Extends });
 
     const result = about(db, { query: 'SQLite', maxDepth: 2, direction: 'outgoing' });
     const ids = new Set(result.map((row) => row.node.id));
@@ -234,14 +379,16 @@ describe('about', () => {
   });
 
   it('returns search + traversal nodes deduplicated by id', () => {
-    const seed = storeNode(db, {
-      type: NodeType.Technology,
+    const seed = makeNode(db, {
+      type: NodeType.Artifact,
+      role: NodeRole.Technology,
       title: 'SQLite search seed',
       content: 'SQLite',
       tags: ['sqlite'],
     });
-    const matchingNeighbor = storeNode(db, {
-      type: NodeType.Decision,
+    const matchingNeighbor = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
       title: 'SQLite neighbor',
       content: 'SQLite usage',
     });
@@ -249,7 +396,7 @@ describe('about', () => {
     createEdge(db, {
       source_id: seed.id,
       target_id: matchingNeighbor.id,
-      type: EdgeType.RelatedTo,
+      type: EdgeType.Extends,
     });
 
     const result = about(db, { query: 'SQLite', maxDepth: 2 });
@@ -262,7 +409,12 @@ describe('about', () => {
   });
 
   it('returns empty when search finds no seed nodes', () => {
-    storeNode(db, { type: NodeType.Decision, title: 'Unrelated', content: 'No sqlite here' });
+    makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Unrelated',
+      content: 'No sqlite here',
+    });
     const result = about(db, { query: 'nonexistentqueryterm' });
     expect(result).toEqual([]);
   });
@@ -280,19 +432,26 @@ describe('stats', () => {
   });
 
   it('returns node and edge totals plus by-type breakdowns and invalidated count', () => {
-    const decision = storeNode(db, {
-      type: NodeType.Decision,
+    const decision = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
       title: 'Decision',
       content: 'Decision',
     });
-    const problem = storeNode(db, { type: NodeType.Problem, title: 'Problem', content: 'Problem' });
-    const solution = storeNode(db, {
-      type: NodeType.Solution,
+    const problem = makeNode(db, {
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
+      title: 'Problem',
+      content: 'Problem',
+    });
+    const solution = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
       title: 'Solution',
       content: 'Solution',
     });
 
-    createEdge(db, { source_id: decision.id, target_id: solution.id, type: EdgeType.Solves });
+    createEdge(db, { source_id: decision.id, target_id: solution.id, type: EdgeType.Resolves });
     createEdge(db, { source_id: problem.id, target_id: decision.id, type: EdgeType.Causes });
 
     invalidateNode(db, problem.id);
@@ -301,16 +460,16 @@ describe('stats', () => {
       nodes: {
         total: 3,
         byType: {
-          [NodeType.Decision]: 1,
-          [NodeType.Problem]: 1,
-          [NodeType.Solution]: 1,
+          [NodeType.Knowledge]: 1,
+          [NodeType.Issue]: 1,
+          [NodeType.Action]: 1,
         },
         invalidated: 1,
       },
       edges: {
         total: 2,
         byType: {
-          [EdgeType.Solves]: 1,
+          [EdgeType.Resolves]: 1,
           [EdgeType.Causes]: 1,
         },
       },

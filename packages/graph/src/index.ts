@@ -6,16 +6,27 @@ import {
   deleteEdge as deleteEdgeImpl,
   getEdgesForNode as getEdgesForNodeImpl,
   type CreateEdgeInput,
+  type CreateEdgeOptions,
   type EdgeDirection,
+  type MinimalEdge,
 } from './edges.js';
 import {
   getNode as getNodeImpl,
   invalidateNode as invalidateNodeImpl,
   storeNode as storeNodeImpl,
   type GetNodeOptions,
+  type MinimalNode,
   type NodeWithEdges,
+  type SimilarNode,
   type StoreNodeInput,
+  type StoreNodeOptions,
+  type StoreNodeResult,
 } from './nodes.js';
+import {
+  replaceNode as replaceNodeImpl,
+  type ReplaceNodeInput,
+  type ReplaceNodeOptions,
+} from './replace-node.js';
 import { search as searchImpl } from './search.js';
 import {
   about as aboutImpl,
@@ -27,11 +38,16 @@ import {
 } from './traverse.js';
 import {
   EdgeType,
+  NodeRole,
+  NodeScope,
+  NodeSource,
+  NodeStatus,
   NodeType,
   type Edge,
   type Node,
   type NodeTag,
   type SearchOptions,
+  type SearchResult,
   type TraverseOptions,
 } from './types.js';
 
@@ -51,13 +67,18 @@ export class TextereDB {
     this.db = createDatabase(dbPath);
   }
 
-  /**
-   * Store a new node in the database
-   * @param input - Node data to store
-   * @returns The created node
-   */
-  storeNode(input: StoreNodeInput): Node {
-    return storeNodeImpl(this.db, input);
+  storeNode(
+    input: StoreNodeInput,
+    options?: StoreNodeOptions & { minimal?: false },
+  ): StoreNodeResult;
+  storeNode(input: StoreNodeInput, options: StoreNodeOptions & { minimal: true }): MinimalNode;
+  storeNode(input: StoreNodeInput[], options?: StoreNodeOptions & { minimal?: false }): Node[];
+  storeNode(input: StoreNodeInput[], options: StoreNodeOptions & { minimal: true }): MinimalNode[];
+  storeNode(
+    input: StoreNodeInput | StoreNodeInput[],
+    options?: StoreNodeOptions,
+  ): StoreNodeResult | MinimalNode | Node[] | MinimalNode[] {
+    return (storeNodeImpl as Function)(this.db, input, options);
   }
 
   /**
@@ -79,13 +100,27 @@ export class TextereDB {
     invalidateNodeImpl(this.db, id);
   }
 
-  /**
-   * Create an edge between two nodes
-   * @param input - Edge data
-   * @returns The created edge
-   */
-  createEdge(input: CreateEdgeInput): Edge {
-    return createEdgeImpl(this.db, input);
+  replaceNode(input: ReplaceNodeInput, options?: ReplaceNodeOptions & { minimal?: false }): Node;
+  replaceNode(
+    input: ReplaceNodeInput,
+    options: ReplaceNodeOptions & { minimal: true },
+  ): MinimalNode;
+  replaceNode(input: ReplaceNodeInput, options?: ReplaceNodeOptions): Node | MinimalNode {
+    return (replaceNodeImpl as Function)(this.db, input, options);
+  }
+
+  createEdge(input: CreateEdgeInput, options?: CreateEdgeOptions & { minimal?: false }): Edge;
+  createEdge(input: CreateEdgeInput, options: CreateEdgeOptions & { minimal: true }): MinimalEdge;
+  createEdge(input: CreateEdgeInput[], options?: CreateEdgeOptions & { minimal?: false }): Edge[];
+  createEdge(
+    input: CreateEdgeInput[],
+    options: CreateEdgeOptions & { minimal: true },
+  ): MinimalEdge[];
+  createEdge(
+    input: CreateEdgeInput | CreateEdgeInput[],
+    options?: CreateEdgeOptions,
+  ): Edge | MinimalEdge | Edge[] | MinimalEdge[] {
+    return (createEdgeImpl as Function)(this.db, input, options);
   }
 
   /**
@@ -112,7 +147,7 @@ export class TextereDB {
    * @param options - Search options
    * @returns Array of matching nodes
    */
-  search(options: SearchOptions): Node[] {
+  search(options: SearchOptions): SearchResult[] {
     return searchImpl(this.db, options);
   }
 
@@ -150,27 +185,30 @@ export class TextereDB {
   }
 }
 
-// Re-export all public types
 export type {
-  // Node types
   Node,
   NodeWithEdges,
   StoreNodeInput,
+  StoreNodeOptions,
+  StoreNodeResult,
+  SimilarNode,
+  MinimalNode,
   GetNodeOptions,
-  // Edge types
+  ReplaceNodeInput,
+  ReplaceNodeOptions,
   Edge,
   CreateEdgeInput,
+  CreateEdgeOptions,
+  MinimalEdge,
   EdgeDirection,
-  // Search types
   SearchOptions,
-  // Traverse types
+  SearchResult,
   TraverseOptions,
   TraverseResult,
   AboutOptions,
   Stats,
-  // Tag types
   NodeTag,
 };
 
-// Re-export enums
-export { NodeType, EdgeType };
+export { EdgeType, NodeRole, NodeScope, NodeSource, NodeStatus, NodeType };
+export { isValidTypeRole, VALID_ROLES_BY_TYPE } from './types.js';

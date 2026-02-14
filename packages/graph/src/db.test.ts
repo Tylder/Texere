@@ -41,12 +41,13 @@ describe('createDatabase', () => {
 
     db.prepare(
       `
-        INSERT INTO nodes (id, type, title, content, tags_json, created_at)
-        VALUES (@id, @type, @title, @content, @tags_json, @created_at)
+        INSERT INTO nodes (id, type, role, title, content, tags_json, created_at)
+        VALUES (@id, @type, @role, @title, @content, @tags_json, @created_at)
       `,
     ).run({
       id: 'node-1',
-      type: 'task',
+      type: 'action',
+      role: 'task',
       title: 'node one',
       content: 'content',
       tags_json: '["a","b"]',
@@ -68,12 +69,13 @@ describe('createDatabase', () => {
 
     db.prepare(
       `
-        INSERT INTO nodes (id, type, title, content, tags_json, created_at)
-        VALUES (@id, @type, @title, @content, @tags_json, @created_at)
+        INSERT INTO nodes (id, type, role, title, content, tags_json, created_at)
+        VALUES (@id, @type, @role, @title, @content, @tags_json, @created_at)
       `,
     ).run({
       id: 'node-2',
-      type: 'task',
+      type: 'action',
+      role: 'task',
       title: 'node two',
       content: 'content',
       tags_json: '[]',
@@ -95,12 +97,13 @@ describe('createDatabase', () => {
 
     db.prepare(
       `
-        INSERT INTO nodes (id, type, title, content, tags_json, created_at)
-        VALUES (@id, @type, @title, @content, @tags_json, @created_at)
+        INSERT INTO nodes (id, type, role, title, content, tags_json, created_at)
+        VALUES (@id, @type, @role, @title, @content, @tags_json, @created_at)
       `,
     ).run({
       id: 'node-3',
-      type: 'task',
+      type: 'action',
+      role: 'task',
       title: 'fts title',
       content: 'fts content',
       tags_json: '["fts"]',

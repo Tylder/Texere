@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { EdgeType, NodeType } from './types.js';
+import { EdgeType, NodeRole, NodeType } from './types.js';
 
 import { TextereDB } from './index.js';
 
@@ -25,7 +25,8 @@ describe('TextereDB', () => {
   describe('node operations', () => {
     it('storeNode creates a node', () => {
       const node = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Test Task',
         content: 'Test content',
         tags: ['test'],
@@ -33,7 +34,8 @@ describe('TextereDB', () => {
       });
 
       expect(node.id).toBeDefined();
-      expect(node.type).toBe(NodeType.Task);
+      expect(node.type).toBe(NodeType.Action);
+      expect(node.role).toBe(NodeRole.Task);
       expect(node.title).toBe('Test Task');
       expect(node.content).toBe('Test content');
       expect(node.importance).toBe(0.8);
@@ -41,7 +43,8 @@ describe('TextereDB', () => {
 
     it('getNode retrieves a stored node', () => {
       const created = db.storeNode({
-        type: NodeType.Solution,
+        type: NodeType.Action,
+        role: NodeRole.Solution,
         title: 'Test Solution',
         content: 'Solution content',
       });
@@ -59,13 +62,15 @@ describe('TextereDB', () => {
 
     it('getNode with includeEdges option returns edges', () => {
       const node1 = db.storeNode({
-        type: NodeType.Problem,
+        type: NodeType.Issue,
+        role: NodeRole.Problem,
         title: 'Problem',
         content: 'Problem content',
       });
 
       const node2 = db.storeNode({
-        type: NodeType.Solution,
+        type: NodeType.Action,
+        role: NodeRole.Solution,
         title: 'Solution',
         content: 'Solution content',
       });
@@ -73,7 +78,7 @@ describe('TextereDB', () => {
       db.createEdge({
         source_id: node2.id,
         target_id: node1.id,
-        type: EdgeType.Solves,
+        type: EdgeType.Resolves,
       });
 
       const retrieved = db.getNode(node1.id, { includeEdges: true });
@@ -84,7 +89,8 @@ describe('TextereDB', () => {
 
     it('invalidateNode marks a node as invalidated', () => {
       const node = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task to invalidate',
         content: 'Content',
       });
@@ -103,13 +109,15 @@ describe('TextereDB', () => {
   describe('edge operations', () => {
     it('createEdge creates an edge between nodes', () => {
       const source = db.storeNode({
-        type: NodeType.Problem,
+        type: NodeType.Issue,
+        role: NodeRole.Problem,
         title: 'Problem',
         content: 'Problem content',
       });
 
       const target = db.storeNode({
-        type: NodeType.Solution,
+        type: NodeType.Action,
+        role: NodeRole.Solution,
         title: 'Solution',
         content: 'Solution content',
       });
@@ -117,26 +125,28 @@ describe('TextereDB', () => {
       const edge = db.createEdge({
         source_id: source.id,
         target_id: target.id,
-        type: EdgeType.Solves,
+        type: EdgeType.Resolves,
         strength: 0.9,
       });
 
       expect(edge.id).toBeDefined();
       expect(edge.source_id).toBe(source.id);
       expect(edge.target_id).toBe(target.id);
-      expect(edge.type).toBe(EdgeType.Solves);
+      expect(edge.type).toBe(EdgeType.Resolves);
       expect(edge.strength).toBe(0.9);
     });
 
     it('deleteEdge removes an edge', () => {
       const source = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task',
         content: 'Content',
       });
 
       const target = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 2',
         content: 'Content 2',
       });
@@ -144,7 +154,7 @@ describe('TextereDB', () => {
       const edge = db.createEdge({
         source_id: source.id,
         target_id: target.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
 
       const deleted = db.deleteEdge(edge.id);
@@ -161,19 +171,22 @@ describe('TextereDB', () => {
 
     it('getEdgesForNode returns outgoing edges', () => {
       const source = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task',
         content: 'Content',
       });
 
       const target1 = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 2',
         content: 'Content 2',
       });
 
       const target2 = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 3',
         content: 'Content 3',
       });
@@ -181,13 +194,13 @@ describe('TextereDB', () => {
       db.createEdge({
         source_id: source.id,
         target_id: target1.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
 
       db.createEdge({
         source_id: source.id,
         target_id: target2.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
 
       const edges = db.getEdgesForNode(source.id, 'outgoing');
@@ -196,13 +209,15 @@ describe('TextereDB', () => {
 
     it('getEdgesForNode returns incoming edges', () => {
       const source = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task',
         content: 'Content',
       });
 
       const target = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 2',
         content: 'Content 2',
       });
@@ -210,7 +225,7 @@ describe('TextereDB', () => {
       db.createEdge({
         source_id: source.id,
         target_id: target.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
 
       const edges = db.getEdgesForNode(target.id, 'incoming');
@@ -220,19 +235,22 @@ describe('TextereDB', () => {
 
     it('getEdgesForNode returns both directions', () => {
       const node1 = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 1',
         content: 'Content 1',
       });
 
       const node2 = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 2',
         content: 'Content 2',
       });
 
       const node3 = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 3',
         content: 'Content 3',
       });
@@ -240,13 +258,13 @@ describe('TextereDB', () => {
       db.createEdge({
         source_id: node1.id,
         target_id: node2.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
 
       db.createEdge({
         source_id: node3.id,
         target_id: node1.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
 
       const edges = db.getEdgesForNode(node1.id, 'both');
@@ -257,14 +275,16 @@ describe('TextereDB', () => {
   describe('search operations', () => {
     it('search finds nodes by query', () => {
       db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Implement authentication',
         content: 'Add JWT authentication to API',
         tags: ['auth', 'security'],
       });
 
       db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Add logging',
         content: 'Implement structured logging',
         tags: ['logging'],
@@ -275,34 +295,39 @@ describe('TextereDB', () => {
       expect(results[0].title).toBe('Implement authentication');
     });
 
-    it('search filters by type', () => {
+    it('search filters by type and role', () => {
       db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task about auth',
         content: 'Auth task',
       });
 
       db.storeNode({
-        type: NodeType.Solution,
+        type: NodeType.Action,
+        role: NodeRole.Solution,
         title: 'Solution about auth',
         content: 'Auth solution',
       });
 
-      const results = db.search({ query: 'auth', type: NodeType.Solution });
+      const results = db.search({ query: 'auth', type: NodeType.Action, role: NodeRole.Solution });
       expect(results).toHaveLength(1);
-      expect(results[0].type).toBe(NodeType.Solution);
+      expect(results[0].type).toBe(NodeType.Action);
+      expect(results[0].role).toBe(NodeRole.Solution);
     });
 
     it('search filters by tags', () => {
       db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 1',
         content: 'Content 1',
         tags: ['auth', 'security'],
       });
 
       db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 2',
         content: 'Content 2',
         tags: ['auth'],
@@ -315,14 +340,16 @@ describe('TextereDB', () => {
 
     it('search filters by minImportance', () => {
       db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Important task',
         content: 'Important content',
         importance: 0.9,
       });
 
       db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Less important task',
         content: 'Less important content',
         importance: 0.3,
@@ -336,7 +363,8 @@ describe('TextereDB', () => {
     it('search respects limit option', () => {
       for (let i = 0; i < 10; i++) {
         db.storeNode({
-          type: NodeType.Task,
+          type: NodeType.Action,
+          role: NodeRole.Task,
           title: `Task ${i}`,
           content: 'Common content',
         });
@@ -350,19 +378,22 @@ describe('TextereDB', () => {
   describe('traverse operations', () => {
     it('traverse walks outgoing edges', () => {
       const node1 = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 1',
         content: 'Content 1',
       });
 
       const node2 = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 2',
         content: 'Content 2',
       });
 
       const node3 = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 3',
         content: 'Content 3',
       });
@@ -370,13 +401,13 @@ describe('TextereDB', () => {
       db.createEdge({
         source_id: node1.id,
         target_id: node2.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
 
       db.createEdge({
         source_id: node2.id,
         target_id: node3.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
 
       const results = db.traverse({ startId: node1.id, direction: 'outgoing', maxDepth: 2 });
@@ -389,13 +420,15 @@ describe('TextereDB', () => {
 
     it('traverse walks incoming edges', () => {
       const node1 = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 1',
         content: 'Content 1',
       });
 
       const node2 = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 2',
         content: 'Content 2',
       });
@@ -403,7 +436,7 @@ describe('TextereDB', () => {
       db.createEdge({
         source_id: node1.id,
         target_id: node2.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
 
       const results = db.traverse({ startId: node2.id, direction: 'incoming' });
@@ -413,19 +446,22 @@ describe('TextereDB', () => {
 
     it('traverse filters by edgeType', () => {
       const problem = db.storeNode({
-        type: NodeType.Problem,
+        type: NodeType.Issue,
+        role: NodeRole.Problem,
         title: 'Problem',
         content: 'Problem content',
       });
 
       const solution = db.storeNode({
-        type: NodeType.Solution,
+        type: NodeType.Action,
+        role: NodeRole.Solution,
         title: 'Solution',
         content: 'Solution content',
       });
 
       const related = db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Related',
         content: 'Related content',
       });
@@ -433,16 +469,16 @@ describe('TextereDB', () => {
       db.createEdge({
         source_id: solution.id,
         target_id: problem.id,
-        type: EdgeType.Solves,
+        type: EdgeType.Resolves,
       });
 
       db.createEdge({
         source_id: solution.id,
         target_id: related.id,
-        type: EdgeType.RelatedTo,
+        type: EdgeType.Extends,
       });
 
-      const results = db.traverse({ startId: solution.id, edgeType: EdgeType.Solves });
+      const results = db.traverse({ startId: solution.id, edgeType: EdgeType.Resolves });
       expect(results).toHaveLength(1);
       expect(results[0].node.id).toBe(problem.id);
     });
@@ -451,14 +487,16 @@ describe('TextereDB', () => {
   describe('about operations', () => {
     it('about combines search and traverse', () => {
       const problem = db.storeNode({
-        type: NodeType.Problem,
+        type: NodeType.Issue,
+        role: NodeRole.Problem,
         title: 'Authentication problem',
         content: 'Users cannot log in',
         tags: ['auth'],
       });
 
       const solution = db.storeNode({
-        type: NodeType.Solution,
+        type: NodeType.Action,
+        role: NodeRole.Solution,
         title: 'Authentication solution',
         content: 'Fix JWT validation',
         tags: ['auth'],
@@ -467,7 +505,7 @@ describe('TextereDB', () => {
       db.createEdge({
         source_id: solution.id,
         target_id: problem.id,
-        type: EdgeType.Solves,
+        type: EdgeType.Resolves,
       });
 
       const results = db.about({ query: 'authentication', direction: 'outgoing' });
@@ -479,47 +517,54 @@ describe('TextereDB', () => {
 
     it('about respects search filters', () => {
       db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task about auth',
         content: 'Auth task',
         tags: ['auth'],
       });
 
       db.storeNode({
-        type: NodeType.Solution,
+        type: NodeType.Action,
+        role: NodeRole.Solution,
         title: 'Solution about auth',
         content: 'Auth solution',
         tags: ['auth'],
       });
 
-      const results = db.about({ query: 'auth', type: NodeType.Solution });
+      const results = db.about({ query: 'auth', type: NodeType.Action, role: NodeRole.Solution });
       expect(results).toHaveLength(1);
-      expect(results[0].node.type).toBe(NodeType.Solution);
+      expect(results[0].node.type).toBe(NodeType.Action);
+      expect(results[0].node.role).toBe(NodeRole.Solution);
     });
   });
 
   describe('stats operations', () => {
     it('stats returns database statistics', () => {
       db.storeNode({
-        type: NodeType.Task,
+        type: NodeType.Action,
+        role: NodeRole.Task,
         title: 'Task 1',
         content: 'Content 1',
       });
 
       db.storeNode({
-        type: NodeType.Solution,
+        type: NodeType.Action,
+        role: NodeRole.Solution,
         title: 'Solution 1',
         content: 'Content 1',
       });
 
       const node1 = db.storeNode({
-        type: NodeType.Problem,
+        type: NodeType.Issue,
+        role: NodeRole.Problem,
         title: 'Problem 1',
         content: 'Content 1',
       });
 
       const node2 = db.storeNode({
-        type: NodeType.Solution,
+        type: NodeType.Action,
+        role: NodeRole.Solution,
         title: 'Solution 2',
         content: 'Content 2',
       });
@@ -527,19 +572,18 @@ describe('TextereDB', () => {
       db.createEdge({
         source_id: node2.id,
         target_id: node1.id,
-        type: EdgeType.Solves,
+        type: EdgeType.Resolves,
       });
 
       db.invalidateNode(node1.id);
 
-      const stats = db.stats();
-      expect(stats.nodes.total).toBe(4);
-      expect(stats.nodes.byType[NodeType.Task]).toBe(1);
-      expect(stats.nodes.byType[NodeType.Solution]).toBe(2);
-      expect(stats.nodes.byType[NodeType.Problem]).toBe(1);
-      expect(stats.nodes.invalidated).toBe(1);
-      expect(stats.edges.total).toBe(1);
-      expect(stats.edges.byType[EdgeType.Solves]).toBe(1);
+      const result = db.stats();
+      expect(result.nodes.total).toBe(4);
+      expect(result.nodes.byType[NodeType.Action]).toBe(3);
+      expect(result.nodes.byType[NodeType.Issue]).toBe(1);
+      expect(result.nodes.invalidated).toBe(1);
+      expect(result.edges.total).toBe(1);
+      expect(result.edges.byType[EdgeType.Resolves]).toBe(1);
     });
   });
 

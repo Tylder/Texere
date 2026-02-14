@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { EdgeType, NodeType, TextereDB } from './index.js';
+import { EdgeType, NodeRole, NodeType, TextereDB } from './index.js';
 import type { Node } from './index.js';
 
 describe('Graph package integration', () => {
@@ -10,11 +10,13 @@ describe('Graph package integration', () => {
       expect(typeof TextereDB).toBe('function');
     });
 
-    it('import { NodeType, EdgeType } from @texere/graph works', () => {
+    it('import { NodeType, NodeRole, EdgeType } from @texere/graph works', () => {
       expect(NodeType).toBeDefined();
+      expect(NodeRole).toBeDefined();
       expect(EdgeType).toBeDefined();
-      expect(NodeType.Task).toBe('task');
-      expect(EdgeType.RelatedTo).toBe('RELATED_TO');
+      expect(NodeType.Action).toBe('action');
+      expect(NodeRole.Task).toBe('task');
+      expect(EdgeType.Resolves).toBe('RESOLVES');
     });
   });
 
@@ -31,7 +33,8 @@ describe('Graph package integration', () => {
 
     it('runs complete graph lifecycle end-to-end', () => {
       const problem = db.storeNode({
-        type: NodeType.Problem,
+        type: NodeType.Issue,
+        role: NodeRole.Problem,
         title: 'Database write contention',
         content: 'Concurrent writes cause SQLITE_BUSY errors under load',
         tags: ['sqlite', 'concurrency'],
@@ -39,7 +42,8 @@ describe('Graph package integration', () => {
       });
 
       const solution = db.storeNode({
-        type: NodeType.Solution,
+        type: NodeType.Action,
+        role: NodeRole.Solution,
         title: 'Use WAL mode with IMMEDIATE transactions',
         content: 'Enable WAL journal mode and wrap writes in IMMEDIATE transactions',
         tags: ['sqlite', 'concurrency', 'wal'],
@@ -47,7 +51,8 @@ describe('Graph package integration', () => {
       });
 
       const fix = db.storeNode({
-        type: NodeType.Fix,
+        type: NodeType.Action,
+        role: NodeRole.Fix,
         title: 'Add busy timeout pragma',
         content: 'Set pragma busy_timeout = 5000 for graceful retry',
         tags: ['sqlite'],
@@ -61,19 +66,19 @@ describe('Graph package integration', () => {
       const solvesEdge = db.createEdge({
         source_id: solution.id,
         target_id: problem.id,
-        type: EdgeType.Solves,
+        type: EdgeType.Resolves,
         strength: 0.95,
       });
 
       const buildsOnEdge = db.createEdge({
         source_id: fix.id,
         target_id: solution.id,
-        type: EdgeType.BuildsOn,
+        type: EdgeType.Extends,
         strength: 0.8,
       });
 
       expect(solvesEdge.id).toBeDefined();
-      expect(solvesEdge.type).toBe(EdgeType.Solves);
+      expect(solvesEdge.type).toBe(EdgeType.Resolves);
       expect(buildsOnEdge.id).toBeDefined();
 
       const outgoingEdges = db.getEdgesForNode(solution.id, 'outgoing');
@@ -112,11 +117,10 @@ describe('Graph package integration', () => {
       const stats = db.stats();
       expect(stats.nodes.total).toBe(3);
       expect(stats.edges.total).toBe(2);
-      expect(stats.nodes.byType[NodeType.Problem]).toBe(1);
-      expect(stats.nodes.byType[NodeType.Solution]).toBe(1);
-      expect(stats.nodes.byType[NodeType.Fix]).toBe(1);
-      expect(stats.edges.byType[EdgeType.Solves]).toBe(1);
-      expect(stats.edges.byType[EdgeType.BuildsOn]).toBe(1);
+      expect(stats.nodes.byType[NodeType.Issue]).toBe(1);
+      expect(stats.nodes.byType[NodeType.Action]).toBe(2);
+      expect(stats.edges.byType[EdgeType.Resolves]).toBe(1);
+      expect(stats.edges.byType[EdgeType.Extends]).toBe(1);
 
       db.invalidateNode(problem.id);
       const invalidated = db.getNode(problem.id);
@@ -130,6 +134,135 @@ describe('Graph package integration', () => {
 
       const finalStats = db.stats();
       expect(finalStats.edges.total).toBe(1);
+    });
+  });
+
+  describe('replaceNode', () => {
+    let db: TextereDB;
+
+    beforeEach(() => {
+      db = new TextereDB(':memory:');
+    });
+
+    afterEach(() => {
+      db.close();
+    });
+
+    it('atomically replaces node and creates REPLACES edge', () => {
+      const oldNode = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Use REST API',
+        content: 'Initial decision to use REST for API',
+        tags: ['api', 'rest'],
+        importance: 0.8,
+      });
+
+      const newNode = db.replaceNode({
+        old_id: oldNode.id,
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Use GraphQL API',
+        content: 'Updated decision to use GraphQL instead of REST',
+        tags: ['api', 'graphql'],
+        importance: 0.9,
+      });
+
+      expect(newNode.id).toBeDefined();
+      expect(newNode.id).not.toBe(oldNode.id);
+      expect(newNode.title).toBe('Use GraphQL API');
+
+      const replacedNode = db.getNode(oldNode.id);
+      expect(replacedNode?.invalidated_at).not.toBeNull();
+
+      const edges = db.getEdgesForNode(oldNode.id, 'outgoing');
+      expect(edges).toHaveLength(1);
+      expect(edges[0].type).toBe(EdgeType.Replaces);
+      expect(edges[0].target_id).toBe(newNode.id);
+    });
+
+    it('supports minimal mode', () => {
+      const oldNode = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Old task',
+        content: 'Old task content',
+      });
+
+      const result = db.replaceNode(
+        {
+          old_id: oldNode.id,
+          type: NodeType.Action,
+          role: NodeRole.Task,
+          title: 'New task',
+          content: 'New task content',
+        },
+        { minimal: true },
+      );
+
+      expect(result).toHaveProperty('id');
+      expect(Object.keys(result)).toHaveLength(1);
+
+      const replacedNode = db.getNode(oldNode.id);
+      expect(replacedNode?.invalidated_at).not.toBeNull();
+    });
+
+    it('throws when old node does not exist', () => {
+      expect(() => {
+        db.replaceNode({
+          old_id: 'nonexistent',
+          type: NodeType.Knowledge,
+          role: NodeRole.Decision,
+          title: 'New node',
+          content: 'Content',
+        });
+      }).toThrow('Node not found: nonexistent');
+    });
+
+    it('throws when replacing already-invalidated node', () => {
+      const oldNode = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Old decision',
+        content: 'Old content',
+      });
+
+      db.invalidateNode(oldNode.id);
+
+      expect(() => {
+        db.replaceNode({
+          old_id: oldNode.id,
+          type: NodeType.Knowledge,
+          role: NodeRole.Decision,
+          title: 'New decision',
+          content: 'New content',
+        });
+      }).toThrow('Cannot replace invalidated node');
+    });
+
+    it('fails atomically on invalid type-role combination', () => {
+      const oldNode = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Valid node',
+        content: 'Valid content',
+      });
+
+      expect(() => {
+        db.replaceNode({
+          old_id: oldNode.id,
+          type: NodeType.Knowledge,
+          role: NodeRole.Task,
+          title: 'Invalid combination',
+          content: 'This should fail',
+        });
+      }).toThrow('invalid type-role combination');
+
+      const unchanged = db.getNode(oldNode.id);
+      expect(unchanged?.invalidated_at).toBeNull();
+
+      const edges = db.getEdgesForNode(oldNode.id, 'outgoing');
+      expect(edges).toHaveLength(0);
     });
   });
 });

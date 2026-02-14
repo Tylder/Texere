@@ -1,6 +1,6 @@
 const RESERVED_OPERATORS = new Set(['OR', 'AND', 'NOT', 'NEAR']);
 
-export const sanitizeFtsQuery = (input: string): string => {
+export const sanitizeFtsQueryStrict = (input: string): string => {
   if (input.length === 0) {
     return '';
   }

@@ -1,7 +1,9 @@
 {
-  "active_plan": "/home/dan/Texere/.sisyphus/plans/deps-update.md",
-  "started_at": "2026-02-13T23:40:40.408Z",
-  "session_ids": ["ses_3a6b13321ffeJbPvxHzjFIFNkU"],
-  "plan_name": "deps-update",
+  "active_plan": "/home/dan/Texere/.sisyphus/plans/v1.1-schema-refinement.md",
+  "started_at": "2026-02-14T11:39:17.315Z",
+  "session_ids": [
+    "ses_3a4bafc94ffetIJfr4RK36ImnR"
+  ],
+  "plan_name": "v1.1-schema-refinement",
   "agent": "atlas"
 }

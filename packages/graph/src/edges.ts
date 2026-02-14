@@ -11,7 +11,15 @@ export interface CreateEdgeInput {
   confidence?: number;
 }
 
+export interface CreateEdgeOptions {
+  minimal?: boolean;
+}
+
+export type MinimalEdge = Pick<Edge, 'id'>;
+
 export type EdgeDirection = 'outgoing' | 'incoming' | 'both';
+
+const MAX_BATCH_SIZE = 50;
 
 type Statements = {
   insertEdge: Database.Statement;
@@ -63,28 +71,78 @@ const getStatements = (db: Database.Database): Statements => {
   return statements;
 };
 
-export const createEdge = (db: Database.Database, input: CreateEdgeInput): Edge => {
+// Single input overloads
+export function createEdge(
+  db: Database.Database,
+  input: CreateEdgeInput,
+  options?: CreateEdgeOptions & { minimal?: false },
+): Edge;
+export function createEdge(
+  db: Database.Database,
+  input: CreateEdgeInput,
+  options: CreateEdgeOptions & { minimal: true },
+): MinimalEdge;
+
+// Array input overloads
+export function createEdge(
+  db: Database.Database,
+  input: CreateEdgeInput[],
+  options?: CreateEdgeOptions & { minimal?: false },
+): Edge[];
+export function createEdge(
+  db: Database.Database,
+  input: CreateEdgeInput[],
+  options: CreateEdgeOptions & { minimal: true },
+): MinimalEdge[];
+
+// Implementation
+export function createEdge(
+  db: Database.Database,
+  input: CreateEdgeInput | CreateEdgeInput[],
+  options?: CreateEdgeOptions,
+): Edge | MinimalEdge | Edge[] | MinimalEdge[] {
+  const isBatch = Array.isArray(input);
+  const inputs = isBatch ? input : [input];
+
+  if (inputs.length === 0) {
+    throw new Error('at least one edge required');
+  }
+  if (inputs.length > MAX_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded (${MAX_BATCH_SIZE})`);
+  }
+
   const statements = getStatements(db);
-  const edge: Edge = {
+  const now = Date.now();
+
+  const edges: Edge[] = inputs.map((inp) => ({
     id: nanoid(),
-    source_id: input.source_id,
-    target_id: input.target_id,
-    type: input.type,
-    strength: input.strength ?? 0.5,
-    confidence: input.confidence ?? 0.8,
-    created_at: Date.now(),
-  };
+    source_id: inp.source_id,
+    target_id: inp.target_id,
+    type: inp.type,
+    strength: inp.strength ?? 0.5,
+    confidence: inp.confidence ?? 0.8,
+    created_at: now,
+  }));
 
   db.transaction(() => {
-    statements.insertEdge.run(edge);
+    for (const edge of edges) {
+      statements.insertEdge.run(edge);
 
-    if (edge.type === EdgeType.DeprecatedBy) {
-      statements.invalidateNode.run(Date.now(), edge.source_id);
+      if (edge.type === EdgeType.Replaces) {
+        statements.invalidateNode.run(now, edge.source_id);
+      }
     }
   }).immediate();
 
-  return edge;
-};
+  const minimal = options?.minimal ?? false;
+
+  if (minimal) {
+    const result = edges.map((e) => ({ id: e.id }));
+    return isBatch ? result : result[0]!;
+  }
+
+  return isBatch ? edges : edges[0]!;
+}
 
 export const deleteEdge = (db: Database.Database, id: string): boolean => {
   const statements = getStatements(db);
