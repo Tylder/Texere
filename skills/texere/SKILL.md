@@ -1,3 +1,16 @@
+---
+name: texere
+description:
+  Persistent knowledge graph for LLM agents - store typed nodes (decisions, problems, solutions)
+  with semantic edges (SOLVES, REQUIRES, ANCHORED_TO). Use for cross-session memory, linking
+  solutions to problems, anchoring to code, deprecation tracking.
+license: MIT
+compatibility: opencode
+metadata:
+  author: dan
+  category: knowledge-management
+---
+
 # Texere: LLM Quick Reference Guide
 
 ## What is Texere?
@@ -54,22 +67,22 @@ Otherwise → general
 
 ## Edge Type Chooser
 
-| Type             | Direction | Use When                          | Example                                                                  |
-| ---------------- | --------- | --------------------------------- | ------------------------------------------------------------------------ |
-| `RELATED_TO`     | ↔        | General association               | `(research: "SQLite benchmarks") ↔ (research: "PostgreSQL benchmarks")` |
-| `CAUSES`         | →         | X leads to Y                      | `(problem: "Missing API key") → (error: "AuthenticationError")`          |
-| `SOLVES`         | →         | X resolves Y                      | `(solution: "Use WAL mode") → (problem: "Database locked errors")`       |
-| `REQUIRES`       | →         | X depends on Y                    | `(task: "Deploy to prod") → (task: "Pass all tests")`                    |
-| `CONTRADICTS`    | ↔        | X conflicts with Y                | `(research: "SQLite faster") ↔ (research: "PostgreSQL faster")`         |
-| `BUILDS_ON`      | →         | X extends Y                       | `(solution: "Add connection pooling") → (solution: "Use WAL mode")`      |
-| `DEPRECATED_BY`  | →         | Y replaces X (auto-invalidates X) | `(decision: "Use REST") → (decision: "Use GraphQL")`                     |
-| `PREVENTS`       | →         | X stops Y                         | `(constraint: "No network in tests") → (problem: "Flaky tests")`         |
-| `VALIDATES`      | →         | X confirms Y                      | `(research: "Benchmark shows 10x speedup") → (decision: "Use FTS5")`     |
-| `ALTERNATIVE_TO` | ↔        | X and Y are options               | `(decision: "Use JWT") ↔ (decision: "Use sessions")`                    |
-| `MOTIVATED_BY`   | →         | Y is reason for X                 | `(decision: "Use SQLite") → (requirement: "Must work offline")`          |
-| `IMPLEMENTS`     | →         | X realizes Y                      | `(file_context: "src/db/connection.ts") → (decision: "Use WAL mode")`    |
-| `CONSTRAINS`     | →         | X limits Y                        | `(constraint: "Node.js 18+") → (technology: "better-sqlite3")`           |
-| `ANCHORED_TO`    | →         | X is relevant to code Y           | `(decision: "Use nanoid for IDs") → (file_context: "src/db/schema.ts")`  |
+| Type             | Direction | Use When                          | Example                                                                 |
+| ---------------- | --------- | --------------------------------- | ----------------------------------------------------------------------- |
+| `RELATED_TO`     | ↔         | General association               | `(research: "SQLite benchmarks") ↔ (research: "PostgreSQL benchmarks")` |
+| `CAUSES`         | →         | X leads to Y                      | `(problem: "Missing API key") → (error: "AuthenticationError")`         |
+| `SOLVES`         | →         | X resolves Y                      | `(solution: "Use WAL mode") → (problem: "Database locked errors")`      |
+| `REQUIRES`       | →         | X depends on Y                    | `(task: "Deploy to prod") → (task: "Pass all tests")`                   |
+| `CONTRADICTS`    | ↔         | X conflicts with Y                | `(research: "SQLite faster") ↔ (research: "PostgreSQL faster")`         |
+| `BUILDS_ON`      | →         | X extends Y                       | `(solution: "Add connection pooling") → (solution: "Use WAL mode")`     |
+| `DEPRECATED_BY`  | →         | Y replaces X (auto-invalidates X) | `(decision: "Use REST") → (decision: "Use GraphQL")`                    |
+| `PREVENTS`       | →         | X stops Y                         | `(constraint: "No network in tests") → (problem: "Flaky tests")`        |
+| `VALIDATES`      | →         | X confirms Y                      | `(research: "Benchmark shows 10x speedup") → (decision: "Use FTS5")`    |
+| `ALTERNATIVE_TO` | ↔         | X and Y are options               | `(decision: "Use JWT") ↔ (decision: "Use sessions")`                    |
+| `MOTIVATED_BY`   | →         | Y is reason for X                 | `(decision: "Use SQLite") → (requirement: "Must work offline")`         |
+| `IMPLEMENTS`     | →         | X realizes Y                      | `(file_context: "src/db/connection.ts") → (decision: "Use WAL mode")`   |
+| `CONSTRAINS`     | →         | X limits Y                        | `(constraint: "Node.js 18+") → (technology: "better-sqlite3")`          |
+| `ANCHORED_TO`    | →         | X is relevant to code Y           | `(decision: "Use nanoid for IDs") → (file_context: "src/db/schema.ts")` |
 
 ---
 

@@ -231,7 +231,6 @@ workflow:
 Before returning results, verify:
 
 1. **Completeness**
-
    - ✅ All mentioned areas/features have corresponding docs
    - ✅ Execution projects checked (docs/execution)
    - ✅ Related symbols identified (if code-related)
@@ -239,13 +238,11 @@ Before returning results, verify:
    - ✅ Reference images included (if applicable)
 
 2. **Precision**
-
    - ✅ Line ranges are tight (no full-file reads unless necessary)
    - ✅ Sections are directly relevant (filtered out tangential content)
    - ✅ Frontmatter checked to verify document matches need
 
 3. **Token Efficiency**
-
    - ✅ Avoided reading full documents when sections suffice
    - ✅ Used registry/grep for discovery, not exploration
    - ✅ Returned paths with line ranges, not full content

@@ -42,6 +42,11 @@
         "ide",
       ],
     },
+    "texere": {
+      "enabled": true,
+      "type": "local",
+      "command": ["node", "apps/mcp/dist/index.js"],
+    },
     "playwright": {
       "enabled": false,
       "type": "local",

@@ -1,7 +1,7 @@
 {
-  "active_plan": "/home/dan/Texere/.sisyphus/plans/texere.md",
-  "started_at": "2026-02-13T21:59:03.918Z",
-  "session_ids": ["ses_3a79cccd8ffeZlzPKLrnvHNSpi"],
-  "plan_name": "texere",
+  "active_plan": "/home/dan/Texere/.sisyphus/plans/deps-update.md",
+  "started_at": "2026-02-13T23:40:40.408Z",
+  "session_ids": ["ses_3a6b13321ffeJbPvxHzjFIFNkU"],
+  "plan_name": "deps-update",
   "agent": "atlas"
 }
