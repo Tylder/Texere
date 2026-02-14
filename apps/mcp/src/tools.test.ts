@@ -15,6 +15,7 @@ const TOOL_NAMES = [
   'texere_create_edges',
   'texere_delete_edge',
   'texere_search',
+  'texere_search_batch',
   'texere_traverse',
   'texere_about',
   'texere_stats',
@@ -33,13 +34,13 @@ describe('Texere MCP tools', () => {
     db.close();
   });
 
-  it('registers exactly 12 tools', () => {
+  it('registers exactly 13 tools', () => {
     expect(mcp.toolNames).toEqual(TOOL_NAMES);
-    expect(mcp.toolNames).toHaveLength(12);
+    expect(mcp.toolNames).toHaveLength(13);
   });
 
   it('exposes zod input schema for each tool', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(12);
+    expect(TOOL_DEFINITIONS).toHaveLength(13);
 
     for (const definition of TOOL_DEFINITIONS) {
       expect(typeof definition.inputSchema.safeParse).toBe('function');
@@ -360,6 +361,35 @@ describe('Texere MCP tools', () => {
     expect(nodes).toHaveLength(2);
     expect(nodes[0].title).toBe('Batch A');
     expect(nodes[1].title).toBe('Batch B');
+  });
+
+  it('texere_search_batch returns results indexed by query position', async () => {
+    await mcp.callTool('texere_store_node', {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Redis caching layer',
+      content: 'In-memory cache for hot data',
+      tags: ['cache'],
+    });
+    await mcp.callTool('texere_store_node', {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'SQLite for persistence',
+      content: 'Embedded database for local storage',
+      tags: ['db'],
+    });
+
+    const result = await mcp.callTool('texere_search_batch', {
+      queries: [{ query: 'Redis' }, { query: 'SQLite' }],
+    });
+
+    expect(result.isError).toBeUndefined();
+    const results = (result.structuredContent as any).results;
+    expect(results).toHaveLength(2);
+    expect(results[0].length).toBeGreaterThan(0);
+    expect(results[1].length).toBeGreaterThan(0);
+    expect(results[0][0].title).toContain('Redis');
+    expect(results[1][0].title).toContain('SQLite');
   });
 
   it('texere_create_edges batch creates multiple edges', async () => {

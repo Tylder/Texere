@@ -4,6 +4,7 @@ import { deleteEdgeTool } from './delete-edge.js';
 import { getNodeTool } from './get-node.js';
 import { invalidateNodeTool } from './invalidate-node.js';
 import { replaceNodeTool } from './replace-node.js';
+import { searchBatchTool } from './search-batch.js';
 import { searchTool } from './search.js';
 import { statsTool } from './stats.js';
 import { storeNodeTool, storeNodesTool } from './store-node.js';
@@ -22,6 +23,7 @@ export const TOOL_DEFINITIONS = [
   createEdgesTool,
   deleteEdgeTool,
   searchTool,
+  searchBatchTool,
   traverseTool,
   aboutTool,
   statsTool,

@@ -228,6 +228,20 @@ const getRelationships = (
   return result;
 };
 
+export const searchBatch = (db: Database.Database, queries: SearchOptions[]): SearchResult[][] => {
+  const txn = db.transaction(() => {
+    return queries.map((query) => {
+      try {
+        return search(db, query);
+      } catch {
+        return [];
+      }
+    });
+  });
+
+  return txn();
+};
+
 export const search = (
   db: Database.Database,
   options: SearchOptions,

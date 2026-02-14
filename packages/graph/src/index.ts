@@ -28,7 +28,11 @@ import {
   type ReplaceNodeInput,
   type ReplaceNodeOptions,
 } from './replace-node.js';
-import { detectSearchMode, search as searchImpl } from './search.js';
+import {
+  detectSearchMode,
+  search as searchImpl,
+  searchBatch as searchBatchImpl,
+} from './search.js';
 import {
   about as aboutImpl,
   stats as statsImpl,
@@ -163,6 +167,10 @@ export class Texere {
     return searchImpl(this.db, options);
   }
 
+  searchBatch(queries: SearchOptions[]): SearchResult[][] {
+    return searchBatchImpl(this.db, queries);
+  }
+
   /**
    * Traverse the graph from a starting node
    * @param options - Traversal options
@@ -232,3 +240,4 @@ export type {
 
 export { EdgeType, NodeRole, NodeScope, NodeStatus, NodeType };
 export { isValidTypeRole, VALID_ROLES_BY_TYPE } from './types.js';
+export { sanitizeFtsQueryStrict } from './sanitize.js';
