@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { EdgeType, NodeRole, NodeType, TextereDB } from '@texere/graph';
+import { EdgeType, NodeRole, NodeSource, NodeType, TextereDB } from '@texere/graph';
 
 import { createTexereMcpServer } from './server.js';
 import { TOOL_DEFINITIONS } from './tools/index.js';
@@ -295,5 +295,100 @@ describe('Texere MCP tools', () => {
     const result = await mcp.callTool('texere_stats', {});
     expect(result.isError).toBeUndefined();
     expect((result.structuredContent as any).stats.nodes.total).toBeGreaterThanOrEqual(1);
+  });
+
+  it('accepts v1.2 roles (source, concept, pitfall)', async () => {
+    const results = await Promise.all([
+      mcp.callTool('texere_store_node', {
+        type: NodeType.Artifact,
+        role: NodeRole.Source,
+        title: 'External API docs',
+        content: 'https://example.com/api',
+      }),
+      mcp.callTool('texere_store_node', {
+        type: NodeType.Artifact,
+        role: NodeRole.Concept,
+        title: 'Event sourcing',
+        content: 'Pattern for storing state changes',
+      }),
+      mcp.callTool('texere_store_node', {
+        type: NodeType.Knowledge,
+        role: NodeRole.Pitfall,
+        title: 'Avoid N+1 queries',
+        content: 'Use eager loading instead',
+      }),
+    ]);
+
+    for (const r of results) {
+      expect(r.isError).toBeUndefined();
+    }
+    expect((results[0].structuredContent as any).node.role).toBe(NodeRole.Source);
+    expect((results[1].structuredContent as any).node.role).toBe(NodeRole.Concept);
+    expect((results[2].structuredContent as any).node.role).toBe(NodeRole.Pitfall);
+  });
+
+  it('accepts v1.2 edge types (BASED_ON, RELATED_TO, ABOUT, IS_A)', async () => {
+    const nodes = await Promise.all(
+      Array.from({ length: 5 }, (_, i) =>
+        mcp.callTool('texere_store_node', {
+          type: NodeType.Action,
+          role: NodeRole.Task,
+          title: `Edge test node ${i}`,
+          content: `Content ${i}`,
+        }),
+      ),
+    );
+
+    const ids = nodes.map((n) => (n.structuredContent as any).node.id as string);
+    const edgeTypes = [EdgeType.BasedOn, EdgeType.RelatedTo, EdgeType.About, EdgeType.IsA];
+
+    for (let i = 0; i < edgeTypes.length; i++) {
+      const result = await mcp.callTool('texere_create_edge', {
+        edges: {
+          source_id: ids[i],
+          target_id: ids[i + 1],
+          type: edgeTypes[i],
+        },
+      });
+      expect(result.isError).toBeUndefined();
+      expect((result.structuredContent as any).edge.type).toBe(edgeTypes[i]);
+    }
+  });
+
+  it('silently ignores deprecated source parameter in store_node', async () => {
+    const result = await mcp.callTool('texere_store_node', {
+      type: NodeType.Knowledge,
+      role: NodeRole.Finding,
+      title: 'Source deprecation test',
+      content: 'Source should be ignored',
+      source: NodeSource.External,
+    });
+
+    expect(result.isError).toBeUndefined();
+    const node = (result.structuredContent as any).node;
+    expect(node.source).toBe(NodeSource.Internal);
+  });
+
+  it('silently ignores deprecated source parameter in replace_node', async () => {
+    const original = await mcp.callTool('texere_store_node', {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Original decision',
+      content: 'Will be replaced',
+    });
+    const originalId = (original.structuredContent as any).node.id as string;
+
+    const result = await mcp.callTool('texere_replace_node', {
+      old_id: originalId,
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Replacement decision',
+      content: 'Replaced with source ignored',
+      source: NodeSource.External,
+    });
+
+    expect(result.isError).toBeUndefined();
+    const node = (result.structuredContent as any).node;
+    expect(node.source).toBe(NodeSource.Internal);
   });
 });

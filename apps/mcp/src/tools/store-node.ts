@@ -42,7 +42,6 @@ const toNodeInput = (item: z.infer<typeof singleNodeSchema>): StoreNodeInput => 
   if (item.tags !== undefined) nodeInput.tags = item.tags;
   if (item.importance !== undefined) nodeInput.importance = item.importance;
   if (item.confidence !== undefined) nodeInput.confidence = item.confidence;
-  if (item.source !== undefined) nodeInput.source = item.source;
   if (item.status !== undefined) nodeInput.status = item.status;
   if (item.scope !== undefined) nodeInput.scope = item.scope;
   if (item.anchor_to !== undefined) nodeInput.anchor_to = item.anchor_to;

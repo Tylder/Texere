@@ -40,7 +40,6 @@ const toReplaceNodeInput = (item: z.infer<typeof inputSchema>): ReplaceNodeInput
   if (item.tags !== undefined) replaceInput.tags = item.tags;
   if (item.importance !== undefined) replaceInput.importance = item.importance;
   if (item.confidence !== undefined) replaceInput.confidence = item.confidence;
-  if (item.source !== undefined) replaceInput.source = item.source;
   if (item.status !== undefined) replaceInput.status = item.status;
   if (item.scope !== undefined) replaceInput.scope = item.scope;
   if (item.anchor_to !== undefined) replaceInput.anchor_to = item.anchor_to;
