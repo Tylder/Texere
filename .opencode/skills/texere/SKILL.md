@@ -111,8 +111,7 @@ Create immutable node(s). Supports batch (max 50), minimal mode, auto-creates AN
 - `tags`: string[] (optional) — Array of tag strings
 - `importance`: number (optional, default: 0.5) — 0.0–1.0, how critical
 - `confidence`: number (optional, default: 0.8) — 0.0–1.0, how certain
-- `source`: NodeSource (optional, default: "internal") — "internal" | "external" (deprecated, use
-  artifact/source instead)
+
 - `status`: NodeStatus (optional, default: "active") — "proposed" | "active" | "deprecated" |
   "invalidated"
 - `scope`: NodeScope (optional, default: "project") — "project" | "module" | "file" | "session"
@@ -191,7 +190,7 @@ Atomically replace node: create new node, create REPLACES edge, invalidate old n
 - `tags`: string[] (optional) — Array of tag strings
 - `importance`: number (optional, default: 0.5) — 0.0–1.0
 - `confidence`: number (optional, default: 0.8) — 0.0–1.0
-- `source`: NodeSource (optional, default: "internal") — "internal" | "external"
+
 - `status`: NodeStatus (optional, default: "active") — "proposed" | "active" | "deprecated" |
   "invalidated"
 - `scope`: NodeScope (optional, default: "project") — "project" | "module" | "file" | "session"
@@ -461,8 +460,6 @@ DEPENDS_ON, EXAMPLE_OF, EXTENDS, IS_A, PART_OF, RELATED_TO, REPLACES, RESOLVES, 
 
 **Node Scope (4):** project, module, file, session
 
-**Node Source (2, deprecated):** internal, external
-
 **Tag Modes (2):** all (AND), any (OR)
 
 **Traversal Directions (3):** outgoing, incoming, both
@@ -473,7 +470,7 @@ DEPENDS_ON, EXAMPLE_OF, EXTENDS, IS_A, PART_OF, RELATED_TO, REPLACES, RESOLVES, 
 - confidence: 0.8
 - status: "active"
 - scope: "project"
-- source: "internal"
+
 - tag_mode: "all"
 - direction: "outgoing" (traverse), "both" (about)
 - max_depth: 3 (traverse), 1 (about)
