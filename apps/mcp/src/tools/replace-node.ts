@@ -1,13 +1,6 @@
 import { z } from 'zod';
 
-import {
-  NodeRole,
-  NodeScope,
-  NodeSource,
-  NodeStatus,
-  NodeType,
-  type ReplaceNodeInput,
-} from '@texere/graph';
+import { NodeRole, NodeScope, NodeStatus, NodeType, type ReplaceNodeInput } from '@texere/graph';
 
 import { ok } from './helpers.js';
 import type { ToolDefinition } from './types.js';
@@ -21,7 +14,6 @@ const inputSchema = z.object({
   tags: z.array(z.string().min(1)).optional(),
   importance: z.number().min(0).max(1).optional(),
   confidence: z.number().min(0).max(1).optional(),
-  source: z.nativeEnum(NodeSource).optional(),
   status: z.nativeEnum(NodeStatus).optional(),
   scope: z.nativeEnum(NodeScope).optional(),
   anchor_to: z.array(z.string().min(1)).optional(),

@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS nodes (
   tags_json TEXT NOT NULL DEFAULT '[]',
   importance REAL NOT NULL DEFAULT 0.5,
   confidence REAL NOT NULL DEFAULT 0.8,
-  source TEXT NOT NULL DEFAULT 'internal',
   status TEXT NOT NULL DEFAULT 'active',
   scope TEXT NOT NULL DEFAULT 'project',
   created_at INTEGER NOT NULL,

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { EdgeType, NodeRole, NodeSource, NodeType, TextereDB } from '@texere/graph';
+import { EdgeType, NodeRole, NodeType, TextereDB } from '@texere/graph';
 
 import { createTexereMcpServer } from './server.js';
 import { TOOL_DEFINITIONS } from './tools/index.js';
@@ -353,42 +353,5 @@ describe('Texere MCP tools', () => {
       expect(result.isError).toBeUndefined();
       expect((result.structuredContent as any).edge.type).toBe(edgeTypes[i]);
     }
-  });
-
-  it('silently ignores deprecated source parameter in store_node', async () => {
-    const result = await mcp.callTool('texere_store_node', {
-      type: NodeType.Knowledge,
-      role: NodeRole.Finding,
-      title: 'Source deprecation test',
-      content: 'Source should be ignored',
-      source: NodeSource.External,
-    });
-
-    expect(result.isError).toBeUndefined();
-    const node = (result.structuredContent as any).node;
-    expect(node.source).toBe(NodeSource.Internal);
-  });
-
-  it('silently ignores deprecated source parameter in replace_node', async () => {
-    const original = await mcp.callTool('texere_store_node', {
-      type: NodeType.Knowledge,
-      role: NodeRole.Decision,
-      title: 'Original decision',
-      content: 'Will be replaced',
-    });
-    const originalId = (original.structuredContent as any).node.id as string;
-
-    const result = await mcp.callTool('texere_replace_node', {
-      old_id: originalId,
-      type: NodeType.Knowledge,
-      role: NodeRole.Decision,
-      title: 'Replacement decision',
-      content: 'Replaced with source ignored',
-      source: NodeSource.External,
-    });
-
-    expect(result.isError).toBeUndefined();
-    const node = (result.structuredContent as any).node;
-    expect(node.source).toBe(NodeSource.Internal);
   });
 });

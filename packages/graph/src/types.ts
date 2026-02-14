@@ -46,12 +46,6 @@ export enum NodeRole {
   System = 'system',
 }
 
-/** @deprecated Use artifact/source nodes instead of the source enum. Will be removed in v2.0. */
-export enum NodeSource {
-  Internal = 'internal',
-  External = 'external',
-}
-
 export enum NodeStatus {
   Proposed = 'proposed',
   Active = 'active',
@@ -133,7 +127,6 @@ export interface Node {
   tags_json: string;
   importance: number;
   confidence: number;
-  source?: NodeSource;
   status?: NodeStatus;
   scope?: NodeScope;
   created_at: number;

@@ -652,14 +652,13 @@ describe('MCP server integration', () => {
     });
   });
 
-  describe('source parameter backward compatibility', () => {
-    it('accepts the deprecated source field without error', async () => {
+  describe('node storage without source field', () => {
+    it('stores node correctly without source field', async () => {
       const result = await storeNode(mcp, {
         type: NodeType.Knowledge,
         role: NodeRole.Decision,
         title: 'Use WAL mode for SQLite',
         content: 'WAL mode enables concurrent reads during writes',
-        source: 'internal',
       });
       expect(result.isError).toBeUndefined();
 

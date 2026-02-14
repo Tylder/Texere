@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createDatabase } from './db';
 import { getNode, invalidateNode, storeNode, type StoreNodeInput } from './nodes';
-import { EdgeType, NodeRole, NodeScope, NodeSource, NodeStatus, NodeType } from './types';
+import { EdgeType, NodeRole, NodeScope, NodeStatus, NodeType } from './types';
 
 const decision = (overrides: Partial<StoreNodeInput> = {}): StoreNodeInput => ({
   type: NodeType.Knowledge,
@@ -47,7 +47,6 @@ describe('node CRUD', () => {
     expect(typeof node.tags_json).toBe('string');
     expect(typeof node.importance).toBe('number');
     expect(typeof node.confidence).toBe('number');
-    expect(node.source).toBe(NodeSource.Internal);
     expect(node.status).toBe(NodeStatus.Active);
     expect(node.scope).toBe(NodeScope.Project);
     expect(typeof node.created_at).toBe('number');
@@ -178,10 +177,9 @@ describe('facet defaults', () => {
     db.close();
   });
 
-  it('applies default facets: source=internal, status=active, scope=project', () => {
+  it('applies default facets: status=active, scope=project', () => {
     const node = storeNode(db, decision());
 
-    expect(node.source).toBe(NodeSource.Internal);
     expect(node.status).toBe(NodeStatus.Active);
     expect(node.scope).toBe(NodeScope.Project);
   });
@@ -190,13 +188,11 @@ describe('facet defaults', () => {
     const node = storeNode(
       db,
       decision({
-        source: NodeSource.External,
         status: NodeStatus.Proposed,
         scope: NodeScope.Module,
       }),
     );
 
-    expect(node.source).toBe(NodeSource.External);
     expect(node.status).toBe(NodeStatus.Proposed);
     expect(node.scope).toBe(NodeScope.Module);
   });

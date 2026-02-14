@@ -14,7 +14,6 @@ const NODE_COLUMNS = `
   n.tags_json,
   n.importance,
   n.confidence,
-  n.source,
   n.status,
   n.scope,
   n.created_at,

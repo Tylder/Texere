@@ -6,7 +6,6 @@ import {
   EdgeType,
   NodeRole,
   NodeScope,
-  NodeSource,
   NodeStatus,
   NodeType,
   isValidTypeRole,
@@ -22,7 +21,6 @@ export interface StoreNodeInput {
   tags?: string[];
   importance?: number;
   confidence?: number;
-  source?: NodeSource;
   status?: NodeStatus;
   scope?: NodeScope;
   embedding?: Uint8Array | Buffer | null;
@@ -53,11 +51,11 @@ export type NodeWithEdges = Node & { edges: Edge[] };
 const MAX_BATCH_SIZE = 50;
 
 const NODE_COLUMNS = `id, type, role, title, content, tags_json,
-    importance, confidence, source, status, scope,
+    importance, confidence, status, scope,
     created_at, invalidated_at, embedding`;
 
 const NODE_PARAMS = `@id, @type, @role, @title, @content, @tags_json,
-    @importance, @confidence, @source, @status, @scope,
+    @importance, @confidence, @status, @scope,
     @created_at, @invalidated_at, @embedding`;
 
 type Statements = {
@@ -131,7 +129,6 @@ const buildNode = (input: StoreNodeInput, now: number): Node => ({
   tags_json: JSON.stringify(input.tags ?? []),
   importance: input.importance ?? 0.5,
   confidence: input.confidence ?? 0.8,
-  source: input.source ?? NodeSource.Internal,
   status: input.status ?? NodeStatus.Active,
   scope: input.scope ?? NodeScope.Project,
   created_at: now,
@@ -159,7 +156,6 @@ const insertNodeWithAnchors = (
       tags_json: '[]',
       importance: 0.5,
       confidence: 0.8,
-      source: NodeSource.Internal,
       status: NodeStatus.Active,
       scope: NodeScope.File,
       created_at: now,

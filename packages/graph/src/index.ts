@@ -40,7 +40,6 @@ import {
   EdgeType,
   NodeRole,
   NodeScope,
-  NodeSource,
   NodeStatus,
   NodeType,
   type Edge,
@@ -213,5 +212,5 @@ export type {
   NodeTag,
 };
 
-export { EdgeType, NodeRole, NodeScope, NodeSource, NodeStatus, NodeType };
+export { EdgeType, NodeRole, NodeScope, NodeStatus, NodeType };
 export { isValidTypeRole, VALID_ROLES_BY_TYPE } from './types.js';
