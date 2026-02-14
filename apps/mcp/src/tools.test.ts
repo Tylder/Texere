@@ -19,6 +19,7 @@ const TOOL_NAMES = [
   'texere_traverse',
   'texere_about',
   'texere_stats',
+  'texere_validate',
 ] as const;
 
 describe('Texere MCP tools', () => {
@@ -34,13 +35,13 @@ describe('Texere MCP tools', () => {
     db.close();
   });
 
-  it('registers exactly 13 tools', () => {
+  it('registers exactly 14 tools', () => {
     expect(mcp.toolNames).toEqual(TOOL_NAMES);
-    expect(mcp.toolNames).toHaveLength(13);
+    expect(mcp.toolNames).toHaveLength(14);
   });
 
   it('exposes zod input schema for each tool', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(13);
+    expect(TOOL_DEFINITIONS).toHaveLength(14);
 
     for (const definition of TOOL_DEFINITIONS) {
       expect(typeof definition.inputSchema.safeParse).toBe('function');
@@ -426,5 +427,226 @@ describe('Texere MCP tools', () => {
     expect(result.isError).toBeUndefined();
     const edges = (result.structuredContent as any).edges;
     expect(edges).toHaveLength(2);
+  });
+
+  it('texere_validate returns valid for a correct batch', async () => {
+    const nodeA = await mcp.callTool('texere_store_node', {
+      type: NodeType.Action,
+      role: NodeRole.Task,
+      title: 'Validate edge source',
+      content: 'Content A',
+    });
+    const nodeB = await mcp.callTool('texere_store_node', {
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
+      title: 'Validate edge target',
+      content: 'Content B',
+    });
+    const idA = (nodeA.structuredContent as any).node.id as string;
+    const idB = (nodeB.structuredContent as any).node.id as string;
+
+    const result = await mcp.callTool('texere_validate', {
+      nodes: [
+        {
+          type: NodeType.Knowledge,
+          role: NodeRole.Decision,
+          title: 'Completely unique validate node xyz123',
+          content: 'Some decision content',
+        },
+      ],
+      edges: [
+        {
+          source_id: idA,
+          target_id: idB,
+          type: EdgeType.Resolves,
+        },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    const output = result.structuredContent as any;
+    expect(output.valid).toBe(true);
+    expect(output.issues.filter((i: any) => i.severity === 'error')).toHaveLength(0);
+  });
+
+  it('texere_validate reports invalid type-role combo with correct index', async () => {
+    const result = await mcp.callTool('texere_validate', {
+      nodes: [
+        {
+          type: NodeType.Knowledge,
+          role: NodeRole.Decision,
+          title: 'Valid node',
+          content: 'OK',
+        },
+        {
+          type: NodeType.Knowledge,
+          role: NodeRole.Task,
+          title: 'Invalid combo',
+          content: 'Knowledge cannot have Task role',
+        },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    const output = result.structuredContent as any;
+    expect(output.valid).toBe(false);
+
+    const typeRoleError = output.issues.find(
+      (i: any) => i.severity === 'error' && i.message.includes('type-role'),
+    );
+    expect(typeRoleError).toBeDefined();
+    expect(typeRoleError.index).toBe(1);
+    expect(typeRoleError.item).toBe('node');
+  });
+
+  it('texere_validate reports missing edge endpoint', async () => {
+    const result = await mcp.callTool('texere_validate', {
+      edges: [
+        {
+          source_id: 'nonexistent-source',
+          target_id: 'nonexistent-target',
+          type: EdgeType.DependsOn,
+        },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    const output = result.structuredContent as any;
+    expect(output.valid).toBe(false);
+
+    const endpointErrors = output.issues.filter(
+      (i: any) => i.severity === 'error' && i.message.includes('not found'),
+    );
+    expect(endpointErrors.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('texere_validate reports self-referential edge', async () => {
+    const stored = await mcp.callTool('texere_store_node', {
+      type: NodeType.Action,
+      role: NodeRole.Task,
+      title: 'Self ref node',
+      content: 'Content',
+    });
+    const nodeId = (stored.structuredContent as any).node.id as string;
+
+    const result = await mcp.callTool('texere_validate', {
+      edges: [
+        {
+          source_id: nodeId,
+          target_id: nodeId,
+          type: EdgeType.DependsOn,
+        },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    const output = result.structuredContent as any;
+    expect(output.valid).toBe(false);
+
+    const selfRefError = output.issues.find(
+      (i: any) => i.severity === 'error' && i.message.includes('Self-referential'),
+    );
+    expect(selfRefError).toBeDefined();
+    expect(selfRefError.index).toBe(0);
+    expect(selfRefError.item).toBe('edge');
+  });
+
+  it('texere_validate warns on duplicate title', async () => {
+    await mcp.callTool('texere_store_node', {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Redis caching strategy',
+      content: 'Use Redis for session caching',
+    });
+
+    const result = await mcp.callTool('texere_validate', {
+      nodes: [
+        {
+          type: NodeType.Knowledge,
+          role: NodeRole.Finding,
+          title: 'Redis caching strategy',
+          content: 'Different content about Redis caching',
+        },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    const output = result.structuredContent as any;
+    expect(output.valid).toBe(true);
+
+    const warning = output.issues.find((i: any) => i.severity === 'warning');
+    expect(warning).toBeDefined();
+    expect(warning.item).toBe('node');
+    expect(warning.message).toContain('Similar node exists');
+  });
+
+  it('texere_validate has zero side effects on the database', async () => {
+    const statsBefore = await mcp.callTool('texere_stats', {});
+    const countBefore = (statsBefore.structuredContent as any).stats.nodes.total as number;
+
+    await mcp.callTool('texere_validate', {
+      nodes: [
+        {
+          type: NodeType.Action,
+          role: NodeRole.Task,
+          title: 'Should not be stored',
+          content: 'This must not appear in the database',
+        },
+        {
+          type: NodeType.Knowledge,
+          role: NodeRole.Finding,
+          title: 'Another ghost node',
+          content: 'Also must not be stored',
+        },
+      ],
+      edges: [
+        {
+          source_id: 'fake-source',
+          target_id: 'fake-target',
+          type: EdgeType.RelatedTo,
+        },
+      ],
+    });
+
+    const statsAfter = await mcp.callTool('texere_stats', {});
+    const countAfter = (statsAfter.structuredContent as any).stats.nodes.total as number;
+
+    expect(countAfter).toBe(countBefore);
+  });
+
+  it('texere_validate accepts temp_id cross-references in edges', async () => {
+    const result = await mcp.callTool('texere_validate', {
+      nodes: [
+        {
+          temp_id: 'tmp-problem',
+          type: NodeType.Issue,
+          role: NodeRole.Problem,
+          title: 'Proposed problem',
+          content: 'A problem to solve',
+        },
+        {
+          temp_id: 'tmp-solution',
+          type: NodeType.Action,
+          role: NodeRole.Solution,
+          title: 'Proposed solution',
+          content: 'A solution to the problem',
+        },
+      ],
+      edges: [
+        {
+          source_id: 'tmp-solution',
+          target_id: 'tmp-problem',
+          type: EdgeType.Resolves,
+        },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    const output = result.structuredContent as any;
+
+    const endpointErrors = output.issues.filter(
+      (i: any) => i.severity === 'error' && i.message.includes('not found'),
+    );
+    expect(endpointErrors).toHaveLength(0);
   });
 });

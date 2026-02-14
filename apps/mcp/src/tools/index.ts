@@ -9,6 +9,7 @@ import { searchTool } from './search.js';
 import { statsTool } from './stats.js';
 import { storeNodeTool, storeNodesTool } from './store-node.js';
 import { traverseTool } from './traverse.js';
+import { validateTool } from './validate.js';
 
 export { executeToolDefinition } from './helpers.js';
 export type { ToolCallResult, ToolContext, ToolDefinition } from './types.js';
@@ -27,6 +28,7 @@ export const TOOL_DEFINITIONS = [
   traverseTool,
   aboutTool,
   statsTool,
+  validateTool,
 ] as const;
 
 export const TOOL_NAMES = TOOL_DEFINITIONS.map((tool) => tool.name) as ReadonlyArray<string>;
