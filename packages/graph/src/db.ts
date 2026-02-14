@@ -1,6 +1,5 @@
 import Database from 'better-sqlite3';
 
-import { migrateDatabase } from './migration.js';
 import { SCHEMA_DDL } from './schema.js';
 
 export const createDatabase = (path: string): Database.Database => {
@@ -13,8 +12,6 @@ export const createDatabase = (path: string): Database.Database => {
   db.pragma('temp_store = MEMORY');
   db.pragma('foreign_keys = ON');
   db.pragma('wal_autocheckpoint = 1000');
-
-  migrateDatabase(db);
 
   db.exec(SCHEMA_DDL);
 
