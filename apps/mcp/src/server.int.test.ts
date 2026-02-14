@@ -1,3 +1,8 @@
+import { execSync } from 'node:child_process';
+import { existsSync, unlinkSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { ListToolsResultSchema } from '@modelcontextprotocol/sdk/types.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -669,6 +674,76 @@ describe('MCP server integration', () => {
       expect(node.id).toBe(nodeId);
       expect(node.type).toBe(NodeType.Knowledge);
       expect(node.role).toBe(NodeRole.Decision);
+    });
+  });
+
+  describe('stdio handshake (real binary)', () => {
+    const dbPath = `/tmp/texere-stdio-test-${process.pid}.db`;
+    const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+
+    afterEach(() => {
+      for (const suffix of ['', '-wal', '-shm', '-journal']) {
+        const file = `${dbPath}${suffix}`;
+        if (existsSync(file)) {
+          unlinkSync(file);
+        }
+      }
+    });
+
+    it('completes initialize + tools/list handshake over stdio', () => {
+      const distEntry = resolve(projectRoot, 'apps/mcp/dist/index.js');
+      if (!existsSync(distEntry)) {
+        execSync('pnpm build', { cwd: projectRoot, timeout: 30_000, stdio: 'pipe' });
+      }
+
+      const input =
+        [
+          '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}',
+          '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}',
+        ].join('\n') + '\n';
+
+      const stdout = execSync(`node apps/mcp/dist/index.js --db-path ${dbPath}`, {
+        cwd: projectRoot,
+        encoding: 'utf-8',
+        input,
+        timeout: 10_000,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      const lines = stdout.split('\n').filter((l) => l.trim().length > 0);
+
+      for (const line of lines) {
+        expect(() => JSON.parse(line)).not.toThrow();
+      }
+
+      const responses = lines.map((l) => JSON.parse(l) as Record<string, unknown>);
+      const initResponse = responses.find((r) => r.id === 1) as Record<string, any>;
+      const toolsResponse = responses.find((r) => r.id === 2) as Record<string, any>;
+
+      expect(initResponse).toBeDefined();
+      expect(initResponse.result.protocolVersion).toBeDefined();
+      expect(initResponse.result.capabilities).toBeDefined();
+      expect(initResponse.result.serverInfo).toBeDefined();
+
+      expect(toolsResponse).toBeDefined();
+      expect(toolsResponse.result.tools).toHaveLength(10);
+
+      for (const tool of toolsResponse.result.tools as Array<Record<string, unknown>>) {
+        expect(typeof tool.name).toBe('string');
+        expect(typeof tool.inputSchema).toBe('object');
+
+        const schema = tool.inputSchema as { type?: string; anyOf?: unknown[] };
+        const hasValidRoot =
+          schema.type === 'object' || (Array.isArray(schema.anyOf) && schema.anyOf.length > 0);
+        expect(hasValidRoot).toBe(true);
+      }
+
+      const storeNodeTool = (toolsResponse.result.tools as Array<Record<string, unknown>>).find(
+        (t) => t.name === 'texere_store_node',
+      );
+      expect(hasObjectBranch((storeNodeTool?.inputSchema as { anyOf?: unknown })?.anyOf)).toBe(
+        true,
+      );
     });
   });
 });
