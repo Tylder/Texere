@@ -5,7 +5,7 @@
 ## OVERVIEW
 
 Public API facade (`Texere` class) over immutable node/edge graph with multi-mode search
-(keyword/semantic/hybrid). 23 source files, 8498 total LOC.
+(keyword/semantic/hybrid). 11 source files, 12 test files.
 
 ## STRUCTURE
 
@@ -67,7 +67,7 @@ if (edge.type === EdgeType.Replaces) {
 }
 ```
 
-- `DEPRECATED_BY` edge auto-sets `invalidated_at` on source node
+- `REPLACES` edge auto-sets `invalidated_at` on source node
 - Enforced in `edges.ts` at edge creation time
 
 ## UNIQUE PATTERNS
@@ -174,8 +174,7 @@ pragma foreign_keys = ON;
 
 ## TESTING
 
-- **12 test files** (5,707 lines total)
-- Co-located: `*.test.ts` next to source
+- **12 test files** co-located next to source
 - No mocking: Real SQLite (`:memory:`)
 - Expensive setup: `beforeAll/afterAll` for embedding tests (30s timeout)
 
