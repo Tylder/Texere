@@ -1,6 +1,6 @@
 # MCP SERVER (@texere/mcp)
 
-**Model Context Protocol server** — Exposes Texere graph via 14 tools over stdio transport
+**Model Context Protocol server** — Exposes Texere graph via 15 tools over stdio transport
 
 ## OVERVIEW
 
@@ -14,17 +14,20 @@ src/
 ├── index.ts              # CLI entry: --db-path parsing, server startup
 ├── server.ts             # MCP server factory, request handlers
 ├── tools/
-│   ├── index.ts          # Tool registry (14 tools)
+│   ├── index.ts          # Tool registry (15 tools)
 │   ├── types.ts          # ToolDefinition, ToolContext
 │   ├── helpers.ts        # ok(), invalidInput(), toolFailure()
-│   ├── store-node.ts     # Node creation
+│   ├── store-knowledge.ts # Store knowledge nodes
+│   ├── store-issue.ts    # Store issue nodes
+│   ├── store-action.ts   # Store action nodes
+│   ├── store-artifact.ts # Store artifact nodes
+│   ├── store-source.ts   # Store source nodes
 │   ├── get-node.ts       # Node retrieval
 │   ├── replace-node.ts   # Node replacement
 │   ├── invalidate-node.ts # Node soft-delete
 │   ├── create-edge.ts    # Edge creation
 │   ├── delete-edge.ts    # Edge deletion
 │   ├── search.ts         # Full-text search
-│   ├── search-batch.ts   # Batch search (up to 50)
 │   ├── traverse.ts       # Graph traversal
 │   ├── about.ts          # Search + traverse
 │   ├── stats.ts          # Database statistics
@@ -95,12 +98,14 @@ const result = minimal
 ```
 
 - Reduces payload for bulk operations
-- Tools: `store_node`, `create_edge`, `replace_node`
+- Tools: `store_knowledge`, `store_issue`, `store_action`, `store_artifact`, `store_source`,
+  `create_edge`, `replace_node`
 
 ### Batch Limits (Max 50)
 
-- `store_nodes`, `create_edges`, `search_batch` limited to 50 items
+- `create_edge` limited to 50 items per call
 - Enforced in Zod schema: `z.array(...).min(1).max(50)`
+- Per-type store tools accept single node input (no batch)
 
 ### Validation Tool (Pre-Write)
 
@@ -121,15 +126,15 @@ return {
 - All errors include error code for programmatic parsing
 - Codes: `UNKNOWN_TOOL`, `INVALID_INPUT`, `TOOL_ERROR`
 
-## TOOL ORGANIZATION (14 Tools)
+## TOOL ORGANIZATION (15 Tools)
 
-| Category      | Tools                                                  | Batch Support      |
-| ------------- | ------------------------------------------------------ | ------------------ |
-| **Node CRUD** | store_node(s), get_node, replace_node, invalidate_node | Yes (store_nodes)  |
-| **Edge CRUD** | create_edge(s), delete_edge                            | Yes (create_edges) |
-| **Search**    | search, search_batch                                   | Yes (batch)        |
-| **Graph**     | traverse, about                                        | No                 |
-| **Meta**      | stats, validate                                        | No                 |
+| Category      | Tools                                                                                                             | Batch Support              |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **Node CRUD** | store_knowledge, store_issue, store_action, store_artifact, store_source, get_node, replace_node, invalidate_node | No (single node per call)  |
+| **Edge CRUD** | create_edge, delete_edge                                                                                          | Yes (create_edge up to 50) |
+| **Search**    | search                                                                                                            | No                         |
+| **Graph**     | traverse, about                                                                                                   | No                         |
+| **Meta**      | stats, validate                                                                                                   | No                         |
 
 ## INTEGRATION WITH @TEXERE/GRAPH
 
