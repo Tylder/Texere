@@ -15,13 +15,16 @@ import {
   getNode as getNodeImpl,
   invalidateNode as invalidateNodeImpl,
   storeNode as storeNodeImpl,
+  storeNodesWithEdges as storeNodesWithEdgesImpl,
   type GetNodeOptions,
   type MinimalNode,
+  type MinimalStoreNodesWithEdgesResult,
   type NodeWithEdges,
   type SimilarNode,
   type StoreNodeInput,
   type StoreNodeOptions,
   type StoreNodeResult,
+  type StoreNodesWithEdgesResult,
 } from './nodes.js';
 import {
   replaceNode as replaceNodeImpl,
@@ -42,6 +45,7 @@ import {
   NodeRole,
   NodeType,
   type Edge,
+  type InlineEdgeInput,
   type Node,
   type NodeTag,
   type SearchMode,
@@ -77,6 +81,28 @@ export class Texere {
   ): StoreNodeResult | MinimalNode | Node[] | MinimalNode[] {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const result = (storeNodeImpl as any)(this.db, input, options);
+    this.embedder.schedulePending();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return result;
+  }
+
+  storeNodesWithEdges(
+    nodes: StoreNodeInput[],
+    edges: InlineEdgeInput[],
+    options?: StoreNodeOptions & { minimal?: false },
+  ): StoreNodesWithEdgesResult;
+  storeNodesWithEdges(
+    nodes: StoreNodeInput[],
+    edges: InlineEdgeInput[],
+    options: StoreNodeOptions & { minimal: true },
+  ): MinimalStoreNodesWithEdgesResult;
+  storeNodesWithEdges(
+    nodes: StoreNodeInput[],
+    edges: InlineEdgeInput[],
+    options?: StoreNodeOptions,
+  ): StoreNodesWithEdgesResult | MinimalStoreNodesWithEdgesResult {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const result = (storeNodesWithEdgesImpl as any)(this.db, nodes, edges, options);
     this.embedder.schedulePending();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result;
@@ -208,12 +234,15 @@ export type {
   StoreNodeInput,
   StoreNodeOptions,
   StoreNodeResult,
+  StoreNodesWithEdgesResult,
+  MinimalStoreNodesWithEdgesResult,
   SimilarNode,
   MinimalNode,
   GetNodeOptions,
   ReplaceNodeInput,
   ReplaceNodeOptions,
   Edge,
+  InlineEdgeInput,
   CreateEdgeInput,
   CreateEdgeOptions,
   MinimalEdge,

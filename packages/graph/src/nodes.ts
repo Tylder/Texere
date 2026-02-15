@@ -1,8 +1,17 @@
 import type Database from 'better-sqlite3';
 import { nanoid } from 'nanoid';
 
+import { createEdge, type MinimalEdge } from './edges.js';
 import { sanitizeFtsQueryStrict } from './sanitize.js';
-import { EdgeType, NodeRole, NodeType, isValidTypeRole, type Edge, type Node } from './types.js';
+import {
+  EdgeType,
+  NodeRole,
+  NodeType,
+  isValidTypeRole,
+  type Edge,
+  type InlineEdgeInput,
+  type Node,
+} from './types.js';
 
 export interface StoreNodeInput {
   type: NodeType;
@@ -14,6 +23,7 @@ export interface StoreNodeInput {
   confidence?: number;
   anchor_to?: string[];
   sources?: string[];
+  temp_id?: string;
 }
 
 export interface StoreNodeOptions {
@@ -335,3 +345,140 @@ export const invalidateNode = (db: Database.Database, id: string): void => {
     statements.setInvalidatedAt.run(Date.now(), id);
   }).immediate();
 };
+
+export interface StoreNodesWithEdgesResult {
+  nodes: Array<Node & { temp_id?: string }>;
+  edges: Edge[];
+}
+
+export interface MinimalStoreNodesWithEdgesResult {
+  nodes: Array<MinimalNode & { temp_id?: string }>;
+  edges: MinimalEdge[];
+}
+
+export function storeNodesWithEdges(
+  db: Database.Database,
+  nodes: StoreNodeInput[],
+  edges: InlineEdgeInput[],
+  options?: StoreNodeOptions & { minimal?: false },
+): StoreNodesWithEdgesResult;
+export function storeNodesWithEdges(
+  db: Database.Database,
+  nodes: StoreNodeInput[],
+  edges: InlineEdgeInput[],
+  options: StoreNodeOptions & { minimal: true },
+): MinimalStoreNodesWithEdgesResult;
+export function storeNodesWithEdges(
+  db: Database.Database,
+  inputs: StoreNodeInput[],
+  edgeInputs: InlineEdgeInput[],
+  options?: StoreNodeOptions,
+): StoreNodesWithEdgesResult | MinimalStoreNodesWithEdgesResult {
+  if (inputs.length === 0) {
+    throw new Error('at least one node required');
+  }
+  if (inputs.length > MAX_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded for nodes (${MAX_BATCH_SIZE})`);
+  }
+  if (edgeInputs.length > MAX_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded for edges (${MAX_BATCH_SIZE})`);
+  }
+
+  for (const inp of inputs) {
+    if (!isValidTypeRole(inp.type, inp.role)) {
+      throw new Error(`invalid type-role combination: type="${inp.type}" role="${inp.role}"`);
+    }
+  }
+
+  const tempIds = new Map<string, number>();
+  for (let i = 0; i < inputs.length; i++) {
+    const tempId = inputs[i]!.temp_id;
+    if (tempId) {
+      if (tempIds.has(tempId)) {
+        throw new Error(
+          `duplicate temp_id: "${tempId}" (nodes at index ${tempIds.get(tempId)} and ${i})`,
+        );
+      }
+      tempIds.set(tempId, i);
+    }
+  }
+
+  for (let i = 0; i < edgeInputs.length; i++) {
+    const edge = edgeInputs[i]!;
+
+    if (edge.source_id === edge.target_id) {
+      throw new Error(
+        `self-referential edge at index ${i}: source_id and target_id are both "${edge.source_id}"`,
+      );
+    }
+
+    for (const field of ['source_id', 'target_id'] as const) {
+      const id = edge[field];
+      if (!tempIds.has(id)) {
+        const existing = getNode(db, id);
+        if (!existing) {
+          throw new Error(
+            `${field} "${id}" in edge at index ${i} not found in database or node temp_ids`,
+          );
+        }
+      }
+    }
+  }
+
+  const statements = getStatements(db);
+  const now = Date.now();
+  const minimal = options?.minimal ?? false;
+
+  const result = db
+    .transaction(() => {
+      const tempToReal = new Map<string, string>();
+
+      // Phase 1: Insert all nodes (FK constraint: nodes must exist before edges)
+      const builtNodes: Node[] = inputs.map((inp) => buildNode(inp, now));
+      for (let i = 0; i < builtNodes.length; i++) {
+        insertNodeWithAnchors(
+          statements,
+          builtNodes[i]!,
+          inputs[i]!.anchor_to ?? [],
+          inputs[i]!.sources ?? [],
+          now,
+        );
+        if (inputs[i]!.temp_id) {
+          tempToReal.set(inputs[i]!.temp_id!, builtNodes[i]!.id);
+        }
+      }
+
+      // Phase 2: Resolve temp_ids → real IDs, then create edges
+      const storedEdges = edgeInputs.map((edge) => {
+        const resolved = {
+          source_id: tempToReal.get(edge.source_id) ?? edge.source_id,
+          target_id: tempToReal.get(edge.target_id) ?? edge.target_id,
+          type: edge.type,
+        };
+        return createEdge(db, resolved);
+      });
+
+      return { nodes: builtNodes, edges: storedEdges };
+    })
+    .immediate();
+
+  if (minimal) {
+    return {
+      nodes: result.nodes.map((n, i) => {
+        const tempId = inputs[i]?.temp_id;
+        const base: MinimalNode & { temp_id?: string } = { id: n.id };
+        if (tempId) base.temp_id = tempId;
+        return base;
+      }),
+      edges: result.edges.map((e) => ({ id: e.id })),
+    };
+  }
+
+  return {
+    nodes: result.nodes.map((n, i) => {
+      const tempId = inputs[i]?.temp_id;
+      return tempId ? { ...n, temp_id: tempId } : n;
+    }),
+    edges: result.edges,
+  };
+}

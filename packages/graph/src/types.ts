@@ -103,6 +103,12 @@ export interface Edge {
   created_at: number;
 }
 
+export interface InlineEdgeInput {
+  source_id: string;
+  target_id: string;
+  type: EdgeType;
+}
+
 export interface NodeTag {
   node_id: string;
   tag: string;

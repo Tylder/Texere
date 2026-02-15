@@ -1,9 +1,16 @@
 import type Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createDatabase } from './db';
-import { getNode, invalidateNode, storeNode, type StoreNodeInput } from './nodes';
-import { EdgeType, NodeRole, NodeType } from './types';
+import { createDatabase } from './db.js';
+import { getEdgesForNode } from './edges.js';
+import {
+  getNode,
+  invalidateNode,
+  storeNode,
+  storeNodesWithEdges,
+  type StoreNodeInput,
+} from './nodes.js';
+import { EdgeType, NodeRole, NodeType } from './types.js';
 
 const decision = (overrides: Partial<StoreNodeInput> = {}): StoreNodeInput => ({
   type: NodeType.Knowledge,
@@ -452,5 +459,235 @@ describe('sources field', () => {
       .get('source:web:https://example.com/api') as { c: number };
 
     expect(count.c).toBe(1);
+  });
+});
+
+describe('storeNodesWithEdges', () => {
+  let db: Database.Database;
+
+  beforeEach(() => {
+    db = createDatabase(':memory:');
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('creates nodes and inline edges in single transaction', () => {
+    const result = storeNodesWithEdges(
+      db,
+      [
+        { ...decision(), temp_id: 'a' },
+        { ...decision({ title: 'Another decision' }), temp_id: 'b' },
+      ],
+      [{ source_id: 'a', target_id: 'b', type: EdgeType.BasedOn }],
+    );
+
+    expect(result.nodes).toHaveLength(2);
+    expect(result.edges).toHaveLength(1);
+
+    const nodeA = getNode(db, result.nodes[0]!.id);
+    const nodeB = getNode(db, result.nodes[1]!.id);
+    expect(nodeA).not.toBeNull();
+    expect(nodeB).not.toBeNull();
+
+    const edge = result.edges[0]!;
+    expect(edge.source_id).toBe(result.nodes[0]!.id);
+    expect(edge.target_id).toBe(result.nodes[1]!.id);
+    expect(edge.type).toBe(EdgeType.BasedOn);
+  });
+
+  it('resolves temp_ids to real IDs in edge source_id and target_id', () => {
+    const result = storeNodesWithEdges(
+      db,
+      [
+        { ...decision(), temp_id: 'a' },
+        { ...decision({ title: 'Another decision' }), temp_id: 'b' },
+      ],
+      [{ source_id: 'a', target_id: 'b', type: EdgeType.BasedOn }],
+    );
+
+    const edge = result.edges[0]!;
+    expect(edge.source_id).toMatch(/^[A-Za-z0-9_-]{21}$/);
+    expect(edge.target_id).toMatch(/^[A-Za-z0-9_-]{21}$/);
+    expect(edge.source_id).toBe(result.nodes[0]!.id);
+    expect(edge.target_id).toBe(result.nodes[1]!.id);
+  });
+
+  it('echoes temp_id on returned nodes', () => {
+    const result = storeNodesWithEdges(db, [{ ...decision(), temp_id: 'x' }], []);
+
+    expect(result.nodes[0]).toHaveProperty('temp_id', 'x');
+    expect(result.nodes[0]!.id).toMatch(/^[A-Za-z0-9_-]{21}$/);
+  });
+
+  it('supports edge from temp_id node to existing DB node', () => {
+    const existingNode = storeNode(db, decision({ title: 'Existing' }));
+
+    const result = storeNodesWithEdges(
+      db,
+      [{ ...decision({ title: 'New node' }), temp_id: 'b' }],
+      [{ source_id: 'b', target_id: existingNode.id, type: EdgeType.Resolves }],
+    );
+
+    const edge = result.edges[0]!;
+    expect(edge.source_id).toBe(result.nodes[0]!.id);
+    expect(edge.target_id).toBe(existingNode.id);
+  });
+
+  it('supports edge between two existing DB nodes', () => {
+    const nodeA = storeNode(db, decision({ title: 'Node A' }));
+    const nodeB = storeNode(db, decision({ title: 'Node B' }));
+
+    const result = storeNodesWithEdges(
+      db,
+      [{ ...decision({ title: 'Node C' }), temp_id: 'c' }],
+      [{ source_id: nodeA.id, target_id: nodeB.id, type: EdgeType.Causes }],
+    );
+
+    expect(result.nodes).toHaveLength(1);
+    expect(result.edges).toHaveLength(1);
+
+    const edge = result.edges[0]!;
+    expect(edge.source_id).toBe(nodeA.id);
+    expect(edge.target_id).toBe(nodeB.id);
+  });
+
+  it('creates auto-provenance edges alongside inline edges', () => {
+    const result = storeNodesWithEdges(
+      db,
+      [
+        {
+          ...decision({ title: 'Node with source', sources: ['https://example.com'] }),
+          temp_id: 'a',
+        },
+        { ...decision({ title: 'Another node' }), temp_id: 'b' },
+      ],
+      [{ source_id: 'a', target_id: 'b', type: EdgeType.Resolves }],
+    );
+
+    const nodeAEdges = getEdgesForNode(db, result.nodes[0]!.id, 'outgoing');
+    expect(nodeAEdges.length).toBeGreaterThanOrEqual(2);
+
+    const inlineEdge = nodeAEdges.find((e) => e.target_id === result.nodes[1]!.id);
+    expect(inlineEdge).not.toBeUndefined();
+    expect(inlineEdge!.type).toBe(EdgeType.Resolves);
+
+    const provenanceEdge = nodeAEdges.find((e) => e.type === EdgeType.BasedOn);
+    expect(provenanceEdge).not.toBeUndefined();
+  });
+
+  it('handles REPLACES edge auto-invalidation', () => {
+    const oldNode = storeNode(db, decision({ title: 'Old decision' }));
+
+    const result = storeNodesWithEdges(
+      db,
+      [{ ...decision({ title: 'New decision' }), temp_id: 'b' }],
+      [{ source_id: oldNode.id, target_id: 'b', type: EdgeType.Replaces }],
+    );
+
+    const invalidated = getNode(db, oldNode.id);
+    expect(invalidated).not.toBeNull();
+    expect(invalidated!.invalidated_at).not.toBeNull();
+
+    const edge = result.edges[0]!;
+    expect(edge.type).toBe(EdgeType.Replaces);
+  });
+
+  it('rolls back all nodes and edges on edge failure', () => {
+    const nodeInputs = [
+      { ...decision({ title: 'Node 1' }), temp_id: 'a' },
+      { ...decision({ title: 'Node 2' }), temp_id: 'b' },
+    ];
+
+    expect(() => {
+      storeNodesWithEdges(db, nodeInputs, [
+        { source_id: 'a', target_id: 'nonexistent-id', type: EdgeType.BasedOn },
+      ]);
+    }).toThrow();
+
+    expect(getNode(db, 'a')).toBeNull();
+    expect(getNode(db, 'b')).toBeNull();
+  });
+
+  it('rejects duplicate temp_ids', () => {
+    expect(() => {
+      storeNodesWithEdges(
+        db,
+        [
+          { ...decision({ title: 'Node 1' }), temp_id: 'dup' },
+          { ...decision({ title: 'Node 2' }), temp_id: 'dup' },
+        ],
+        [],
+      );
+    }).toThrow(/duplicate/i);
+  });
+
+  it('rejects self-referential edge', () => {
+    expect(() => {
+      storeNodesWithEdges(
+        db,
+        [{ ...decision(), temp_id: 'x' }],
+        [{ source_id: 'x', target_id: 'x', type: EdgeType.BasedOn }],
+      );
+    }).toThrow(/self-referential/i);
+  });
+
+  it('rejects edge referencing nonexistent temp_id', () => {
+    expect(() => {
+      storeNodesWithEdges(
+        db,
+        [{ ...decision(), temp_id: 'a' }],
+        [{ source_id: 'a', target_id: 'b', type: EdgeType.BasedOn }],
+      );
+    }).toThrow(/temp_id|not found/i);
+  });
+
+  it('with empty edges array behaves like storeNode', () => {
+    const result = storeNodesWithEdges(
+      db,
+      [
+        { ...decision({ title: 'Node 1' }), temp_id: 'a' },
+        { ...decision({ title: 'Node 2' }), temp_id: 'b' },
+      ],
+      [],
+    );
+
+    expect(result.nodes).toHaveLength(2);
+    expect(result.edges).toHaveLength(0);
+    expect(result.nodes[0]!.temp_id).toBe('a');
+    expect(result.nodes[1]!.temp_id).toBe('b');
+  });
+
+  it('with minimal:true returns ids only', () => {
+    const result = storeNodesWithEdges(
+      db,
+      [
+        { ...decision({ title: 'Node 1' }), temp_id: 'a' },
+        { ...decision({ title: 'Node 2' }), temp_id: 'b' },
+      ],
+      [{ source_id: 'a', target_id: 'b', type: EdgeType.BasedOn }],
+      { minimal: true },
+    );
+
+    expect(result.nodes[0]).toEqual({ id: expect.any(String), temp_id: 'a' });
+    expect(result.nodes[1]).toEqual({ id: expect.any(String), temp_id: 'b' });
+    expect(result.edges[0]).toEqual({ id: expect.any(String) });
+  });
+
+  it('preserves node array ordering', () => {
+    const result = storeNodesWithEdges(
+      db,
+      [
+        { ...decision({ title: 'First' }), temp_id: 'x' },
+        { ...decision({ title: 'Second' }), temp_id: 'y' },
+        { ...decision({ title: 'Third' }), temp_id: 'z' },
+      ],
+      [],
+    );
+
+    expect(result.nodes[0]!.temp_id).toBe('x');
+    expect(result.nodes[1]!.temp_id).toBe('y');
+    expect(result.nodes[2]!.temp_id).toBe('z');
   });
 });
