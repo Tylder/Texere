@@ -1,6 +1,6 @@
 # TEXERE PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-15 09:25:35  
+**Updated:** 2026-02-15  
 **Commit:** 76a1ec6  
 **Branch:** remake-as-knowledge-graph
 
@@ -14,14 +14,14 @@ Designed for AI-assisted development with multi-agent integration (OpenCode, Ser
 ```
 texere/
 ├── apps/mcp/              # MCP server (Model Context Protocol)
-│   └── src/tools/         # 14 tool definitions
+│   └── src/tools/         # 15 tool definitions
 ├── packages/graph/        # Core graph library (SQLite + embeddings)
-│   └── src/               # 23 source files, Texere class API
+│   └── src/               # 11 source files, Texere class API
 ├── tooling/               # Shared ESLint + TypeScript configs
 │   ├── eslint-config/     # Custom rules, import ordering
 │   └── typescript-config/ # Strict mode, Node.js modules
 ├── docs/                  # Design docs (kg-redesign, anti-patterns)
-├── .opencode/             # OpenCode AI agent workspace
+├── .Claude/               # Claude Code AI agent workspace
 ├── .serena/               # Serena IDE language server config
 └── .sisyphus/             # Agent execution state tracking
 ```
@@ -49,21 +49,24 @@ texere/
 - **@texere/graph**: `Texere` class (main API)
   - Node CRUD: `storeNode()`, `getNode()`, `replaceNode()`, `invalidateNode()`
   - Edge CRUD: `createEdge()`, `deleteEdge()`, `getEdgesForNode()`
-  - Search: `search()`, `searchBatch()`, `about()`
+  - Search: `search()`, `about()`
   - Traversal: `traverse()`
   - Metadata: `stats()`
 
-- **@texere/mcp**: 14 MCP tools
-  - `texere_store_node`, `texere_get_node`, `texere_replace_node`, `texere_invalidate_node`
+- **@texere/mcp**: 15 MCP tools
+  - `texere_store_knowledge`, `texere_store_issue`, `texere_store_action`, `texere_store_artifact`,
+    `texere_store_source`
+  - `texere_get_node`, `texere_replace_node`, `texere_invalidate_node`
   - `texere_create_edge`, `texere_delete_edge`
-  - `texere_search`, `texere_search_batch`, `texere_traverse`, `texere_about`
+  - `texere_search`, `texere_traverse`, `texere_about`
   - `texere_stats`, `texere_validate`
 
 ### Type System
 
-- **7 NodeTypes**: Knowledge, Issue, Action, Artifact, Context, Meta, Source
-- **26 NodeRoles**: Constrained by type via `VALID_ROLES_BY_TYPE` matrix
-- **16 EdgeTypes**: About, AlternativeTo, AnchoredTo, BasedOn, Causes, etc.
+- **5 NodeTypes**: Knowledge, Issue, Action, Artifact, Source
+- **20 NodeRoles**: Constrained by type via `VALID_ROLES_BY_TYPE` matrix
+- **11 EdgeTypes**: AlternativeTo, AnchoredTo, BasedOn, Causes, Contradicts, DependsOn, ExampleOf,
+  PartOf, RelatedTo, Replaces, Resolves
 - Validation enforced at insertion time
 
 ## CONVENTIONS (Project-Specific Only)
@@ -109,7 +112,7 @@ texere/
 ### Immutability
 
 - ❌ **No node updates/mutations** → nodes are immutable
-- ✅ Use `replaceNode()` (creates new + DEPRECATED_BY edge)
+- ✅ Use `replaceNode()` (creates new + REPLACES edge)
 - ❌ **No `updated_at`** field → immutable design
 
 ### Type Safety
@@ -119,8 +122,8 @@ texere/
 
 ### Edge Types (Deprecated)
 
-- ❌ 21 edge types dropped (too subtle for LLMs)
-- Use: `CAUSES` not `TRIGGERS`, `SOLVES` not `ADDRESSES`, `DEPRECATED_BY` not `SUPERSEDES`
+- ❌ Older edge types dropped (too subtle for LLMs)
+- Use: `CAUSES` not `TRIGGERS`, `RESOLVES` not `SOLVES`, `REPLACES` not `SUPERSEDES`
 
 ### Database
 
@@ -156,7 +159,7 @@ const statementsByDb = new WeakMap<Database.Database, Statements>();
 ```typescript
 db.transaction(() => {
   storeNode(newNode);
-  createEdge({ type: 'DEPRECATED_BY', ... });
+  createEdge({ type: 'REPLACES', ... });
   // Old node auto-invalidated
 }).immediate();
 ```
@@ -215,7 +218,7 @@ turbo run test:unit   # Test all packages
 
 ### AI Agent Integration
 
-- **OpenCode**: MCP servers (memory-graph, serena, texere)
+- **Claude Code**: MCP servers (memory-graph, serena, texere)
 - **Serena**: TypeScript language server for IDE
 - **Sisyphus**: Active plan tracking (`.sisyphus/boulder.json`)
 
