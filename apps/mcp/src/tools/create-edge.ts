@@ -9,40 +9,33 @@ const edgeSchema = z.object({
   source_id: z.string().min(1),
   target_id: z.string().min(1),
   type: z.nativeEnum(EdgeType),
-  strength: z.number().min(0).max(1).optional(),
-  confidence: z.number().min(0).max(1).optional(),
 });
 
-const singleInputSchema = edgeSchema.extend({
-  minimal: z.boolean().optional(),
-});
-
-const batchInputSchema = z.object({
+const inputSchema = z.object({
   edges: z.array(edgeSchema).min(1).max(50),
   minimal: z.boolean().optional(),
 });
 
-export const createEdgeTool: ToolDefinition<typeof singleInputSchema> = {
+export const createEdgeTool: ToolDefinition<typeof inputSchema> = {
   name: 'texere_create_edge',
-  description: 'Create a single edge between two nodes.',
-  inputSchema: singleInputSchema,
+  description:
+    'Link nodes with typed edges. ' +
+    'Use RESOLVES (solution\u2192problem), DEPENDS_ON (dependent\u2192dependency), ' +
+    'BASED_ON (derived\u2192source), CAUSES (cause\u2192effect), EXAMPLE_OF (instance\u2192concept). ' +
+    'Use RELATED_TO only as last resort.',
+  inputSchema,
   execute: ({ db }, input) => {
-    const { minimal, ...edgeData } = input;
+    const minimal = input.minimal ?? true;
     const createEdge = db.createEdge.bind(db) as (...args: unknown[]) => unknown;
-    const raw = createEdge(edgeData, minimal ? { minimal: true } : undefined);
-    const result = raw as { id: string };
-    return ok({ edge: minimal ? { id: result.id } : result });
-  },
-};
 
-export const createEdgesTool: ToolDefinition<typeof batchInputSchema> = {
-  name: 'texere_create_edges',
-  description: 'Create multiple edges atomically (max 50).',
-  inputSchema: batchInputSchema,
-  execute: ({ db }, input) => {
-    const createEdge = db.createEdge.bind(db) as (...args: unknown[]) => unknown;
-    const raw = createEdge(input.edges, input.minimal ? { minimal: true } : undefined);
+    if (input.edges.length === 1) {
+      const raw = createEdge(input.edges[0], minimal ? { minimal: true } : undefined);
+      const result = raw as { id: string };
+      return ok({ edges: [minimal ? { id: result.id } : result] });
+    }
+
+    const raw = createEdge(input.edges, minimal ? { minimal: true } : undefined);
     const results = raw as Array<{ id: string }>;
-    return ok({ edges: input.minimal ? results.map((e) => ({ id: e.id })) : results });
+    return ok({ edges: minimal ? results.map((e) => ({ id: e.id })) : results });
   },
 };

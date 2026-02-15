@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { NodeRole, NodeScope, NodeStatus, NodeType, type ReplaceNodeInput } from '@texere/graph';
+import { NodeRole, NodeType, type ReplaceNodeInput } from '@texere/graph';
 
 import { ok } from './helpers.js';
 import type { ToolDefinition } from './types.js';
@@ -12,10 +12,8 @@ const inputSchema = z.object({
   title: z.string().min(1),
   content: z.string().min(1),
   tags: z.array(z.string().min(1)).optional(),
-  importance: z.number().min(0).max(1).optional(),
-  confidence: z.number().min(0).max(1).optional(),
-  status: z.nativeEnum(NodeStatus).optional(),
-  scope: z.nativeEnum(NodeScope).optional(),
+  importance: z.number().min(0).max(1),
+  confidence: z.number().min(0).max(1),
   anchor_to: z.array(z.string().min(1)).optional(),
   minimal: z.boolean().optional(),
 });
@@ -27,13 +25,11 @@ const toReplaceNodeInput = (item: z.infer<typeof inputSchema>): ReplaceNodeInput
     role: item.role,
     title: item.title,
     content: item.content,
+    importance: item.importance,
+    confidence: item.confidence,
   };
 
   if (item.tags !== undefined) replaceInput.tags = item.tags;
-  if (item.importance !== undefined) replaceInput.importance = item.importance;
-  if (item.confidence !== undefined) replaceInput.confidence = item.confidence;
-  if (item.status !== undefined) replaceInput.status = item.status;
-  if (item.scope !== undefined) replaceInput.scope = item.scope;
   if (item.anchor_to !== undefined) replaceInput.anchor_to = item.anchor_to;
 
   return replaceInput;
@@ -46,7 +42,7 @@ export const replaceNodeTool: ToolDefinition<typeof inputSchema> = {
   inputSchema,
   execute: ({ db }, input) => {
     const replaceInput = toReplaceNodeInput(input);
-    const minimal = input.minimal ?? false;
+    const minimal = input.minimal ?? true;
     const result = minimal
       ? db.replaceNode(replaceInput, { minimal: true })
       : db.replaceNode(replaceInput);
