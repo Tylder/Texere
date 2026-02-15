@@ -24,9 +24,9 @@ export function buildEmbeddingText(title: string, content: string, tagsJson: str
   // Parse tags from JSON string
   if (tagsJson && tagsJson.trim()) {
     try {
-      const parsed = JSON.parse(tagsJson);
+      const parsed: unknown = JSON.parse(tagsJson);
       if (Array.isArray(parsed)) {
-        tags = parsed;
+        tags = parsed as string[];
       }
     } catch {
       // Gracefully handle invalid JSON

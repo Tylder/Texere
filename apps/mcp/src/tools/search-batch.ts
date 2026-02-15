@@ -24,7 +24,7 @@ export const searchBatchTool: ToolDefinition<typeof inputSchema> = {
   name: 'texere_search_batch',
   description: 'Run multiple searches in one call. Results indexed by query position.',
   inputSchema,
-  execute: async ({ db }, input) => {
+  execute: ({ db }, input) => {
     const searchQueries = input.queries.map((q) => ({
       query: q.query,
       ...(q.type !== undefined ? { type: q.type } : {}),

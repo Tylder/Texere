@@ -5,11 +5,6 @@
 Find shortcomings, friction, and gaps in Texere's DX by having an agent ingest documentation into
 the knowledge graph.
 
-## Setup
-
-1. Wipe the graph: `rm /home/dan/Texere/.texere/knowledge-graph.db`
-2. Start fresh
-
 ## Track 1: External Docs (Hono)
 
 Ingest content from these Hono documentation pages. Create nodes and edges representing the
