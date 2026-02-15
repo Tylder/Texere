@@ -270,7 +270,6 @@ describe('Texere facade', () => {
       expect(results[0].title).toContain('Authentication');
     });
 
-
     it('traverse() delegates to internal module', () => {
       const node1 = db.storeNode({
         type: NodeType.Action,

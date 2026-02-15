@@ -174,23 +174,23 @@ Store decisions, findings, principles, constraints, pitfalls, requirements. Cont
 Recall Test: include rationale for decisions, evidence for findings, reasoning for principles,
 mechanisms for constraints, traps+fixes for pitfalls.
 
-| arg     | type              | required | default | notes                                                                     |
-| ------- | ----------------- | -------- | ------- | ------------------------------------------------------------------------- |
-| nodes   | KnowledgeNode[]   | yes      | —       | Array of knowledge nodes (1-50)                                           |
-| minimal | boolean           | no       | true    | Return only `{ id }` per node if true                                     |
+| arg     | type            | required | default | notes                                 |
+| ------- | --------------- | -------- | ------- | ------------------------------------- |
+| nodes   | KnowledgeNode[] | yes      | —       | Array of knowledge nodes (1-50)       |
+| minimal | boolean         | no       | true    | Return only `{ id }` per node if true |
 
 **KnowledgeNode fields:**
 
-| field      | type         | required | notes                                                            |
-| ---------- | ------------ | -------- | ---------------------------------------------------------------- |
+| field      | type         | required | notes                                                                                |
+| ---------- | ------------ | -------- | ------------------------------------------------------------------------------------ |
 | role       | enum         | yes      | "constraint" \| "decision" \| "finding" \| "pitfall" \| "principle" \| "requirement" |
-| title      | string       | yes      | Short descriptive title                                          |
-| content    | string       | yes      | Detailed content (must pass Recall Test)                         |
-| tags       | string[]     | no       | Tags for categorization                                          |
-| importance | number (0-1) | yes      | How critical is this knowledge                                   |
-| confidence | number (0-1) | yes      | How certain are you                                              |
-| anchor_to  | string[]     | no       | File paths (auto-creates ANCHORED_TO edges)                      |
-| sources    | string[]     | no       | URLs/file paths (auto-creates provenance Source nodes + edges)   |
+| title      | string       | yes      | Short descriptive title                                                              |
+| content    | string       | yes      | Detailed content (must pass Recall Test)                                             |
+| tags       | string[]     | no       | Tags for categorization                                                              |
+| importance | number (0-1) | yes      | How critical is this knowledge                                                       |
+| confidence | number (0-1) | yes      | How certain are you                                                                  |
+| anchor_to  | string[]     | no       | File paths (auto-creates ANCHORED_TO edges)                                          |
+| sources    | string[]     | no       | URLs/file paths (auto-creates provenance Source nodes + edges)                       |
 
 Example:
 `texere_store_knowledge({ nodes: [{ role: "decision", title: "Use SQLite with WAL", content: "Chose SQLite over PostgreSQL because...", importance: 0.9, confidence: 0.95, tags: ["db"], anchor_to: ["src/db.ts"] }] })`
@@ -199,16 +199,16 @@ Example:
 
 Store problems and errors.
 
-| field      | type         | required | notes                          |
-| ---------- | ------------ | -------- | ------------------------------ |
-| role       | enum         | yes      | "error" \| "problem"           |
-| title      | string       | yes      | Short descriptive title        |
+| field      | type         | required | notes                             |
+| ---------- | ------------ | -------- | --------------------------------- |
+| role       | enum         | yes      | "error" \| "problem"              |
+| title      | string       | yes      | Short descriptive title           |
 | content    | string       | yes      | Include symptoms, impact, context |
-| tags       | string[]     | no       | Tags for categorization        |
-| importance | number (0-1) | yes      | Severity of the issue          |
-| confidence | number (0-1) | yes      | How certain is this an issue   |
-| anchor_to  | string[]     | no       | File paths                     |
-| sources    | string[]     | no       | URLs/file paths                |
+| tags       | string[]     | no       | Tags for categorization           |
+| importance | number (0-1) | yes      | Severity of the issue             |
+| confidence | number (0-1) | yes      | How certain is this an issue      |
+| anchor_to  | string[]     | no       | File paths                        |
+| sources    | string[]     | no       | URLs/file paths                   |
 
 Example:
 `texere_store_issue({ nodes: [{ role: "problem", title: "Auth timeout under load", content: "Users experience 30s timeouts during peak hours (>100 concurrent logins). Root cause: connection pool exhaustion.", importance: 0.8, confidence: 0.9, tags: ["auth", "performance"] }] })`
@@ -217,16 +217,16 @@ Example:
 
 Store tasks, solutions, commands, workflows.
 
-| field      | type         | required | notes                                     |
-| ---------- | ------------ | -------- | ----------------------------------------- |
+| field      | type         | required | notes                                           |
+| ---------- | ------------ | -------- | ----------------------------------------------- |
 | role       | enum         | yes      | "command" \| "solution" \| "task" \| "workflow" |
-| title      | string       | yes      | Short descriptive title                   |
-| content    | string       | yes      | Steps, rationale, expected outcomes       |
-| tags       | string[]     | no       | Tags for categorization                   |
-| importance | number (0-1) | yes      | Priority/criticality                      |
-| confidence | number (0-1) | yes      | Likelihood of success                     |
-| anchor_to  | string[]     | no       | File paths                                |
-| sources    | string[]     | no       | URLs/file paths                           |
+| title      | string       | yes      | Short descriptive title                         |
+| content    | string       | yes      | Steps, rationale, expected outcomes             |
+| tags       | string[]     | no       | Tags for categorization                         |
+| importance | number (0-1) | yes      | Priority/criticality                            |
+| confidence | number (0-1) | yes      | Likelihood of success                           |
+| anchor_to  | string[]     | no       | File paths                                      |
+| sources    | string[]     | no       | URLs/file paths                                 |
 
 Example:
 `texere_store_action({ nodes: [{ role: "solution", title: "Increase connection pool to 20", content: "Scale auth DB pool from 5 to 20 connections. Verified via load test: p99 latency drops from 30s to 200ms.", importance: 0.85, confidence: 0.9, tags: ["auth", "database"] }] })`
@@ -235,16 +235,16 @@ Example:
 
 Store code patterns, concepts, examples, technologies.
 
-| field      | type         | required | notes                                              |
-| ---------- | ------------ | -------- | -------------------------------------------------- |
+| field      | type         | required | notes                                                    |
+| ---------- | ------------ | -------- | -------------------------------------------------------- |
 | role       | enum         | yes      | "code_pattern" \| "concept" \| "example" \| "technology" |
-| title      | string       | yes      | Short descriptive title                            |
-| content    | string       | yes      | Implementation details, usage patterns             |
-| tags       | string[]     | no       | Tags for categorization                            |
-| importance | number (0-1) | yes      | Reusability/relevance                              |
-| confidence | number (0-1) | yes      | How proven is this pattern                         |
-| anchor_to  | string[]     | no       | File paths                                         |
-| sources    | string[]     | no       | URLs/file paths                                    |
+| title      | string       | yes      | Short descriptive title                                  |
+| content    | string       | yes      | Implementation details, usage patterns                   |
+| tags       | string[]     | no       | Tags for categorization                                  |
+| importance | number (0-1) | yes      | Reusability/relevance                                    |
+| confidence | number (0-1) | yes      | How proven is this pattern                               |
+| anchor_to  | string[]     | no       | File paths                                               |
+| sources    | string[]     | no       | URLs/file paths                                          |
 
 Example:
 `texere_store_artifact({ nodes: [{ role: "code_pattern", title: "WeakMap statement cache", content: "Use WeakMap<Database, Statements> to cache prepared statements. WeakMap allows GC when db is closed. Pattern used in nodes.ts, edges.ts, search.ts.", importance: 0.7, confidence: 0.95, anchor_to: ["packages/graph/src/nodes.ts"] }] })`
@@ -253,16 +253,16 @@ Example:
 
 Store web URLs, file paths, repositories, API docs.
 
-| field      | type         | required | notes                                           |
-| ---------- | ------------ | -------- | ----------------------------------------------- |
+| field      | type         | required | notes                                                 |
+| ---------- | ------------ | -------- | ----------------------------------------------------- |
 | role       | enum         | yes      | "web_url" \| "file_path" \| "repository" \| "api_doc" |
-| title      | string       | yes      | Short descriptive title                         |
-| content    | string       | yes      | URL, path, or description of the source         |
-| tags       | string[]     | no       | Tags for categorization                         |
-| importance | number (0-1) | yes      | Authority/relevance of source                   |
-| confidence | number (0-1) | yes      | How trustworthy is this source                  |
-| anchor_to  | string[]     | no       | File paths                                      |
-| sources    | string[]     | no       | URLs/file paths                                 |
+| title      | string       | yes      | Short descriptive title                               |
+| content    | string       | yes      | URL, path, or description of the source               |
+| tags       | string[]     | no       | Tags for categorization                               |
+| importance | number (0-1) | yes      | Authority/relevance of source                         |
+| confidence | number (0-1) | yes      | How trustworthy is this source                        |
+| anchor_to  | string[]     | no       | File paths                                            |
+| sources    | string[]     | no       | URLs/file paths                                       |
 
 Example:
 `texere_store_source({ nodes: [{ role: "web_url", title: "SQLite WAL documentation", content: "https://www.sqlite.org/wal.html — Official SQLite WAL mode documentation covering journal modes, checkpointing, and concurrency semantics.", importance: 0.8, confidence: 1.0, tags: ["sqlite", "docs"] }] })`
@@ -271,10 +271,10 @@ Example:
 
 Link nodes with typed edges. Accepts an array of edges (1-50).
 
-| arg     | type         | required | default | notes                        |
-| ------- | ------------ | -------- | ------- | ---------------------------- |
-| edges   | EdgeInput[]  | yes      | —       | Array of edges (1-50)        |
-| minimal | boolean      | no       | true    | Return only `{ id }` if true |
+| arg     | type        | required | default | notes                        |
+| ------- | ----------- | -------- | ------- | ---------------------------- |
+| edges   | EdgeInput[] | yes      | —       | Array of edges (1-50)        |
+| minimal | boolean     | no       | true    | Return only `{ id }` if true |
 
 **EdgeInput fields:**
 
@@ -362,39 +362,22 @@ Example:
 
 ### NodeRole (20 values)
 
-**knowledge** (6): constraint, decision, finding, pitfall, principle, requirement
-**issue** (2): error, problem
-**action** (4): command, solution, task, workflow
-**artifact** (4): code_pattern, concept, example, technology
-**source** (4): web_url, file_path, repository, api_doc
+**knowledge** (6): constraint, decision, finding, pitfall, principle, requirement **issue** (2):
+error, problem **action** (4): command, solution, task, workflow **artifact** (4): code_pattern,
+concept, example, technology **source** (4): web_url, file_path, repository, api_doc
 
 ### Type-Role Decision Tree
 
-Storing knowledge? → type=knowledge
-  Restrictive "cannot do Y"? → role=constraint
-  Choice with rationale? → role=decision
-  Observation/measurement? → role=finding
-  "Avoid X" warning? → role=pitfall
-  Aspirational "should do X"? → role=principle
-  Non-negotiable spec? → role=requirement
-Storing problem/error? → type=issue
-  Specific error instance? → role=error
-  General problem to solve? → role=problem
-Storing action? → type=action
-  Shell/build command? → role=command
-  Problem solution? → role=solution
-  Work item? → role=task
-  Process/pipeline? → role=workflow
-Storing artifact? → type=artifact
-  Reusable pattern? → role=code_pattern
-  Abstract category? → role=concept
-  Concrete one-off instance? → role=example
-  Library/tool? → role=technology
-Storing external source? → type=source
-  Web documentation? → role=web_url
-  Local file reference? → role=file_path
-  Git repository? → role=repository
-  API documentation? → role=api_doc
+Storing knowledge? → type=knowledge Restrictive "cannot do Y"? → role=constraint Choice with
+rationale? → role=decision Observation/measurement? → role=finding "Avoid X" warning? → role=pitfall
+Aspirational "should do X"? → role=principle Non-negotiable spec? → role=requirement Storing
+problem/error? → type=issue Specific error instance? → role=error General problem to solve? →
+role=problem Storing action? → type=action Shell/build command? → role=command Problem solution? →
+role=solution Work item? → role=task Process/pipeline? → role=workflow Storing artifact? →
+type=artifact Reusable pattern? → role=code_pattern Abstract category? → role=concept Concrete
+one-off instance? → role=example Library/tool? → role=technology Storing external source? →
+type=source Web documentation? → role=web_url Local file reference? → role=file_path Git repository?
+→ role=repository API documentation? → role=api_doc
 
 ### EdgeType (11 values)
 
@@ -412,17 +395,12 @@ Storing external source? → type=source
 
 ### Edge Selection Decision Tree
 
-Does X fix/solve Y? → RESOLVES
-Does X depend on/require Y? → DEPENDS_ON
-Was X derived from/informed by Y? → BASED_ON
-Does X conflict with Y? → CONTRADICTS
-Does X replace Y? → REPLACES (auto-invalidates Y)
-Is X an example/demo of Y? → EXAMPLE_OF
-Is X a component/part of Y? → PART_OF
-Is X linked to code file Y? → ANCHORED_TO (auto-created via anchor_to param)
-Are X and Y alternatives? → ALTERNATIVE_TO
-Does X cause/lead to Y? → CAUSES
-Weak/unclear association? → RELATED_TO (last resort)
+Does X fix/solve Y? → RESOLVES Does X depend on/require Y? → DEPENDS_ON Was X derived from/informed
+by Y? → BASED_ON Does X conflict with Y? → CONTRADICTS Does X replace Y? → REPLACES
+(auto-invalidates Y) Is X an example/demo of Y? → EXAMPLE_OF Is X a component/part of Y? → PART_OF
+Is X linked to code file Y? → ANCHORED_TO (auto-created via anchor_to param) Are X and Y
+alternatives? → ALTERNATIVE_TO Does X cause/lead to Y? → CAUSES Weak/unclear association? →
+RELATED_TO (last resort)
 
 ## Search Tips
 

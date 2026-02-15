@@ -66,12 +66,7 @@ export const VALID_ROLES_BY_TYPE: Record<NodeType, NodeRole[]> = {
     NodeRole.Requirement,
   ],
   [NodeType.Issue]: [NodeRole.Error, NodeRole.Problem],
-  [NodeType.Action]: [
-    NodeRole.Command,
-    NodeRole.Solution,
-    NodeRole.Task,
-    NodeRole.Workflow,
-  ],
+  [NodeType.Action]: [NodeRole.Command, NodeRole.Solution, NodeRole.Task, NodeRole.Workflow],
   [NodeType.Artifact]: [
     NodeRole.CodePattern,
     NodeRole.Concept,

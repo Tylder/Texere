@@ -226,7 +226,6 @@ const getRelationships = (
   return result;
 };
 
-
 export const search = (
   db: Database.Database,
   options: SearchOptions,

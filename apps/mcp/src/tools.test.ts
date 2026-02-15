@@ -456,15 +456,15 @@ describe('Texere MCP tools', () => {
     for (const r of results) {
       expect(r.isError).toBeUndefined();
     }
-    expect(
-      (results[0].structuredContent as { nodes: Array<{ role: string }> }).nodes[0].role,
-    ).toBe(NodeRole.WebUrl);
-    expect(
-      (results[1].structuredContent as { nodes: Array<{ role: string }> }).nodes[0].role,
-    ).toBe(NodeRole.Concept);
-    expect(
-      (results[2].structuredContent as { nodes: Array<{ role: string }> }).nodes[0].role,
-    ).toBe(NodeRole.Pitfall);
+    expect((results[0].structuredContent as { nodes: Array<{ role: string }> }).nodes[0].role).toBe(
+      NodeRole.WebUrl,
+    );
+    expect((results[1].structuredContent as { nodes: Array<{ role: string }> }).nodes[0].role).toBe(
+      NodeRole.Concept,
+    );
+    expect((results[2].structuredContent as { nodes: Array<{ role: string }> }).nodes[0].role).toBe(
+      NodeRole.Pitfall,
+    );
   });
 
   it('accepts surviving edge types (BASED_ON, RELATED_TO, EXAMPLE_OF, PART_OF)', async () => {
@@ -502,9 +502,9 @@ describe('Texere MCP tools', () => {
         minimal: false,
       });
       expect(result.isError).toBeUndefined();
-      expect(
-        (result.structuredContent as { edges: Array<{ type: string }> }).edges[0].type,
-      ).toBe(edgeTypes[i]);
+      expect((result.structuredContent as { edges: Array<{ type: string }> }).edges[0].type).toBe(
+        edgeTypes[i],
+      );
     }
   });
 

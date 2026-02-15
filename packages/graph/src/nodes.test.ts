@@ -217,7 +217,6 @@ describe('node CRUD', () => {
   });
 });
 
-
 describe('type-role validation', () => {
   let db: Database.Database;
 

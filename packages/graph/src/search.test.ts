@@ -603,4 +603,3 @@ describe('search', () => {
     expect(results[0]!.search_mode).toBe('semantic');
   });
 });
-

@@ -2,14 +2,7 @@ import type Database from 'better-sqlite3';
 import { nanoid } from 'nanoid';
 
 import { sanitizeFtsQueryStrict } from './sanitize.js';
-import {
-  EdgeType,
-  NodeRole,
-  NodeType,
-  isValidTypeRole,
-  type Edge,
-  type Node,
-} from './types.js';
+import { EdgeType, NodeRole, NodeType, isValidTypeRole, type Edge, type Node } from './types.js';
 
 export interface StoreNodeInput {
   type: NodeType;

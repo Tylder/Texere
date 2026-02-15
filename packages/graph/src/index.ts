@@ -28,10 +28,7 @@ import {
   type ReplaceNodeInput,
   type ReplaceNodeOptions,
 } from './replace-node.js';
-import {
-  detectSearchMode,
-  search as searchImpl,
-} from './search.js';
+import { detectSearchMode, search as searchImpl } from './search.js';
 import {
   about as aboutImpl,
   stats as statsImpl,
