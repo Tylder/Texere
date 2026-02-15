@@ -63,7 +63,7 @@ describe('edge CRUD', () => {
         target_id: target.id,
         type: EdgeType.Resolves,
       }),
-    ).toThrow();
+    ).toThrow(/FOREIGN KEY|source/i);
   });
 
   it('createEdge with nonexistent target_id throws', () => {
@@ -75,7 +75,7 @@ describe('edge CRUD', () => {
         target_id: 'missing-target',
         type: EdgeType.Resolves,
       }),
-    ).toThrow();
+    ).toThrow(/FOREIGN KEY|target/i);
   });
 
   it('createEdge with source_id === target_id throws', () => {
@@ -87,7 +87,29 @@ describe('edge CRUD', () => {
         target_id: node.id,
         type: EdgeType.Resolves,
       }),
-    ).toThrow();
+    ).toThrow(/self-referential|source_id.*target_id|CHECK/i);
+  });
+
+  it('duplicate edge between same nodes with same type is allowed', () => {
+    const source = makeNode(db, 'Source');
+    const target = makeNode(db, 'Target', NodeType.Action, NodeRole.Solution);
+
+    const edge1 = createEdge(db, {
+      source_id: source.id,
+      target_id: target.id,
+      type: EdgeType.Resolves,
+    });
+
+    const edge2 = createEdge(db, {
+      source_id: source.id,
+      target_id: target.id,
+      type: EdgeType.Resolves,
+    });
+
+    expect(edge1.id).not.toBe(edge2.id);
+    expect(edge1.source_id).toBe(edge2.source_id);
+    expect(edge1.target_id).toBe(edge2.target_id);
+    expect(edge1.type).toBe(edge2.type);
   });
 
   it('createEdge with REPLACES auto-sets source node invalidated_at', () => {
@@ -262,7 +284,7 @@ describe('batch createEdge', () => {
         { source_id: a.id, target_id: 'nonexistent', type: EdgeType.Causes },
         { source_id: b.id, target_id: a.id, type: EdgeType.Supports },
       ]),
-    ).toThrow();
+    ).toThrow(/FOREIGN KEY/i);
 
     const edges = getEdgesForNode(db, a.id, 'both');
     expect(edges).toHaveLength(0);

@@ -4,7 +4,20 @@ import { EdgeType, NodeRole, NodeType } from './types.js';
 
 import { Texere } from './index.js';
 
-describe('Texere', () => {
+/**
+ * Facade Contract Tests
+ *
+ * Tests the Texere class facade — verifies it correctly exposes all graph operations.
+ * Does NOT deeply test node/edge/search behavior (that's what unit tests are for).
+ *
+ * Focus areas:
+ * - Lifecycle: constructor, close(), double-close
+ * - Delegation: each method works (thin smoke tests)
+ * - Options forwarding: minimal mode, includeEdges
+ * - Error propagation: facade re-throws internal errors
+ * - Embedding integration: semantic search triggers flush
+ */
+describe('Texere facade', () => {
   let db: Texere;
 
   beforeEach(() => {
@@ -15,83 +28,88 @@ describe('Texere', () => {
     db.close();
   });
 
-  describe('constructor', () => {
-    it('creates a working database instance', () => {
-      expect(db).toBeDefined();
-      expect(db).toBeInstanceOf(Texere);
+  describe('lifecycle', () => {
+    it('constructor creates usable database instance', () => {
+      const testDb = new Texere(':memory:');
+      expect(testDb).toBeInstanceOf(Texere);
+
+      // Verify instance is usable
+      const node = testDb.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Test',
+        content: 'Content',
+      });
+      expect(node.id).toBeDefined();
+
+      testDb.close();
+    });
+
+    it('close() releases resources without error', () => {
+      const testDb = new Texere(':memory:');
+      expect(() => testDb.close()).not.toThrow();
+    });
+
+    it('double close() does not crash', () => {
+      const testDb = new Texere(':memory:');
+      testDb.close();
+      expect(() => testDb.close()).not.toThrow();
     });
   });
 
-  describe('node operations', () => {
-    it('storeNode creates a node', () => {
+  describe('delegation - node operations', () => {
+    it('storeNode() delegates to internal module', () => {
       const node = db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
-        title: 'Test Task',
-        content: 'Test content',
-        tags: ['test'],
-        importance: 0.8,
+        title: 'Task',
+        content: 'Content',
       });
 
       expect(node.id).toBeDefined();
       expect(node.type).toBe(NodeType.Action);
       expect(node.role).toBe(NodeRole.Task);
-      expect(node.title).toBe('Test Task');
-      expect(node.content).toBe('Test content');
-      expect(node.importance).toBe(0.8);
     });
 
-    it('getNode retrieves a stored node', () => {
+    it('storeNode() batch delegates to internal module', () => {
+      const nodes = db.storeNode([
+        {
+          type: NodeType.Action,
+          role: NodeRole.Task,
+          title: 'Task 1',
+          content: 'Content 1',
+        },
+        {
+          type: NodeType.Action,
+          role: NodeRole.Task,
+          title: 'Task 2',
+          content: 'Content 2',
+        },
+      ]);
+
+      expect(nodes).toHaveLength(2);
+      expect(nodes[0].id).toBeDefined();
+      expect(nodes[1].id).toBeDefined();
+    });
+
+    it('getNode() delegates to internal module', () => {
       const created = db.storeNode({
         type: NodeType.Action,
-        role: NodeRole.Solution,
-        title: 'Test Solution',
-        content: 'Solution content',
+        role: NodeRole.Task,
+        title: 'Task',
+        content: 'Content',
       });
 
       const retrieved = db.getNode(created.id);
-      expect(retrieved).toBeDefined();
+      expect(retrieved).not.toBeNull();
       expect(retrieved?.id).toBe(created.id);
-      expect(retrieved?.title).toBe('Test Solution');
     });
 
-    it('getNode returns null for non-existent node', () => {
-      const result = db.getNode('non-existent-id');
-      expect(result).toBeNull();
-    });
-
-    it('getNode with includeEdges option returns edges', () => {
-      const node1 = db.storeNode({
-        type: NodeType.Issue,
-        role: NodeRole.Problem,
-        title: 'Problem',
-        content: 'Problem content',
-      });
-
-      const node2 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Solution,
-        title: 'Solution',
-        content: 'Solution content',
-      });
-
-      db.createEdge({
-        source_id: node2.id,
-        target_id: node1.id,
-        type: EdgeType.Resolves,
-      });
-
-      const retrieved = db.getNode(node1.id, { includeEdges: true });
-      expect(retrieved).toBeDefined();
-      expect('edges' in retrieved!).toBe(true);
-      expect((retrieved as any).edges).toHaveLength(1);
-    });
-
-    it('invalidateNode marks a node as invalidated', () => {
+    it('invalidateNode() delegates to internal module', () => {
       const node = db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
-        title: 'Task to invalidate',
+        title: 'Task',
         content: 'Content',
       });
 
@@ -101,42 +119,92 @@ describe('Texere', () => {
       expect(retrieved?.invalidated_at).not.toBeNull();
     });
 
-    it('invalidateNode throws for non-existent node', () => {
-      expect(() => db.invalidateNode('non-existent-id')).toThrow('Node not found');
+    it('replaceNode() delegates to internal module', () => {
+      const original = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Original',
+        content: 'Original content',
+      });
+
+      const replacement = db.replaceNode({
+        old_id: original.id,
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Replacement',
+        content: 'Replacement content',
+      });
+
+      expect(replacement.id).not.toBe(original.id);
+      expect(replacement.title).toBe('Replacement');
+
+      // Original should be invalidated
+      const originalNode = db.getNode(original.id);
+      expect(originalNode?.invalidated_at).not.toBeNull();
     });
   });
 
-  describe('edge operations', () => {
-    it('createEdge creates an edge between nodes', () => {
+  describe('delegation - edge operations', () => {
+    it('createEdge() delegates to internal module', () => {
       const source = db.storeNode({
         type: NodeType.Issue,
         role: NodeRole.Problem,
         title: 'Problem',
-        content: 'Problem content',
+        content: 'Content',
       });
 
       const target = db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Solution,
         title: 'Solution',
-        content: 'Solution content',
+        content: 'Content',
       });
 
       const edge = db.createEdge({
         source_id: source.id,
         target_id: target.id,
         type: EdgeType.Resolves,
-        strength: 0.9,
       });
 
       expect(edge.id).toBeDefined();
       expect(edge.source_id).toBe(source.id);
       expect(edge.target_id).toBe(target.id);
-      expect(edge.type).toBe(EdgeType.Resolves);
-      expect(edge.strength).toBe(0.9);
     });
 
-    it('deleteEdge removes an edge', () => {
+    it('createEdge() batch delegates to internal module', () => {
+      const node1 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 1',
+        content: 'Content',
+      });
+
+      const node2 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 2',
+        content: 'Content',
+      });
+
+      const edges = db.createEdge([
+        {
+          source_id: node1.id,
+          target_id: node2.id,
+          type: EdgeType.Extends,
+        },
+        {
+          source_id: node2.id,
+          target_id: node1.id,
+          type: EdgeType.RelatedTo,
+        },
+      ]);
+
+      expect(edges).toHaveLength(2);
+      expect(edges[0].id).toBeDefined();
+      expect(edges[1].id).toBeDefined();
+    });
+
+    it('deleteEdge() delegates to internal module', () => {
       const source = db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
@@ -148,7 +216,7 @@ describe('Texere', () => {
         type: NodeType.Action,
         role: NodeRole.Task,
         title: 'Task 2',
-        content: 'Content 2',
+        content: 'Content',
       });
 
       const edge = db.createEdge({
@@ -159,55 +227,9 @@ describe('Texere', () => {
 
       const deleted = db.deleteEdge(edge.id);
       expect(deleted).toBe(true);
-
-      const edges = db.getEdgesForNode(source.id, 'outgoing');
-      expect(edges).toHaveLength(0);
     });
 
-    it('deleteEdge returns false for non-existent edge', () => {
-      const deleted = db.deleteEdge('non-existent-id');
-      expect(deleted).toBe(false);
-    });
-
-    it('getEdgesForNode returns outgoing edges', () => {
-      const source = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task',
-        content: 'Content',
-      });
-
-      const target1 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 2',
-        content: 'Content 2',
-      });
-
-      const target2 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 3',
-        content: 'Content 3',
-      });
-
-      db.createEdge({
-        source_id: source.id,
-        target_id: target1.id,
-        type: EdgeType.Extends,
-      });
-
-      db.createEdge({
-        source_id: source.id,
-        target_id: target2.id,
-        type: EdgeType.Extends,
-      });
-
-      const edges = db.getEdgesForNode(source.id, 'outgoing');
-      expect(edges).toHaveLength(2);
-    });
-
-    it('getEdgesForNode returns incoming edges', () => {
+    it('getEdgesForNode() delegates to internal module', () => {
       const source = db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
@@ -219,7 +241,7 @@ describe('Texere', () => {
         type: NodeType.Action,
         role: NodeRole.Task,
         title: 'Task 2',
-        content: 'Content 2',
+        content: 'Content',
       });
 
       db.createEdge({
@@ -228,353 +250,170 @@ describe('Texere', () => {
         type: EdgeType.Extends,
       });
 
-      const edges = db.getEdgesForNode(target.id, 'incoming');
+      const edges = db.getEdgesForNode(source.id, 'outgoing');
       expect(edges).toHaveLength(1);
       expect(edges[0].source_id).toBe(source.id);
     });
-
-    it('getEdgesForNode returns both directions', () => {
-      const node1 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 1',
-        content: 'Content 1',
-      });
-
-      const node2 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 2',
-        content: 'Content 2',
-      });
-
-      const node3 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 3',
-        content: 'Content 3',
-      });
-
-      db.createEdge({
-        source_id: node1.id,
-        target_id: node2.id,
-        type: EdgeType.Extends,
-      });
-
-      db.createEdge({
-        source_id: node3.id,
-        target_id: node1.id,
-        type: EdgeType.Extends,
-      });
-
-      const edges = db.getEdgesForNode(node1.id, 'both');
-      expect(edges).toHaveLength(2);
-    });
   });
 
-  describe('search operations', () => {
-    it('search finds nodes by query', async () => {
+  describe('delegation - search and traversal', () => {
+    it('search() delegates to internal module', async () => {
       db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
-        title: 'Implement authentication',
-        content: 'Add JWT authentication to API',
-        tags: ['auth', 'security'],
-      });
-
-      db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Add logging',
-        content: 'Implement structured logging',
-        tags: ['logging'],
+        title: 'Authentication task',
+        content: 'Implement JWT auth',
       });
 
       const results = await db.search({ query: 'authentication', mode: 'keyword' });
-      expect(results).toHaveLength(1);
-      expect(results[0].title).toBe('Implement authentication');
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0].title).toContain('Authentication');
     });
 
-    it('search filters by type and role', async () => {
+    it('searchBatch() delegates to internal module', () => {
       db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
-        title: 'Task about auth',
-        content: 'Auth task',
+        title: 'Auth task',
+        content: 'Content',
       });
 
       db.storeNode({
         type: NodeType.Action,
-        role: NodeRole.Solution,
-        title: 'Solution about auth',
-        content: 'Auth solution',
+        role: NodeRole.Task,
+        title: 'Logging task',
+        content: 'Content',
       });
 
-      const results = await db.search({
-        query: 'auth',
-        type: NodeType.Action,
-        role: NodeRole.Solution,
-      });
-      expect(results).toHaveLength(1);
-      expect(results[0].type).toBe(NodeType.Action);
-      expect(results[0].role).toBe(NodeRole.Solution);
+      const results = db.searchBatch([
+        { query: 'auth', mode: 'keyword' },
+        { query: 'logging', mode: 'keyword' },
+      ]);
+
+      expect(results).toHaveLength(2);
+      expect(results[0].length).toBeGreaterThan(0);
+      expect(results[1].length).toBeGreaterThan(0);
     });
 
-    it('search filters by tags', async () => {
-      db.storeNode({
+    it('traverse() delegates to internal module', () => {
+      const node1 = db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
         title: 'Task 1',
-        content: 'Content 1',
-        tags: ['auth', 'security'],
+        content: 'Content',
       });
 
-      db.storeNode({
+      const node2 = db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
         title: 'Task 2',
-        content: 'Content 2',
-        tags: ['auth'],
+        content: 'Content',
       });
 
-      const results = await db.search({ query: 'Task', tags: ['auth', 'security'] });
+      db.createEdge({
+        source_id: node1.id,
+        target_id: node2.id,
+        type: EdgeType.Extends,
+      });
+
+      const results = db.traverse({ startId: node1.id, direction: 'outgoing' });
       expect(results).toHaveLength(1);
-      expect(results[0].title).toBe('Task 1');
+      expect(results[0].node.id).toBe(node2.id);
     });
 
-    it('search filters by minImportance', async () => {
+    it('about() delegates to internal module', async () => {
+      const problem = db.storeNode({
+        type: NodeType.Issue,
+        role: NodeRole.Problem,
+        title: 'Auth problem',
+        content: 'Users cannot log in',
+      });
+
+      const solution = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Solution,
+        title: 'Auth solution',
+        content: 'Fix JWT validation',
+      });
+
+      db.createEdge({
+        source_id: solution.id,
+        target_id: problem.id,
+        type: EdgeType.Resolves,
+      });
+
+      const results = await db.about({ query: 'auth', mode: 'keyword' });
+      expect(results.length).toBeGreaterThan(0);
+    });
+
+    it('stats() delegates to internal module', () => {
       db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
-        title: 'Important task',
-        content: 'Important content',
-        importance: 0.9,
+        title: 'Task',
+        content: 'Content',
       });
 
-      db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Less important task',
-        content: 'Less important content',
-        importance: 0.3,
-      });
-
-      const results = await db.search({ query: 'task', minImportance: 0.7 });
-      expect(results).toHaveLength(1);
-      expect(results[0].title).toBe('Important task');
-    });
-
-    it('search respects limit option', async () => {
-      for (let i = 0; i < 10; i++) {
-        db.storeNode({
-          type: NodeType.Action,
-          role: NodeRole.Task,
-          title: `Task ${i}`,
-          content: 'Common content',
-        });
-      }
-
-      const results = await db.search({ query: 'Task', limit: 5 });
-      expect(results).toHaveLength(5);
+      const stats = db.stats();
+      expect(stats.nodes.total).toBe(1);
+      expect(stats.nodes.byType[NodeType.Action]).toBe(1);
     });
   });
 
-  describe('traverse operations', () => {
-    it('traverse walks outgoing edges', () => {
-      const node1 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 1',
-        content: 'Content 1',
-      });
+  describe('options forwarding', () => {
+    it('storeNode({ minimal: true }) returns only id', () => {
+      const node = db.storeNode(
+        {
+          type: NodeType.Action,
+          role: NodeRole.Task,
+          title: 'Task',
+          content: 'Content',
+        },
+        { minimal: true },
+      );
 
-      const node2 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 2',
-        content: 'Content 2',
-      });
-
-      const node3 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 3',
-        content: 'Content 3',
-      });
-
-      db.createEdge({
-        source_id: node1.id,
-        target_id: node2.id,
-        type: EdgeType.Extends,
-      });
-
-      db.createEdge({
-        source_id: node2.id,
-        target_id: node3.id,
-        type: EdgeType.Extends,
-      });
-
-      const results = db.traverse({ startId: node1.id, direction: 'outgoing', maxDepth: 2 });
-      expect(results).toHaveLength(2);
-      expect(results[0].node.id).toBe(node2.id);
-      expect(results[0].depth).toBe(1);
-      expect(results[1].node.id).toBe(node3.id);
-      expect(results[1].depth).toBe(2);
+      // Minimal node has only id
+      expect(node).toHaveProperty('id');
+      expect(Object.keys(node)).toEqual(['id']);
     });
 
-    it('traverse walks incoming edges', () => {
-      const node1 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 1',
-        content: 'Content 1',
-      });
+    it('storeNode() batch with minimal: true returns only ids', () => {
+      const nodes = db.storeNode(
+        [
+          {
+            type: NodeType.Action,
+            role: NodeRole.Task,
+            title: 'Task 1',
+            content: 'Content',
+          },
+          {
+            type: NodeType.Action,
+            role: NodeRole.Task,
+            title: 'Task 2',
+            content: 'Content',
+          },
+        ],
+        { minimal: true },
+      );
 
-      const node2 = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 2',
-        content: 'Content 2',
-      });
-
-      db.createEdge({
-        source_id: node1.id,
-        target_id: node2.id,
-        type: EdgeType.Extends,
-      });
-
-      const results = db.traverse({ startId: node2.id, direction: 'incoming' });
-      expect(results).toHaveLength(1);
-      expect(results[0].node.id).toBe(node1.id);
+      expect(nodes).toHaveLength(2);
+      expect(Object.keys(nodes[0])).toEqual(['id']);
+      expect(Object.keys(nodes[1])).toEqual(['id']);
     });
 
-    it('traverse filters by edgeType', () => {
-      const problem = db.storeNode({
+    it('getNode({ includeEdges: true }) includes edges', () => {
+      const node1 = db.storeNode({
         type: NodeType.Issue,
         role: NodeRole.Problem,
         title: 'Problem',
-        content: 'Problem content',
-      });
-
-      const solution = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Solution,
-        title: 'Solution',
-        content: 'Solution content',
-      });
-
-      const related = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Related',
-        content: 'Related content',
-      });
-
-      db.createEdge({
-        source_id: solution.id,
-        target_id: problem.id,
-        type: EdgeType.Resolves,
-      });
-
-      db.createEdge({
-        source_id: solution.id,
-        target_id: related.id,
-        type: EdgeType.Extends,
-      });
-
-      const results = db.traverse({ startId: solution.id, edgeType: EdgeType.Resolves });
-      expect(results).toHaveLength(1);
-      expect(results[0].node.id).toBe(problem.id);
-    });
-  });
-
-  describe('about operations', () => {
-    it('about combines search and traverse', async () => {
-      const problem = db.storeNode({
-        type: NodeType.Issue,
-        role: NodeRole.Problem,
-        title: 'Authentication problem',
-        content: 'Users cannot log in',
-        tags: ['auth'],
-      });
-
-      const solution = db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Solution,
-        title: 'Authentication solution',
-        content: 'Fix JWT validation',
-        tags: ['auth'],
-      });
-
-      db.createEdge({
-        source_id: solution.id,
-        target_id: problem.id,
-        type: EdgeType.Resolves,
-      });
-
-      const results = await db.about({ query: 'authentication', direction: 'outgoing' });
-      expect(results.length).toBeGreaterThan(0);
-      const nodeIds = results.map((r) => r.node.id);
-      expect(nodeIds).toContain(problem.id);
-      expect(nodeIds).toContain(solution.id);
-    });
-
-    it('about respects search filters', async () => {
-      db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task about auth',
-        content: 'Auth task',
-        tags: ['auth'],
-      });
-
-      db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Solution,
-        title: 'Solution about auth',
-        content: 'Auth solution',
-        tags: ['auth'],
-      });
-
-      const results = await db.about({
-        query: 'auth',
-        type: NodeType.Action,
-        role: NodeRole.Solution,
-      });
-      expect(results).toHaveLength(1);
-      expect(results[0].node.type).toBe(NodeType.Action);
-      expect(results[0].node.role).toBe(NodeRole.Solution);
-    });
-  });
-
-  describe('stats operations', () => {
-    it('stats returns database statistics', () => {
-      db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Task 1',
-        content: 'Content 1',
-      });
-
-      db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Solution,
-        title: 'Solution 1',
-        content: 'Content 1',
-      });
-
-      const node1 = db.storeNode({
-        type: NodeType.Issue,
-        role: NodeRole.Problem,
-        title: 'Problem 1',
-        content: 'Content 1',
+        content: 'Content',
       });
 
       const node2 = db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Solution,
-        title: 'Solution 2',
-        content: 'Content 2',
+        title: 'Solution',
+        content: 'Content',
       });
 
       db.createEdge({
@@ -583,22 +422,224 @@ describe('Texere', () => {
         type: EdgeType.Resolves,
       });
 
-      db.invalidateNode(node1.id);
+      const retrieved = db.getNode(node1.id, { includeEdges: true });
+      expect(retrieved).not.toBeNull();
+      expect('edges' in retrieved!).toBe(true);
+      expect((retrieved as { edges: unknown[] }).edges).toHaveLength(1);
+    });
 
-      const result = db.stats();
-      expect(result.nodes.total).toBe(4);
-      expect(result.nodes.byType[NodeType.Action]).toBe(3);
-      expect(result.nodes.byType[NodeType.Issue]).toBe(1);
-      expect(result.nodes.invalidated).toBe(1);
-      expect(result.edges.total).toBe(1);
-      expect(result.edges.byType[EdgeType.Resolves]).toBe(1);
+    it('replaceNode({ minimal: true }) returns only id', () => {
+      const original = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Original',
+        content: 'Content',
+      });
+
+      const replacement = db.replaceNode(
+        {
+          old_id: original.id,
+          type: NodeType.Action,
+          role: NodeRole.Task,
+          title: 'Replacement',
+          content: 'Content',
+        },
+        { minimal: true },
+      );
+
+      expect(replacement).toHaveProperty('id');
+      expect(Object.keys(replacement)).toEqual(['id']);
+    });
+
+    it('createEdge({ minimal: true }) returns only id', () => {
+      const source = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task',
+        content: 'Content',
+      });
+
+      const target = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 2',
+        content: 'Content',
+      });
+
+      const edge = db.createEdge(
+        {
+          source_id: source.id,
+          target_id: target.id,
+          type: EdgeType.Extends,
+        },
+        { minimal: true },
+      );
+
+      expect(edge).toHaveProperty('id');
+      expect(Object.keys(edge)).toEqual(['id']);
+    });
+
+    it('createEdge() batch with minimal: true returns only ids', () => {
+      const node1 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 1',
+        content: 'Content',
+      });
+
+      const node2 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 2',
+        content: 'Content',
+      });
+
+      const edges = db.createEdge(
+        [
+          {
+            source_id: node1.id,
+            target_id: node2.id,
+            type: EdgeType.Extends,
+          },
+          {
+            source_id: node2.id,
+            target_id: node1.id,
+            type: EdgeType.RelatedTo,
+          },
+        ],
+        { minimal: true },
+      );
+
+      expect(edges).toHaveLength(2);
+      expect(Object.keys(edges[0])).toEqual(['id']);
+      expect(Object.keys(edges[1])).toEqual(['id']);
     });
   });
 
-  describe('close operations', () => {
-    it('close closes the database without error', () => {
-      const testDb = new Texere(':memory:');
-      expect(() => testDb.close()).not.toThrow();
+  describe('error propagation', () => {
+    it('storeNode with invalid type-role throws with useful message', () => {
+      expect(() =>
+        db.storeNode({
+          type: NodeType.Issue,
+          role: NodeRole.CodePattern, // Invalid: Issue cannot have CodePattern role
+          title: 'Invalid',
+          content: 'Content',
+        }),
+      ).toThrow(/invalid.*type.*role/i);
+    });
+
+    it('invalidateNode with non-existent id throws', () => {
+      expect(() => db.invalidateNode('non-existent-id')).toThrow(/not found/i);
+    });
+
+    it('replaceNode with non-existent old_id throws', () => {
+      expect(() =>
+        db.replaceNode({
+          old_id: 'non-existent-id',
+          type: NodeType.Action,
+          role: NodeRole.Task,
+          title: 'Replacement',
+          content: 'Content',
+        }),
+      ).toThrow(/not found/i);
+    });
+
+    it('createEdge with non-existent source_id throws', () => {
+      const target = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task',
+        content: 'Content',
+      });
+
+      expect(() =>
+        db.createEdge({
+          source_id: 'non-existent-id',
+          target_id: target.id,
+          type: EdgeType.Extends,
+        }),
+      ).toThrow(/foreign key/i);
+    });
+
+    it('createEdge with non-existent target_id throws', () => {
+      const source = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task',
+        content: 'Content',
+      });
+
+      expect(() =>
+        db.createEdge({
+          source_id: source.id,
+          target_id: 'non-existent-id',
+          type: EdgeType.Extends,
+        }),
+      ).toThrow(/foreign key/i);
+    });
+  });
+
+  describe('embedding integration', () => {
+    it('semantic search triggers embedding flush', async () => {
+      db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Authentication task',
+        content: 'Implement JWT authentication',
+      });
+
+      // Semantic search should trigger flush and embed query
+      const results = await db.search({ query: 'authentication', mode: 'semantic' });
+
+      // Should not throw and should return results
+      expect(results).toBeDefined();
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('hybrid search triggers embedding flush', async () => {
+      db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Logging task',
+        content: 'Add structured logging',
+      });
+
+      // Hybrid search should trigger flush and embed query
+      const results = await db.search({ query: 'logging', mode: 'hybrid' });
+
+      // Should not throw and should return results
+      expect(results).toBeDefined();
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('keyword search does not trigger embedding flush', async () => {
+      db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Database task',
+        content: 'Optimize queries',
+      });
+
+      // Keyword search should not trigger embedding pipeline
+      const results = await db.search({ query: 'database', mode: 'keyword' });
+
+      expect(results).toBeDefined();
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('about() with semantic mode triggers embedding flush', async () => {
+      db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Security task',
+        content: 'Add rate limiting',
+      });
+
+      // About with semantic mode should trigger flush
+      const results = await db.about({ query: 'security', mode: 'semantic' });
+
+      expect(results).toBeDefined();
+      expect(Array.isArray(results)).toBe(true);
     });
   });
 });

@@ -238,7 +238,8 @@ describe('traverse', () => {
 
     expect(ids.has(b.id)).toBe(true);
     expect(ids.has(c.id)).toBe(true);
-    expect(result.length).toBeLessThanOrEqual(3);
+    expect(ids.has(a.id)).toBe(true);
+    expect(result).toHaveLength(3);
   });
 
   it('applies edge type filter when provided', () => {

@@ -91,7 +91,7 @@ describe('Texere MCP tools', () => {
       content: 'Store then get',
     });
 
-    const nodeId = (stored.structuredContent as any).node.id as string;
+    const nodeId = (stored.structuredContent as { node: { id: string } }).node.id;
 
     const fetched = await mcp.callTool('texere_get_node', {
       id: nodeId,
@@ -121,13 +121,16 @@ describe('Texere MCP tools', () => {
       title: 'Wrong assumption',
       content: 'Needs invalidation',
     });
-    const nodeId = (stored.structuredContent as any).node.id as string;
+    const nodeId = (stored.structuredContent as { node: { id: string } }).node.id;
 
     const invalidated = await mcp.callTool('texere_invalidate_node', { id: nodeId });
     expect(invalidated.isError).toBeUndefined();
 
     const fetched = await mcp.callTool('texere_get_node', { id: nodeId });
-    expect((fetched.structuredContent as any).node.invalidated_at).not.toBeNull();
+    expect(
+      (fetched.structuredContent as { node: { invalidated_at: string | null } }).node
+        .invalidated_at,
+    ).not.toBeNull();
   });
 
   it('texere_create_edge returns edge and REPLACES invalidates source node', async () => {
@@ -144,8 +147,8 @@ describe('Texere MCP tools', () => {
       content: 'Replacement decision',
     });
 
-    const sourceId = (oldNode.structuredContent as any).node.id as string;
-    const targetId = (newNode.structuredContent as any).node.id as string;
+    const sourceId = (oldNode.structuredContent as { node: { id: string } }).node.id;
+    const targetId = (newNode.structuredContent as { node: { id: string } }).node.id;
 
     const edgeResult = await mcp.callTool('texere_create_edge', {
       source_id: sourceId,
@@ -163,7 +166,10 @@ describe('Texere MCP tools', () => {
     });
 
     const sourceNode = await mcp.callTool('texere_get_node', { id: sourceId });
-    expect((sourceNode.structuredContent as any).node.invalidated_at).not.toBeNull();
+    expect(
+      (sourceNode.structuredContent as { node: { invalidated_at: string | null } }).node
+        .invalidated_at,
+    ).not.toBeNull();
   });
 
   it('texere_delete_edge removes edge', async () => {
@@ -181,13 +187,13 @@ describe('Texere MCP tools', () => {
     });
 
     const edge = await mcp.callTool('texere_create_edge', {
-      source_id: (source.structuredContent as any).node.id,
-      target_id: (target.structuredContent as any).node.id,
+      source_id: (source.structuredContent as { node: { id: string } }).node.id,
+      target_id: (target.structuredContent as { node: { id: string } }).node.id,
       type: EdgeType.Extends,
     });
 
     const deleted = await mcp.callTool('texere_delete_edge', {
-      id: (edge.structuredContent as any).edge.id,
+      id: (edge.structuredContent as { edge: { id: string } }).edge.id,
     });
     expect(deleted.isError).toBeUndefined();
     expect(deleted.structuredContent).toMatchObject({ deleted: true });
@@ -212,7 +218,7 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    expect((result.structuredContent as any).results.length).toBeGreaterThan(0);
+    expect((result.structuredContent as { results: unknown[] }).results).toHaveLength(1);
   });
 
   it('texere_traverse returns neighbors', async () => {
@@ -229,8 +235,8 @@ describe('Texere MCP tools', () => {
       content: 'Neighbor node',
     });
 
-    const startId = (start.structuredContent as any).node.id as string;
-    const neighborId = (neighbor.structuredContent as any).node.id as string;
+    const startId = (start.structuredContent as { node: { id: string } }).node.id;
+    const neighborId = (neighbor.structuredContent as { node: { id: string } }).node.id;
 
     await mcp.callTool('texere_create_edge', {
       source_id: startId,
@@ -245,8 +251,10 @@ describe('Texere MCP tools', () => {
     });
 
     expect(traversed.isError).toBeUndefined();
-    const nodes = (traversed.structuredContent as any).results.map((row: any) => row.node.id);
-    expect(nodes).toContain(neighborId);
+    const results = (traversed.structuredContent as { results: Array<{ node: { id: string } }> })
+      .results;
+    expect(results).toHaveLength(1);
+    expect(results[0].node.id).toBe(neighborId);
   });
 
   it('texere_about returns search plus traversal context', async () => {
@@ -263,9 +271,12 @@ describe('Texere MCP tools', () => {
       content: 'Use longer busy timeout',
     });
 
+    const problemId = (problem.structuredContent as { node: { id: string } }).node.id;
+    const fixId = (fix.structuredContent as { node: { id: string } }).node.id;
+
     await mcp.callTool('texere_create_edge', {
-      source_id: (fix.structuredContent as any).node.id,
-      target_id: (problem.structuredContent as any).node.id,
+      source_id: fixId,
+      target_id: problemId,
       type: EdgeType.Resolves,
     });
 
@@ -277,7 +288,11 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    expect((result.structuredContent as any).results.length).toBeGreaterThan(0);
+    const results = (result.structuredContent as { results: Array<{ node: { id: string } }> })
+      .results;
+    const resultIds = results.map((r) => r.node.id);
+    expect(resultIds).toContain(problemId);
+    expect(resultIds).toContain(fixId);
   });
 
   it('texere_stats returns counts', async () => {
@@ -290,7 +305,9 @@ describe('Texere MCP tools', () => {
 
     const result = await mcp.callTool('texere_stats', {});
     expect(result.isError).toBeUndefined();
-    expect((result.structuredContent as any).stats.nodes.total).toBeGreaterThanOrEqual(1);
+    expect(
+      (result.structuredContent as { stats: { nodes: { total: number } } }).stats.nodes.total,
+    ).toBe(1);
   });
 
   it('accepts v1.2 roles (web_url, concept, pitfall)', async () => {
@@ -318,9 +335,15 @@ describe('Texere MCP tools', () => {
     for (const r of results) {
       expect(r.isError).toBeUndefined();
     }
-    expect((results[0].structuredContent as any).node.role).toBe(NodeRole.WebUrl);
-    expect((results[1].structuredContent as any).node.role).toBe(NodeRole.Concept);
-    expect((results[2].structuredContent as any).node.role).toBe(NodeRole.Pitfall);
+    expect((results[0].structuredContent as { node: { role: string } }).node.role).toBe(
+      NodeRole.WebUrl,
+    );
+    expect((results[1].structuredContent as { node: { role: string } }).node.role).toBe(
+      NodeRole.Concept,
+    );
+    expect((results[2].structuredContent as { node: { role: string } }).node.role).toBe(
+      NodeRole.Pitfall,
+    );
   });
 
   it('accepts v1.2 edge types (BASED_ON, RELATED_TO, ABOUT, IS_A)', async () => {
@@ -335,7 +358,7 @@ describe('Texere MCP tools', () => {
       ),
     );
 
-    const ids = nodes.map((n) => (n.structuredContent as any).node.id as string);
+    const ids = nodes.map((n) => (n.structuredContent as { node: { id: string } }).node.id);
     const edgeTypes = [EdgeType.BasedOn, EdgeType.RelatedTo, EdgeType.About, EdgeType.IsA];
 
     for (let i = 0; i < edgeTypes.length; i++) {
@@ -345,7 +368,7 @@ describe('Texere MCP tools', () => {
         type: edgeTypes[i],
       });
       expect(result.isError).toBeUndefined();
-      expect((result.structuredContent as any).edge.type).toBe(edgeTypes[i]);
+      expect((result.structuredContent as { edge: { type: string } }).edge.type).toBe(edgeTypes[i]);
     }
   });
 
@@ -358,7 +381,7 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    const nodes = (result.structuredContent as any).nodes;
+    const nodes = (result.structuredContent as { nodes: Array<{ title: string }> }).nodes;
     expect(nodes).toHaveLength(2);
     expect(nodes[0].title).toBe('Batch A');
     expect(nodes[1].title).toBe('Batch B');
@@ -385,10 +408,11 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    const results = (result.structuredContent as any).results;
+    const results = (result.structuredContent as { results: Array<Array<{ title: string }>> })
+      .results;
     expect(results).toHaveLength(2);
-    expect(results[0].length).toBeGreaterThan(0);
-    expect(results[1].length).toBeGreaterThan(0);
+    expect(results[0]).toHaveLength(1);
+    expect(results[1]).toHaveLength(1);
     expect(results[0][0].title).toContain('Redis');
     expect(results[1][0].title).toContain('SQLite');
   });
@@ -413,9 +437,9 @@ describe('Texere MCP tools', () => {
       content: 'C',
     });
 
-    const idA = (nodeA.structuredContent as any).node.id as string;
-    const idB = (nodeB.structuredContent as any).node.id as string;
-    const idC = (nodeC.structuredContent as any).node.id as string;
+    const idA = (nodeA.structuredContent as { node: { id: string } }).node.id;
+    const idB = (nodeB.structuredContent as { node: { id: string } }).node.id;
+    const idC = (nodeC.structuredContent as { node: { id: string } }).node.id;
 
     const result = await mcp.callTool('texere_create_edges', {
       edges: [
@@ -425,7 +449,7 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    const edges = (result.structuredContent as any).edges;
+    const edges = (result.structuredContent as { edges: unknown[] }).edges;
     expect(edges).toHaveLength(2);
   });
 
@@ -442,8 +466,8 @@ describe('Texere MCP tools', () => {
       title: 'Validate edge target',
       content: 'Content B',
     });
-    const idA = (nodeA.structuredContent as any).node.id as string;
-    const idB = (nodeB.structuredContent as any).node.id as string;
+    const idA = (nodeA.structuredContent as { node: { id: string } }).node.id;
+    const idB = (nodeB.structuredContent as { node: { id: string } }).node.id;
 
     const result = await mcp.callTool('texere_validate', {
       nodes: [
@@ -464,9 +488,12 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    const output = result.structuredContent as any;
+    const output = result.structuredContent as {
+      valid: boolean;
+      issues: Array<{ severity: string }>;
+    };
     expect(output.valid).toBe(true);
-    expect(output.issues.filter((i: any) => i.severity === 'error')).toHaveLength(0);
+    expect(output.issues.filter((i) => i.severity === 'error')).toHaveLength(0);
   });
 
   it('texere_validate reports invalid type-role combo with correct index', async () => {
@@ -488,15 +515,18 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    const output = result.structuredContent as any;
+    const output = result.structuredContent as {
+      valid: boolean;
+      issues: Array<{ severity: string; message: string; index?: number; item?: string }>;
+    };
     expect(output.valid).toBe(false);
 
     const typeRoleError = output.issues.find(
-      (i: any) => i.severity === 'error' && i.message.includes('type-role'),
+      (i) => i.severity === 'error' && i.message.includes('type-role'),
     );
     expect(typeRoleError).toBeDefined();
-    expect(typeRoleError.index).toBe(1);
-    expect(typeRoleError.item).toBe('node');
+    expect(typeRoleError!.index).toBe(1);
+    expect(typeRoleError!.item).toBe('node');
   });
 
   it('texere_validate reports missing edge endpoint', async () => {
@@ -511,13 +541,16 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    const output = result.structuredContent as any;
+    const output = result.structuredContent as {
+      valid: boolean;
+      issues: Array<{ severity: string; message: string }>;
+    };
     expect(output.valid).toBe(false);
 
     const endpointErrors = output.issues.filter(
-      (i: any) => i.severity === 'error' && i.message.includes('not found'),
+      (i) => i.severity === 'error' && i.message.includes('not found'),
     );
-    expect(endpointErrors.length).toBeGreaterThanOrEqual(1);
+    expect(endpointErrors).toHaveLength(2);
   });
 
   it('texere_validate reports self-referential edge', async () => {
@@ -527,7 +560,7 @@ describe('Texere MCP tools', () => {
       title: 'Self ref node',
       content: 'Content',
     });
-    const nodeId = (stored.structuredContent as any).node.id as string;
+    const nodeId = (stored.structuredContent as { node: { id: string } }).node.id;
 
     const result = await mcp.callTool('texere_validate', {
       edges: [
@@ -540,15 +573,18 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    const output = result.structuredContent as any;
+    const output = result.structuredContent as {
+      valid: boolean;
+      issues: Array<{ severity: string; message: string; index?: number; item?: string }>;
+    };
     expect(output.valid).toBe(false);
 
     const selfRefError = output.issues.find(
-      (i: any) => i.severity === 'error' && i.message.includes('Self-referential'),
+      (i) => i.severity === 'error' && i.message.includes('Self-referential'),
     );
     expect(selfRefError).toBeDefined();
-    expect(selfRefError.index).toBe(0);
-    expect(selfRefError.item).toBe('edge');
+    expect(selfRefError!.index).toBe(0);
+    expect(selfRefError!.item).toBe('edge');
   });
 
   it('texere_validate warns on duplicate title', async () => {
@@ -571,18 +607,22 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    const output = result.structuredContent as any;
+    const output = result.structuredContent as {
+      valid: boolean;
+      issues: Array<{ severity: string; message: string; item?: string }>;
+    };
     expect(output.valid).toBe(true);
 
-    const warning = output.issues.find((i: any) => i.severity === 'warning');
+    const warning = output.issues.find((i) => i.severity === 'warning');
     expect(warning).toBeDefined();
-    expect(warning.item).toBe('node');
-    expect(warning.message).toContain('Similar node exists');
+    expect(warning!.item).toBe('node');
+    expect(warning!.message).toContain('Similar node exists');
   });
 
   it('texere_validate has zero side effects on the database', async () => {
     const statsBefore = await mcp.callTool('texere_stats', {});
-    const countBefore = (statsBefore.structuredContent as any).stats.nodes.total as number;
+    const countBefore = (statsBefore.structuredContent as { stats: { nodes: { total: number } } })
+      .stats.nodes.total;
 
     await mcp.callTool('texere_validate', {
       nodes: [
@@ -609,7 +649,8 @@ describe('Texere MCP tools', () => {
     });
 
     const statsAfter = await mcp.callTool('texere_stats', {});
-    const countAfter = (statsAfter.structuredContent as any).stats.nodes.total as number;
+    const countAfter = (statsAfter.structuredContent as { stats: { nodes: { total: number } } })
+      .stats.nodes.total;
 
     expect(countAfter).toBe(countBefore);
   });
@@ -642,10 +683,12 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    const output = result.structuredContent as any;
+    const output = result.structuredContent as {
+      issues: Array<{ severity: string; message: string }>;
+    };
 
     const endpointErrors = output.issues.filter(
-      (i: any) => i.severity === 'error' && i.message.includes('not found'),
+      (i) => i.severity === 'error' && i.message.includes('not found'),
     );
     expect(endpointErrors).toHaveLength(0);
   });

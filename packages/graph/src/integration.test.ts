@@ -38,8 +38,11 @@ describe('Integration: Semantic Search End-to-End', () => {
         mode: 'semantic',
       });
 
-      expect(results.some((r) => r.id === authNode.id)).toBe(true);
+      // Closest semantic match should rank first
+      expect(results[0]!.id).toBe(authNode.id);
       expect(results[0]?.search_mode).toBe('semantic');
+      // Should return exactly 2 nodes
+      expect(results).toHaveLength(2);
     }, 30_000);
 
     it('finds PostgreSQL node via "how is data stored" query', async () => {
@@ -64,7 +67,9 @@ describe('Integration: Semantic Search End-to-End', () => {
         mode: 'semantic',
       });
 
-      expect(results.some((r) => r.id === dbNode.id)).toBe(true);
+      // PostgreSQL node should rank above CI/CD node (semantically closer)
+      expect(results[0]!.id).toBe(dbNode.id);
+      expect(results).toHaveLength(2);
     }, 30_000);
   });
 
@@ -83,7 +88,8 @@ describe('Integration: Semantic Search End-to-End', () => {
         mode: 'keyword',
       });
 
-      expect(results.some((r) => r.id === authNode.id)).toBe(true);
+      // Exact keyword match should be first result
+      expect(results[0]!.id).toBe(authNode.id);
       expect(results[0]?.search_mode).toBe('keyword');
     });
   });
@@ -113,8 +119,69 @@ describe('Integration: Semantic Search End-to-End', () => {
         mode: 'hybrid',
       });
 
-      expect(results[0]?.id).toBe(dualMatchNode.id);
+      // Dual-match node (keyword + semantic) should rank first
+      expect(results[0]!.id).toBe(dualMatchNode.id);
       expect(results[0]?.search_mode).toBe('hybrid');
+      // Dual-match should have higher match_quality than keyword-only match
+      expect(results[0]!.match_quality).toBeGreaterThan(results[1]!.match_quality);
+    }, 30_000);
+  });
+
+  describe('negative precision (semantic mode)', () => {
+    it('does NOT return completely unrelated nodes', async () => {
+      // Related nodes (authentication domain)
+      const authNode1 = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'JWT authentication strategy',
+        content: 'Use JSON Web Tokens for stateless authentication with 24h expiry',
+        tags: ['auth'],
+      });
+
+      const authNode2 = db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Finding,
+        title: 'OAuth2 integration',
+        content: 'OAuth2 provider integration for third-party authentication',
+        tags: ['auth'],
+      });
+
+      // Unrelated nodes (completely different domains)
+      db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Database sharding strategy',
+        content: 'Horizontal sharding by user ID for PostgreSQL scalability',
+        tags: ['database'],
+      });
+
+      db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Finding,
+        title: 'CSS grid layout patterns',
+        content: 'Responsive grid layouts using CSS Grid specification',
+        tags: ['frontend'],
+      });
+
+      db.storeNode({
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: 'Logging infrastructure',
+        content: 'Centralized logging with structured JSON logs to CloudWatch',
+        tags: ['observability'],
+      });
+
+      const results = await db.search({
+        query: 'authentication and login',
+        mode: 'semantic',
+        limit: 3,
+      });
+
+      // Top 2 results should be auth-related nodes (order may vary)
+      expect(results.length).toBeGreaterThanOrEqual(2);
+      const topTwoIds = [results[0]!.id, results[1]!.id];
+      expect(topTwoIds).toContain(authNode1.id);
+      expect(topTwoIds).toContain(authNode2.id);
     }, 30_000);
   });
 
@@ -216,7 +283,8 @@ describe('Integration: Semantic Search End-to-End', () => {
         query: 'login session management',
         mode: 'semantic',
       });
-      expect(seeds.some((r) => r.id === decision.id)).toBe(true);
+      const seedIds = seeds.map((r) => r.id);
+      expect(seedIds).toContain(decision.id);
 
       const traversed = db.traverse({
         startId: decision.id,

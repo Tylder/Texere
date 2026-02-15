@@ -66,32 +66,152 @@ describe('MCP server integration', () => {
     db.close();
   });
 
-  describe('round-trip: store_node -> get_node', () => {
-    it('stores a node and retrieves it with identical data', async () => {
-      const stored = await storeNode(mcp, {
-        type: NodeType.Knowledge,
-        role: NodeRole.Decision,
-        title: 'Use SQLite for storage',
-        content: 'SQLite is sufficient for expected scale',
-        tags: ['database', 'architecture'],
-        importance: 0.9,
-        confidence: 0.85,
+  describe('malformed input handling', () => {
+    it('returns INVALID_INPUT with field path when required title is missing', async () => {
+      const result = await mcp.callTool('texere_store_node', {
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        content: 'Missing required title field',
       });
 
-      expect(stored.isError).toBeUndefined();
-      const nodeId = getNodeId(stored);
+      expect(result.isError).toBe(true);
+      const error = (
+        result.structuredContent as { error: { code: string; issues: Array<{ path: string[] }> } }
+      ).error;
+      expect(error.code).toBe('INVALID_INPUT');
+      expect(error.issues.length).toBeGreaterThan(0);
+      expect(error.issues.some((i) => i.path?.includes('title'))).toBe(true);
+    });
 
-      const fetched = await mcp.callTool('texere_get_node', { id: nodeId, include_edges: true });
+    it('returns INVALID_INPUT for null in required string field', async () => {
+      const result = await mcp.callTool('texere_store_node', {
+        type: NodeType.Knowledge,
+        role: NodeRole.Decision,
+        title: null,
+        content: 'Has content but null title',
+      });
 
+      expect(result.isError).toBe(true);
+      expect((result.structuredContent as { error: { code: string } }).error.code).toBe(
+        'INVALID_INPUT',
+      );
+    });
+
+    it('silently strips extra unknown fields from input', async () => {
+      const result = await storeNode(mcp, {
+        unknown_extra_field: 'should be ignored',
+        another_bogus: 42,
+      });
+
+      expect(result.isError).toBeUndefined();
+      const nodeId = getNodeId(result);
+
+      const fetched = await mcp.callTool('texere_get_node', { id: nodeId });
       expect(fetched.isError).toBeUndefined();
-      const node = (fetched.structuredContent as any).node;
-      expect(node.id).toBe(nodeId);
-      expect(node.type).toBe(NodeType.Knowledge);
-      expect(node.role).toBe(NodeRole.Decision);
-      expect(node.title).toBe('Use SQLite for storage');
-      expect(node.content).toBe('SQLite is sufficient for expected scale');
-      expect(node.importance).toBe(0.9);
-      expect(node.confidence).toBe(0.85);
+      const node = (fetched.structuredContent as { node: Record<string, unknown> }).node;
+      expect(node.unknown_extra_field).toBeUndefined();
+      expect(node.another_bogus).toBeUndefined();
+    });
+
+    it('handles extremely long strings without crashing', async () => {
+      const longContent = 'x'.repeat(100_000);
+      const result = await storeNode(mcp, {
+        title: 'Long content test',
+        content: longContent,
+      });
+
+      expect(result.isError).toBeUndefined();
+      const nodeId = getNodeId(result);
+
+      const fetched = await mcp.callTool('texere_get_node', { id: nodeId });
+      expect((fetched.structuredContent as { node: { content: string } }).node.content).toBe(
+        longContent,
+      );
+    });
+
+    it('returns INVALID_INPUT for empty string in min(1) field', async () => {
+      const result = await mcp.callTool('texere_store_node', {
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: '',
+        content: 'Has content but empty title',
+      });
+
+      expect(result.isError).toBe(true);
+      expect((result.structuredContent as { error: { code: string } }).error.code).toBe(
+        'INVALID_INPUT',
+      );
+    });
+
+    it('returns INVALID_INPUT for wrong type in numeric field', async () => {
+      const result = await mcp.callTool('texere_store_node', {
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Test node',
+        content: 'Content',
+        importance: 'high',
+      });
+
+      expect(result.isError).toBe(true);
+      expect((result.structuredContent as { error: { code: string } }).error.code).toBe(
+        'INVALID_INPUT',
+      );
+    });
+  });
+
+  describe('error boundary propagation', () => {
+    it('wraps type-role validation errors as TOOL_ERROR with descriptive message', async () => {
+      const result = await mcp.callTool('texere_store_node', {
+        type: NodeType.Knowledge,
+        role: NodeRole.Task,
+        title: 'Invalid combo',
+        content: 'Knowledge type does not allow Task role',
+      });
+
+      expect(result.isError).toBe(true);
+      const error = (result.structuredContent as { error: { code: string; message: string } })
+        .error;
+      expect(error.code).toBe('TOOL_ERROR');
+      expect(error.message).toMatch(/type.*role|invalid/i);
+    });
+
+    it('wraps foreign key errors when creating edge with nonexistent node', async () => {
+      const result = await mcp.callTool('texere_create_edge', {
+        source_id: 'nonexistent-source-id',
+        target_id: 'nonexistent-target-id',
+        type: EdgeType.RelatedTo,
+      });
+
+      expect(result.isError).toBe(true);
+      const error = (result.structuredContent as { error: { code: string; message: string } })
+        .error;
+      expect(error.code).toBe('TOOL_ERROR');
+      expect(error.message).toMatch(/foreign key|constraint/i);
+    });
+
+    it('concurrent tool calls produce isolated results without interference', async () => {
+      const concurrentStores = Array.from({ length: 10 }, (_, i) =>
+        storeNode(mcp, {
+          title: `Concurrent node ${i}`,
+          content: `Content for concurrent test ${i}`,
+        }),
+      );
+
+      const results = await Promise.all(concurrentStores);
+
+      for (const result of results) {
+        expect(result.isError).toBeUndefined();
+      }
+
+      const ids = results.map(getNodeId);
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(10);
+
+      const statsResult = await mcp.callTool('texere_stats', {});
+      expect(
+        (statsResult.structuredContent as { stats: { nodes: { total: number } } }).stats.nodes
+          .total,
+      ).toBe(10);
     });
   });
 
@@ -329,28 +449,6 @@ describe('MCP server integration', () => {
     });
   });
 
-  describe('invalidate_node -> get_node -> verify invalidated_at', () => {
-    it('sets invalidated_at timestamp on node', async () => {
-      const node = await storeNode(mcp, {
-        type: NodeType.Knowledge,
-        role: NodeRole.Research,
-        title: 'Outdated research finding',
-        content: 'This finding is no longer valid',
-      });
-
-      const beforeInvalidation = await mcp.callTool('texere_get_node', { id: getNodeId(node) });
-      expect((beforeInvalidation.structuredContent as any).node.invalidated_at).toBeNull();
-
-      await mcp.callTool('texere_invalidate_node', { id: getNodeId(node) });
-
-      const afterInvalidation = await mcp.callTool('texere_get_node', { id: getNodeId(node) });
-      expect((afterInvalidation.structuredContent as any).node.invalidated_at).not.toBeNull();
-      expect(typeof (afterInvalidation.structuredContent as any).node.invalidated_at).toBe(
-        'number',
-      );
-    });
-  });
-
   describe('all tools return valid MCP response format', () => {
     it('every tool result has content array with text entries', async () => {
       const stored = await storeNode(mcp, {
@@ -415,7 +513,7 @@ describe('MCP server integration', () => {
     });
   });
 
-  describe('tools/list schema regression', () => {
+  describe('schema compliance', () => {
     it('every tool has type:object at root with no top-level anyOf/oneOf/allOf', async () => {
       const listToolsResult = await listToolsViaServer(mcp);
 
@@ -428,6 +526,44 @@ describe('MCP server integration', () => {
         const inputSchema = tool.inputSchema as Record<string, unknown>;
         expect(inputSchema.type).toBe('object');
         expect(hasTopLevelUnion(inputSchema)).toBe(false);
+      }
+    });
+
+    it('tools with required inputs declare required fields in JSON schema', async () => {
+      const listToolsResult = await listToolsViaServer(mcp);
+
+      const toolsWithRequiredInputs = [
+        'texere_store_node',
+        'texere_get_node',
+        'texere_invalidate_node',
+        'texere_replace_node',
+        'texere_create_edge',
+        'texere_delete_edge',
+        'texere_search',
+        'texere_traverse',
+        'texere_about',
+      ];
+
+      for (const toolName of toolsWithRequiredInputs) {
+        const tool = listToolsResult.tools.find(
+          (t) => (t as Record<string, unknown>).name === toolName,
+        );
+        expect(tool).toBeDefined();
+        const schema = (tool as Record<string, unknown>).inputSchema as Record<string, unknown>;
+        expect(schema.properties).toBeDefined();
+        expect(schema.required).toBeDefined();
+        expect(Array.isArray(schema.required)).toBe(true);
+        expect((schema.required as string[]).length).toBeGreaterThan(0);
+      }
+    });
+
+    it('every tool schema has properties defined', async () => {
+      const listToolsResult = await listToolsViaServer(mcp);
+
+      for (const tool of listToolsResult.tools) {
+        const schema = (tool as Record<string, unknown>).inputSchema as Record<string, unknown>;
+        expect(schema.properties).toBeDefined();
+        expect(typeof schema.properties).toBe('object');
       }
     });
   });
@@ -575,58 +711,6 @@ describe('MCP server integration', () => {
       const nodes = (traversed.structuredContent as any).results;
       const nodeIds = nodes.map((r: any) => r.node.id);
       expect(nodeIds).toContain(getNodeId(nodeB));
-    });
-  });
-
-  describe('pitfall role for knowledge nodes', () => {
-    it('stores and retrieves a pitfall node with correct type and role', async () => {
-      const pitfall = await storeNode(mcp, {
-        type: NodeType.Knowledge,
-        role: NodeRole.Pitfall,
-        title: 'Do not use SELECT * in production queries',
-        content: 'SELECT * prevents index-only scans and transfers unnecessary data',
-        tags: ['sql', 'performance', 'pitfall'],
-        importance: 0.8,
-      });
-      expect(pitfall.isError).toBeUndefined();
-
-      const searchResult = await mcp.callTool('texere_search', {
-        query: 'SELECT production',
-        type: NodeType.Knowledge,
-        limit: 10,
-      });
-      expect(searchResult.isError).toBeUndefined();
-      const results = (searchResult.structuredContent as any).results;
-      const ids = results.map((r: any) => r.id);
-      expect(ids).toContain(getNodeId(pitfall));
-
-      const fetched = await mcp.callTool('texere_get_node', { id: getNodeId(pitfall) });
-      expect(fetched.isError).toBeUndefined();
-      const node = (fetched.structuredContent as any).node;
-      expect(node.type).toBe(NodeType.Knowledge);
-      expect(node.role).toBe(NodeRole.Pitfall);
-      expect(node.title).toBe('Do not use SELECT * in production queries');
-      expect(node.importance).toBe(0.8);
-    });
-  });
-
-  describe('node storage without source field', () => {
-    it('stores node correctly without source field', async () => {
-      const result = await storeNode(mcp, {
-        type: NodeType.Knowledge,
-        role: NodeRole.Decision,
-        title: 'Use WAL mode for SQLite',
-        content: 'WAL mode enables concurrent reads during writes',
-      });
-      expect(result.isError).toBeUndefined();
-
-      const nodeId = getNodeId(result);
-      const fetched = await mcp.callTool('texere_get_node', { id: nodeId });
-      expect(fetched.isError).toBeUndefined();
-      const node = (fetched.structuredContent as any).node;
-      expect(node.id).toBe(nodeId);
-      expect(node.type).toBe(NodeType.Knowledge);
-      expect(node.role).toBe(NodeRole.Decision);
     });
   });
 

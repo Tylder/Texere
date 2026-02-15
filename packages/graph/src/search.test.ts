@@ -282,7 +282,7 @@ describe('search', () => {
   });
 
   it('supports FTS5 phrase matching with quotes', () => {
-    store(db, {
+    const phraseMatch = store(db, {
       role: NodeRole.Finding,
       title: 'exact phrase matching',
       content: 'This has the exact phrase we want.',
@@ -296,8 +296,8 @@ describe('search', () => {
     });
 
     const results = search(db, { query: '"exact phrase"' });
-    expect(results.length).toBeGreaterThanOrEqual(1);
-    expect(results.some((r) => r.title.includes('exact phrase'))).toBe(true);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.id).toBe(phraseMatch.id);
   });
 
   it('supports FTS5 boolean OR', () => {
@@ -321,7 +321,7 @@ describe('search', () => {
   });
 
   it('falls back to sanitized query on invalid FTS5 syntax', () => {
-    store(db, {
+    const node = store(db, {
       role: NodeRole.Finding,
       title: 'better-sqlite3 driver evaluation',
       content: 'Comparing better-sqlite3 with sql.js for performance.',
@@ -330,7 +330,8 @@ describe('search', () => {
 
     expect(() => search(db, { query: 'better-sqlite3' })).not.toThrow();
     const results = search(db, { query: 'better-sqlite3' });
-    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.id).toBe(node.id);
   });
 
   it('returns empty array on empty database', () => {
@@ -354,6 +355,99 @@ describe('search', () => {
     expect(results).toHaveLength(2);
     expect(results[0]!.id).toBe(titleAndContent.id);
     expect(results[1]!.id).toBe(tagsOnly.id);
+  });
+
+  it('exact title match outranks partial content match', () => {
+    const exactTitle = store(db, {
+      title: 'authentication',
+      content: 'Details about user verification.',
+      tags: ['security'],
+    });
+    const partialContent = store(db, {
+      title: 'Security overview',
+      content: 'This document covers authentication, authorization, and encryption.',
+      tags: ['security'],
+    });
+
+    const results = search(db, { query: 'authentication' });
+
+    expect(results).toHaveLength(2);
+    expect(results[0]!.id).toBe(exactTitle.id);
+    expect(results[1]!.id).toBe(partialContent.id);
+  });
+
+  it('multi-field match outranks single-field match', () => {
+    const multiField = store(db, {
+      title: 'Redis caching strategy',
+      content: 'Redis provides fast in-memory caching for session data.',
+      tags: ['redis', 'cache'],
+    });
+    const singleField = store(db, {
+      title: 'Database options',
+      content: 'Considering various storage backends.',
+      tags: ['redis'],
+    });
+
+    const results = search(db, { query: 'Redis' });
+
+    expect(results).toHaveLength(2);
+    expect(results[0]!.id).toBe(multiField.id);
+    expect(results[1]!.id).toBe(singleField.id);
+  });
+
+  it('semantic search ranks closest embedding first', () => {
+    const closest = store(db, {
+      title: 'JWT authentication flow',
+      content: 'Token-based stateless authentication with refresh tokens.',
+      tags: ['auth'],
+    });
+    const farther = store(db, {
+      title: 'Database indexing',
+      content: 'B-tree index optimization strategies.',
+      tags: ['db'],
+    });
+
+    // Closest has embedding [1, 0], farther has [0, 1], query is [1, 0]
+    storeEmbedding(db, closest.id, embeddingOf(1, 0));
+    storeEmbedding(db, farther.id, embeddingOf(0, 1));
+
+    const results = search(db, { query: 'auth tokens', mode: 'semantic' }, embeddingOf(1, 0));
+
+    expect(results).toHaveLength(2);
+    expect(results[0]!.id).toBe(closest.id);
+    expect(results[1]!.id).toBe(farther.id);
+  });
+
+  it('hybrid RRF boost is measurable: dual-signal node scores higher than single-signal', () => {
+    const dualSignal = store(db, {
+      title: 'JWT session management',
+      content: 'Token rotation and refresh strategies for stateless auth.',
+      tags: ['auth'],
+    });
+    const keywordOnly = store(db, {
+      title: 'JWT JWT JWT session',
+      content: 'Repeated keyword stuffing for testing purposes.',
+      tags: ['test'],
+    });
+    const semanticOnly = store(db, {
+      title: 'Authentication lifecycle',
+      content: 'Stateless token-based verification patterns.',
+      tags: ['auth'],
+    });
+
+    // dualSignal: embedding matches query [1, 0]
+    // keywordOnly: embedding far from query [0, 1]
+    // semanticOnly: embedding close to query [0.9, 0.1]
+    storeEmbedding(db, dualSignal.id, embeddingOf(1, 0));
+    storeEmbedding(db, keywordOnly.id, embeddingOf(0, 1));
+    storeEmbedding(db, semanticOnly.id, embeddingOf(0.9, 0.1));
+
+    const results = search(db, { query: 'JWT session', mode: 'hybrid' }, embeddingOf(1, 0));
+
+    // dualSignal should rank first (matches both keyword and semantic)
+    expect(results[0]!.id).toBe(dualSignal.id);
+    expect(results[0]!.match_fields).toContain('semantic');
+    expect(results[0]!.search_mode).toBe('hybrid');
   });
 
   it('detects match_fields correctly', () => {
@@ -444,8 +538,10 @@ describe('search', () => {
       embeddingOf(0, 1),
     );
 
-    expect(results.some((r) => r.id === authNode.id)).toBe(true);
-    expect(results[0]?.search_mode).toBe('semantic');
+    expect(results).toHaveLength(2);
+    expect(results[0]!.id).toBe(authNode.id);
+    expect(results[1]!.id).toBe(unrelatedNode.id);
+    expect(results[0]!.search_mode).toBe('semantic');
   });
 
   it('hybrid mode boosts nodes that match keyword and semantic signals', () => {
@@ -502,8 +598,9 @@ describe('search', () => {
 
     const results = search(db, { query: 'How does session management work?' }, embeddingOf(0, 1));
 
-    expect(results.some((r) => r.id === authNode.id)).toBe(true);
-    expect(results[0]?.search_mode).toBe('semantic');
+    expect(results).toHaveLength(1);
+    expect(results[0]!.id).toBe(authNode.id);
+    expect(results[0]!.search_mode).toBe('semantic');
   });
 });
 
@@ -519,9 +616,21 @@ describe('searchBatch', () => {
   });
 
   it('returns array of length 3 for batch of 3 queries', () => {
-    store(db, { title: 'SQLite internals', content: 'B-tree page storage', tags: ['db'] });
-    store(db, { title: 'Redis caching', content: 'In-memory key-value store', tags: ['cache'] });
-    store(db, { title: 'GraphQL schema', content: 'Type-safe API layer', tags: ['api'] });
+    const sqliteNode = store(db, {
+      title: 'SQLite internals',
+      content: 'B-tree page storage',
+      tags: ['db'],
+    });
+    const redisNode = store(db, {
+      title: 'Redis caching',
+      content: 'In-memory key-value store',
+      tags: ['cache'],
+    });
+    const graphqlNode = store(db, {
+      title: 'GraphQL schema',
+      content: 'Type-safe API layer',
+      tags: ['api'],
+    });
 
     const results = searchBatch(db, [
       { query: 'SQLite' },
@@ -530,9 +639,12 @@ describe('searchBatch', () => {
     ]);
 
     expect(results).toHaveLength(3);
-    expect(results[0]!.length).toBeGreaterThanOrEqual(1);
-    expect(results[1]!.length).toBeGreaterThanOrEqual(1);
-    expect(results[2]!.length).toBeGreaterThanOrEqual(1);
+    expect(results[0]).toHaveLength(1);
+    expect(results[0]![0]!.id).toBe(sqliteNode.id);
+    expect(results[1]).toHaveLength(1);
+    expect(results[1]![0]!.id).toBe(redisNode.id);
+    expect(results[2]).toHaveLength(1);
+    expect(results[2]![0]!.id).toBe(graphqlNode.id);
   });
 
   it('each element is result array for that query position', () => {
@@ -557,7 +669,7 @@ describe('searchBatch', () => {
   });
 
   it('handles query with special chars that triggers sanitizer fallback', () => {
-    store(db, {
+    const node = store(db, {
       title: 'better-sqlite3 driver',
       content: 'Native Node.js SQLite binding',
       tags: ['database'],
@@ -566,7 +678,9 @@ describe('searchBatch', () => {
     const results = searchBatch(db, [{ query: 'better-sqlite3' }, { query: 'SQLite' }]);
 
     expect(results).toHaveLength(2);
-    expect(results[0]!.length).toBeGreaterThanOrEqual(1);
-    expect(results[1]!.length).toBeGreaterThanOrEqual(1);
+    expect(results[0]).toHaveLength(1);
+    expect(results[0]![0]!.id).toBe(node.id);
+    expect(results[1]).toHaveLength(1);
+    expect(results[1]![0]!.id).toBe(node.id);
   });
 });

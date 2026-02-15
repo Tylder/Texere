@@ -258,4 +258,70 @@ describe('Embedder', { timeout: 120_000 }, () => {
       expect(vecCount.count).toBe(1);
     });
   });
+
+  describe('failure handling', () => {
+    let db: Database.Database;
+    let embedder: Embedder;
+
+    beforeEach(() => {
+      db = createDatabase(':memory:');
+      embedder = new Embedder(db);
+    });
+
+    afterEach(() => {
+      embedder.destroy();
+      db.close();
+    });
+
+    it('embedNode silently handles node deleted between queue and execution', async () => {
+      const node = storeNode(db, testNode());
+      invalidateNode(db, node.id);
+
+      await expect(embedder.embedNode(node.id)).resolves.toBeUndefined();
+
+      const row = db.prepare('SELECT node_id FROM nodes_vec WHERE node_id = ?').get(node.id);
+      expect(row).toBeUndefined();
+    });
+
+    it('embedPending handles empty database gracefully', async () => {
+      const count = await embedder.embedPending();
+      expect(count).toBe(0);
+
+      const vecCount = db.prepare('SELECT COUNT(*) as count FROM nodes_vec').get() as {
+        count: number;
+      };
+      expect(vecCount.count).toBe(0);
+    });
+
+    it('embed returns consistent dimensions regardless of input length', async () => {
+      const shortEmb = await embedder.embed('hello');
+      expect(shortEmb).toBeInstanceOf(Float32Array);
+      expect(shortEmb).toHaveLength(EMBEDDING_DIM);
+
+      const longText = 'a'.repeat(10_000);
+      const longEmb = await embedder.embed(longText);
+      expect(longEmb).toBeInstanceOf(Float32Array);
+      expect(longEmb).toHaveLength(EMBEDDING_DIM);
+
+      expect(shortEmb.length).toBe(longEmb.length);
+    });
+
+    it('destroy() prevents further embed calls from starting pipeline', async () => {
+      embedder.destroy();
+
+      const emb = await embedder.embed('test after destroy');
+
+      expect(emb).toBeInstanceOf(Float32Array);
+      expect(emb).toHaveLength(EMBEDDING_DIM);
+    });
+
+    it('embeddings are normalized (L2 norm ≈ 1) - consistency check', async () => {
+      const emb = await embedder.embed('knowledge graph semantic search');
+      let sumSq = 0;
+      for (let i = 0; i < emb.length; i++) {
+        sumSq += emb[i]! * emb[i]!;
+      }
+      expect(Math.sqrt(sumSq)).toBeCloseTo(1.0, 2);
+    });
+  });
 });

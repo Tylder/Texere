@@ -1,7 +1,9 @@
 {
-  "active_plan": "/home/dan/Texere/.sisyphus/plans/v2-qc-fixes.md",
-  "started_at": "2026-02-14T18:54:30.000Z",
-  "session_ids": ["ses_3a3164bbfffeFVyBdxuvVn3ZNh"],
-  "plan_name": "v2-qc-fixes",
+  "active_plan": "/home/dan/Texere/.sisyphus/plans/test-suite-overhaul.md",
+  "started_at": "2026-02-15T09:25:42.252Z",
+  "session_ids": [
+    "ses_39f84a164ffeOnIfTgnqq3n5xo"
+  ],
+  "plan_name": "test-suite-overhaul",
   "agent": "atlas"
 }

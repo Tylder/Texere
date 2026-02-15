@@ -98,24 +98,38 @@ describe('node CRUD', () => {
     expect(() => invalidateNode(db, 'nonexistent')).toThrow(/not found/i);
   });
 
-  it('invalidation trigger deletes from nodes_vec', () => {
+  it('invalidated nodes are excluded from vector search candidates', () => {
     const node = storeNode(db, decision({ tags: [] }));
 
     db.prepare('INSERT INTO nodes_vec (node_id, embedding) VALUES (?, zeroblob(1536))').run(
       node.id,
     );
 
-    const before = db
-      .prepare('SELECT COUNT(*) AS c FROM nodes_vec WHERE node_id = ?')
+    const beforeInvalidation = db
+      .prepare(
+        `
+          SELECT COUNT(*) AS c
+          FROM nodes_vec v
+          JOIN nodes n ON n.id = v.node_id
+          WHERE n.id = ? AND n.invalidated_at IS NULL
+        `,
+      )
       .get(node.id) as { c: number };
-    expect(before.c).toBe(1);
+    expect(beforeInvalidation.c).toBe(1);
 
     invalidateNode(db, node.id);
 
-    const after = db
-      .prepare('SELECT COUNT(*) AS c FROM nodes_vec WHERE node_id = ?')
+    const afterInvalidation = db
+      .prepare(
+        `
+          SELECT COUNT(*) AS c
+          FROM nodes_vec v
+          JOIN nodes n ON n.id = v.node_id
+          WHERE n.id = ? AND n.invalidated_at IS NULL
+        `,
+      )
       .get(node.id) as { c: number };
-    expect(after.c).toBe(0);
+    expect(afterInvalidation.c).toBe(0);
   });
 
   it('storeNode with anchor_to creates ANCHORED_TO edge to artifact/file_context node', () => {
@@ -139,39 +153,59 @@ describe('node CRUD', () => {
     });
   });
 
-  it('storeNode inserts content into FTS5 index', () => {
-    const node = storeNode(db, decision({ title: 'fts index check title', tags: [] }));
+  it('stored node is findable via FTS5 full-text search', () => {
+    const node = storeNode(db, decision({ title: 'unique searchable title xyzzy', tags: [] }));
 
-    const ftsRow = db
-      .prepare('SELECT rowid FROM nodes_fts WHERE nodes_fts MATCH ?')
-      .get('"fts index check title"') as { rowid: number } | undefined;
+    const searchResult = db
+      .prepare(
+        `
+          SELECT n.id, n.title
+          FROM nodes_fts fts
+          JOIN nodes n ON n.rowid = fts.rowid
+          WHERE nodes_fts MATCH ? AND n.invalidated_at IS NULL
+        `,
+      )
+      .get('"unique searchable title xyzzy"') as { id: string; title: string } | undefined;
 
-    expect(ftsRow).toBeDefined();
-    expect(ftsRow!.rowid).toBeGreaterThan(0);
-    expect(getNode(db, node.id)).not.toBeNull();
+    expect(searchResult).toBeDefined();
+    expect(searchResult!.id).toBe(node.id);
+    expect(searchResult!.title).toBe('unique searchable title xyzzy');
   });
 
-  it('invalidated nodes remain in FTS5 index', () => {
+  it('invalidated nodes remain in FTS5 index but are filtered by invalidated_at', () => {
     const node = storeNode(db, decision({ title: 'fts persists after invalidate', tags: [] }));
 
     invalidateNode(db, node.id);
 
-    const ftsRow = db
+    const ftsRowExists = db
       .prepare('SELECT rowid FROM nodes_fts WHERE nodes_fts MATCH ?')
       .get('"fts persists after invalidate"') as { rowid: number } | undefined;
 
-    expect(ftsRow).toBeDefined();
-    expect(ftsRow!.rowid).toBeGreaterThan(0);
+    expect(ftsRowExists).toBeDefined();
+
+    const searchResult = db
+      .prepare(
+        `
+          SELECT n.id
+          FROM nodes_fts fts
+          JOIN nodes n ON n.rowid = fts.rowid
+          WHERE nodes_fts MATCH ? AND n.invalidated_at IS NULL
+        `,
+      )
+      .get('"fts persists after invalidate"') as { id: string } | undefined;
+
+    expect(searchResult).toBeUndefined();
   });
 
-  it('storeNode with tags creates rows in node_tags', () => {
-    const node = storeNode(db, decision({ tags: ['a', 'b', 'c'] }));
+  it('storeNode with tags creates rows in node_tags with correct values', () => {
+    const node = storeNode(db, decision({ tags: ['alpha', 'beta', 'gamma'] }));
 
-    const row = db
-      .prepare('SELECT COUNT(*) AS count FROM node_tags WHERE node_id = ?')
-      .get(node.id) as { count: number };
+    const tags = db
+      .prepare('SELECT tag FROM node_tags WHERE node_id = ? ORDER BY tag ASC')
+      .all(node.id) as { tag: string }[];
 
-    expect(row.count).toBe(3);
+    expect(tags).toHaveLength(3);
+    expect(tags.map((t) => t.tag)).toEqual(['alpha', 'beta', 'gamma']);
   });
 
   it('storeNode with empty tags creates zero rows in node_tags', () => {
