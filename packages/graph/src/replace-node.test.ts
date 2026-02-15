@@ -215,7 +215,7 @@ describe('replaceNode', () => {
     // Create another node that references the old node
     const relatedNode = storeNode(db, {
       type: NodeType.Action,
-      role: NodeRole.Fix,
+      role: NodeRole.Solution,
       title: 'Fix for error',
       content: 'Fix details',
     });
@@ -298,7 +298,7 @@ describe('replaceNode', () => {
     expect(newNode!.title).toBe('New pattern');
   });
 
-  it('preserves all new node properties (tags, importance, confidence, status, scope)', () => {
+  it('preserves all new node properties (tags, importance, confidence)', () => {
     const oldNode = storeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Principle,

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createDatabase } from './db.js';
 import { createEdge } from './edges.js';
 import { invalidateNode, storeNode, type StoreNodeInput } from './nodes.js';
-import { search, searchBatch } from './search.js';
+import { search } from './search.js';
 import { EdgeType, NodeRole, NodeType } from './types.js';
 
 const store = (db: Database.Database, overrides: Partial<StoreNodeInput> = {}) =>
@@ -604,83 +604,3 @@ describe('search', () => {
   });
 });
 
-describe('searchBatch', () => {
-  let db: Database.Database;
-
-  beforeEach(() => {
-    db = createDatabase(':memory:');
-  });
-
-  afterEach(() => {
-    db.close();
-  });
-
-  it('returns array of length 3 for batch of 3 queries', () => {
-    const sqliteNode = store(db, {
-      title: 'SQLite internals',
-      content: 'B-tree page storage',
-      tags: ['db'],
-    });
-    const redisNode = store(db, {
-      title: 'Redis caching',
-      content: 'In-memory key-value store',
-      tags: ['cache'],
-    });
-    const graphqlNode = store(db, {
-      title: 'GraphQL schema',
-      content: 'Type-safe API layer',
-      tags: ['api'],
-    });
-
-    const results = searchBatch(db, [
-      { query: 'SQLite' },
-      { query: 'Redis' },
-      { query: 'GraphQL' },
-    ]);
-
-    expect(results).toHaveLength(3);
-    expect(results[0]).toHaveLength(1);
-    expect(results[0]![0]!.id).toBe(sqliteNode.id);
-    expect(results[1]).toHaveLength(1);
-    expect(results[1]![0]!.id).toBe(redisNode.id);
-    expect(results[2]).toHaveLength(1);
-    expect(results[2]![0]!.id).toBe(graphqlNode.id);
-  });
-
-  it('each element is result array for that query position', () => {
-    const sqliteNode = store(db, {
-      title: 'SQLite indexing',
-      content: 'FTS5 indexing strategy',
-      tags: ['db'],
-    });
-    const redisNode = store(db, {
-      title: 'Redis pub/sub',
-      content: 'Message broker pattern',
-      tags: ['cache'],
-    });
-
-    const results = searchBatch(db, [{ query: 'SQLite' }, { query: 'Redis' }]);
-
-    expect(results).toHaveLength(2);
-    expect(results[0]!.some((r) => r.id === sqliteNode.id)).toBe(true);
-    expect(results[0]!.some((r) => r.id === redisNode.id)).toBe(false);
-    expect(results[1]!.some((r) => r.id === redisNode.id)).toBe(true);
-    expect(results[1]!.some((r) => r.id === sqliteNode.id)).toBe(false);
-  });
-
-  it('handles query with special chars that triggers sanitizer fallback', () => {
-    const node = store(db, {
-      title: 'better-sqlite3 driver',
-      content: 'Native Node.js SQLite binding',
-      tags: ['database'],
-    });
-
-    const results = searchBatch(db, [{ query: 'better-sqlite3' }, { query: 'SQLite' }]);
-
-    expect(results).toHaveLength(2);
-    expect(results[0]).toHaveLength(1);
-    expect(results[0]![0]!.id).toBe(node.id);
-    expect(results[1]).toHaveLength(1);
-    expect(results[1]![0]!.id).toBe(node.id);
-  });
-});

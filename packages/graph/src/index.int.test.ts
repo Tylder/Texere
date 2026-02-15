@@ -52,7 +52,7 @@ describe('Graph package integration', () => {
 
       const fix = db.storeNode({
         type: NodeType.Action,
-        role: NodeRole.Fix,
+        role: NodeRole.Solution,
         title: 'Add busy timeout pragma',
         content: 'Set pragma busy_timeout = 5000 for graceful retry',
         tags: ['sqlite'],
@@ -67,14 +67,12 @@ describe('Graph package integration', () => {
         source_id: solution.id,
         target_id: problem.id,
         type: EdgeType.Resolves,
-        strength: 0.95,
       });
 
       const buildsOnEdge = db.createEdge({
         source_id: fix.id,
         target_id: solution.id,
-        type: EdgeType.Extends,
-        strength: 0.8,
+        type: EdgeType.BasedOn,
       });
 
       expect(solvesEdge.id).toBeDefined();
@@ -120,7 +118,7 @@ describe('Graph package integration', () => {
       expect(stats.nodes.byType[NodeType.Issue]).toBe(1);
       expect(stats.nodes.byType[NodeType.Action]).toBe(2);
       expect(stats.edges.byType[EdgeType.Resolves]).toBe(1);
-      expect(stats.edges.byType[EdgeType.Extends]).toBe(1);
+      expect(stats.edges.byType[EdgeType.BasedOn]).toBe(1);
 
       db.invalidateNode(problem.id);
       const invalidated = db.getNode(problem.id);
@@ -352,13 +350,13 @@ describe('Graph package integration', () => {
       });
       const c = db.storeNode({
         type: NodeType.Action,
-        role: NodeRole.Fix,
+        role: NodeRole.Solution,
         title: 'Fix node',
         content: 'Concrete fix implementation',
       });
 
       db.createEdge({ source_id: a.id, target_id: b.id, type: EdgeType.Causes });
-      db.createEdge({ source_id: b.id, target_id: c.id, type: EdgeType.Extends });
+      db.createEdge({ source_id: b.id, target_id: c.id, type: EdgeType.BasedOn });
 
       const traverseResults = db.traverse({
         startId: a.id,

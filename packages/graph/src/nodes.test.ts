@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createDatabase } from './db';
 import { getNode, invalidateNode, storeNode, type StoreNodeInput } from './nodes';
-import { EdgeType, NodeRole, NodeScope, NodeStatus, NodeType } from './types';
+import { EdgeType, NodeRole, NodeType } from './types';
 
 const decision = (overrides: Partial<StoreNodeInput> = {}): StoreNodeInput => ({
   type: NodeType.Knowledge,
@@ -47,8 +47,6 @@ describe('node CRUD', () => {
     expect(typeof node.tags_json).toBe('string');
     expect(typeof node.importance).toBe('number');
     expect(typeof node.confidence).toBe('number');
-    expect(node.status).toBe(NodeStatus.Active);
-    expect(node.scope).toBe(NodeScope.Project);
     expect(typeof node.created_at).toBe('number');
     expect(node.invalidated_at).toBeNull();
   });
@@ -149,7 +147,7 @@ describe('node CRUD', () => {
     expect(anchoredEdge).toEqual({
       type: EdgeType.AnchoredTo,
       target_type: NodeType.Artifact,
-      target_role: NodeRole.FileContext,
+      target_role: 'file_context',
     });
   });
 
@@ -219,37 +217,6 @@ describe('node CRUD', () => {
   });
 });
 
-describe('facet defaults', () => {
-  let db: Database.Database;
-
-  beforeEach(() => {
-    db = createDatabase(':memory:');
-  });
-
-  afterEach(() => {
-    db.close();
-  });
-
-  it('applies default facets: status=active, scope=project', () => {
-    const node = storeNode(db, decision());
-
-    expect(node.status).toBe(NodeStatus.Active);
-    expect(node.scope).toBe(NodeScope.Project);
-  });
-
-  it('accepts custom facets', () => {
-    const node = storeNode(
-      db,
-      decision({
-        status: NodeStatus.Proposed,
-        scope: NodeScope.Module,
-      }),
-    );
-
-    expect(node.status).toBe(NodeStatus.Proposed);
-    expect(node.scope).toBe(NodeScope.Module);
-  });
-});
 
 describe('type-role validation', () => {
   let db: Database.Database;
@@ -273,7 +240,7 @@ describe('type-role validation', () => {
       storeNode(db, decision({ type: NodeType.Issue, role: NodeRole.Problem })),
     ).not.toThrow();
     expect(() =>
-      storeNode(db, decision({ type: NodeType.Action, role: NodeRole.Fix })),
+      storeNode(db, decision({ type: NodeType.Action, role: NodeRole.Solution })),
     ).not.toThrow();
     expect(() =>
       storeNode(db, decision({ type: NodeType.Artifact, role: NodeRole.CodePattern })),

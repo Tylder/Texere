@@ -265,12 +265,12 @@ describe('batch createEdge', () => {
     const c = makeNode(db, 'C');
 
     const edges = createEdge(db, [
-      { source_id: a.id, target_id: b.id, type: EdgeType.Extends },
+      { source_id: a.id, target_id: b.id, type: EdgeType.BasedOn },
       { source_id: b.id, target_id: c.id, type: EdgeType.DependsOn },
     ]);
 
     expect(edges).toHaveLength(2);
-    expect(edges[0]!.type).toBe(EdgeType.Extends);
+    expect(edges[0]!.type).toBe(EdgeType.BasedOn);
     expect(edges[1]!.type).toBe(EdgeType.DependsOn);
   });
 
@@ -280,9 +280,9 @@ describe('batch createEdge', () => {
 
     expect(() =>
       createEdge(db, [
-        { source_id: a.id, target_id: b.id, type: EdgeType.Extends },
+        { source_id: a.id, target_id: b.id, type: EdgeType.BasedOn },
         { source_id: a.id, target_id: 'nonexistent', type: EdgeType.Causes },
-        { source_id: b.id, target_id: a.id, type: EdgeType.Supports },
+        { source_id: b.id, target_id: a.id, type: EdgeType.BasedOn },
       ]),
     ).toThrow(/FOREIGN KEY/i);
 
@@ -298,7 +298,7 @@ describe('batch createEdge', () => {
     const inputs = Array.from({ length: 51 }, () => ({
       source_id: 'a',
       target_id: 'b',
-      type: EdgeType.Extends,
+      type: EdgeType.BasedOn,
     }));
 
     expect(() => createEdge(db, inputs)).toThrow('max batch size exceeded');
@@ -355,7 +355,7 @@ describe('minimal response', () => {
     const results = createEdge(
       db,
       [
-        { source_id: a.id, target_id: b.id, type: EdgeType.Extends },
+        { source_id: a.id, target_id: b.id, type: EdgeType.BasedOn },
         { source_id: b.id, target_id: c.id, type: EdgeType.DependsOn },
       ],
       { minimal: true },

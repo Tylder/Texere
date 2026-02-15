@@ -31,7 +31,6 @@ import {
 import {
   detectSearchMode,
   search as searchImpl,
-  searchBatch as searchBatchImpl,
 } from './search.js';
 import {
   about as aboutImpl,
@@ -44,8 +43,6 @@ import {
 import {
   EdgeType,
   NodeRole,
-  NodeScope,
-  NodeStatus,
   NodeType,
   type Edge,
   type Node,
@@ -167,10 +164,6 @@ export class Texere {
     return searchImpl(this.db, options);
   }
 
-  searchBatch(queries: SearchOptions[]): SearchResult[][] {
-    return searchBatchImpl(this.db, queries);
-  }
-
   /**
    * Traverse the graph from a starting node
    * @param options - Traversal options
@@ -238,6 +231,6 @@ export type {
   NodeTag,
 };
 
-export { EdgeType, NodeRole, NodeScope, NodeStatus, NodeType };
+export { EdgeType, NodeRole, NodeType };
 export { isValidTypeRole, VALID_ROLES_BY_TYPE } from './types.js';
 export { sanitizeFtsQueryStrict } from './sanitize.js';

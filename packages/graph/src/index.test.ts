@@ -190,7 +190,7 @@ describe('Texere facade', () => {
         {
           source_id: node1.id,
           target_id: node2.id,
-          type: EdgeType.Extends,
+          type: EdgeType.BasedOn,
         },
         {
           source_id: node2.id,
@@ -222,7 +222,7 @@ describe('Texere facade', () => {
       const edge = db.createEdge({
         source_id: source.id,
         target_id: target.id,
-        type: EdgeType.Extends,
+        type: EdgeType.BasedOn,
       });
 
       const deleted = db.deleteEdge(edge.id);
@@ -247,7 +247,7 @@ describe('Texere facade', () => {
       db.createEdge({
         source_id: source.id,
         target_id: target.id,
-        type: EdgeType.Extends,
+        type: EdgeType.BasedOn,
       });
 
       const edges = db.getEdgesForNode(source.id, 'outgoing');
@@ -270,30 +270,6 @@ describe('Texere facade', () => {
       expect(results[0].title).toContain('Authentication');
     });
 
-    it('searchBatch() delegates to internal module', () => {
-      db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Auth task',
-        content: 'Content',
-      });
-
-      db.storeNode({
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Logging task',
-        content: 'Content',
-      });
-
-      const results = db.searchBatch([
-        { query: 'auth', mode: 'keyword' },
-        { query: 'logging', mode: 'keyword' },
-      ]);
-
-      expect(results).toHaveLength(2);
-      expect(results[0].length).toBeGreaterThan(0);
-      expect(results[1].length).toBeGreaterThan(0);
-    });
 
     it('traverse() delegates to internal module', () => {
       const node1 = db.storeNode({
@@ -313,7 +289,7 @@ describe('Texere facade', () => {
       db.createEdge({
         source_id: node1.id,
         target_id: node2.id,
-        type: EdgeType.Extends,
+        type: EdgeType.BasedOn,
       });
 
       const results = db.traverse({ startId: node1.id, direction: 'outgoing' });
@@ -470,7 +446,7 @@ describe('Texere facade', () => {
         {
           source_id: source.id,
           target_id: target.id,
-          type: EdgeType.Extends,
+          type: EdgeType.BasedOn,
         },
         { minimal: true },
       );
@@ -499,7 +475,7 @@ describe('Texere facade', () => {
           {
             source_id: node1.id,
             target_id: node2.id,
-            type: EdgeType.Extends,
+            type: EdgeType.BasedOn,
           },
           {
             source_id: node2.id,
@@ -556,7 +532,7 @@ describe('Texere facade', () => {
         db.createEdge({
           source_id: 'non-existent-id',
           target_id: target.id,
-          type: EdgeType.Extends,
+          type: EdgeType.BasedOn,
         }),
       ).toThrow(/foreign key/i);
     });
@@ -573,7 +549,7 @@ describe('Texere facade', () => {
         db.createEdge({
           source_id: source.id,
           target_id: 'non-existent-id',
-          type: EdgeType.Extends,
+          type: EdgeType.BasedOn,
         }),
       ).toThrow(/foreign key/i);
     });

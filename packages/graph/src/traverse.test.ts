@@ -54,7 +54,7 @@ describe('traverse', () => {
 
     createEdge(db, { source_id: start.id, target_id: depth1.id, type: EdgeType.Resolves });
     createEdge(db, { source_id: depth1.id, target_id: depth2.id, type: EdgeType.DependsOn });
-    createEdge(db, { source_id: depth2.id, target_id: depth3.id, type: EdgeType.Extends });
+    createEdge(db, { source_id: depth2.id, target_id: depth3.id, type: EdgeType.BasedOn });
 
     const result = traverse(db, { startId: start.id, direction: 'outgoing', maxDepth: 2 });
     const depthById = toDepthById(result);
@@ -229,9 +229,9 @@ describe('traverse', () => {
       content: 'C',
     });
 
-    createEdge(db, { source_id: a.id, target_id: b.id, type: EdgeType.Extends });
-    createEdge(db, { source_id: b.id, target_id: c.id, type: EdgeType.Extends });
-    createEdge(db, { source_id: c.id, target_id: a.id, type: EdgeType.Extends });
+    createEdge(db, { source_id: a.id, target_id: b.id, type: EdgeType.BasedOn });
+    createEdge(db, { source_id: b.id, target_id: c.id, type: EdgeType.BasedOn });
+    createEdge(db, { source_id: c.id, target_id: a.id, type: EdgeType.BasedOn });
 
     const result = traverse(db, { startId: a.id, direction: 'outgoing', maxDepth: 4 });
     const ids = new Set(result.map((row) => row.node.id));
@@ -304,10 +304,10 @@ describe('traverse', () => {
       content: 'D4',
     });
 
-    createEdge(db, { source_id: start.id, target_id: d1.id, type: EdgeType.Extends });
-    createEdge(db, { source_id: d1.id, target_id: d2.id, type: EdgeType.Extends });
-    createEdge(db, { source_id: d2.id, target_id: d3.id, type: EdgeType.Extends });
-    createEdge(db, { source_id: d3.id, target_id: d4.id, type: EdgeType.Extends });
+    createEdge(db, { source_id: start.id, target_id: d1.id, type: EdgeType.BasedOn });
+    createEdge(db, { source_id: d1.id, target_id: d2.id, type: EdgeType.BasedOn });
+    createEdge(db, { source_id: d2.id, target_id: d3.id, type: EdgeType.BasedOn });
+    createEdge(db, { source_id: d3.id, target_id: d4.id, type: EdgeType.BasedOn });
 
     const result = traverse(db, { startId: start.id, direction: 'outgoing' });
     const ids = new Set(result.map((row) => row.node.id));
@@ -332,7 +332,7 @@ describe('traverse', () => {
       createEdge(db, {
         source_id: nodes[idx]!.id,
         target_id: nodes[idx + 1]!.id,
-        type: EdgeType.Extends,
+        type: EdgeType.BasedOn,
       });
     }
 
@@ -370,7 +370,7 @@ describe('about', () => {
       content: 'Decision referencing SQLite',
     });
 
-    createEdge(db, { source_id: seed.id, target_id: neighbor.id, type: EdgeType.Extends });
+    createEdge(db, { source_id: seed.id, target_id: neighbor.id, type: EdgeType.BasedOn });
 
     const result = about(db, { query: 'SQLite', maxDepth: 2, direction: 'outgoing' });
     const ids = new Set(result.map((row) => row.node.id));
@@ -397,7 +397,7 @@ describe('about', () => {
     createEdge(db, {
       source_id: seed.id,
       target_id: matchingNeighbor.id,
-      type: EdgeType.Extends,
+      type: EdgeType.BasedOn,
     });
 
     const result = about(db, { query: 'SQLite', maxDepth: 2 });
