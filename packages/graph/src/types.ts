@@ -1,42 +1,36 @@
-// Core node types (7 values)
+// Core node types (5 values)
 export enum NodeType {
   Knowledge = 'knowledge',
   Issue = 'issue',
   Action = 'action',
   Artifact = 'artifact',
-  Context = 'context',
-  Meta = 'meta',
   Source = 'source',
 }
 
-// Node roles (26 values) - constrained by type
+// Node roles (20 values) - constrained by type
 export enum NodeRole {
-  // Knowledge roles (7)
+  // Knowledge roles (6)
   Constraint = 'constraint',
   Decision = 'decision',
   Finding = 'finding',
   Pitfall = 'pitfall',
   Principle = 'principle',
   Requirement = 'requirement',
-  Research = 'research',
 
   // Issue roles (2)
   Error = 'error',
   Problem = 'problem',
 
-  // Action roles (5)
+  // Action roles (4)
   Command = 'command',
-  Fix = 'fix',
   Solution = 'solution',
   Task = 'task',
   Workflow = 'workflow',
 
-  // Artifact roles (6)
+  // Artifact roles (4)
   CodePattern = 'code_pattern',
   Concept = 'concept',
   Example = 'example',
-  FileContext = 'file_context',
-  Project = 'project',
   Technology = 'technology',
 
   // Source roles (4)
@@ -44,46 +38,21 @@ export enum NodeRole {
   FilePath = 'file_path',
   Repository = 'repository',
   ApiDoc = 'api_doc',
-
-  // Context roles (1)
-  Conversation = 'conversation',
-
-  // Meta roles (1)
-  System = 'system',
 }
 
-export enum NodeStatus {
-  Proposed = 'proposed',
-  Active = 'active',
-  Deprecated = 'deprecated',
-  Invalidated = 'invalidated',
-}
-
-export enum NodeScope {
-  Project = 'project',
-  Module = 'module',
-  File = 'file',
-  Session = 'session',
-}
-
-// Edge types (16 values)
+// Edge types (11 values)
 export enum EdgeType {
-  About = 'ABOUT',
   AlternativeTo = 'ALTERNATIVE_TO',
   AnchoredTo = 'ANCHORED_TO',
   BasedOn = 'BASED_ON',
   Causes = 'CAUSES',
-  Constrains = 'CONSTRAINS',
   Contradicts = 'CONTRADICTS',
   DependsOn = 'DEPENDS_ON',
   ExampleOf = 'EXAMPLE_OF',
-  Extends = 'EXTENDS',
-  IsA = 'IS_A',
   PartOf = 'PART_OF',
   RelatedTo = 'RELATED_TO',
   Replaces = 'REPLACES',
   Resolves = 'RESOLVES',
-  Supports = 'SUPPORTS',
 }
 
 // Type-role constraint matrix
@@ -95,12 +64,10 @@ export const VALID_ROLES_BY_TYPE: Record<NodeType, NodeRole[]> = {
     NodeRole.Pitfall,
     NodeRole.Principle,
     NodeRole.Requirement,
-    NodeRole.Research,
   ],
   [NodeType.Issue]: [NodeRole.Error, NodeRole.Problem],
   [NodeType.Action]: [
     NodeRole.Command,
-    NodeRole.Fix,
     NodeRole.Solution,
     NodeRole.Task,
     NodeRole.Workflow,
@@ -109,12 +76,8 @@ export const VALID_ROLES_BY_TYPE: Record<NodeType, NodeRole[]> = {
     NodeRole.CodePattern,
     NodeRole.Concept,
     NodeRole.Example,
-    NodeRole.FileContext,
-    NodeRole.Project,
     NodeRole.Technology,
   ],
-  [NodeType.Context]: [NodeRole.Conversation],
-  [NodeType.Meta]: [NodeRole.System],
   [NodeType.Source]: [NodeRole.WebUrl, NodeRole.FilePath, NodeRole.Repository, NodeRole.ApiDoc],
 };
 
@@ -133,8 +96,6 @@ export interface Node {
   tags_json: string;
   importance: number;
   confidence: number;
-  status?: NodeStatus;
-  scope?: NodeScope;
   created_at: number;
   invalidated_at: number | null;
 }
@@ -144,8 +105,6 @@ export interface Edge {
   source_id: string;
   target_id: string;
   type: EdgeType;
-  strength: number;
-  confidence: number;
   created_at: number;
 }
 

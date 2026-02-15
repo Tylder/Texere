@@ -6,10 +6,8 @@ CREATE TABLE IF NOT EXISTS nodes (
   title TEXT NOT NULL,
   content TEXT NOT NULL,
   tags_json TEXT NOT NULL DEFAULT '[]',
-  importance REAL NOT NULL DEFAULT 0.5,
-  confidence REAL NOT NULL DEFAULT 0.8,
-  status TEXT NOT NULL DEFAULT 'active',
-  scope TEXT NOT NULL DEFAULT 'project',
+  importance REAL NOT NULL,
+  confidence REAL NOT NULL,
   created_at INTEGER NOT NULL,
   invalidated_at INTEGER
 );
@@ -19,8 +17,6 @@ CREATE TABLE IF NOT EXISTS edges (
   source_id TEXT NOT NULL REFERENCES nodes(id),
   target_id TEXT NOT NULL REFERENCES nodes(id),
   type TEXT NOT NULL,
-  strength REAL NOT NULL DEFAULT 0.5,
-  confidence REAL NOT NULL DEFAULT 0.8,
   created_at INTEGER NOT NULL,
   CHECK (source_id != target_id)
 );
@@ -42,8 +38,6 @@ CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts USING fts5(
 
 CREATE INDEX IF NOT EXISTS idx_nodes_type ON nodes(type) WHERE invalidated_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_nodes_role ON nodes(role) WHERE invalidated_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_nodes_status ON nodes(status) WHERE invalidated_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_nodes_created ON nodes(created_at) WHERE invalidated_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source_id, target_id);
 CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target_id, source_id);
 CREATE INDEX IF NOT EXISTS idx_edges_source_type ON edges(source_id, type);
