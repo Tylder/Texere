@@ -2,40 +2,37 @@
 
 **Knowledge graph database with semantic search for AI agents**
 
-Texere is a SQLite-based knowledge graph with full-text search (FTS5) and semantic search (vector
-embeddings), exposed via the [Model Context Protocol](https://modelcontextprotocol.io) (MCP).
+Texere is an immutable knowledge graph built on SQLite with full-text search (FTS5) and semantic
+search (vector embeddings), exposed via the
+[Model Context Protocol](https://modelcontextprotocol.io) (MCP). It provides persistent,
+cross-session memory for AI agents.
 
 ## Features
 
-- **Immutable node/edge graph** with typed nodes and semantic relationships
-- **Multi-mode search**: Keyword (BM25), semantic (embeddings), and hybrid (RRF fusion)
-- **Graph traversal** with recursive CTEs and depth control
-- **MCP server** exposing 14 tools for graph operations
-- **Type-safe API** with Zod validation and TypeScript throughout
-- **Debounced embedding pipeline** for efficient semantic search
+- **5 node types, 20 roles, 11 edge types** — Typed graph with type-role constraint validation
+- **Multi-mode search** — Keyword (BM25), semantic (embeddings), hybrid (RRF fusion), auto-detection
+- **Graph traversal** — Recursive CTEs with depth control and edge type filtering
+- **15 MCP tools** — Per-type store tools, search, traversal, validation
+- **Immutable design** — Nodes never mutate, only replaced with REPLACES edges
+- **Soft-delete** — Invalidation timestamps preserve history
+- **Debounced embeddings** — Async batch processing for efficient semantic search
 
 ## Quick Start
 
 ### Installation
 
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/texere.git
+git clone https://github.com/danscan/texere.git
 cd texere
 
-# Install dependencies
 pnpm install
-
-# Build all packages
 pnpm build
 ```
 
-### Usage
-
-#### As MCP Server
+### As MCP Server
 
 ```bash
-# Run MCP server with default database location
+# Run with default database location
 ./apps/mcp/dist/index.js
 
 # Or specify custom database path
@@ -55,7 +52,7 @@ Configure in your MCP client (e.g., Claude Desktop):
 }
 ```
 
-#### As Library
+### As Library
 
 ```typescript
 import { Texere, NodeType, NodeRole } from '@texere/graph';
@@ -66,16 +63,17 @@ const db = new Texere('./my-knowledge.db');
 // Store a node
 const node = db.storeNode({
   type: NodeType.Knowledge,
-  role: NodeRole.Finding,
-  title: 'Important Discovery',
-  content: 'Details about the discovery...',
-  tags: ['research', 'insight'],
-  importance: 0.8,
+  role: NodeRole.Decision,
+  title: 'Use SQLite with WAL mode',
+  content: 'Chose SQLite over PostgreSQL because...',
+  tags: ['database', 'architecture'],
+  importance: 0.9,
+  confidence: 0.95,
 });
 
 // Search with semantic mode
 const results = await db.search({
-  query: 'discoveries about machine learning',
+  query: 'database decisions',
   mode: 'semantic',
   limit: 10,
 });
@@ -91,14 +89,85 @@ const neighbors = db.traverse({
 db.close();
 ```
 
+## MCP Tools
+
+The MCP server exposes **15 tools** for graph operations:
+
+**Node CRUD (per-type stores):**
+
+- `texere_store_knowledge` — Store decisions, findings, principles, constraints, pitfalls,
+  requirements
+- `texere_store_issue` — Store problems, errors
+- `texere_store_action` — Store tasks, solutions, commands, workflows
+- `texere_store_artifact` — Store code patterns, concepts, examples, technologies
+- `texere_store_source` — Store web URLs, file paths, repositories, API docs
+- `texere_get_node` — Retrieve node by ID
+- `texere_replace_node` — Replace node (creates REPLACES edge, invalidates old)
+- `texere_invalidate_node` — Soft-delete node
+
+**Edge CRUD:**
+
+- `texere_create_edge` — Create edges (single or batch up to 50)
+- `texere_delete_edge` — Delete edge
+
+**Search & Traversal:**
+
+- `texere_search` — Multi-mode search (keyword/semantic/hybrid)
+- `texere_traverse` — Graph traversal with depth control
+- `texere_about` — Search + traverse (find seeds, explore neighborhood)
+
+**Metadata:**
+
+- `texere_stats` — Database statistics
+- `texere_validate` — Pre-write validation
+
+See [.opencode/skills/texere/SKILL.md](.opencode/skills/texere/SKILL.md) for detailed tool
+documentation.
+
+## Type System
+
+### Node Types (5)
+
+- **Knowledge** — Decisions, constraints, principles, findings, requirements, pitfalls
+- **Issue** — Problems, errors
+- **Action** — Tasks, solutions, commands, workflows
+- **Artifact** — Code patterns, concepts, examples, technologies
+- **Source** — Web URLs, file paths, repositories, API docs
+
+### Node Roles (20)
+
+Roles are constrained by type via validation matrix:
+
+- **Knowledge** (6): constraint, decision, finding, pitfall, principle, requirement
+- **Issue** (2): error, problem
+- **Action** (4): command, solution, task, workflow
+- **Artifact** (4): code_pattern, concept, example, technology
+- **Source** (4): web_url, file_path, repository, api_doc
+
+### Edge Types (11)
+
+- `ALTERNATIVE_TO` — X and Y are options (bidirectional)
+- `ANCHORED_TO` — X is relevant to code file Y
+- `BASED_ON` — X derived from Y
+- `CAUSES` — X leads to Y
+- `CONTRADICTS` — X conflicts with Y (bidirectional)
+- `DEPENDS_ON` — X requires Y
+- `EXAMPLE_OF` — X demonstrates Y
+- `PART_OF` — X is component of Y
+- `RELATED_TO` — X and Y are related (last resort)
+- `REPLACES` — X replaces Y (auto-invalidates Y)
+- `RESOLVES` — X fixes/solves Y
+
+See [packages/graph/src/types.ts](packages/graph/src/types.ts) for complete type definitions.
+
 ## Project Structure
 
-This is a monorepo with the following packages:
+Monorepo with Turbo task orchestration:
 
 ```
 texere/
 ├── apps/
-│   └── mcp/              # MCP server (14 tools over stdio)
+│   └── mcp/              # MCP server (15 tools over stdio)
 ├── packages/
 │   └── graph/            # Core graph library (SQLite + embeddings)
 └── tooling/
@@ -113,12 +182,9 @@ texere/
 - Node.js 20 or later
 - pnpm 10.29.3 or later
 
-### Setup
+### Commands
 
 ```bash
-# Install dependencies
-pnpm install
-
 # Build all packages
 pnpm build
 
@@ -128,8 +194,11 @@ pnpm test:integration   # Full integration tests
 
 # Quality checks
 pnpm lint               # Run oxlint + eslint
+pnpm lint:fix           # Auto-fix linting issues
+pnpm format             # Format code with Prettier
+pnpm format:check       # Check formatting only
 pnpm typecheck          # Type check all packages
-pnpm quality            # Run all checks (format, lint, typecheck, test)
+pnpm quality            # Run all checks (format, lint, typecheck, test:unit)
 ```
 
 ### Development Workflow
@@ -144,80 +213,6 @@ pnpm format
 # Fix linting issues
 pnpm lint:fix
 ```
-
-## MCP Tools
-
-The MCP server exposes 14 tools for graph operations:
-
-**Node CRUD:**
-
-- `texere_store_node` / `texere_store_nodes` — Create nodes (single/batch)
-- `texere_get_node` — Retrieve node by ID
-- `texere_replace_node` — Replace node (creates DEPRECATED_BY edge)
-- `texere_invalidate_node` — Soft-delete node
-
-**Edge CRUD:**
-
-- `texere_create_edge` / `texere_create_edges` — Create edges (single/batch)
-- `texere_delete_edge` — Delete edge
-
-**Search & Traversal:**
-
-- `texere_search` — Multi-mode search (keyword/semantic/hybrid)
-- `texere_search_batch` — Batch search (up to 50 queries)
-- `texere_traverse` — Graph traversal with depth control
-- `texere_about` — Semantic neighborhood (search + traverse)
-
-**Metadata:**
-
-- `texere_stats` — Database statistics
-- `texere_validate` — Pre-write validation
-
-See [apps/mcp/AGENTS.md](apps/mcp/AGENTS.md) for detailed tool documentation.
-
-## Type System
-
-**Node Types:**
-
-- `Knowledge` — Decisions, findings, principles, requirements
-- `Issue` — Problems, errors
-- `Action` — Tasks, solutions, fixes, workflows, commands
-- `Artifact` — Code patterns, file context, examples
-- `Context` — Projects, technologies, concepts
-- `Meta` — Conversations, system metadata
-- `Source` — Web URLs, file paths, repositories, API docs
-
-**Edge Types:**
-
-- `ANCHORED_TO` — Links to file/code location
-- `BASED_ON` — Built upon source material
-- `CAUSES` — Causal relationship
-- `DEPENDS_ON` — Dependency relationship
-- `RELATED_TO` — General association
-- `RESOLVES` — Solution to problem
-- `DEPRECATED_BY` — Replacement relationship
-- ...and 9 more
-
-See [packages/graph/src/types.ts](packages/graph/src/types.ts) for the complete type system.
-
-## Architecture
-
-### Core Design Principles
-
-1. **Immutability** — Nodes are never updated, only replaced (DEPRECATED_BY edge)
-2. **Type Safety** — Type-role validation via constraint matrix
-3. **Batch Operations** — Atomic transactions with 50-item limit
-4. **Prepared Statements** — Cached via WeakMap for performance
-5. **Debounced Embeddings** — Async pipeline with batch processing
-
-### Search Modes
-
-- **Keyword** — FTS5 with BM25 ranking, field weights
-- **Semantic** — Vector similarity via embeddings (384-dim)
-- **Hybrid** — Reciprocal Rank Fusion combining both
-- **Auto** — Mode detection based on query structure
-
-See [packages/graph/AGENTS.md](packages/graph/AGENTS.md) for architecture details.
 
 ## Contributing
 
@@ -243,6 +238,7 @@ See [AGENTS.md](AGENTS.md) for complete development guidelines.
 - [AGENTS.md](AGENTS.md) — Project knowledge base for AI agents
 - [packages/graph/AGENTS.md](packages/graph/AGENTS.md) — Graph library internals
 - [apps/mcp/AGENTS.md](apps/mcp/AGENTS.md) — MCP server architecture
+- [.opencode/skills/texere/SKILL.md](.opencode/skills/texere/SKILL.md) — MCP tool reference
 - [docs/kg-redesign.md](docs/kg-redesign.md) — Design decisions and rationale
 - [docs/node-modeling-test-findings.md](docs/node-modeling-test-findings.md) — Anti-patterns
 
@@ -250,13 +246,11 @@ See [AGENTS.md](AGENTS.md) for complete development guidelines.
 
 [License details to be added]
 
-## Acknowledgments
-
-Built with:
+## Built With
 
 - [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) — Fast SQLite3 bindings
 - [sqlite-vec](https://github.com/asg017/sqlite-vec) — Vector search extension
-- [HuggingFace Transformers.js](https://huggingface.co/docs/transformers.js) — In-browser embeddings
+- [Transformers.js](https://huggingface.co/docs/transformers.js) — In-browser embeddings
 - [Model Context Protocol](https://modelcontextprotocol.io) — AI integration standard
 - [Vitest](https://vitest.dev) — Testing framework
 - [Turbo](https://turbo.build) — Monorepo task runner
