@@ -275,16 +275,39 @@ Example:
 
 Store tasks, solutions, commands, workflows.
 
-| field      | type         | required | notes                                           |
-| ---------- | ------------ | -------- | ----------------------------------------------- |
-| role       | enum         | yes      | "command" \| "solution" \| "task" \| "workflow" |
-| title      | string       | yes      | Short descriptive title                         |
-| content    | string       | yes      | Steps, rationale, expected outcomes             |
-| tags       | string[]     | no       | Tags for categorization                         |
-| importance | number (0-1) | yes      | Priority/criticality                            |
-| confidence | number (0-1) | yes      | Likelihood of success                           |
-| anchor_to  | string[]     | no       | File paths                                      |
-| sources    | string[]     | no       | URLs/file paths                                 |
+| arg     | type         | required | default | notes                                 |
+| ------- | ------------ | -------- | ------- | ------------------------------------- |
+| nodes   | ActionNode[] | yes      | —       | Array of action nodes (1-50)          |
+| edges   | EdgeInput[]  | no       | —       | Edges to create atomically (max 50)   |
+| minimal | boolean      | no       | true    | Return only `{ id }` per node if true |
+
+**ActionNode fields:**
+
+| field      | type         | required | notes                                                        |
+| ---------- | ------------ | -------- | ------------------------------------------------------------ |
+| role       | enum         | yes      | "command" \| "solution" \| "task" \| "workflow"              |
+| title      | string       | yes      | Short descriptive title                                      |
+| content    | string       | yes      | Steps, rationale, expected outcomes                          |
+| tags       | string[]     | no       | Tags for categorization                                      |
+| importance | number (0-1) | yes      | Priority/criticality                                         |
+| confidence | number (0-1) | yes      | Likelihood of success                                        |
+| anchor_to  | string[]     | no       | File paths                                                   |
+| sources    | string[]     | no       | URLs/file paths                                              |
+| temp_id    | string       | no       | Client-assigned ID, scoped to this call. Echoed in response. |
+
+**Optional edges (atomic node+edge creation):**
+
+| field | type        | required | notes                                                   |
+| ----- | ----------- | -------- | ------------------------------------------------------- |
+| edges | EdgeInput[] | no       | Array of edges to create atomically with nodes (max 50) |
+
+**EdgeInput fields:**
+
+| field     | type     | required | notes                                              |
+| --------- | -------- | -------- | -------------------------------------------------- |
+| source_id | string   | yes      | temp_id from this call's nodes OR existing real ID |
+| target_id | string   | yes      | temp_id from this call's nodes OR existing real ID |
+| type      | EdgeType | yes      | Edge type (11 values, see reference below)         |
 
 Example:
 `texere_store_action({ nodes: [{ role: "solution", title: "Increase connection pool to 20", content: "Scale auth DB pool from 5 to 20 connections. Verified via load test: p99 latency drops from 30s to 200ms.", importance: 0.85, confidence: 0.9, tags: ["auth", "database"] }] })`
@@ -293,16 +316,39 @@ Example:
 
 Store code patterns, concepts, examples, technologies.
 
-| field      | type         | required | notes                                                    |
-| ---------- | ------------ | -------- | -------------------------------------------------------- |
-| role       | enum         | yes      | "code_pattern" \| "concept" \| "example" \| "technology" |
-| title      | string       | yes      | Short descriptive title                                  |
-| content    | string       | yes      | Implementation details, usage patterns                   |
-| tags       | string[]     | no       | Tags for categorization                                  |
-| importance | number (0-1) | yes      | Reusability/relevance                                    |
-| confidence | number (0-1) | yes      | How proven is this pattern                               |
-| anchor_to  | string[]     | no       | File paths                                               |
-| sources    | string[]     | no       | URLs/file paths                                          |
+| arg     | type           | required | default | notes                                 |
+| ------- | -------------- | -------- | ------- | ------------------------------------- |
+| nodes   | ArtifactNode[] | yes      | —       | Array of artifact nodes (1-50)        |
+| edges   | EdgeInput[]    | no       | —       | Edges to create atomically (max 50)   |
+| minimal | boolean        | no       | true    | Return only `{ id }` per node if true |
+
+**ArtifactNode fields:**
+
+| field      | type         | required | notes                                                        |
+| ---------- | ------------ | -------- | ------------------------------------------------------------ |
+| role       | enum         | yes      | "code_pattern" \| "concept" \| "example" \| "technology"     |
+| title      | string       | yes      | Short descriptive title                                      |
+| content    | string       | yes      | Implementation details, usage patterns                       |
+| tags       | string[]     | no       | Tags for categorization                                      |
+| importance | number (0-1) | yes      | Reusability/relevance                                        |
+| confidence | number (0-1) | yes      | How proven is this pattern                                   |
+| anchor_to  | string[]     | no       | File paths                                                   |
+| sources    | string[]     | no       | URLs/file paths                                              |
+| temp_id    | string       | no       | Client-assigned ID, scoped to this call. Echoed in response. |
+
+**Optional edges (atomic node+edge creation):**
+
+| field | type        | required | notes                                                   |
+| ----- | ----------- | -------- | ------------------------------------------------------- |
+| edges | EdgeInput[] | no       | Array of edges to create atomically with nodes (max 50) |
+
+**EdgeInput fields:**
+
+| field     | type     | required | notes                                              |
+| --------- | -------- | -------- | -------------------------------------------------- |
+| source_id | string   | yes      | temp_id from this call's nodes OR existing real ID |
+| target_id | string   | yes      | temp_id from this call's nodes OR existing real ID |
+| type      | EdgeType | yes      | Edge type (11 values, see reference below)         |
 
 Example:
 `texere_store_artifact({ nodes: [{ role: "code_pattern", title: "WeakMap statement cache", content: "Use WeakMap<Database, Statements> to cache prepared statements. WeakMap allows GC when db is closed. Pattern used in nodes.ts, edges.ts, search.ts.", importance: 0.7, confidence: 0.95, anchor_to: ["packages/graph/src/nodes.ts"] }] })`
@@ -311,19 +357,94 @@ Example:
 
 Store web URLs, file paths, repositories, API docs.
 
-| field      | type         | required | notes                                                 |
-| ---------- | ------------ | -------- | ----------------------------------------------------- |
-| role       | enum         | yes      | "web_url" \| "file_path" \| "repository" \| "api_doc" |
-| title      | string       | yes      | Short descriptive title                               |
-| content    | string       | yes      | URL, path, or description of the source               |
-| tags       | string[]     | no       | Tags for categorization                               |
-| importance | number (0-1) | yes      | Authority/relevance of source                         |
-| confidence | number (0-1) | yes      | How trustworthy is this source                        |
-| anchor_to  | string[]     | no       | File paths                                            |
-| sources    | string[]     | no       | URLs/file paths                                       |
+| arg     | type         | required | default | notes                                 |
+| ------- | ------------ | -------- | ------- | ------------------------------------- |
+| nodes   | SourceNode[] | yes      | —       | Array of source nodes (1-50)          |
+| edges   | EdgeInput[]  | no       | —       | Edges to create atomically (max 50)   |
+| minimal | boolean      | no       | true    | Return only `{ id }` per node if true |
+
+**SourceNode fields:**
+
+| field      | type         | required | notes                                                        |
+| ---------- | ------------ | -------- | ------------------------------------------------------------ |
+| role       | enum         | yes      | "web_url" \| "file_path" \| "repository" \| "api_doc"        |
+| title      | string       | yes      | Short descriptive title                                      |
+| content    | string       | yes      | URL, path, or description of the source                      |
+| tags       | string[]     | no       | Tags for categorization                                      |
+| importance | number (0-1) | yes      | Authority/relevance of source                                |
+| confidence | number (0-1) | yes      | How trustworthy is this source                               |
+| anchor_to  | string[]     | no       | File paths                                                   |
+| sources    | string[]     | no       | URLs/file paths                                              |
+| temp_id    | string       | no       | Client-assigned ID, scoped to this call. Echoed in response. |
+
+**Optional edges (atomic node+edge creation):**
+
+| field | type        | required | notes                                                   |
+| ----- | ----------- | -------- | ------------------------------------------------------- |
+| edges | EdgeInput[] | no       | Array of edges to create atomically with nodes (max 50) |
+
+**EdgeInput fields:**
+
+| field     | type     | required | notes                                              |
+| --------- | -------- | -------- | -------------------------------------------------- |
+| source_id | string   | yes      | temp_id from this call's nodes OR existing real ID |
+| target_id | string   | yes      | temp_id from this call's nodes OR existing real ID |
+| type      | EdgeType | yes      | Edge type (11 values, see reference below)         |
 
 Example:
 `texere_store_source({ nodes: [{ role: "web_url", title: "SQLite WAL documentation", content: "https://www.sqlite.org/wal.html — Official SQLite WAL mode documentation covering journal modes, checkpointing, and concurrency semantics.", importance: 0.8, confidence: 1.0, tags: ["sqlite", "docs"] }] })`
+
+### Inline Edges: Atomic Node+Edge Creation
+
+All 5 store tools support creating edges alongside nodes in a single atomic call. This eliminates
+within-type ID bookkeeping.
+
+**How temp_id resolution works:**
+
+- Assign `temp_id` strings to nodes in your call (e.g., "d1", "f1")
+- Reference these temp_ids in the `edges` array's `source_id` and `target_id`
+- Server resolves temp_ids to real IDs within the transaction
+- Response echoes `temp_id` on each node alongside the real `id`
+- Edges in response show resolved real IDs
+
+**Edge references can be:**
+
+1. A temp_id from this call's nodes → resolved to generated real ID
+2. An existing real ID in the database → passed through as-is
+
+**temp_ids are call-scoped only.** They don't persist across calls.
+
+**Example:**
+
+```
+texere_store_knowledge({
+  nodes: [
+    { temp_id: "d1", role: "decision", title: "Use Hono", content: "...", importance: 0.9, confidence: 0.95 },
+    { temp_id: "f1", role: "finding", title: "Hono benchmarks", content: "...", importance: 0.7, confidence: 0.9 }
+  ],
+  edges: [
+    { source_id: "d1", target_id: "f1", type: "BASED_ON" }
+  ]
+})
+→ {
+  nodes: [{ id: "abc", temp_id: "d1" }, { id: "def", temp_id: "f1" }],
+  edges: [{ id: "edge-1", source_id: "abc", target_id: "def", type: "BASED_ON" }]
+}
+```
+
+**Multi-type workflow:**
+
+```
+# Call 1: Knowledge nodes + intra-knowledge edges
+texere_store_knowledge({ nodes: [...], edges: [...] })
+→ { nodes: [{id: "abc", temp_id: "d1"}, ...], edges: [...] }
+
+# Call 2: Artifact nodes + edges to knowledge nodes (via real IDs from call 1)
+texere_store_artifact({
+  nodes: [{ temp_id: "c1", role: "concept", ... }],
+  edges: [{ source_id: "c1", target_id: "abc", type: "PART_OF" }]
+})
+```
 
 ### texere_create_edge
 
@@ -463,7 +584,8 @@ RELATED_TO (last resort)
 ## Limits
 
 - Batch nodes: max 50 per store call
-- Batch edges: max 50 per create call
+- Inline edges: max 50 per store call
+- Batch edges: max 50 per create_edge call
 - Search limit: max 100
 - Traverse depth: max 5
 - About depth: max 5
