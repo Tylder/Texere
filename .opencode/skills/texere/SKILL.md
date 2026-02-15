@@ -196,6 +196,7 @@ mechanisms for constraints, traps+fixes for pitfalls.
 | arg     | type            | required | default | notes                                 |
 | ------- | --------------- | -------- | ------- | ------------------------------------- |
 | nodes   | KnowledgeNode[] | yes      | —       | Array of knowledge nodes (1-50)       |
+| edges   | EdgeInput[]     | no       | —       | Edges to create atomically (max 50)   |
 | minimal | boolean         | no       | true    | Return only `{ id }` per node if true |
 
 **KnowledgeNode fields:**
@@ -210,6 +211,21 @@ mechanisms for constraints, traps+fixes for pitfalls.
 | confidence | number (0-1) | yes      | How certain are you                                                                  |
 | anchor_to  | string[]     | no       | File paths (auto-creates ANCHORED_TO edges)                                          |
 | sources    | string[]     | no       | URLs/file paths (auto-creates provenance Source nodes + edges)                       |
+| temp_id    | string       | no       | Client-assigned ID, scoped to this call. Echoed in response.                         |
+
+**Optional edges (atomic node+edge creation):**
+
+| field | type        | required | notes                                                   |
+| ----- | ----------- | -------- | ------------------------------------------------------- |
+| edges | EdgeInput[] | no       | Array of edges to create atomically with nodes (max 50) |
+
+**EdgeInput fields:**
+
+| field     | type     | required | notes                                              |
+| --------- | -------- | -------- | -------------------------------------------------- |
+| source_id | string   | yes      | temp_id from this call's nodes OR existing real ID |
+| target_id | string   | yes      | temp_id from this call's nodes OR existing real ID |
+| type      | EdgeType | yes      | Edge type (11 values, see reference below)         |
 
 Example:
 `texere_store_knowledge({ nodes: [{ role: "decision", title: "Use SQLite with WAL", content: "Chose SQLite over PostgreSQL because...", importance: 0.9, confidence: 0.95, tags: ["db"], anchor_to: ["src/db.ts"] }] })`
@@ -218,16 +234,39 @@ Example:
 
 Store problems and errors.
 
-| field      | type         | required | notes                             |
-| ---------- | ------------ | -------- | --------------------------------- |
-| role       | enum         | yes      | "error" \| "problem"              |
-| title      | string       | yes      | Short descriptive title           |
-| content    | string       | yes      | Include symptoms, impact, context |
-| tags       | string[]     | no       | Tags for categorization           |
-| importance | number (0-1) | yes      | Severity of the issue             |
-| confidence | number (0-1) | yes      | How certain is this an issue      |
-| anchor_to  | string[]     | no       | File paths                        |
-| sources    | string[]     | no       | URLs/file paths                   |
+| arg     | type        | required | default | notes                                 |
+| ------- | ----------- | -------- | ------- | ------------------------------------- |
+| nodes   | IssueNode[] | yes      | —       | Array of issue nodes (1-50)           |
+| edges   | EdgeInput[] | no       | —       | Edges to create atomically (max 50)   |
+| minimal | boolean     | no       | true    | Return only `{ id }` per node if true |
+
+**IssueNode fields:**
+
+| field      | type         | required | notes                                                        |
+| ---------- | ------------ | -------- | ------------------------------------------------------------ |
+| role       | enum         | yes      | "error" \| "problem"                                         |
+| title      | string       | yes      | Short descriptive title                                      |
+| content    | string       | yes      | Include symptoms, impact, context                            |
+| tags       | string[]     | no       | Tags for categorization                                      |
+| importance | number (0-1) | yes      | Severity of the issue                                        |
+| confidence | number (0-1) | yes      | How certain is this an issue                                 |
+| anchor_to  | string[]     | no       | File paths                                                   |
+| sources    | string[]     | no       | URLs/file paths                                              |
+| temp_id    | string       | no       | Client-assigned ID, scoped to this call. Echoed in response. |
+
+**Optional edges (atomic node+edge creation):**
+
+| field | type        | required | notes                                                   |
+| ----- | ----------- | -------- | ------------------------------------------------------- |
+| edges | EdgeInput[] | no       | Array of edges to create atomically with nodes (max 50) |
+
+**EdgeInput fields:**
+
+| field     | type     | required | notes                                              |
+| --------- | -------- | -------- | -------------------------------------------------- |
+| source_id | string   | yes      | temp_id from this call's nodes OR existing real ID |
+| target_id | string   | yes      | temp_id from this call's nodes OR existing real ID |
+| type      | EdgeType | yes      | Edge type (11 values, see reference below)         |
 
 Example:
 `texere_store_issue({ nodes: [{ role: "problem", title: "Auth timeout under load", content: "Users experience 30s timeouts during peak hours (>100 concurrent logins). Root cause: connection pool exhaustion.", importance: 0.8, confidence: 0.9, tags: ["auth", "performance"] }] })`

@@ -71,6 +71,32 @@ const node = db.storeNode({
   confidence: 0.95,
 });
 
+// Atomic nodes + edges with temp_id
+const result = await db.storeNodesWithEdges(
+  [
+    {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      temp_id: 'd1',
+      title: 'Use Hono',
+      content: '...',
+      importance: 0.9,
+      confidence: 0.95,
+    },
+    {
+      type: NodeType.Knowledge,
+      role: NodeRole.Finding,
+      temp_id: 'f1',
+      title: 'Benchmarks',
+      content: '...',
+      importance: 0.7,
+      confidence: 0.9,
+    },
+  ],
+  [{ source_id: 'd1', target_id: 'f1', type: EdgeType.BasedOn }],
+);
+// result.nodes[0].temp_id === 'd1', result.edges[0].source_id === result.nodes[0].id
+
 // Search with semantic mode
 const results = await db.search({
   query: 'database decisions',
@@ -93,7 +119,7 @@ db.close();
 
 The MCP server exposes **15 tools** for graph operations:
 
-**Node CRUD (per-type stores):**
+**Node CRUD (per-type stores + inline edges):**
 
 - `texere_store_knowledge` — Store decisions, findings, principles, constraints, pitfalls,
   requirements
@@ -101,6 +127,10 @@ The MCP server exposes **15 tools** for graph operations:
 - `texere_store_action` — Store tasks, solutions, commands, workflows
 - `texere_store_artifact` — Store code patterns, concepts, examples, technologies
 - `texere_store_source` — Store web URLs, file paths, repositories, API docs
+
+All store tools support `temp_id` for call-scoped node identification and optional `edges` array for
+atomic node+edge creation in a single tool call.
+
 - `texere_get_node` — Retrieve node by ID
 - `texere_replace_node` — Replace node (creates REPLACES edge, invalidates old)
 - `texere_invalidate_node` — Soft-delete node

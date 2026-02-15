@@ -885,5 +885,27 @@ describe('MCP server integration', () => {
         expect(hasTopLevelUnion(schema)).toBe(false);
       }
     });
+
+    it('tool schemas include edges property without anyOf/oneOf/allOf', async () => {
+      const listToolsResult = await listToolsViaServer(mcp);
+      const storeTools = listToolsResult.tools.filter(
+        (t) =>
+          t.name && typeof t.name === 'string' && (t.name as string).startsWith('texere_store_'),
+      );
+
+      expect(storeTools).toHaveLength(5);
+
+      for (const tool of storeTools) {
+        const schema = tool.inputSchema as Record<string, unknown>;
+
+        // Verify edges property exists
+        const properties = schema.properties as Record<string, unknown> | undefined;
+        expect(properties).toBeDefined();
+        expect(properties).toHaveProperty('edges');
+
+        // Verify no forbidden union keywords at top level
+        expect(hasTopLevelUnion(schema)).toBe(false);
+      }
+    });
   });
 });

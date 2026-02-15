@@ -47,7 +47,8 @@ texere/
 ### Core Exports
 
 - **@texere/graph**: `Texere` class (main API)
-  - Node CRUD: `storeNode()`, `getNode()`, `replaceNode()`, `invalidateNode()`
+  - Node CRUD: `storeNode()`, `storeNodesWithEdges()`, `getNode()`, `replaceNode()`,
+    `invalidateNode()`
   - Edge CRUD: `createEdge()`, `deleteEdge()`, `getEdgesForNode()`
   - Search: `search()`, `about()`
   - Traversal: `traverse()`

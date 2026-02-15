@@ -909,4 +909,232 @@ describe('Texere MCP tools', () => {
     expect(nodes[0].title).toBeUndefined();
     expect(nodes[0].content).toBeUndefined();
   });
+
+  it('store_knowledge with temp_id + edges creates nodes and edges atomically', async () => {
+    const result = await mcp.callTool('texere_store_knowledge', {
+      nodes: [
+        {
+          temp_id: 'd1',
+          role: 'decision',
+          title: 'Use Hono',
+          content: 'Chose Hono because...',
+          importance: 0.9,
+          confidence: 0.95,
+          tags: ['web', 'framework'],
+        },
+        {
+          temp_id: 'f1',
+          role: 'finding',
+          title: 'Hono benchmarks',
+          content: 'Hono is 3x faster...',
+          importance: 0.7,
+          confidence: 0.9,
+          tags: ['benchmark'],
+        },
+      ],
+      edges: [{ source_id: 'd1', target_id: 'f1', type: EdgeType.BasedOn }],
+      minimal: false,
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).toMatchObject({
+      nodes: [
+        { temp_id: 'd1', type: NodeType.Knowledge, role: NodeRole.Decision, title: 'Use Hono' },
+        {
+          temp_id: 'f1',
+          type: NodeType.Knowledge,
+          role: NodeRole.Finding,
+          title: 'Hono benchmarks',
+        },
+      ],
+      edges: [{ type: EdgeType.BasedOn }],
+    });
+    // Verify temp_id echoed and edge has real IDs
+    expect(result.structuredContent).toHaveProperty('nodes');
+    const nodes = (result.structuredContent as { nodes: Array<Record<string, unknown>> }).nodes;
+    expect(nodes[0]).toHaveProperty('temp_id', 'd1');
+    expect(nodes[0]).toHaveProperty('id');
+    expect(nodes[1]).toHaveProperty('temp_id', 'f1');
+    expect(nodes[1]).toHaveProperty('id');
+
+    const edges = (result.structuredContent as { edges: Array<Record<string, unknown>> }).edges;
+    expect(edges[0]).toHaveProperty('source_id');
+    expect(edges[0]).toHaveProperty('target_id');
+    expect(edges[0].source_id).toBe(nodes[0].id);
+    expect(edges[0].target_id).toBe(nodes[1].id);
+  });
+
+  it('store_action with temp_id + edges works', async () => {
+    const result = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          temp_id: 't1',
+          role: 'task',
+          title: 'Implement feature',
+          content: 'Build new feature',
+          importance: 0.8,
+          confidence: 0.9,
+        },
+        {
+          temp_id: 's1',
+          role: 'solution',
+          title: 'Use async/await',
+          content: 'Simplifies async code',
+          importance: 0.7,
+          confidence: 0.95,
+        },
+      ],
+      edges: [{ source_id: 's1', target_id: 't1', type: EdgeType.Resolves }],
+      minimal: false,
+    });
+
+    expect(result.isError).toBeUndefined();
+    const nodes = (result.structuredContent as { nodes: Array<Record<string, unknown>> }).nodes;
+    const edges = (result.structuredContent as { edges: Array<Record<string, unknown>> }).edges;
+
+    expect(nodes).toHaveLength(2);
+    expect(nodes[0]).toHaveProperty('temp_id', 't1');
+    expect(nodes[1]).toHaveProperty('temp_id', 's1');
+    expect(edges).toHaveLength(1);
+    expect(edges[0].type).toBe(EdgeType.Resolves);
+  });
+
+  it('store_artifact with edge to existing node works', async () => {
+    // Pre-create a knowledge node
+    const knowledgeResult = await mcp.callTool('texere_store_knowledge', {
+      nodes: [
+        {
+          role: 'decision',
+          title: 'Use SQLite',
+          content: 'Chose SQLite for embedded database',
+          importance: 0.9,
+          confidence: 0.95,
+        },
+      ],
+      minimal: false,
+    });
+    const knowledgeId = (knowledgeResult.structuredContent as { nodes: Array<{ id: string }> })
+      .nodes[0].id;
+
+    // Create artifact with edge to existing knowledge node
+    const result = await mcp.callTool('texere_store_artifact', {
+      nodes: [
+        {
+          temp_id: 'c1',
+          role: 'concept',
+          title: 'WAL mode',
+          content: 'Write-Ahead Logging...',
+          importance: 0.8,
+          confidence: 0.9,
+        },
+      ],
+      edges: [{ source_id: 'c1', target_id: knowledgeId, type: EdgeType.PartOf }],
+      minimal: false,
+    });
+
+    expect(result.isError).toBeUndefined();
+    const edges = (result.structuredContent as { edges: Array<Record<string, unknown>> }).edges;
+    expect(edges[0].target_id).toBe(knowledgeId);
+  });
+
+  it('store_issue with temp_id but no edges works (backward compat)', async () => {
+    const result = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          temp_id: 'e1',
+          role: 'error',
+          title: 'Timeout error',
+          content: 'Connection timeout...',
+          importance: 0.8,
+          confidence: 0.9,
+        },
+      ],
+      minimal: false,
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).toHaveProperty('nodes');
+    const nodes = (result.structuredContent as { nodes: Array<Record<string, unknown>> }).nodes;
+    expect(nodes[0]).toHaveProperty('temp_id', 'e1');
+    expect(result.structuredContent).not.toHaveProperty('edges');
+  });
+
+  it('store_source without temp_id or edges works identically to before', async () => {
+    const result = await mcp.callTool('texere_store_source', {
+      nodes: [
+        {
+          role: 'web_url',
+          title: 'SQLite docs',
+          content: 'https://sqlite.org',
+          importance: 0.7,
+          confidence: 1.0,
+        },
+      ],
+      minimal: false,
+    });
+
+    expect(result.isError).toBeUndefined();
+    const nodes = (result.structuredContent as { nodes: Array<Record<string, unknown>> }).nodes;
+    expect(nodes[0]).toHaveProperty('id');
+    expect(nodes[0]).not.toHaveProperty('temp_id');
+    expect(result.structuredContent).not.toHaveProperty('edges');
+  });
+
+  it('all 5 store tools accept edges array in schema', () => {
+    const toolConfigs = [
+      { name: 'texere_store_knowledge', role: 'decision' },
+      { name: 'texere_store_issue', role: 'error' },
+      { name: 'texere_store_action', role: 'task' },
+      { name: 'texere_store_artifact', role: 'concept' },
+      { name: 'texere_store_source', role: 'web_url' },
+    ];
+
+    for (const config of toolConfigs) {
+      const tool = TOOL_DEFINITIONS.find((t) => t.name === config.name);
+      expect(tool).toBeDefined();
+
+      // Valid input with edges should parse successfully
+      const validInput = {
+        nodes: [
+          {
+            role: config.role,
+            title: 'Test',
+            content: 'Test',
+            importance: 0.5,
+            confidence: 0.5,
+          },
+        ],
+        edges: [{ source_id: 'temp1', target_id: 'temp2', type: EdgeType.BasedOn }],
+      };
+
+      const parseResult = tool!.inputSchema.safeParse(validInput);
+      expect(parseResult.success).toBe(true);
+    }
+  });
+
+  it('store_knowledge rejects invalid edge type', async () => {
+    const result = await mcp.callTool('texere_store_knowledge', {
+      nodes: [
+        {
+          role: 'decision',
+          title: 'Test',
+          content: 'Test',
+          importance: 0.5,
+          confidence: 0.5,
+        },
+      ],
+      edges: [
+        {
+          source_id: 'a',
+          target_id: 'b',
+          type: 'INVALID_TYPE' as unknown as EdgeType,
+        },
+      ],
+    });
+
+    expect(result.isError).toBe(true);
+    expect((result.structuredContent as { error: { code: string } }).error.code).toBe(
+      'INVALID_INPUT',
+    );
+  });
 });

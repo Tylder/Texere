@@ -69,6 +69,13 @@ export const toolName: ToolDefinition<typeof inputSchema> = {
 - Use `z.infer<typeof schema>` for type safety
 - `safeParse()` for validation, errors handled by `executeToolDefinition()`
 
+### Inline Edge Support (Store Tools)
+
+- All 5 store tools accept optional `edges` array alongside `nodes`
+- If edges present → calls `db.storeNodesWithEdges()` (atomic)
+- If no edges → calls `db.storeNode()` (backward compatible)
+- `temp_id` on nodes echoed in response for cross-call correlation
+
 ### Snake_case Input → camelCase API
 
 - MCP tools accept `snake_case` (JSON convention)
@@ -128,13 +135,13 @@ return {
 
 ## TOOL ORGANIZATION (15 Tools)
 
-| Category      | Tools                                                                                                             | Batch Support              |
-| ------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| **Node CRUD** | store_knowledge, store_issue, store_action, store_artifact, store_source, get_node, replace_node, invalidate_node | No (single node per call)  |
-| **Edge CRUD** | create_edge, delete_edge                                                                                          | Yes (create_edge up to 50) |
-| **Search**    | search                                                                                                            | No                         |
-| **Graph**     | traverse, about                                                                                                   | No                         |
-| **Meta**      | stats, validate                                                                                                   | No                         |
+| Category      | Tools                                                                                                             | Batch Support                                                        |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **Node CRUD** | store_knowledge, store_issue, store_action, store_artifact, store_source, get_node, replace_node, invalidate_node | Store tools: batch up to 50 nodes + optional inline edges (up to 50) |
+| **Edge CRUD** | create_edge, delete_edge                                                                                          | Yes (create_edge up to 50)                                           |
+| **Search**    | search                                                                                                            | No                                                                   |
+| **Graph**     | traverse, about                                                                                                   | No                                                                   |
+| **Meta**      | stats, validate                                                                                                   | No                                                                   |
 
 ## INTEGRATION WITH @TEXERE/GRAPH
 

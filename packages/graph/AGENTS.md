@@ -59,6 +59,13 @@ const statementsByDb = new WeakMap<Database.Database, Statements>();
 - Max 50 items per batch (enforced)
 - Atomic transactions: all-or-nothing
 
+### Atomic Node+Edge Creation
+
+- `storeNodesWithEdges()` creates nodes and edges in a single transaction
+- temp_ids resolve within the call (call-scoped, not persisted)
+- Delegates to existing `createEdge()` for edges (reuses REPLACES auto-invalidation)
+- Composes with `insertNodeWithAnchors()` — auto-provenance + inline edges in same transaction
+
 ### Auto-Invalidation Pattern
 
 ```typescript
@@ -141,6 +148,32 @@ texere.storeNode([input1, input2, ...]);  // Up to 50
 
 // ❌ 50 separate transactions
 for (const input of inputs) texere.storeNode(input);
+```
+
+### Atomic Nodes + Edges
+
+```typescript
+// Atomic nodes + edges
+const result = texere.storeNodesWithEdges(
+  [
+    {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      temp_id: 'd1',
+      title: '...',
+      content: '...',
+    },
+    {
+      type: NodeType.Knowledge,
+      role: NodeRole.Finding,
+      temp_id: 'f1',
+      title: '...',
+      content: '...',
+    },
+  ],
+  [{ source_id: 'd1', target_id: 'f1', type: EdgeType.BasedOn }],
+);
+// result.nodes[0].temp_id === 'd1', result.edges[0].source_id === result.nodes[0].id
 ```
 
 ### Use Type-Role Validation
