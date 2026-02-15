@@ -13,20 +13,43 @@ import type { ToolCallResult } from './tools/types.js';
 
 type McpServer = ReturnType<typeof createTexereMcpServer>;
 
+// Maps NodeType to per-type store tool name
+const STORE_TOOL_BY_TYPE: Record<string, string> = {
+  [NodeType.Knowledge]: 'texere_store_knowledge',
+  [NodeType.Issue]: 'texere_store_issue',
+  [NodeType.Action]: 'texere_store_action',
+  [NodeType.Artifact]: 'texere_store_artifact',
+  [NodeType.Source]: 'texere_store_source',
+};
+
 const storeNode = async (
   mcp: McpServer,
   overrides: Record<string, unknown> = {},
-): Promise<ToolCallResult> =>
-  mcp.callTool('texere_store_node', {
-    type: NodeType.Action,
-    role: NodeRole.Task,
-    title: 'Default title',
-    content: 'Default content',
-    ...overrides,
+): Promise<ToolCallResult> => {
+  const type = (overrides.type as string) ?? NodeType.Action;
+  const toolName = STORE_TOOL_BY_TYPE[type] ?? 'texere_store_action';
+  const { type: _type, ...rest } = overrides;
+  return mcp.callTool(toolName, {
+    nodes: [
+      {
+        role: (rest.role as string) ?? 'task',
+        title: (rest.title as string) ?? 'Default title',
+        content: (rest.content as string) ?? 'Default content',
+        importance: (rest.importance as number) ?? 0.5,
+        confidence: (rest.confidence as number) ?? 0.8,
+        ...Object.fromEntries(
+          Object.entries(rest).filter(
+            ([k]) => !['role', 'title', 'content', 'importance', 'confidence'].includes(k),
+          ),
+        ),
+      },
+    ],
+    minimal: false,
   });
+};
 
 const getNodeId = (result: Awaited<ReturnType<McpServer['callTool']>>): string =>
-  (result.structuredContent as Record<string, Record<string, string>>).node.id;
+  (result.structuredContent as Record<string, Array<Record<string, string>>>).nodes[0].id;
 
 const listToolsViaServer = async (
   mcp: McpServer,
@@ -68,10 +91,15 @@ describe('MCP server integration', () => {
 
   describe('malformed input handling', () => {
     it('returns INVALID_INPUT with field path when required title is missing', async () => {
-      const result = await mcp.callTool('texere_store_node', {
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        content: 'Missing required title field',
+      const result = await mcp.callTool('texere_store_action', {
+        nodes: [
+          {
+            role: 'task',
+            content: 'Missing required title field',
+            importance: 0.5,
+            confidence: 0.8,
+          },
+        ],
       });
 
       expect(result.isError).toBe(true);
@@ -84,11 +112,16 @@ describe('MCP server integration', () => {
     });
 
     it('returns INVALID_INPUT for null in required string field', async () => {
-      const result = await mcp.callTool('texere_store_node', {
-        type: NodeType.Knowledge,
-        role: NodeRole.Decision,
-        title: null,
-        content: 'Has content but null title',
+      const result = await mcp.callTool('texere_store_knowledge', {
+        nodes: [
+          {
+            role: 'decision',
+            title: null,
+            content: 'Has content but null title',
+            importance: 0.5,
+            confidence: 0.8,
+          },
+        ],
       });
 
       expect(result.isError).toBe(true);
@@ -130,11 +163,16 @@ describe('MCP server integration', () => {
     });
 
     it('returns INVALID_INPUT for empty string in min(1) field', async () => {
-      const result = await mcp.callTool('texere_store_node', {
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: '',
-        content: 'Has content but empty title',
+      const result = await mcp.callTool('texere_store_action', {
+        nodes: [
+          {
+            role: 'task',
+            title: '',
+            content: 'Has content but empty title',
+            importance: 0.5,
+            confidence: 0.8,
+          },
+        ],
       });
 
       expect(result.isError).toBe(true);
@@ -144,12 +182,16 @@ describe('MCP server integration', () => {
     });
 
     it('returns INVALID_INPUT for wrong type in numeric field', async () => {
-      const result = await mcp.callTool('texere_store_node', {
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'Test node',
-        content: 'Content',
-        importance: 'high',
+      const result = await mcp.callTool('texere_store_action', {
+        nodes: [
+          {
+            role: 'task',
+            title: 'Test node',
+            content: 'Content',
+            importance: 'high',
+            confidence: 0.8,
+          },
+        ],
       });
 
       expect(result.isError).toBe(true);
@@ -161,25 +203,36 @@ describe('MCP server integration', () => {
 
   describe('error boundary propagation', () => {
     it('wraps type-role validation errors as TOOL_ERROR with descriptive message', async () => {
-      const result = await mcp.callTool('texere_store_node', {
-        type: NodeType.Knowledge,
-        role: NodeRole.Task,
-        title: 'Invalid combo',
-        content: 'Knowledge type does not allow Task role',
+      // Use Knowledge tool but with 'task' role which is invalid for Knowledge
+      // However per-type tools use z.enum so this will be INVALID_INPUT, not TOOL_ERROR
+      const result = await mcp.callTool('texere_store_knowledge', {
+        nodes: [
+          {
+            role: 'task',
+            title: 'Invalid combo',
+            content: 'Knowledge type does not allow Task role',
+            importance: 0.5,
+            confidence: 0.8,
+          },
+        ],
       });
 
       expect(result.isError).toBe(true);
       const error = (result.structuredContent as { error: { code: string; message: string } })
         .error;
-      expect(error.code).toBe('TOOL_ERROR');
-      expect(error.message).toMatch(/type.*role|invalid/i);
+      // Per-type tools use z.enum for role, so invalid role is caught by Zod as INVALID_INPUT
+      expect(error.code).toBe('INVALID_INPUT');
     });
 
     it('wraps foreign key errors when creating edge with nonexistent node', async () => {
       const result = await mcp.callTool('texere_create_edge', {
-        source_id: 'nonexistent-source-id',
-        target_id: 'nonexistent-target-id',
-        type: EdgeType.RelatedTo,
+        edges: [
+          {
+            source_id: 'nonexistent-source-id',
+            target_id: 'nonexistent-target-id',
+            type: EdgeType.RelatedTo,
+          },
+        ],
       });
 
       expect(result.isError).toBe(true);
@@ -235,24 +288,32 @@ describe('MCP server integration', () => {
         importance: 0.85,
       });
 
-      const fix = await storeNode(mcp, {
+      const command = await storeNode(mcp, {
         type: NodeType.Action,
-        role: NodeRole.Fix,
+        role: NodeRole.Command,
         title: 'Set pool size to 20 connections',
         content: 'Updated config to use 20 max connections for auth database',
         tags: ['auth', 'config'],
       });
 
       await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(solution),
-        target_id: getNodeId(problem),
-        type: EdgeType.Resolves,
+        edges: [
+          {
+            source_id: getNodeId(solution),
+            target_id: getNodeId(problem),
+            type: EdgeType.Resolves,
+          },
+        ],
       });
 
       await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(fix),
-        target_id: getNodeId(solution),
-        type: EdgeType.Extends,
+        edges: [
+          {
+            source_id: getNodeId(command),
+            target_id: getNodeId(solution),
+            type: EdgeType.PartOf,
+          },
+        ],
       });
 
       const searchResult = await mcp.callTool('texere_search', {
@@ -292,15 +353,23 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(root),
-        target_id: getNodeId(child),
-        type: EdgeType.DependsOn,
+        edges: [
+          {
+            source_id: getNodeId(root),
+            target_id: getNodeId(child),
+            type: EdgeType.DependsOn,
+          },
+        ],
       });
 
       await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(child),
-        target_id: getNodeId(grandchild),
-        type: EdgeType.DependsOn,
+        edges: [
+          {
+            source_id: getNodeId(child),
+            target_id: getNodeId(grandchild),
+            type: EdgeType.DependsOn,
+          },
+        ],
       });
 
       const traversed = await mcp.callTool('texere_traverse', {
@@ -344,9 +413,13 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(solution),
-        target_id: getNodeId(problem),
-        type: EdgeType.Resolves,
+        edges: [
+          {
+            source_id: getNodeId(solution),
+            target_id: getNodeId(problem),
+            type: EdgeType.Resolves,
+          },
+        ],
       });
 
       const aboutResult = await mcp.callTool('texere_about', {
@@ -393,9 +466,13 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(solution),
-        target_id: getNodeId(problem),
-        type: EdgeType.Resolves,
+        edges: [
+          {
+            source_id: getNodeId(solution),
+            target_id: getNodeId(problem),
+            type: EdgeType.Resolves,
+          },
+        ],
       });
 
       const statsResult = await mcp.callTool('texere_stats', {});
@@ -429,9 +506,13 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(oldDecision),
-        target_id: getNodeId(newDecision),
-        type: EdgeType.Replaces,
+        edges: [
+          {
+            source_id: getNodeId(oldDecision),
+            target_id: getNodeId(newDecision),
+            type: EdgeType.Replaces,
+          },
+        ],
       });
 
       const oldNode = await mcp.callTool('texere_get_node', { id: getNodeId(oldDecision) });
@@ -461,12 +542,17 @@ describe('MCP server integration', () => {
 
       const toolCalls: Array<{ name: string; args: Record<string, unknown> }> = [
         {
-          name: 'texere_store_node',
+          name: 'texere_store_action',
           args: {
-            type: NodeType.Action,
-            role: NodeRole.Task,
-            title: 'Another',
-            content: 'Node',
+            nodes: [
+              {
+                role: 'task',
+                title: 'Another',
+                content: 'Node',
+                importance: 0.5,
+                confidence: 0.8,
+              },
+            ],
           },
         },
         { name: 'texere_get_node', args: { id: nodeId } },
@@ -493,10 +579,15 @@ describe('MCP server integration', () => {
     });
 
     it('error results include isError flag and error structure', async () => {
-      const result = await mcp.callTool('texere_store_node', {
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        content: 'Missing required title',
+      const result = await mcp.callTool('texere_store_action', {
+        nodes: [
+          {
+            role: 'task',
+            content: 'Missing required title',
+            importance: 0.5,
+            confidence: 0.8,
+          },
+        ],
       });
 
       expect(result.isError).toBe(true);
@@ -520,7 +611,7 @@ describe('MCP server integration', () => {
       const parsed = ListToolsResultSchema.safeParse(listToolsResult);
       expect(parsed.success).toBe(true);
 
-      expect(listToolsResult.tools).toHaveLength(14);
+      expect(listToolsResult.tools).toHaveLength(15);
 
       for (const tool of listToolsResult.tools) {
         const inputSchema = tool.inputSchema as Record<string, unknown>;
@@ -533,7 +624,11 @@ describe('MCP server integration', () => {
       const listToolsResult = await listToolsViaServer(mcp);
 
       const toolsWithRequiredInputs = [
-        'texere_store_node',
+        'texere_store_knowledge',
+        'texere_store_issue',
+        'texere_store_action',
+        'texere_store_artifact',
+        'texere_store_source',
         'texere_get_node',
         'texere_invalidate_node',
         'texere_replace_node',
@@ -589,9 +684,13 @@ describe('MCP server integration', () => {
       expect(finding.isError).toBeUndefined();
 
       const edgeResult = await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(finding),
-        target_id: getNodeId(source),
-        type: EdgeType.BasedOn,
+        edges: [
+          {
+            source_id: getNodeId(finding),
+            target_id: getNodeId(source),
+            type: EdgeType.BasedOn,
+          },
+        ],
       });
       expect(edgeResult.isError).toBeUndefined();
 
@@ -618,7 +717,7 @@ describe('MCP server integration', () => {
     });
   });
 
-  describe('concept hierarchy with IS_A and ABOUT edges', () => {
+  describe('concept hierarchy with EXAMPLE_OF and PART_OF edges', () => {
     it('builds a concept tree and traverses it at depth 2', async () => {
       const framework = await storeNode(mcp, {
         type: NodeType.Artifact,
@@ -645,15 +744,23 @@ describe('MCP server integration', () => {
       });
 
       await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(router),
-        target_id: getNodeId(framework),
-        type: EdgeType.IsA,
+        edges: [
+          {
+            source_id: getNodeId(router),
+            target_id: getNodeId(framework),
+            type: EdgeType.PartOf,
+          },
+        ],
       });
 
       await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(hono),
-        target_id: getNodeId(router),
-        type: EdgeType.About,
+        edges: [
+          {
+            source_id: getNodeId(hono),
+            target_id: getNodeId(router),
+            type: EdgeType.ExampleOf,
+          },
+        ],
       });
 
       const traversed = await mcp.callTool('texere_traverse', {
@@ -696,9 +803,13 @@ describe('MCP server integration', () => {
       });
 
       const edgeResult = await mcp.callTool('texere_create_edge', {
-        source_id: getNodeId(nodeA),
-        target_id: getNodeId(nodeB),
-        type: EdgeType.RelatedTo,
+        edges: [
+          {
+            source_id: getNodeId(nodeA),
+            target_id: getNodeId(nodeB),
+            type: EdgeType.RelatedTo,
+          },
+        ],
       });
       expect(edgeResult.isError).toBeUndefined();
 
@@ -763,7 +874,7 @@ describe('MCP server integration', () => {
       expect(initResponse.result.serverInfo).toBeDefined();
 
       expect(toolsResponse).toBeDefined();
-      expect(toolsResponse.result.tools).toHaveLength(14);
+      expect(toolsResponse.result.tools).toHaveLength(15);
 
       for (const tool of toolsResponse.result.tools as Array<Record<string, unknown>>) {
         expect(typeof tool.name).toBe('string');

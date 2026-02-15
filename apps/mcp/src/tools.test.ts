@@ -6,16 +6,17 @@ import { createTexereMcpServer } from './server.js';
 import { TOOL_DEFINITIONS } from './tools/index.js';
 
 const TOOL_NAMES = [
-  'texere_store_node',
-  'texere_store_nodes',
+  'texere_store_knowledge',
+  'texere_store_issue',
+  'texere_store_action',
+  'texere_store_artifact',
+  'texere_store_source',
   'texere_get_node',
   'texere_invalidate_node',
   'texere_replace_node',
   'texere_create_edge',
-  'texere_create_edges',
   'texere_delete_edge',
   'texere_search',
-  'texere_search_batch',
   'texere_traverse',
   'texere_about',
   'texere_stats',
@@ -35,44 +36,57 @@ describe('Texere MCP tools', () => {
     db.close();
   });
 
-  it('registers exactly 14 tools', () => {
+  it('registers exactly 15 tools', () => {
     expect(mcp.toolNames).toEqual(TOOL_NAMES);
-    expect(mcp.toolNames).toHaveLength(14);
+    expect(mcp.toolNames).toHaveLength(15);
   });
 
   it('exposes zod input schema for each tool', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(14);
+    expect(TOOL_DEFINITIONS).toHaveLength(15);
 
     for (const definition of TOOL_DEFINITIONS) {
       expect(typeof definition.inputSchema.safeParse).toBe('function');
     }
   });
 
-  it('texere_store_node accepts valid input and returns a node', async () => {
-    const result = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Task,
-      title: 'MCP node',
-      content: 'Created from tool',
-      tags: ['mcp'],
-      anchor_to: ['src/server.ts'],
+  it('texere_store_action accepts valid input and returns a node', async () => {
+    const result = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'MCP node',
+          content: 'Created from tool',
+          tags: ['mcp'],
+          anchor_to: ['src/server.ts'],
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
 
     expect(result.isError).toBeUndefined();
     expect(result.structuredContent).toMatchObject({
-      node: {
-        type: NodeType.Action,
-        role: NodeRole.Task,
-        title: 'MCP node',
-      },
+      nodes: [
+        {
+          type: NodeType.Action,
+          role: NodeRole.Task,
+          title: 'MCP node',
+        },
+      ],
     });
   });
 
-  it('texere_store_node rejects invalid input with structured error', async () => {
-    const result = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Task,
-      content: 'Missing title',
+  it('texere_store_action rejects invalid input with structured error', async () => {
+    const result = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          content: 'Missing title',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
     });
 
     expect(result.isError).toBe(true);
@@ -83,15 +97,21 @@ describe('Texere MCP tools', () => {
     });
   });
 
-  it('texere_store_node -> texere_get_node round-trip works', async () => {
-    const stored = await mcp.callTool('texere_store_node', {
-      type: NodeType.Knowledge,
-      role: NodeRole.Decision,
-      title: 'Round trip',
-      content: 'Store then get',
+  it('texere_store_knowledge -> texere_get_node round-trip works', async () => {
+    const stored = await mcp.callTool('texere_store_knowledge', {
+      nodes: [
+        {
+          role: 'decision',
+          title: 'Round trip',
+          content: 'Store then get',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
 
-    const nodeId = (stored.structuredContent as { node: { id: string } }).node.id;
+    const nodeId = (stored.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
 
     const fetched = await mcp.callTool('texere_get_node', {
       id: nodeId,
@@ -115,13 +135,19 @@ describe('Texere MCP tools', () => {
   });
 
   it('texere_invalidate_node sets invalidated_at timestamp', async () => {
-    const stored = await mcp.callTool('texere_store_node', {
-      type: NodeType.Issue,
-      role: NodeRole.Problem,
-      title: 'Wrong assumption',
-      content: 'Needs invalidation',
+    const stored = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'Wrong assumption',
+          content: 'Needs invalidation',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
-    const nodeId = (stored.structuredContent as { node: { id: string } }).node.id;
+    const nodeId = (stored.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
 
     const invalidated = await mcp.callTool('texere_invalidate_node', { id: nodeId });
     expect(invalidated.isError).toBeUndefined();
@@ -134,35 +160,54 @@ describe('Texere MCP tools', () => {
   });
 
   it('texere_create_edge returns edge and REPLACES invalidates source node', async () => {
-    const oldNode = await mcp.callTool('texere_store_node', {
-      type: NodeType.Knowledge,
-      role: NodeRole.Decision,
-      title: 'Old decision',
-      content: 'Deprecated decision',
+    const oldNode = await mcp.callTool('texere_store_knowledge', {
+      nodes: [
+        {
+          role: 'decision',
+          title: 'Old decision',
+          content: 'Deprecated decision',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
-    const newNode = await mcp.callTool('texere_store_node', {
-      type: NodeType.Knowledge,
-      role: NodeRole.Decision,
-      title: 'New decision',
-      content: 'Replacement decision',
+    const newNode = await mcp.callTool('texere_store_knowledge', {
+      nodes: [
+        {
+          role: 'decision',
+          title: 'New decision',
+          content: 'Replacement decision',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
 
-    const sourceId = (oldNode.structuredContent as { node: { id: string } }).node.id;
-    const targetId = (newNode.structuredContent as { node: { id: string } }).node.id;
+    const sourceId = (oldNode.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const targetId = (newNode.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
 
     const edgeResult = await mcp.callTool('texere_create_edge', {
-      source_id: sourceId,
-      target_id: targetId,
-      type: EdgeType.Replaces,
+      edges: [
+        {
+          source_id: sourceId,
+          target_id: targetId,
+          type: EdgeType.Replaces,
+        },
+      ],
+      minimal: false,
     });
 
     expect(edgeResult.isError).toBeUndefined();
     expect(edgeResult.structuredContent).toMatchObject({
-      edge: {
-        source_id: sourceId,
-        target_id: targetId,
-        type: EdgeType.Replaces,
-      },
+      edges: [
+        {
+          source_id: sourceId,
+          target_id: targetId,
+          type: EdgeType.Replaces,
+        },
+      ],
     });
 
     const sourceNode = await mcp.callTool('texere_get_node', { id: sourceId });
@@ -173,40 +218,61 @@ describe('Texere MCP tools', () => {
   });
 
   it('texere_delete_edge removes edge', async () => {
-    const source = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Task,
-      title: 'Source',
-      content: 'Source content',
+    const source = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Source',
+          content: 'Source content',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
-    const target = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Task,
-      title: 'Target',
-      content: 'Target content',
+    const target = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Target',
+          content: 'Target content',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
 
     const edge = await mcp.callTool('texere_create_edge', {
-      source_id: (source.structuredContent as { node: { id: string } }).node.id,
-      target_id: (target.structuredContent as { node: { id: string } }).node.id,
-      type: EdgeType.Extends,
+      edges: [
+        {
+          source_id: (source.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id,
+          target_id: (target.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id,
+          type: EdgeType.DependsOn,
+        },
+      ],
+      minimal: false,
     });
 
     const deleted = await mcp.callTool('texere_delete_edge', {
-      id: (edge.structuredContent as { edge: { id: string } }).edge.id,
+      id: (edge.structuredContent as { edges: Array<{ id: string }> }).edges[0].id,
     });
     expect(deleted.isError).toBeUndefined();
     expect(deleted.structuredContent).toMatchObject({ deleted: true });
   });
 
   it('texere_search returns results after storing nodes', async () => {
-    await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Solution,
-      title: 'Use immediate transactions',
-      content: 'Fixes write contention',
-      tags: ['sqlite', 'concurrency'],
-      importance: 0.9,
+    await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'solution',
+          title: 'Use immediate transactions',
+          content: 'Fixes write contention',
+          tags: ['sqlite', 'concurrency'],
+          importance: 0.9,
+          confidence: 0.8,
+        },
+      ],
     });
 
     const result = await mcp.callTool('texere_search', {
@@ -222,26 +288,42 @@ describe('Texere MCP tools', () => {
   });
 
   it('texere_traverse returns neighbors', async () => {
-    const start = await mcp.callTool('texere_store_node', {
-      type: NodeType.Issue,
-      role: NodeRole.Problem,
-      title: 'Traversal start',
-      content: 'Root node',
+    const start = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'Traversal start',
+          content: 'Root node',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
-    const neighbor = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Solution,
-      title: 'Traversal neighbor',
-      content: 'Neighbor node',
+    const neighbor = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'solution',
+          title: 'Traversal neighbor',
+          content: 'Neighbor node',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
 
-    const startId = (start.structuredContent as { node: { id: string } }).node.id;
-    const neighborId = (neighbor.structuredContent as { node: { id: string } }).node.id;
+    const startId = (start.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const neighborId = (neighbor.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
 
     await mcp.callTool('texere_create_edge', {
-      source_id: startId,
-      target_id: neighborId,
-      type: EdgeType.Resolves,
+      edges: [
+        {
+          source_id: startId,
+          target_id: neighborId,
+          type: EdgeType.Resolves,
+        },
+      ],
     });
 
     const traversed = await mcp.callTool('texere_traverse', {
@@ -258,26 +340,42 @@ describe('Texere MCP tools', () => {
   });
 
   it('texere_about returns search plus traversal context', async () => {
-    const problem = await mcp.callTool('texere_store_node', {
-      type: NodeType.Issue,
-      role: NodeRole.Problem,
-      title: 'Auth timeout problem',
-      content: 'User login times out',
+    const problem = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'Auth timeout problem',
+          content: 'User login times out',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
-    const fix = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Fix,
-      title: 'Increase DB timeout',
-      content: 'Use longer busy timeout',
+    const solution = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'solution',
+          title: 'Increase DB timeout',
+          content: 'Use longer busy timeout',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
 
-    const problemId = (problem.structuredContent as { node: { id: string } }).node.id;
-    const fixId = (fix.structuredContent as { node: { id: string } }).node.id;
+    const problemId = (problem.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const solutionId = (solution.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
 
     await mcp.callTool('texere_create_edge', {
-      source_id: fixId,
-      target_id: problemId,
-      type: EdgeType.Resolves,
+      edges: [
+        {
+          source_id: solutionId,
+          target_id: problemId,
+          type: EdgeType.Resolves,
+        },
+      ],
     });
 
     const result = await mcp.callTool('texere_about', {
@@ -292,15 +390,20 @@ describe('Texere MCP tools', () => {
       .results;
     const resultIds = results.map((r) => r.node.id);
     expect(resultIds).toContain(problemId);
-    expect(resultIds).toContain(fixId);
+    expect(resultIds).toContain(solutionId);
   });
 
   it('texere_stats returns counts', async () => {
-    await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Task,
-      title: 'Task one',
-      content: 'Task content',
+    await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Task one',
+          content: 'Task content',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
     });
 
     const result = await mcp.callTool('texere_stats', {});
@@ -310,74 +413,120 @@ describe('Texere MCP tools', () => {
     ).toBe(1);
   });
 
-  it('accepts v1.2 roles (web_url, concept, pitfall)', async () => {
+  it('accepts v1.2 roles (web_url, concept, pitfall) via per-type tools', async () => {
     const results = await Promise.all([
-      mcp.callTool('texere_store_node', {
-        type: NodeType.Source,
-        role: NodeRole.WebUrl,
-        title: 'External API docs',
-        content: 'https://example.com/api',
+      mcp.callTool('texere_store_source', {
+        nodes: [
+          {
+            role: 'web_url',
+            title: 'External API docs',
+            content: 'https://example.com/api',
+            importance: 0.5,
+            confidence: 0.8,
+          },
+        ],
+        minimal: false,
       }),
-      mcp.callTool('texere_store_node', {
-        type: NodeType.Artifact,
-        role: NodeRole.Concept,
-        title: 'Event sourcing',
-        content: 'Pattern for storing state changes',
+      mcp.callTool('texere_store_artifact', {
+        nodes: [
+          {
+            role: 'concept',
+            title: 'Event sourcing',
+            content: 'Pattern for storing state changes',
+            importance: 0.5,
+            confidence: 0.8,
+          },
+        ],
+        minimal: false,
       }),
-      mcp.callTool('texere_store_node', {
-        type: NodeType.Knowledge,
-        role: NodeRole.Pitfall,
-        title: 'Avoid N+1 queries',
-        content: 'Use eager loading instead',
+      mcp.callTool('texere_store_knowledge', {
+        nodes: [
+          {
+            role: 'pitfall',
+            title: 'Avoid N+1 queries',
+            content: 'Use eager loading instead',
+            importance: 0.5,
+            confidence: 0.8,
+          },
+        ],
+        minimal: false,
       }),
     ]);
 
     for (const r of results) {
       expect(r.isError).toBeUndefined();
     }
-    expect((results[0].structuredContent as { node: { role: string } }).node.role).toBe(
-      NodeRole.WebUrl,
-    );
-    expect((results[1].structuredContent as { node: { role: string } }).node.role).toBe(
-      NodeRole.Concept,
-    );
-    expect((results[2].structuredContent as { node: { role: string } }).node.role).toBe(
-      NodeRole.Pitfall,
-    );
+    expect(
+      (results[0].structuredContent as { nodes: Array<{ role: string }> }).nodes[0].role,
+    ).toBe(NodeRole.WebUrl);
+    expect(
+      (results[1].structuredContent as { nodes: Array<{ role: string }> }).nodes[0].role,
+    ).toBe(NodeRole.Concept);
+    expect(
+      (results[2].structuredContent as { nodes: Array<{ role: string }> }).nodes[0].role,
+    ).toBe(NodeRole.Pitfall);
   });
 
-  it('accepts v1.2 edge types (BASED_ON, RELATED_TO, ABOUT, IS_A)', async () => {
+  it('accepts surviving edge types (BASED_ON, RELATED_TO, EXAMPLE_OF, PART_OF)', async () => {
     const nodes = await Promise.all(
       Array.from({ length: 5 }, (_, i) =>
-        mcp.callTool('texere_store_node', {
-          type: NodeType.Action,
-          role: NodeRole.Task,
-          title: `Edge test node ${i}`,
-          content: `Content ${i}`,
+        mcp.callTool('texere_store_action', {
+          nodes: [
+            {
+              role: 'task',
+              title: `Edge test node ${i}`,
+              content: `Content ${i}`,
+              importance: 0.5,
+              confidence: 0.8,
+            },
+          ],
+          minimal: false,
         }),
       ),
     );
 
-    const ids = nodes.map((n) => (n.structuredContent as { node: { id: string } }).node.id);
-    const edgeTypes = [EdgeType.BasedOn, EdgeType.RelatedTo, EdgeType.About, EdgeType.IsA];
+    const ids = nodes.map(
+      (n) => (n.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id,
+    );
+    const edgeTypes = [EdgeType.BasedOn, EdgeType.RelatedTo, EdgeType.ExampleOf, EdgeType.PartOf];
 
     for (let i = 0; i < edgeTypes.length; i++) {
       const result = await mcp.callTool('texere_create_edge', {
-        source_id: ids[i],
-        target_id: ids[i + 1],
-        type: edgeTypes[i],
+        edges: [
+          {
+            source_id: ids[i],
+            target_id: ids[i + 1],
+            type: edgeTypes[i],
+          },
+        ],
+        minimal: false,
       });
       expect(result.isError).toBeUndefined();
-      expect((result.structuredContent as { edge: { type: string } }).edge.type).toBe(edgeTypes[i]);
+      expect(
+        (result.structuredContent as { edges: Array<{ type: string }> }).edges[0].type,
+      ).toBe(edgeTypes[i]);
     }
   });
 
-  it('texere_store_nodes batch creates multiple nodes', async () => {
-    const result = await mcp.callTool('texere_store_nodes', {
+  it('texere_store_action batch creates multiple nodes', async () => {
+    const result = await mcp.callTool('texere_store_action', {
       nodes: [
-        { type: NodeType.Action, role: NodeRole.Task, title: 'Batch A', content: 'A' },
-        { type: NodeType.Action, role: NodeRole.Task, title: 'Batch B', content: 'B' },
+        {
+          role: 'task',
+          title: 'Batch A',
+          content: 'A',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+        {
+          role: 'task',
+          title: 'Batch B',
+          content: 'B',
+          importance: 0.5,
+          confidence: 0.8,
+        },
       ],
+      minimal: false,
     });
 
     expect(result.isError).toBeUndefined();
@@ -387,65 +536,30 @@ describe('Texere MCP tools', () => {
     expect(nodes[1].title).toBe('Batch B');
   });
 
-  it('texere_search_batch returns results indexed by query position', async () => {
-    await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Solution,
-      title: 'Redis caching layer',
-      content: 'In-memory cache for hot data',
-      tags: ['cache'],
+  it('texere_create_edge batch creates multiple edges', async () => {
+    const nodeA = await mcp.callTool('texere_store_action', {
+      nodes: [{ role: 'task', title: 'A', content: 'A', importance: 0.5, confidence: 0.8 }],
+      minimal: false,
     });
-    await mcp.callTool('texere_store_node', {
-      type: NodeType.Knowledge,
-      role: NodeRole.Decision,
-      title: 'SQLite for persistence',
-      content: 'Embedded database for local storage',
-      tags: ['db'],
+    const nodeB = await mcp.callTool('texere_store_action', {
+      nodes: [{ role: 'task', title: 'B', content: 'B', importance: 0.5, confidence: 0.8 }],
+      minimal: false,
+    });
+    const nodeC = await mcp.callTool('texere_store_action', {
+      nodes: [{ role: 'task', title: 'C', content: 'C', importance: 0.5, confidence: 0.8 }],
+      minimal: false,
     });
 
-    const result = await mcp.callTool('texere_search_batch', {
-      queries: [{ query: 'Redis' }, { query: 'SQLite' }],
-    });
+    const idA = (nodeA.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const idB = (nodeB.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const idC = (nodeC.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
 
-    expect(result.isError).toBeUndefined();
-    const results = (result.structuredContent as { results: Array<Array<{ title: string }>> })
-      .results;
-    expect(results).toHaveLength(2);
-    expect(results[0]).toHaveLength(1);
-    expect(results[1]).toHaveLength(1);
-    expect(results[0][0].title).toContain('Redis');
-    expect(results[1][0].title).toContain('SQLite');
-  });
-
-  it('texere_create_edges batch creates multiple edges', async () => {
-    const nodeA = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Task,
-      title: 'A',
-      content: 'A',
-    });
-    const nodeB = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Task,
-      title: 'B',
-      content: 'B',
-    });
-    const nodeC = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Task,
-      title: 'C',
-      content: 'C',
-    });
-
-    const idA = (nodeA.structuredContent as { node: { id: string } }).node.id;
-    const idB = (nodeB.structuredContent as { node: { id: string } }).node.id;
-    const idC = (nodeC.structuredContent as { node: { id: string } }).node.id;
-
-    const result = await mcp.callTool('texere_create_edges', {
+    const result = await mcp.callTool('texere_create_edge', {
       edges: [
         { source_id: idA, target_id: idB, type: EdgeType.DependsOn },
         { source_id: idB, target_id: idC, type: EdgeType.DependsOn },
       ],
+      minimal: false,
     });
 
     expect(result.isError).toBeUndefined();
@@ -454,20 +568,32 @@ describe('Texere MCP tools', () => {
   });
 
   it('texere_validate returns valid for a correct batch', async () => {
-    const nodeA = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Task,
-      title: 'Validate edge source',
-      content: 'Content A',
+    const nodeA = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Validate edge source',
+          content: 'Content A',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
-    const nodeB = await mcp.callTool('texere_store_node', {
-      type: NodeType.Issue,
-      role: NodeRole.Problem,
-      title: 'Validate edge target',
-      content: 'Content B',
+    const nodeB = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'Validate edge target',
+          content: 'Content B',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
-    const idA = (nodeA.structuredContent as { node: { id: string } }).node.id;
-    const idB = (nodeB.structuredContent as { node: { id: string } }).node.id;
+    const idA = (nodeA.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const idB = (nodeB.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
 
     const result = await mcp.callTool('texere_validate', {
       nodes: [
@@ -554,13 +680,19 @@ describe('Texere MCP tools', () => {
   });
 
   it('texere_validate reports self-referential edge', async () => {
-    const stored = await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Task,
-      title: 'Self ref node',
-      content: 'Content',
+    const stored = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Self ref node',
+          content: 'Content',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
     });
-    const nodeId = (stored.structuredContent as { node: { id: string } }).node.id;
+    const nodeId = (stored.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
 
     const result = await mcp.callTool('texere_validate', {
       edges: [
@@ -588,11 +720,16 @@ describe('Texere MCP tools', () => {
   });
 
   it('texere_validate warns on duplicate title', async () => {
-    await mcp.callTool('texere_store_node', {
-      type: NodeType.Action,
-      role: NodeRole.Solution,
-      title: 'Redis caching strategy',
-      content: 'Use Redis for session caching',
+    await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'solution',
+          title: 'Redis caching strategy',
+          content: 'Use Redis for session caching',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
     });
 
     const result = await mcp.callTool('texere_validate', {
@@ -691,5 +828,85 @@ describe('Texere MCP tools', () => {
       (i) => i.severity === 'error' && i.message.includes('not found'),
     );
     expect(endpointErrors).toHaveLength(0);
+  });
+
+  // --- Per-type tool tests ---
+
+  it('per-type store tool rejects invalid role for that type', async () => {
+    // 'error' is an Issue role, not a Knowledge role
+    const result = await mcp.callTool('texere_store_knowledge', {
+      nodes: [
+        {
+          role: 'error',
+          title: 'Wrong role',
+          content: 'Knowledge cannot have error role',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: { code: 'INVALID_INPUT' },
+    });
+  });
+
+  it('per-type store tool rejects missing importance', async () => {
+    const result = await mcp.callTool('texere_store_knowledge', {
+      nodes: [
+        {
+          role: 'finding',
+          title: 'Missing importance',
+          content: 'Should fail validation',
+          confidence: 0.8,
+        },
+      ],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: { code: 'INVALID_INPUT' },
+    });
+  });
+
+  it('per-type store tool rejects missing confidence', async () => {
+    const result = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Missing confidence',
+          content: 'Should fail validation',
+          importance: 0.5,
+        },
+      ],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: { code: 'INVALID_INPUT' },
+    });
+  });
+
+  it('per-type store tool defaults minimal to true (returns id only)', async () => {
+    const result = await mcp.callTool('texere_store_knowledge', {
+      nodes: [
+        {
+          role: 'finding',
+          title: 'Minimal test',
+          content: 'Should return id only',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    const nodes = (result.structuredContent as { nodes: Array<Record<string, unknown>> }).nodes;
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0].id).toBeDefined();
+    // Minimal mode: should NOT have full node fields
+    expect(nodes[0].title).toBeUndefined();
+    expect(nodes[0].content).toBeUndefined();
   });
 });

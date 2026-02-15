@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { NodeType, type StoreNodeInput } from '@texere/graph';
+import { type NodeRole, NodeType, type StoreNodeInput } from '@texere/graph';
 
 import { ok } from './helpers.js';
 import type { ToolDefinition } from './types.js';
@@ -33,7 +33,7 @@ export const storeArtifactTool: ToolDefinition<typeof inputSchema> = {
     const minimal = input.minimal ?? true;
     const nodeInputs: StoreNodeInput[] = input.nodes.map((n) => ({
       type: NodeType.Artifact,
-      role: n.role,
+      role: n.role as NodeRole,
       title: n.title,
       content: n.content,
       ...(n.tags !== undefined ? { tags: n.tags } : {}),
