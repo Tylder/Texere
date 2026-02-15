@@ -5,8 +5,6 @@ import { sanitizeFtsQueryStrict } from './sanitize.js';
 import {
   EdgeType,
   NodeRole,
-  NodeScope,
-  NodeStatus,
   NodeType,
   isValidTypeRole,
   type Edge,
@@ -21,8 +19,6 @@ export interface StoreNodeInput {
   tags?: string[];
   importance?: number;
   confidence?: number;
-  status?: NodeStatus;
-  scope?: NodeScope;
   anchor_to?: string[];
   sources?: string[];
 }
@@ -51,11 +47,11 @@ export type NodeWithEdges = Node & { edges: Edge[] };
 const MAX_BATCH_SIZE = 50;
 
 const NODE_COLUMNS = `id, type, role, title, content, tags_json,
-    importance, confidence, status, scope,
+    importance, confidence,
     created_at, invalidated_at`;
 
 const NODE_PARAMS = `@id, @type, @role, @title, @content, @tags_json,
-    @importance, @confidence, @status, @scope,
+    @importance, @confidence,
     @created_at, @invalidated_at`;
 
 type Statements = {
@@ -89,7 +85,7 @@ const getStatements = (db: Database.Database): Statements => {
       SELECT rowid, ${NODE_COLUMNS} FROM nodes WHERE id = ?
     `),
     getNodeEdges: db.prepare(`
-      SELECT id, source_id, target_id, type, strength, confidence, created_at
+      SELECT id, source_id, target_id, type, created_at
       FROM edges
       WHERE source_id = ? OR target_id = ?
       ORDER BY created_at ASC
@@ -102,8 +98,8 @@ const getStatements = (db: Database.Database): Statements => {
       INSERT OR IGNORE INTO nodes (${NODE_COLUMNS}) VALUES (${NODE_PARAMS})
     `),
     insertAnchoredEdge: db.prepare(`
-      INSERT INTO edges (id, source_id, target_id, type, strength, confidence, created_at)
-      VALUES (@id, @source_id, @target_id, @type, @strength, @confidence, @created_at)
+      INSERT INTO edges (id, source_id, target_id, type, created_at)
+      VALUES (@id, @source_id, @target_id, @type, @created_at)
     `),
     searchSimilarTitle: db.prepare(`
       SELECT n.id, n.title, n.type, n.role
@@ -129,8 +125,6 @@ const buildNode = (input: StoreNodeInput, now: number): Node => ({
   tags_json: JSON.stringify(input.tags ?? []),
   importance: input.importance ?? 0.5,
   confidence: input.confidence ?? 0.8,
-  status: input.status ?? NodeStatus.Active,
-  scope: input.scope ?? NodeScope.Project,
   created_at: now,
   invalidated_at: null,
 });
@@ -150,14 +144,12 @@ const insertNodeWithAnchors = (
     statements.insertFileContextNode.run({
       id: targetId,
       type: NodeType.Artifact,
-      role: NodeRole.FileContext,
+      role: 'file_context' as NodeRole, // internal-only role, not in public NodeRole enum
       title: anchorPath,
       content: anchorPath,
       tags_json: '[]',
       importance: 0.5,
       confidence: 0.8,
-      status: NodeStatus.Active,
-      scope: NodeScope.File,
       created_at: now,
       invalidated_at: null,
     });
@@ -167,8 +159,6 @@ const insertNodeWithAnchors = (
       source_id: node.id,
       target_id: targetId,
       type: EdgeType.AnchoredTo,
-      strength: 1,
-      confidence: 1,
       created_at: now,
     });
   }
@@ -187,8 +177,6 @@ const insertNodeWithAnchors = (
       tags_json: '[]',
       importance: 0.5,
       confidence: 1.0,
-      status: NodeStatus.Active,
-      scope: NodeScope.Project,
       created_at: now,
       invalidated_at: null,
     });
@@ -198,8 +186,6 @@ const insertNodeWithAnchors = (
       source_id: node.id,
       target_id: sourceNodeId,
       type: EdgeType.BasedOn,
-      strength: 1,
-      confidence: 1,
       created_at: now,
     });
   }

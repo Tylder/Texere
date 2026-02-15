@@ -20,8 +20,6 @@ const NODE_COLUMNS = `
   n.tags_json,
   n.importance,
   n.confidence,
-  n.status,
-  n.scope,
   n.created_at,
   n.invalidated_at
 `;
@@ -210,7 +208,7 @@ const getRelationships = (
   });
 
   const sql = `
-    SELECT id, source_id, target_id, type, strength, confidence, created_at
+    SELECT id, source_id, target_id, type, created_at
     FROM edges
     WHERE source_id IN (${placeholders}) OR target_id IN (${placeholders})
   `;
@@ -228,19 +226,6 @@ const getRelationships = (
   return result;
 };
 
-export const searchBatch = (db: Database.Database, queries: SearchOptions[]): SearchResult[][] => {
-  const txn = db.transaction(() => {
-    return queries.map((query) => {
-      try {
-        return search(db, query);
-      } catch {
-        return [];
-      }
-    });
-  });
-
-  return txn();
-};
 
 export const search = (
   db: Database.Database,

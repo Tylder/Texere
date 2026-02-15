@@ -76,8 +76,6 @@ const buildWalkSql = (
         n.tags_json,
         n.importance,
         n.confidence,
-        n.status,
-        n.scope,
         n.created_at,
         n.invalidated_at,
         MIN(gw.depth) AS depth
@@ -93,8 +91,6 @@ const buildWalkSql = (
         n.tags_json,
         n.importance,
         n.confidence,
-        n.status,
-        n.scope,
         n.created_at,
         n.invalidated_at
       ORDER BY depth ASC, n.created_at ASC
@@ -141,8 +137,6 @@ const buildWalkSql = (
         n.tags_json,
         n.importance,
         n.confidence,
-        n.status,
-        n.scope,
         n.created_at,
         n.invalidated_at,
         MIN(gw.depth) AS depth
@@ -158,8 +152,6 @@ const buildWalkSql = (
         n.tags_json,
         n.importance,
         n.confidence,
-        n.status,
-        n.scope,
         n.created_at,
         n.invalidated_at
       ORDER BY depth ASC, n.created_at ASC
@@ -190,8 +182,6 @@ const buildWalkSql = (
       n.tags_json,
       n.importance,
       n.confidence,
-      n.status,
-      n.scope,
       n.created_at,
       n.invalidated_at,
       MIN(gw.depth) AS depth
@@ -207,8 +197,6 @@ const buildWalkSql = (
       n.tags_json,
       n.importance,
       n.confidence,
-      n.status,
-      n.scope,
       n.created_at,
       n.invalidated_at
     ORDER BY depth ASC, n.created_at ASC

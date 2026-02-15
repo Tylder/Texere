@@ -7,8 +7,6 @@ export interface CreateEdgeInput {
   source_id: string;
   target_id: string;
   type: EdgeType;
-  strength?: number;
-  confidence?: number;
 }
 
 export interface CreateEdgeOptions {
@@ -40,27 +38,27 @@ const getStatements = (db: Database.Database): Statements => {
 
   const statements: Statements = {
     insertEdge: db.prepare(`
-      INSERT INTO edges (id, source_id, target_id, type, strength, confidence, created_at)
-      VALUES (@id, @source_id, @target_id, @type, @strength, @confidence, @created_at)
+      INSERT INTO edges (id, source_id, target_id, type, created_at)
+      VALUES (@id, @source_id, @target_id, @type, @created_at)
     `),
     invalidateNode: db.prepare(
       'UPDATE nodes SET invalidated_at = ? WHERE id = ? AND invalidated_at IS NULL',
     ),
     deleteEdge: db.prepare('DELETE FROM edges WHERE id = ?'),
     getOutgoing: db.prepare(`
-      SELECT id, source_id, target_id, type, strength, confidence, created_at
+      SELECT id, source_id, target_id, type, created_at
       FROM edges
       WHERE source_id = ?
       ORDER BY created_at ASC
     `),
     getIncoming: db.prepare(`
-      SELECT id, source_id, target_id, type, strength, confidence, created_at
+      SELECT id, source_id, target_id, type, created_at
       FROM edges
       WHERE target_id = ?
       ORDER BY created_at ASC
     `),
     getBoth: db.prepare(`
-      SELECT id, source_id, target_id, type, strength, confidence, created_at
+      SELECT id, source_id, target_id, type, created_at
       FROM edges
       WHERE source_id = ? OR target_id = ?
       ORDER BY created_at ASC
@@ -119,8 +117,6 @@ export function createEdge(
     source_id: inp.source_id,
     target_id: inp.target_id,
     type: inp.type,
-    strength: inp.strength ?? 0.5,
-    confidence: inp.confidence ?? 0.8,
     created_at: now,
   }));
 
