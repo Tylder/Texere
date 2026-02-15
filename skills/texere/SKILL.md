@@ -13,64 +13,6 @@ Persistent, immutable knowledge graph with typed nodes and semantic edges. Survi
 when: (1) preserve decisions/requirements across sessions, (2) link solutions to problems, (3)
 anchor knowledge to code, (4) track deprecation, (5) build queryable project knowledge.
 
-## Workflow: Search Before Creating
-
-ALWAYS search before creating nodes. Creating without searching = duplicates, missed connections,
-graph degradation.
-
-1. Search first: `texere_search` or `texere_about` with terms from intended node title/tags
-2. Review results: Check for (a) duplicates → use existing, (b) outdated versions → use
-   `texere_replace_node`, (c) related nodes → note IDs for edges
-3. Create node: Use the appropriate per-type store tool only after reviewing search results
-4. Create edges immediately: Link new node to related nodes from step 2
-
-Graph value = connections. Searching first prevents duplicates, identifies deprecation
-opportunities, discovers edge candidates.
-
-## Content Quality: The Recall Test
-
-**Every node must pass the Recall Test:** An agent finding this node 6 months later can act on it
-without needing the original source material.
-
-### BAD Node (Fails Recall Test)
-
-```json
-{
-  "role": "decision",
-  "title": "Use SQLite",
-  "content": "We decided to use SQLite for the database.",
-  "importance": 0.5,
-  "confidence": 0.5
-}
-```
-
-Why it fails: No rationale, no alternatives considered, no constraints. An agent finding this later
-has no idea WHY SQLite was chosen or when it would be wrong.
-
-### GOOD Node (Passes Recall Test)
-
-```json
-{
-  "role": "decision",
-  "title": "Use SQLite with WAL mode for single-server knowledge graph",
-  "content": "Chose SQLite over PostgreSQL for the Texere knowledge graph because: (1) single-server deployment eliminates network latency for graph traversals, (2) WAL mode provides concurrent reads during writes, (3) FTS5 extension handles full-text search without external service, (4) embedded DB means zero operational overhead. Trade-off: no horizontal scaling — acceptable for single-agent knowledge graphs under 10GB. Revisit if multi-server deployment needed.",
-  "importance": 0.9,
-  "confidence": 0.95
-}
-```
-
-Why it passes: Rationale, alternatives, trade-offs, boundary conditions, when to revisit.
-
-### The Split Test
-
-If a node's content covers multiple distinct topics, split it into atomic nodes linked by edges.
-
-**BAD:** One node titled "Authentication system" covering JWT creation, token refresh, session
-management, and OAuth provider setup.
-
-**GOOD:** Four separate nodes (one per concern) linked with PART_OF edges to a parent
-"Authentication system" concept node.
-
 ## READ (Search & Retrieve)
 
 ### texere_search
@@ -158,7 +100,84 @@ Returns:
 
 Example: `texere_stats({})`
 
+## Search Tips
+
+**Keyword search (mode: 'keyword'):** Works with simple words, quoted phrases (`"exact phrase"`),
+boolean `OR`, tag-based filtering. Dots, hyphens, colons, slashes may cause syntax errors.
+
+**Semantic search (mode: 'auto' or 'semantic'):** Finds conceptually related content even with
+vocabulary mismatches. Use for exploratory queries like "session management" to find JWT, OAuth,
+authentication patterns.
+
+**Recovery:** When keyword search fails, try semantic mode or tag-based search (`query: ""` with
+`tags` filter).
+
+**Examples:**
+
+- Keyword: `{ "query": "database locked", "mode": "keyword" }`
+- Semantic: `{ "query": "session management", "mode": "semantic" }` → finds JWT, OAuth, auth
+  patterns
+- Tag search: `{ "query": "", "tags": ["hono", "request"] }`
+
 ## WRITE (Store & Modify) — skip this section if you only need to read
+
+## Workflow: Search Before Creating
+
+ALWAYS search before creating nodes. Creating without searching = duplicates, missed connections,
+graph degradation.
+
+1. Search first: `texere_search` or `texere_about` with terms from intended node title/tags
+2. Review results: Check for (a) duplicates → use existing, (b) outdated versions → use
+   `texere_replace_node`, (c) related nodes → note IDs for edges
+3. Create node: Use the appropriate per-type store tool only after reviewing search results
+4. Create edges immediately: Link new node to related nodes from step 2
+
+Graph value = connections. Searching first prevents duplicates, identifies deprecation
+opportunities, discovers edge candidates.
+
+## Content Quality: The Recall Test
+
+**Every node must pass the Recall Test:** An agent finding this node 6 months later can act on it
+without needing the original source material.
+
+### BAD Node (Fails Recall Test)
+
+```json
+{
+  "role": "decision",
+  "title": "Use SQLite",
+  "content": "We decided to use SQLite for the database.",
+  "importance": 0.5,
+  "confidence": 0.5
+}
+```
+
+Why it fails: No rationale, no alternatives considered, no constraints. An agent finding this later
+has no idea WHY SQLite was chosen or when it would be wrong.
+
+### GOOD Node (Passes Recall Test)
+
+```json
+{
+  "role": "decision",
+  "title": "Use SQLite with WAL mode for single-server knowledge graph",
+  "content": "Chose SQLite over PostgreSQL for the Texere knowledge graph because: (1) single-server deployment eliminates network latency for graph traversals, (2) WAL mode provides concurrent reads during writes, (3) FTS5 extension handles full-text search without external service, (4) embedded DB means zero operational overhead. Trade-off: no horizontal scaling — acceptable for single-agent knowledge graphs under 10GB. Revisit if multi-server deployment needed.",
+  "importance": 0.9,
+  "confidence": 0.95
+}
+```
+
+Why it passes: Rationale, alternatives, trade-offs, boundary conditions, when to revisit.
+
+### The Split Test
+
+If a node's content covers multiple distinct topics, split it into atomic nodes linked by edges.
+
+**BAD:** One node titled "Authentication system" covering JWT creation, token refresh, session
+management, and OAuth provider setup.
+
+**GOOD:** Four separate nodes (one per concern) linked with PART_OF edges to a parent
+"Authentication system" concept node.
 
 ### Per-Type Store Tools
 
@@ -401,25 +420,6 @@ by Y? → BASED_ON Does X conflict with Y? → CONTRADICTS Does X replace Y? →
 Is X linked to code file Y? → ANCHORED_TO (auto-created via anchor_to param) Are X and Y
 alternatives? → ALTERNATIVE_TO Does X cause/lead to Y? → CAUSES Weak/unclear association? →
 RELATED_TO (last resort)
-
-## Search Tips
-
-**Keyword search (mode: 'keyword'):** Works with simple words, quoted phrases (`"exact phrase"`),
-boolean `OR`, tag-based filtering. Dots, hyphens, colons, slashes may cause syntax errors.
-
-**Semantic search (mode: 'auto' or 'semantic'):** Finds conceptually related content even with
-vocabulary mismatches. Use for exploratory queries like "session management" to find JWT, OAuth,
-authentication patterns.
-
-**Recovery:** When keyword search fails, try semantic mode or tag-based search (`query: ""` with
-`tags` filter).
-
-**Examples:**
-
-- Keyword: `{ "query": "database locked", "mode": "keyword" }`
-- Semantic: `{ "query": "session management", "mode": "semantic" }` → finds JWT, OAuth, auth
-  patterns
-- Tag search: `{ "query": "", "tags": ["hono", "request"] }`
 
 ## Limits
 
