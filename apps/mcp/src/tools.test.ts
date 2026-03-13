@@ -532,6 +532,92 @@ describe('Texere MCP tools', () => {
     expect(results[0].node.id).toBe(neighborId);
   });
 
+  it('texere_traverse paginates and rejects scope-mismatched cursors', async () => {
+    const start = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'Traverse paged start',
+          content: 'root',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+    const mid = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'solution',
+          title: 'Traverse paged mid',
+          content: 'mid',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+    const end = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'solution',
+          title: 'Traverse paged end',
+          content: 'end',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+
+    const startId = (start.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const midId = (mid.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const endId = (end.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+
+    await mcp.callTool('texere_create_edge', {
+      edges: [{ source_id: startId, target_id: midId, type: EdgeType.Resolves }],
+    });
+    await mcp.callTool('texere_create_edge', {
+      edges: [{ source_id: midId, target_id: endId, type: EdgeType.BasedOn }],
+    });
+
+    const firstPage = await mcp.callTool('texere_traverse', {
+      start_id: startId,
+      direction: 'outgoing',
+      limit: 1,
+    });
+    const firstStructured = firstPage.structuredContent as {
+      results: Array<{ node: { id: string } }>;
+      page: { has_more: boolean; next_cursor: string | null };
+    };
+    expect(firstStructured.page.has_more).toBe(true);
+
+    const secondPage = await mcp.callTool('texere_traverse', {
+      start_id: startId,
+      direction: 'outgoing',
+      limit: 1,
+      cursor: firstStructured.page.next_cursor,
+    });
+    const secondStructured = secondPage.structuredContent as {
+      results: Array<{ node: { id: string } }>;
+    };
+    const ids = new Set(
+      [...firstStructured.results, ...secondStructured.results].map((row) => row.node.id),
+    );
+    expect(ids.size).toBe(2);
+
+    const invalid = await mcp.callTool('texere_traverse', {
+      start_id: startId,
+      direction: 'incoming',
+      limit: 1,
+      cursor: firstStructured.page.next_cursor,
+    });
+    expect(invalid.isError).toBe(true);
+    expect((invalid.structuredContent as { error: { code: string } }).error.code).toBe(
+      'INVALID_INPUT',
+    );
+  });
+
   it('texere_about returns search plus traversal context', async () => {
     const problem = await mcp.callTool('texere_store_issue', {
       nodes: [
@@ -587,6 +673,95 @@ describe('Texere MCP tools', () => {
     const resultIds = results.map((r) => r.node.id);
     expect(resultIds).toContain(problemId);
     expect(resultIds).toContain(solutionId);
+  });
+
+  it('texere_about paginates and rejects scope-mismatched cursors', async () => {
+    const seedA = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'About paged seed A',
+          content: 'timeout about seed',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+    const seedB = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'About paged seed B',
+          content: 'timeout about seed',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+    const shared = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'solution',
+          title: 'About paged shared',
+          content: 'shared timeout remedy',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+
+    const seedAId = (seedA.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const seedBId = (seedB.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const sharedId = (shared.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+
+    await mcp.callTool('texere_create_edge', {
+      edges: [{ source_id: seedAId, target_id: sharedId, type: EdgeType.Resolves }],
+    });
+    await mcp.callTool('texere_create_edge', {
+      edges: [{ source_id: seedBId, target_id: sharedId, type: EdgeType.Resolves }],
+    });
+
+    const firstPage = await mcp.callTool('texere_about', {
+      query: 'timeout about seed',
+      direction: 'both',
+      max_depth: 2,
+      limit: 1,
+    });
+    const firstStructured = firstPage.structuredContent as {
+      results: Array<{ node: { id: string } }>;
+      page: { has_more: boolean; next_cursor: string | null };
+    };
+    expect(firstStructured.page.has_more).toBe(true);
+
+    const secondPage = await mcp.callTool('texere_about', {
+      query: 'timeout about seed',
+      direction: 'both',
+      max_depth: 2,
+      limit: 1,
+      cursor: firstStructured.page.next_cursor,
+    });
+    const secondStructured = secondPage.structuredContent as {
+      results: Array<{ node: { id: string } }>;
+    };
+    const ids = new Set(
+      [...firstStructured.results, ...secondStructured.results].map((row) => row.node.id),
+    );
+    expect(ids.size).toBeGreaterThanOrEqual(2);
+
+    const invalid = await mcp.callTool('texere_about', {
+      query: 'timeout about seed',
+      direction: 'incoming',
+      max_depth: 2,
+      limit: 1,
+      cursor: firstStructured.page.next_cursor,
+    });
+    expect(invalid.isError).toBe(true);
+    expect((invalid.structuredContent as { error: { code: string } }).error.code).toBe(
+      'INVALID_INPUT',
+    );
   });
 
   it('texere_stats returns counts', async () => {

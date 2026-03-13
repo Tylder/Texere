@@ -14,6 +14,31 @@ const searchResults = (
   queryEmbedding?: Float32Array,
 ) => search(db, options, queryEmbedding).results;
 
+const collectSearchPages = (
+  db: Database.Database,
+  options: Parameters<typeof search>[1],
+  queryEmbedding?: Float32Array,
+) => {
+  const all: ReturnType<typeof search>['results'] = [];
+  let cursor = options.cursor;
+
+  while (true) {
+    const page = search(
+      db,
+      {
+        ...options,
+        ...(cursor ? { cursor } : {}),
+      },
+      queryEmbedding,
+    );
+    all.push(...page.results);
+    if (!page.page.hasMore || !page.page.nextCursor) {
+      return all;
+    }
+    cursor = page.page.nextCursor;
+  }
+};
+
 const store = (db: Database.Database, overrides: Partial<StoreNodeInput> = {}) =>
   storeNode(db, {
     type: NodeType.Knowledge,
@@ -765,5 +790,81 @@ describe('search', () => {
     expect(firstPage.results).toHaveLength(1);
     expect(secondPage.results).toHaveLength(1);
     expect(firstPage.results[0]!.id).not.toBe(secondPage.results[0]!.id);
+  });
+
+  it('matches single large-page results when collecting all keyword pages', () => {
+    for (let i = 0; i < 5; i += 1) {
+      store(db, {
+        title: `Roundtrip SQLite ${i}`,
+        content: 'keyword pagination roundtrip',
+        tags: ['db'],
+      });
+    }
+
+    const allPaged = collectSearchPages(db, { query: 'Roundtrip SQLite', limit: 2 });
+    const singlePage = search(db, { query: 'Roundtrip SQLite', limit: 10 });
+
+    expect(allPaged.map((row) => row.id)).toEqual(singlePage.results.map((row) => row.id));
+  });
+
+  it('matches single large-page results when collecting all semantic pages', () => {
+    const nodes = [
+      store(db, { title: 'Semantic roundtrip 1', content: 'auth one', tags: ['auth'] }),
+      store(db, { title: 'Semantic roundtrip 2', content: 'auth two', tags: ['auth'] }),
+      store(db, { title: 'Semantic roundtrip 3', content: 'auth three', tags: ['auth'] }),
+      store(db, { title: 'Semantic roundtrip 4', content: 'auth four', tags: ['auth'] }),
+    ];
+
+    nodes.forEach((node, index) => {
+      storeEmbedding(db, node.id, embeddingOf(1 - index * 0.1, index * 0.1));
+    });
+
+    const embedding = embeddingOf(1, 0);
+    const allPaged = collectSearchPages(
+      db,
+      { query: 'auth roundtrip', mode: 'semantic', limit: 2 },
+      embedding,
+    );
+    const singlePage = search(
+      db,
+      { query: 'auth roundtrip', mode: 'semantic', limit: 10 },
+      embedding,
+    );
+
+    expect(allPaged.map((row) => row.id)).toEqual(singlePage.results.map((row) => row.id));
+  });
+
+  it('matches single large-page results when collecting all hybrid pages', () => {
+    const nodes = [
+      store(db, {
+        title: 'Hybrid roundtrip alpha',
+        content: 'token refresh alpha',
+        tags: ['auth'],
+      }),
+      store(db, { title: 'Hybrid roundtrip beta', content: 'token refresh beta', tags: ['auth'] }),
+      store(db, {
+        title: 'Hybrid roundtrip gamma',
+        content: 'session continuity gamma',
+        tags: ['auth'],
+      }),
+    ];
+
+    nodes.forEach((node, index) => {
+      storeEmbedding(db, node.id, embeddingOf(1 - index * 0.05, index * 0.05));
+    });
+
+    const embedding = embeddingOf(1, 0);
+    const allPaged = collectSearchPages(
+      db,
+      { query: 'Hybrid roundtrip', mode: 'hybrid', limit: 1 },
+      embedding,
+    );
+    const singlePage = search(
+      db,
+      { query: 'Hybrid roundtrip', mode: 'hybrid', limit: 10 },
+      embedding,
+    );
+
+    expect(allPaged.map((row) => row.id)).toEqual(singlePage.results.map((row) => row.id));
   });
 });

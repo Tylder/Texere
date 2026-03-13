@@ -14,6 +14,40 @@ const traverseResults = (db: Database.Database, options: Parameters<typeof trave
 const aboutResults = async (db: Database.Database, options: Parameters<typeof about>[1]) =>
   (await about(db, options)).results;
 
+const collectTraversePages = (db: Database.Database, options: Parameters<typeof traverse>[1]) => {
+  const all: ReturnType<typeof traverse>['results'] = [];
+  let cursor = options.cursor;
+
+  while (true) {
+    const page = traverse(db, {
+      ...options,
+      ...(cursor ? { cursor } : {}),
+    });
+    all.push(...page.results);
+    if (!page.page.hasMore || !page.page.nextCursor) {
+      return all;
+    }
+    cursor = page.page.nextCursor;
+  }
+};
+
+const collectAboutPages = async (db: Database.Database, options: Parameters<typeof about>[1]) => {
+  const all: Awaited<ReturnType<typeof about>>['results'] = [];
+  let cursor = options.cursor;
+
+  while (true) {
+    const page = await about(db, {
+      ...options,
+      ...(cursor ? { cursor } : {}),
+    });
+    all.push(...page.results);
+    if (!page.page.hasMore || !page.page.nextCursor) {
+      return all;
+    }
+    cursor = page.page.nextCursor;
+  }
+};
+
 const makeNode = (
   db: Database.Database,
   opts: { type: NodeType; role: NodeRole; title: string; content: string; tags?: string[] },
@@ -503,6 +537,80 @@ describe('about', () => {
     );
   });
 
+  it('rejects traverse cursors when request scope changes', () => {
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Traverse scope start',
+      content: 'root',
+    });
+    const neighbor = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Traverse scope neighbor',
+      content: 'one hop',
+    });
+    const otherNeighbor = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Traverse scope other neighbor',
+      content: 'second hop peer',
+    });
+
+    createEdge(db, { source_id: start.id, target_id: neighbor.id, type: EdgeType.BasedOn });
+    createEdge(db, { source_id: start.id, target_id: otherNeighbor.id, type: EdgeType.BasedOn });
+
+    const firstPage = traverse(db, { startId: start.id, direction: 'outgoing', limit: 1 });
+    expect(firstPage.page.hasMore).toBe(true);
+
+    expect(() =>
+      traverse(db, {
+        startId: start.id,
+        direction: 'incoming',
+        limit: 1,
+        cursor: firstPage.page.nextCursor!,
+      }),
+    ).toThrow('Cursor does not match the current request');
+  });
+
+  it('matches single large-page results when collecting all traverse pages', () => {
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Traverse roundtrip start',
+      content: 'root',
+    });
+    const depth1a = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Traverse roundtrip a',
+      content: 'a',
+    });
+    const depth1b = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Traverse roundtrip b',
+      content: 'b',
+    });
+    const depth2 = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Traverse roundtrip c',
+      content: 'c',
+    });
+
+    createEdge(db, { source_id: start.id, target_id: depth1a.id, type: EdgeType.BasedOn });
+    createEdge(db, { source_id: start.id, target_id: depth1b.id, type: EdgeType.BasedOn });
+    createEdge(db, { source_id: depth1a.id, target_id: depth2.id, type: EdgeType.BasedOn });
+
+    const allPaged = collectTraversePages(db, { startId: start.id, limit: 1 });
+    const singlePage = traverse(db, { startId: start.id, limit: 10 });
+
+    expect(allPaged.map((row) => row.node.id)).toEqual(
+      singlePage.results.map((row) => row.node.id),
+    );
+  });
+
   it('paginates about results after deduplication', async () => {
     const seedA = makeNode(db, {
       type: NodeType.Knowledge,
@@ -570,6 +678,73 @@ describe('about', () => {
     });
 
     expect(() => about(db, { query: 'timeout', cursor: 'not-a-cursor' })).toThrow('Invalid cursor');
+  });
+
+  it('rejects about cursors when request scope changes', async () => {
+    makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'About scope seed',
+      content: 'timeout details',
+    });
+    makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'About scope solution',
+      content: 'timeout solution',
+    });
+
+    const firstPage = await about(db, { query: 'timeout', direction: 'outgoing', limit: 1 });
+
+    expect(() =>
+      about(db, {
+        query: 'timeout',
+        direction: 'incoming',
+        limit: 1,
+        cursor: firstPage.page.nextCursor!,
+      }),
+    ).toThrow('Cursor does not match the current request');
+  });
+
+  it('matches single large-page results when collecting all about pages', async () => {
+    const seedA = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'About roundtrip seed A',
+      content: 'about roundtrip timeout',
+    });
+    const seedB = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'About roundtrip seed B',
+      content: 'about roundtrip timeout',
+    });
+    const shared = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'About roundtrip shared',
+      content: 'shared remedy',
+    });
+    const neighbor = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'About roundtrip neighbor',
+      content: 'neighbor remedy',
+    });
+
+    createEdge(db, { source_id: seedA.id, target_id: shared.id, type: EdgeType.Resolves });
+    createEdge(db, { source_id: seedB.id, target_id: shared.id, type: EdgeType.Resolves });
+    createEdge(db, { source_id: shared.id, target_id: neighbor.id, type: EdgeType.BasedOn });
+
+    const allPaged = await collectAboutPages(db, {
+      query: 'about roundtrip timeout',
+      direction: 'both',
+      maxDepth: 2,
+      limit: 1,
+    });
+    const ids = allPaged.map((row) => row.node.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(ids)).toEqual(new Set([seedA.id, seedB.id, shared.id, neighbor.id]));
   });
 });
 
