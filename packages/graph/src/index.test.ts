@@ -105,6 +105,29 @@ describe('Texere facade', () => {
       expect(retrieved?.id).toBe(created.id);
     });
 
+    it('getNodes() delegates to internal module', () => {
+      const node1 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 1',
+        content: 'Content 1',
+      });
+      const node2 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 2',
+        content: 'Content 2',
+      });
+
+      const retrieved = db.getNodes([node1.id, 'missing-id', node2.id, node1.id]);
+
+      expect(retrieved).toHaveLength(4);
+      expect(retrieved[0]?.id).toBe(node1.id);
+      expect(retrieved[1]).toBeNull();
+      expect(retrieved[2]?.id).toBe(node2.id);
+      expect(retrieved[3]?.id).toBe(node1.id);
+    });
+
     it('invalidateNode() delegates to internal module', () => {
       const node = db.storeNode({
         type: NodeType.Action,

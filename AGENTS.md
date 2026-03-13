@@ -14,7 +14,7 @@ Designed for AI-assisted development with multi-agent integration (OpenCode, Ser
 ```
 texere/
 ├── apps/mcp/              # MCP server (Model Context Protocol)
-│   └── src/tools/         # 15 tool definitions
+│   └── src/tools/         # 16 tool definitions
 ├── packages/graph/        # Core graph library (SQLite + embeddings)
 │   └── src/               # 11 source files, Texere class API
 ├── tooling/               # Shared ESLint + TypeScript configs
@@ -54,10 +54,10 @@ texere/
   - Traversal: `traverse()`
   - Metadata: `stats()`
 
-- **@texere/mcp**: 15 MCP tools
+- **@texere/mcp**: 16 MCP tools
   - `texere_store_knowledge`, `texere_store_issue`, `texere_store_action`, `texere_store_artifact`,
     `texere_store_source`
-  - `texere_get_node`, `texere_replace_node`, `texere_invalidate_node`
+  - `texere_get_node`, `texere_get_nodes`, `texere_replace_node`, `texere_invalidate_node`
   - `texere_create_edge`, `texere_delete_edge`
   - `texere_search`, `texere_traverse`, `texere_about`
   - `texere_stats`, `texere_validate`

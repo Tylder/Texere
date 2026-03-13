@@ -1,6 +1,6 @@
 # MCP SERVER (@texere/mcp)
 
-**Model Context Protocol server** — Exposes Texere graph via 15 tools over stdio transport
+**Model Context Protocol server** — Exposes Texere graph via 16 tools over stdio transport
 
 ## OVERVIEW
 
@@ -14,7 +14,7 @@ src/
 ├── index.ts              # CLI entry: --db-path parsing, server startup
 ├── server.ts             # MCP server factory, request handlers
 ├── tools/
-│   ├── index.ts          # Tool registry (15 tools)
+│   ├── index.ts          # Tool registry (16 tools)
 │   ├── types.ts          # ToolDefinition, ToolContext
 │   ├── helpers.ts        # ok(), invalidInput(), toolFailure()
 │   ├── store-knowledge.ts # Store knowledge nodes
@@ -22,7 +22,8 @@ src/
 │   ├── store-action.ts   # Store action nodes
 │   ├── store-artifact.ts # Store artifact nodes
 │   ├── store-source.ts   # Store source nodes
-│   ├── get-node.ts       # Node retrieval
+│   ├── get-node.ts       # Single-node retrieval
+│   ├── get-nodes.ts      # Batch node retrieval
 │   ├── replace-node.ts   # Node replacement
 │   ├── invalidate-node.ts # Node soft-delete
 │   ├── create-edge.ts    # Edge creation
@@ -133,15 +134,15 @@ return {
 - All errors include error code for programmatic parsing
 - Codes: `UNKNOWN_TOOL`, `INVALID_INPUT`, `TOOL_ERROR`
 
-## TOOL ORGANIZATION (15 Tools)
+## TOOL ORGANIZATION (16 Tools)
 
-| Category      | Tools                                                                                                             | Batch Support                                                        |
-| ------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| **Node CRUD** | store_knowledge, store_issue, store_action, store_artifact, store_source, get_node, replace_node, invalidate_node | Store tools: batch up to 50 nodes + optional inline edges (up to 50) |
-| **Edge CRUD** | create_edge, delete_edge                                                                                          | Yes (create_edge up to 50)                                           |
-| **Search**    | search                                                                                                            | No                                                                   |
-| **Graph**     | traverse, about                                                                                                   | No                                                                   |
-| **Meta**      | stats, validate                                                                                                   | No                                                                   |
+| Category      | Tools                                                                                                                        | Batch Support                                                                                           |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Node CRUD** | store_knowledge, store_issue, store_action, store_artifact, store_source, get_node, get_nodes, replace_node, invalidate_node | Store tools: batch up to 50 nodes + optional inline edges (up to 50); `get_nodes` accepts up to 200 IDs |
+| **Edge CRUD** | create_edge, delete_edge                                                                                                     | Yes (create_edge up to 50)                                                                              |
+| **Search**    | search                                                                                                                       | No                                                                                                      |
+| **Graph**     | traverse, about                                                                                                              | No                                                                                                      |
+| **Meta**      | stats, validate                                                                                                              | No                                                                                                      |
 
 ## INTEGRATION WITH @TEXERE/GRAPH
 

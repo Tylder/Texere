@@ -13,6 +13,7 @@ import {
 import { Embedder } from './embedder.js';
 import {
   getNode as getNodeImpl,
+  getNodes as getNodesImpl,
   invalidateNode as invalidateNodeImpl,
   storeNode as storeNodeImpl,
   storeNodesWithEdges as storeNodesWithEdgesImpl,
@@ -116,6 +117,10 @@ export class Texere {
    */
   getNode(id: string, options?: GetNodeOptions): Node | NodeWithEdges | null {
     return getNodeImpl(this.db, id, options);
+  }
+
+  getNodes(ids: string[], options?: GetNodeOptions): Array<Node | NodeWithEdges | null> {
+    return getNodesImpl(this.db, ids, options);
   }
 
   /**

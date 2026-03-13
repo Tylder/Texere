@@ -327,6 +327,62 @@ export const getNode = (
   return { ...node, edges };
 };
 
+export const getNodes = (
+  db: Database.Database,
+  ids: string[],
+  options?: GetNodeOptions,
+): Array<Node | NodeWithEdges | null> => {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const uniqueIds = [...new Set(ids)];
+  const placeholders = uniqueIds.map(() => '?').join(', ');
+
+  const nodes = db
+    .prepare(`SELECT ${NODE_COLUMNS} FROM nodes WHERE id IN (${placeholders})`)
+    .all(...uniqueIds) as Node[];
+
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+
+  if (!options?.includeEdges) {
+    return ids.map((id) => nodesById.get(id) ?? null);
+  }
+
+  const edges = db
+    .prepare(
+      `
+        SELECT id, source_id, target_id, type, created_at
+        FROM edges
+        WHERE source_id IN (${placeholders}) OR target_id IN (${placeholders})
+        ORDER BY created_at ASC
+      `,
+    )
+    .all(...uniqueIds, ...uniqueIds) as Edge[];
+
+  const edgesByNode = new Map<string, Edge[]>();
+  for (const id of uniqueIds) {
+    edgesByNode.set(id, []);
+  }
+
+  for (const edge of edges) {
+    if (edgesByNode.has(edge.source_id)) {
+      edgesByNode.get(edge.source_id)!.push(edge);
+    }
+    if (edge.target_id !== edge.source_id && edgesByNode.has(edge.target_id)) {
+      edgesByNode.get(edge.target_id)!.push(edge);
+    }
+  }
+
+  return ids.map((id) => {
+    const node = nodesById.get(id);
+    if (!node) {
+      return null;
+    }
+    return { ...node, edges: edgesByNode.get(id) ?? [] };
+  });
+};
+
 export const invalidateNode = (db: Database.Database, id: string): void => {
   const statements = getStatements(db);
 

@@ -12,6 +12,7 @@ const TOOL_NAMES = [
   'texere_store_artifact',
   'texere_store_source',
   'texere_get_node',
+  'texere_get_nodes',
   'texere_invalidate_node',
   'texere_replace_node',
   'texere_create_edge',
@@ -36,13 +37,13 @@ describe('Texere MCP tools', () => {
     db.close();
   });
 
-  it('registers exactly 15 tools', () => {
+  it('registers exactly 16 tools', () => {
     expect(mcp.toolNames).toEqual(TOOL_NAMES);
-    expect(mcp.toolNames).toHaveLength(15);
+    expect(mcp.toolNames).toHaveLength(16);
   });
 
   it('exposes zod input schema for each tool', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(15);
+    expect(TOOL_DEFINITIONS).toHaveLength(16);
 
     for (const definition of TOOL_DEFINITIONS) {
       expect(typeof definition.inputSchema.safeParse).toBe('function');
@@ -132,6 +133,137 @@ describe('Texere MCP tools', () => {
 
     expect(result.isError).toBeUndefined();
     expect(result.structuredContent).toMatchObject({ node: null });
+  });
+
+  it('texere_get_nodes returns aligned results for multiple ids', async () => {
+    const first = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'First node',
+          content: 'First content',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+    const second = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Second node',
+          content: 'Second content',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+
+    const firstId = (first.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const secondId = (second.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+
+    const fetched = await mcp.callTool('texere_get_nodes', {
+      ids: [firstId, 'missing-id', secondId, firstId],
+    });
+
+    expect(fetched.isError).toBeUndefined();
+    expect(fetched.structuredContent).toMatchObject({
+      nodes: [
+        { id: firstId, title: 'First node' },
+        null,
+        { id: secondId, title: 'Second node' },
+        { id: firstId, title: 'First node' },
+      ],
+    });
+  });
+
+  it('texere_get_nodes forwards include_edges to the graph API', async () => {
+    const source = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Source node',
+          content: 'Source content',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+    const target = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Target node',
+          content: 'Target content',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+
+    const sourceId = (source.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const targetId = (target.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+
+    await mcp.callTool('texere_create_edge', {
+      edges: [{ source_id: sourceId, target_id: targetId, type: EdgeType.BasedOn }],
+      minimal: false,
+    });
+
+    const fetched = await mcp.callTool('texere_get_nodes', {
+      ids: [sourceId, targetId],
+      include_edges: true,
+    });
+
+    expect(fetched.isError).toBeUndefined();
+    const nodes = (
+      fetched.structuredContent as { nodes: Array<{ edges: Array<{ type: string }> }> }
+    ).nodes;
+    expect(nodes[0].edges).toHaveLength(1);
+    expect(nodes[1].edges).toHaveLength(1);
+    expect(nodes[0].edges[0].type).toBe(EdgeType.BasedOn);
+  });
+
+  it('texere_get_nodes accepts 200 ids', async () => {
+    const ids: string[] = [];
+
+    for (let i = 0; i < 200; i++) {
+      const stored = await mcp.callTool('texere_store_action', {
+        nodes: [
+          {
+            role: 'task',
+            title: `Bulk node ${i}`,
+            content: `Bulk content ${i}`,
+            importance: 0.5,
+            confidence: 0.8,
+          },
+        ],
+        minimal: false,
+      });
+
+      ids.push((stored.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id);
+    }
+
+    const fetched = await mcp.callTool('texere_get_nodes', { ids });
+
+    expect(fetched.isError).toBeUndefined();
+    expect((fetched.structuredContent as { nodes: unknown[] }).nodes).toHaveLength(200);
+  });
+
+  it('texere_get_nodes rejects more than 200 ids', async () => {
+    const result = await mcp.callTool('texere_get_nodes', {
+      ids: Array.from({ length: 201 }, (_, i) => `node-${i}`),
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: {
+        code: 'INVALID_INPUT',
+      },
+    });
   });
 
   it('texere_invalidate_node sets invalidated_at timestamp', async () => {

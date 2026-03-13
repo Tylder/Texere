@@ -5,6 +5,7 @@ import { createDatabase } from './db.js';
 import { getEdgesForNode } from './edges.js';
 import {
   getNode,
+  getNodes,
   invalidateNode,
   storeNode,
   storeNodesWithEdges,
@@ -67,6 +68,45 @@ describe('node CRUD', () => {
 
   it('getNode for unknown id returns null', () => {
     expect(getNode(db, 'nonexistent')).toBeNull();
+  });
+
+  it('getNodes returns results aligned with input ids including nulls for missing nodes', () => {
+    const nodeA = storeNode(db, decision({ title: 'Node A', tags: [] }));
+    const nodeB = storeNode(db, decision({ title: 'Node B', tags: [] }));
+
+    const results = getNodes(db, [nodeA.id, 'missing-id', nodeB.id, nodeA.id]);
+
+    expect(results).toHaveLength(4);
+    expect(results[0]?.id).toBe(nodeA.id);
+    expect(results[1]).toBeNull();
+    expect(results[2]?.id).toBe(nodeB.id);
+    expect(results[3]?.id).toBe(nodeA.id);
+  });
+
+  it('getNodes with includeEdges includes edges for each found node', () => {
+    const nodeA = storeNode(db, decision({ title: 'Node A', tags: [] }));
+    const nodeB = storeNode(db, decision({ title: 'Node B', tags: [] }));
+
+    storeNodesWithEdges(
+      db,
+      [
+        { ...decision({ title: 'Node C', tags: [] }), temp_id: 'c' },
+        { ...decision({ title: 'Node D', tags: [] }), temp_id: 'd' },
+      ],
+      [{ source_id: nodeA.id, target_id: nodeB.id, type: EdgeType.BasedOn }],
+    );
+
+    const results = getNodes(db, [nodeA.id, nodeB.id], { includeEdges: true });
+
+    expect(results[0]).not.toBeNull();
+    expect(results[1]).not.toBeNull();
+    expect('edges' in results[0]!).toBe(true);
+    expect('edges' in results[1]!).toBe(true);
+
+    const edgesA = (results[0] as { edges: Array<{ target_id: string }> }).edges;
+    const edgesB = (results[1] as { edges: Array<{ source_id: string }> }).edges;
+    expect(edgesA.some((edge) => edge.target_id === nodeB.id)).toBe(true);
+    expect(edgesB.some((edge) => edge.source_id === nodeA.id)).toBe(true);
   });
 
   it('getNode with includeEdges returns node with an empty edges array', () => {

@@ -2,6 +2,7 @@ import { aboutTool } from './about.js';
 import { createEdgeTool } from './create-edge.js';
 import { deleteEdgeTool } from './delete-edge.js';
 import { getNodeTool } from './get-node.js';
+import { getNodesTool } from './get-nodes.js';
 import { invalidateNodeTool } from './invalidate-node.js';
 import { replaceNodeTool } from './replace-node.js';
 import { searchTool } from './search.js';
@@ -24,6 +25,7 @@ export const TOOL_DEFINITIONS = [
   storeArtifactTool,
   storeSourceTool,
   getNodeTool,
+  getNodesTool,
   invalidateNodeTool,
   replaceNodeTool,
   createEdgeTool,

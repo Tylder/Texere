@@ -68,9 +68,24 @@ Read node by ID with optional edges.
 | id            | string  | yes      | —       | Node ID                         |
 | include_edges | boolean | no       | false   | Include incoming/outgoing edges |
 
-Returns: `{ node: Node & { edges?: { incoming: Edge[], outgoing: Edge[] } } }`
+Returns: `{ node: (Node & { edges?: Edge[] }) | null }`
 
 Example: `texere_get_node({ id: "abc123", include_edges: true })`
+
+### texere_get_nodes
+
+Read multiple nodes by ID with optional edges. Returns results aligned to the input `ids` array;
+missing nodes are returned as `null`, duplicate IDs are preserved, and the MCP batch limit is 200
+IDs per call.
+
+| arg           | type     | required | default | notes                                             |
+| ------------- | -------- | -------- | ------- | ------------------------------------------------- |
+| ids           | string[] | yes      | —       | Node IDs to fetch (1-200)                         |
+| include_edges | boolean  | no       | false   | Include each found node's incoming/outgoing edges |
+
+Returns: `{ nodes: Array<((Node & { edges?: Edge[] }) | null)> }`
+
+Example: `texere_get_nodes({ ids: ["abc123", "missing", "def456"], include_edges: true })`
 
 ### texere_traverse
 

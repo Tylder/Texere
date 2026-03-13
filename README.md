@@ -12,7 +12,7 @@ cross-session memory for AI agents.
 - **5 node types, 20 roles, 11 edge types** — Typed graph with type-role constraint validation
 - **Multi-mode search** — Keyword (BM25), semantic (embeddings), hybrid (RRF fusion), auto-detection
 - **Graph traversal** — Recursive CTEs with depth control and edge type filtering
-- **15 MCP tools** — Per-type store tools, search, traversal, validation
+- **16 MCP tools** — Per-type store tools, retrieval, search, traversal, validation
 - **Immutable design** — Nodes never mutate, only replaced with REPLACES edges
 - **Soft-delete** — Invalidation timestamps preserve history
 - **Debounced embeddings** — Async batch processing for efficient semantic search
@@ -55,7 +55,7 @@ Configure in your MCP client (e.g., Claude Desktop):
 ### As Library
 
 ```typescript
-import { Texere, NodeType, NodeRole } from '@texere/graph';
+import { Texere, EdgeType, NodeType, NodeRole } from '@texere/graph';
 
 // Initialize database
 const db = new Texere('./my-knowledge.db');
@@ -97,6 +97,10 @@ const result = await db.storeNodesWithEdges(
 );
 // result.nodes[0].temp_id === 'd1', result.edges[0].source_id === result.nodes[0].id
 
+// Fetch multiple nodes while preserving input order
+const nodes = db.getNodes([node.id, 'missing-id'], { includeEdges: true });
+// nodes === [NodeWithEdges, null]
+
 // Search with semantic mode
 const results = await db.search({
   query: 'database decisions',
@@ -117,7 +121,7 @@ db.close();
 
 ## MCP Tools
 
-The MCP server exposes **15 tools** for graph operations:
+The MCP server exposes **16 tools** for graph operations:
 
 **Node CRUD (per-type stores + inline edges):**
 
@@ -132,6 +136,7 @@ All store tools support `temp_id` for call-scoped node identification and option
 atomic node+edge creation in a single tool call.
 
 - `texere_get_node` — Retrieve node by ID
+- `texere_get_nodes` — Retrieve up to 200 nodes by ID while preserving input order
 - `texere_replace_node` — Replace node (creates REPLACES edge, invalidates old)
 - `texere_invalidate_node` — Soft-delete node
 
