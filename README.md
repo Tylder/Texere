@@ -11,7 +11,8 @@ cross-session memory for AI agents.
 
 - **5 node types, 20 roles, 11 edge types** — Typed graph with type-role constraint validation
 - **Multi-mode search** — Keyword (BM25), semantic (embeddings), hybrid (RRF fusion), auto-detection
-- **Graph traversal** — Recursive CTEs with depth control and edge type filtering
+- **Graph traversal** — Recursive CTEs with depth control, edge type filtering, and cursor
+  pagination
 - **16 MCP tools** — Per-type store tools, retrieval, search, traversal, validation
 - **Immutable design** — Nodes never mutate, only replaced with REPLACES edges
 - **Soft-delete** — Invalidation timestamps preserve history
@@ -101,19 +102,33 @@ const result = await db.storeNodesWithEdges(
 const nodes = db.getNodes([node.id, 'missing-id'], { includeEdges: true });
 // nodes === [NodeWithEdges, null]
 
-// Search with semantic mode
-const results = await db.search({
+// Search with semantic mode and pagination
+const searchPage = await db.search({
   query: 'database decisions',
   mode: 'semantic',
   limit: 10,
 });
 
-// Traverse graph
-const neighbors = db.traverse({
+// searchPage.results
+// searchPage.page.nextCursor
+
+// Traverse graph with pagination
+const neighborsPage = db.traverse({
   startId: node.id,
   direction: 'outgoing',
   maxDepth: 2,
+  limit: 25,
 });
+
+// Fetch the next search page if needed
+if (searchPage.page.nextCursor) {
+  await db.search({
+    query: 'database decisions',
+    mode: 'semantic',
+    limit: 10,
+    cursor: searchPage.page.nextCursor,
+  });
+}
 
 // Close when done
 db.close();
@@ -147,9 +162,9 @@ atomic node+edge creation in a single tool call.
 
 **Search & Traversal:**
 
-- `texere_search` — Multi-mode search (keyword/semantic/hybrid)
-- `texere_traverse` — Graph traversal with depth control
-- `texere_about` — Search + traverse (find seeds, explore neighborhood)
+- `texere_search` — Multi-mode search (keyword/semantic/hybrid) with cursor pagination
+- `texere_traverse` — Graph traversal with depth control and cursor pagination
+- `texere_about` — Search + traverse with cursor pagination over the final deduped result set
 
 **Metadata:**
 
@@ -202,7 +217,7 @@ Monorepo with Turbo task orchestration:
 ```
 texere/
 ├── apps/
-│   └── mcp/              # MCP server (15 tools over stdio)
+│   └── mcp/              # MCP server (16 tools over stdio)
 ├── packages/
 │   └── graph/            # Core graph library (SQLite + embeddings)
 └── tooling/

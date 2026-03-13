@@ -12,7 +12,8 @@ const inputSchema = z.object({
   tags: z.array(z.string().min(1)).optional(),
   tag_mode: z.enum(['all', 'any']).optional(),
   min_importance: z.number().min(0).max(1).optional(),
-  limit: z.number().int().min(1).max(100).optional(),
+  limit: z.number().int().min(1).max(250).optional(),
+  cursor: z.string().min(1).optional(),
   direction: z.enum(['outgoing', 'incoming', 'both']).optional(),
   max_depth: z.number().int().min(0).max(5).optional(),
   edge_type: z.nativeEnum(EdgeType).optional(),
@@ -22,7 +23,7 @@ const inputSchema = z.object({
 export const aboutTool: ToolDefinition<typeof inputSchema> = {
   name: 'texere_about',
   description:
-    'Search for seeds with optional semantic/hybrid modes, then traverse their neighborhood.',
+    'Search for seeds with optional semantic/hybrid modes, then traverse their neighborhood with cursor pagination over the final result set.',
   inputSchema,
   execute: async ({ db }, input) => {
     const aboutOptions: AboutOptions = {
@@ -47,6 +48,9 @@ export const aboutTool: ToolDefinition<typeof inputSchema> = {
     if (input.limit !== undefined) {
       aboutOptions.limit = input.limit;
     }
+    if (input.cursor !== undefined) {
+      aboutOptions.cursor = input.cursor;
+    }
     if (input.direction !== undefined) {
       aboutOptions.direction = input.direction;
     }
@@ -60,8 +64,18 @@ export const aboutTool: ToolDefinition<typeof inputSchema> = {
       aboutOptions.mode = input.mode;
     }
 
-    const results = await db.about(aboutOptions);
+    const page = await db.about(aboutOptions);
 
-    return ok({ results });
+    return ok({
+      results: page.results,
+      page: {
+        next_cursor: page.page.nextCursor,
+        has_more: page.page.hasMore,
+        returned: page.page.returned,
+        limit: page.page.limit,
+        order: page.page.order,
+        ...(page.page.mode !== undefined ? { mode: page.page.mode } : {}),
+      },
+    });
   },
 };

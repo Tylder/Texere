@@ -49,6 +49,8 @@ import {
   type InlineEdgeInput,
   type Node,
   type NodeTag,
+  type PageInfo,
+  type PaginatedResults,
   type SearchMode,
   type SearchOptions,
   type SearchResult,
@@ -179,7 +181,7 @@ export class Texere {
     return getEdgesForNodeImpl(this.db, nodeId, direction);
   }
 
-  async search(options: SearchOptions): Promise<SearchResult[]> {
+  async search(options: SearchOptions): Promise<PaginatedResults<SearchResult>> {
     const mode =
       options.mode && options.mode !== 'auto' ? options.mode : detectSearchMode(options.query);
 
@@ -197,7 +199,7 @@ export class Texere {
    * @param options - Traversal options
    * @returns Array of traverse results with depth information
    */
-  traverse(options: TraverseOptions): TraverseResult[] {
+  traverse(options: TraverseOptions): PaginatedResults<TraverseResult> {
     return traverseImpl(this.db, options);
   }
 
@@ -206,7 +208,7 @@ export class Texere {
    * @param options - Combined search and traversal options
    * @returns Array of traverse results with depth information
    */
-  async about(options: AboutOptions): Promise<TraverseResult[]> {
+  async about(options: AboutOptions): Promise<PaginatedResults<TraverseResult>> {
     const mode =
       options.mode && options.mode !== 'auto' ? options.mode : detectSearchMode(options.query);
 
@@ -253,6 +255,8 @@ export type {
   MinimalEdge,
   EdgeDirection,
   SearchMode,
+  PageInfo,
+  PaginatedResults,
   SearchOptions,
   SearchResult,
   TraverseOptions,

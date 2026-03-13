@@ -416,7 +416,53 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).toMatchObject({
+      page: { has_more: false, next_cursor: null, limit: 5 },
+    });
     expect((result.structuredContent as { results: unknown[] }).results).toHaveLength(1);
+  });
+
+  it('texere_search paginates with cursor metadata', async () => {
+    for (let i = 0; i < 3; i += 1) {
+      await mcp.callTool('texere_store_action', {
+        nodes: [
+          {
+            role: 'solution',
+            title: `Paged search ${i}`,
+            content: 'cursor pagination test',
+            importance: 0.9,
+            confidence: 0.8,
+          },
+        ],
+      });
+    }
+
+    const firstPage = await mcp.callTool('texere_search', { query: 'Paged search', limit: 2 });
+    expect(firstPage.isError).toBeUndefined();
+
+    const firstStructured = firstPage.structuredContent as {
+      results: Array<{ id: string }>;
+      page: { has_more: boolean; next_cursor: string | null };
+    };
+    expect(firstStructured.results).toHaveLength(2);
+    expect(firstStructured.page.has_more).toBe(true);
+    expect(firstStructured.page.next_cursor).not.toBeNull();
+
+    const secondPage = await mcp.callTool('texere_search', {
+      query: 'Paged search',
+      limit: 2,
+      cursor: firstStructured.page.next_cursor,
+    });
+    const secondStructured = secondPage.structuredContent as {
+      results: Array<{ id: string }>;
+      page: { has_more: boolean };
+    };
+
+    const ids = new Set(
+      [...firstStructured.results, ...secondStructured.results].map((row) => row.id),
+    );
+    expect(ids.size).toBe(3);
+    expect(secondStructured.page.has_more).toBe(false);
   });
 
   it('texere_traverse returns neighbors', async () => {
@@ -465,6 +511,9 @@ describe('Texere MCP tools', () => {
     });
 
     expect(traversed.isError).toBeUndefined();
+    expect(traversed.structuredContent).toMatchObject({
+      page: { has_more: false, next_cursor: null, limit: 20 },
+    });
     const results = (traversed.structuredContent as { results: Array<{ node: { id: string } }> })
       .results;
     expect(results).toHaveLength(1);
@@ -518,6 +567,9 @@ describe('Texere MCP tools', () => {
     });
 
     expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).toMatchObject({
+      page: { has_more: false, limit: 10 },
+    });
     const results = (result.structuredContent as { results: Array<{ node: { id: string } }> })
       .results;
     const resultIds = results.map((r) => r.node.id);

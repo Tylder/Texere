@@ -1,7 +1,21 @@
 import type Database from 'better-sqlite3';
 
+import {
+  buildPaginatedResults,
+  buildScope,
+  clampPageLimit,
+  parseGraphCursor,
+} from './pagination.js';
 import { search } from './search.js';
-import type { AboutOptions, EdgeType, Node, SearchOptions, TraverseOptions } from './types.js';
+import type {
+  AboutOptions,
+  EdgeType,
+  Node,
+  PaginatedResults,
+  SearchOptions,
+  SearchResult,
+  TraverseOptions,
+} from './types.js';
 
 export type { AboutOptions } from './types.js';
 
@@ -24,8 +38,14 @@ export interface Stats {
   };
 }
 
+interface AboutCandidate {
+  row: TraverseResult;
+  seedIndex: number;
+}
+
 const DEFAULT_MAX_DEPTH = 3;
 const MAX_DEPTH_CAP = 5;
+const INTERNAL_COLLECTION_LIMIT = 500;
 
 const toMaxDepth = (maxDepth: number | undefined): number => {
   if (maxDepth === undefined) {
@@ -44,6 +64,18 @@ const toResults = (rows: TraverseRow[]): TraverseResult[] =>
     node,
     depth,
   }));
+
+const compareTraverseResults = (left: TraverseResult, right: TraverseResult): number => {
+  if (left.depth !== right.depth) {
+    return left.depth - right.depth;
+  }
+
+  if (left.node.created_at !== right.node.created_at) {
+    return left.node.created_at - right.node.created_at;
+  }
+
+  return left.node.id.localeCompare(right.node.id);
+};
 
 const buildWalkSql = (
   direction: NonNullable<TraverseOptions['direction']>,
@@ -93,7 +125,7 @@ const buildWalkSql = (
         n.confidence,
         n.created_at,
         n.invalidated_at
-      ORDER BY depth ASC, n.created_at ASC
+      ORDER BY depth ASC, n.created_at ASC, n.id ASC
     `;
   }
 
@@ -154,7 +186,7 @@ const buildWalkSql = (
         n.confidence,
         n.created_at,
         n.invalidated_at
-      ORDER BY depth ASC, n.created_at ASC
+      ORDER BY depth ASC, n.created_at ASC, n.id ASC
     `;
   }
 
@@ -199,11 +231,20 @@ const buildWalkSql = (
       n.confidence,
       n.created_at,
       n.invalidated_at
-    ORDER BY depth ASC, n.created_at ASC
+    ORDER BY depth ASC, n.created_at ASC, n.id ASC
   `;
 };
 
-export const traverse = (db: Database.Database, options: TraverseOptions): TraverseResult[] => {
+const buildTraverseScope = (options: TraverseOptions): string =>
+  buildScope({
+    endpoint: 'traverse',
+    start_id: options.startId,
+    direction: getDirection(options.direction),
+    max_depth: toMaxDepth(options.maxDepth),
+    edge_type: options.edgeType,
+  });
+
+const runTraverseRows = (db: Database.Database, options: TraverseOptions): TraverseRow[] => {
   const direction = getDirection(options.direction);
   const maxDepth = toMaxDepth(options.maxDepth);
   const hasEdgeType = options.edgeType !== undefined;
@@ -221,15 +262,102 @@ export const traverse = (db: Database.Database, options: TraverseOptions): Trave
   }
 
   const sql = buildWalkSql(direction, hasEdgeType);
-  const rows = db.prepare(sql).all(params) as TraverseRow[];
-  return toResults(rows);
+  return db.prepare(sql).all(params) as TraverseRow[];
 };
 
-export const about = (
+const paginateTraverseResults = (
+  results: TraverseResult[],
+  limit: number,
+  cursor: string | undefined,
+  scope: string,
+  mode?: 'keyword' | 'semantic' | 'hybrid',
+): PaginatedResults<TraverseResult> => {
+  const cursorValue = parseGraphCursor(cursor, scope);
+  const filtered = cursorValue
+    ? results.filter(
+        (row) =>
+          row.depth > cursorValue.depth ||
+          (row.depth === cursorValue.depth && row.node.created_at > cursorValue.created_at) ||
+          (row.depth === cursorValue.depth &&
+            row.node.created_at === cursorValue.created_at &&
+            row.node.id > cursorValue.id),
+      )
+    : results;
+
+  return buildPaginatedResults(
+    filtered,
+    limit,
+    'depth ASC, created_at ASC, id ASC',
+    (row): TraverseResult => row,
+    (row) => ({ depth: row.depth, created_at: row.node.created_at, id: row.node.id }),
+    scope,
+    mode,
+  );
+};
+
+const collectAllSearchResults = async (
+  db: Database.Database,
+  options: SearchOptions,
+  queryEmbedding?: Float32Array,
+): Promise<SearchResult[]> => {
+  const results: SearchResult[] = [];
+  let cursor: string | undefined;
+
+  while (true) {
+    const page = search(
+      db,
+      {
+        ...options,
+        limit: INTERNAL_COLLECTION_LIMIT,
+        ...(cursor ? { cursor } : {}),
+      },
+      queryEmbedding,
+    );
+    results.push(...page.results);
+
+    if (!page.page.hasMore || !page.page.nextCursor) {
+      return results;
+    }
+
+    cursor = page.page.nextCursor;
+  }
+};
+
+const collectAllTraverseResults = (
+  db: Database.Database,
+  options: TraverseOptions,
+): TraverseResult[] => toResults(runTraverseRows(db, options));
+
+const buildAboutScope = (options: AboutOptions, mode: 'keyword' | 'semantic' | 'hybrid'): string =>
+  buildScope({
+    endpoint: 'about',
+    query: options.query.trim(),
+    mode,
+    type: Array.isArray(options.type) ? [...options.type].sort() : options.type,
+    role: options.role,
+    tags: options.tags ? [...options.tags].sort() : undefined,
+    tag_mode: options.tagMode ?? 'all',
+    min_importance: options.minImportance,
+    direction: getDirection(options.direction),
+    max_depth: toMaxDepth(options.maxDepth),
+    edge_type: options.edgeType,
+  });
+
+export const traverse = (
+  db: Database.Database,
+  options: TraverseOptions,
+): PaginatedResults<TraverseResult> => {
+  const rows = toResults(runTraverseRows(db, options));
+  const limit = clampPageLimit(options.limit);
+  const scope = buildTraverseScope(options);
+  return paginateTraverseResults(rows, limit, options.cursor, scope);
+};
+
+export const about = async (
   db: Database.Database,
   options: AboutOptions,
   queryEmbedding?: Float32Array,
-): TraverseResult[] => {
+): Promise<PaginatedResults<TraverseResult>> => {
   const searchOptions: SearchOptions = { query: options.query };
   if (options.type !== undefined) {
     searchOptions.type = options.type;
@@ -239,9 +367,6 @@ export const about = (
   }
   if (options.minImportance !== undefined) {
     searchOptions.minImportance = options.minImportance;
-  }
-  if (options.limit !== undefined) {
-    searchOptions.limit = options.limit;
   }
   if (options.tagMode !== undefined) {
     searchOptions.tagMode = options.tagMode;
@@ -253,19 +378,28 @@ export const about = (
     searchOptions.mode = options.mode;
   }
 
-  const seeds = search(db, searchOptions, queryEmbedding);
+  const seeds = await collectAllSearchResults(db, searchOptions, queryEmbedding);
 
   if (seeds.length === 0) {
-    return [];
+    return {
+      results: [],
+      page: {
+        nextCursor: null,
+        hasMore: false,
+        returned: 0,
+        limit: clampPageLimit(options.limit),
+        order: 'depth ASC, created_at ASC, id ASC',
+      },
+    };
   }
 
-  const byNodeId = new Map<string, TraverseResult>();
+  const byNodeId = new Map<string, AboutCandidate>();
 
-  for (const seed of seeds) {
-    byNodeId.set(seed.id, { node: seed, depth: 0 });
+  for (const [seedIndex, seed] of seeds.entries()) {
+    byNodeId.set(seed.id, { row: { node: seed, depth: 0 }, seedIndex });
   }
 
-  for (const seed of seeds) {
+  for (const [seedIndex, seed] of seeds.entries()) {
     const traverseOptions: TraverseOptions = { startId: seed.id };
     if (options.direction !== undefined) {
       traverseOptions.direction = options.direction;
@@ -277,23 +411,35 @@ export const about = (
       traverseOptions.edgeType = options.edgeType;
     }
 
-    const neighbors = traverse(db, traverseOptions);
+    const neighbors = collectAllTraverseResults(db, traverseOptions);
 
     for (const row of neighbors) {
       const existing = byNodeId.get(row.node.id);
-      if (!existing || row.depth < existing.depth) {
-        byNodeId.set(row.node.id, row);
+      if (!existing || row.depth < existing.row.depth) {
+        byNodeId.set(row.node.id, { row, seedIndex });
+        continue;
+      }
+
+      if (row.depth === existing.row.depth && seedIndex < existing.seedIndex) {
+        byNodeId.set(row.node.id, { row, seedIndex });
       }
     }
   }
 
-  return Array.from(byNodeId.values()).sort((left, right) => {
-    if (left.depth !== right.depth) {
-      return left.depth - right.depth;
-    }
+  const finalResults = Array.from(byNodeId.values())
+    .sort((left, right) => {
+      const resultComparison = compareTraverseResults(left.row, right.row);
+      if (resultComparison !== 0) {
+        return resultComparison;
+      }
+      return left.seedIndex - right.seedIndex;
+    })
+    .map((entry) => entry.row);
 
-    return left.node.created_at - right.node.created_at;
-  });
+  const aboutMode = seeds[0]!.search_mode === 'auto' ? 'keyword' : seeds[0]!.search_mode;
+  const limit = clampPageLimit(options.limit);
+  const scope = buildAboutScope(options, aboutMode);
+  return paginateTraverseResults(finalResults, limit, options.cursor, scope, aboutMode);
 };
 
 export const stats = (db: Database.Database): Stats => {

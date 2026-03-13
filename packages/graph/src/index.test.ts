@@ -288,9 +288,9 @@ describe('Texere facade', () => {
         content: 'Implement JWT auth',
       });
 
-      const results = await db.search({ query: 'authentication', mode: 'keyword' });
-      expect(results.length).toBeGreaterThan(0);
-      expect(results[0].title).toContain('Authentication');
+      const page = await db.search({ query: 'authentication', mode: 'keyword' });
+      expect(page.results.length).toBeGreaterThan(0);
+      expect(page.results[0].title).toContain('Authentication');
     });
 
     it('traverse() delegates to internal module', () => {
@@ -314,9 +314,9 @@ describe('Texere facade', () => {
         type: EdgeType.BasedOn,
       });
 
-      const results = db.traverse({ startId: node1.id, direction: 'outgoing' });
-      expect(results).toHaveLength(1);
-      expect(results[0].node.id).toBe(node2.id);
+      const page = db.traverse({ startId: node1.id, direction: 'outgoing' });
+      expect(page.results).toHaveLength(1);
+      expect(page.results[0].node.id).toBe(node2.id);
     });
 
     it('about() delegates to internal module', async () => {
@@ -340,8 +340,8 @@ describe('Texere facade', () => {
         type: EdgeType.Resolves,
       });
 
-      const results = await db.about({ query: 'auth', mode: 'keyword' });
-      expect(results.length).toBeGreaterThan(0);
+      const page = await db.about({ query: 'auth', mode: 'keyword' });
+      expect(page.results.length).toBeGreaterThan(0);
     });
 
     it('stats() delegates to internal module', () => {
@@ -591,7 +591,7 @@ describe('Texere facade', () => {
 
       // Should not throw and should return results
       expect(results).toBeDefined();
-      expect(Array.isArray(results)).toBe(true);
+      expect(Array.isArray(results.results)).toBe(true);
     });
 
     it('hybrid search triggers embedding flush', async () => {
@@ -607,7 +607,7 @@ describe('Texere facade', () => {
 
       // Should not throw and should return results
       expect(results).toBeDefined();
-      expect(Array.isArray(results)).toBe(true);
+      expect(Array.isArray(results.results)).toBe(true);
     });
 
     it('keyword search does not trigger embedding flush', async () => {
@@ -622,7 +622,7 @@ describe('Texere facade', () => {
       const results = await db.search({ query: 'database', mode: 'keyword' });
 
       expect(results).toBeDefined();
-      expect(Array.isArray(results)).toBe(true);
+      expect(Array.isArray(results.results)).toBe(true);
     });
 
     it('about() with semantic mode triggers embedding flush', async () => {
@@ -637,7 +637,7 @@ describe('Texere facade', () => {
       const results = await db.about({ query: 'security', mode: 'semantic' });
 
       expect(results).toBeDefined();
-      expect(Array.isArray(results)).toBe(true);
+      expect(Array.isArray(results.results)).toBe(true);
     });
   });
 });

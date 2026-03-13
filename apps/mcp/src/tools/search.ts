@@ -12,14 +12,15 @@ const inputSchema = z.object({
   tags: z.array(z.string().min(1)).optional(),
   tag_mode: z.enum(['all', 'any']).optional(),
   min_importance: z.number().min(0).max(1).optional(),
-  limit: z.number().int().min(1).max(100).optional(),
+  limit: z.number().int().min(1).max(250).optional(),
+  cursor: z.string().min(1).optional(),
   mode: z.enum(['auto', 'keyword', 'semantic', 'hybrid']).optional().default('auto'),
 });
 
 export const searchTool: ToolDefinition<typeof inputSchema> = {
   name: 'texere_search',
   description:
-    'FTS5 search with BM25 ranking, type/role/tag/importance filters. Supports keyword, semantic, and hybrid search modes.',
+    'FTS5 search with BM25 ranking, type/role/tag/importance filters, and cursor pagination. Supports keyword, semantic, and hybrid search modes.',
   inputSchema,
   execute: async ({ db }, input) => {
     const searchOptions = {
@@ -32,8 +33,21 @@ export const searchTool: ToolDefinition<typeof inputSchema> = {
       ...(input.limit !== undefined ? { limit: input.limit } : {}),
       ...(input.mode !== undefined ? { mode: input.mode } : {}),
     };
-    const results = await db.search(searchOptions);
+    const page = await db.search({
+      ...searchOptions,
+      ...(input.cursor !== undefined ? { cursor: input.cursor } : {}),
+    });
 
-    return ok({ results });
+    return ok({
+      results: page.results,
+      page: {
+        next_cursor: page.page.nextCursor,
+        has_more: page.page.hasMore,
+        returned: page.page.returned,
+        limit: page.page.limit,
+        order: page.page.order,
+        ...(page.page.mode !== undefined ? { mode: page.page.mode } : {}),
+      },
+    });
   },
 };

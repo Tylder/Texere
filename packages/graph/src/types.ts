@@ -127,6 +127,20 @@ export interface SearchResult extends Node {
 
 export type SearchMode = 'auto' | 'keyword' | 'semantic' | 'hybrid';
 
+export interface PageInfo {
+  nextCursor: string | null;
+  hasMore: boolean;
+  returned: number;
+  limit: number;
+  order: string;
+  mode?: Exclude<SearchMode, 'auto'>;
+}
+
+export interface PaginatedResults<T> {
+  results: T[];
+  page: PageInfo;
+}
+
 export interface SearchOptions {
   query: string;
   type?: NodeType | NodeType[];
@@ -135,6 +149,7 @@ export interface SearchOptions {
   tagMode?: 'all' | 'any';
   minImportance?: number;
   limit?: number;
+  cursor?: string;
   mode?: SearchMode;
 }
 
@@ -143,6 +158,8 @@ export interface TraverseOptions {
   direction?: 'outgoing' | 'incoming' | 'both';
   maxDepth?: number;
   edgeType?: EdgeType;
+  limit?: number;
+  cursor?: string;
 }
 
 export interface AboutOptions

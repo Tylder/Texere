@@ -92,7 +92,7 @@ describe('Graph package integration', () => {
       expect(retrieved!.id).toBe(problem.id);
 
       const searchResults = await db.search({ query: 'WAL mode transactions' });
-      const foundIds = searchResults.map((node: Node) => node.id);
+      const foundIds = searchResults.results.map((node: Node) => node.id);
       expect(foundIds).toContain(solution.id);
 
       const traverseResults = db.traverse({
@@ -100,16 +100,16 @@ describe('Graph package integration', () => {
         direction: 'outgoing',
         maxDepth: 3,
       });
-      expect(traverseResults).toHaveLength(2);
-      expect(traverseResults[0].node.id).toBe(solution.id);
-      expect(traverseResults[1].node.id).toBe(problem.id);
+      expect(traverseResults.results).toHaveLength(2);
+      expect(traverseResults.results[0].node.id).toBe(solution.id);
+      expect(traverseResults.results[1].node.id).toBe(problem.id);
 
       const aboutResults = await db.about({
         query: 'contention',
         direction: 'both',
         maxDepth: 2,
       });
-      const aboutIds = aboutResults.map((r) => r.node.id);
+      const aboutIds = aboutResults.results.map((r) => r.node.id);
       expect(aboutIds).toContain(problem.id);
 
       const stats = db.stats();
@@ -329,7 +329,7 @@ describe('Graph package integration', () => {
         ),
       ]);
 
-      expect(searchResults.length).toBeGreaterThanOrEqual(1);
+      expect(searchResults.results.length).toBeGreaterThanOrEqual(1);
 
       const stats = db.stats();
       expect(stats.nodes.total).toBe(2);
@@ -366,9 +366,9 @@ describe('Graph package integration', () => {
 
       db.invalidateNode(b.id);
 
-      expect(traverseResults).toHaveLength(2);
-      expect(traverseResults[0]!.node.id).toBe(b.id);
-      expect(traverseResults[1]!.node.id).toBe(c.id);
+      expect(traverseResults.results).toHaveLength(2);
+      expect(traverseResults.results[0]!.node.id).toBe(b.id);
+      expect(traverseResults.results[1]!.node.id).toBe(c.id);
 
       const invalidated = db.getNode(b.id);
       expect(invalidated?.invalidated_at).not.toBeNull();
@@ -488,7 +488,7 @@ describe('Graph package integration', () => {
       const results = await db.search({ query: 'knowledge finding', mode: 'keyword', limit: 20 });
       const elapsed = performance.now() - start;
 
-      expect(results.length).toBeGreaterThan(0);
+      expect(results.results.length).toBeGreaterThan(0);
       expect(elapsed).toBeLessThan(200);
     });
 
@@ -546,7 +546,7 @@ describe('Graph package integration', () => {
       });
       const elapsed = performance.now() - start;
 
-      expect(results.length).toBeGreaterThan(0);
+      expect(results.results.length).toBeGreaterThan(0);
       expect(elapsed).toBeLessThan(100);
     });
 

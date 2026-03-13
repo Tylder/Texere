@@ -28,10 +28,13 @@ hybrid search modes.
 | tags           | string[]                                      | no       | —       | Filter by tags               |
 | tag_mode       | "all" \| "any"                                | no       | "all"   | AND vs OR for tags           |
 | min_importance | number (0-1)                                  | no       | —       | Minimum importance threshold |
-| limit          | number (1-100)                                | no       | 20      | Max results                  |
+| limit          | number (1-250)                                | no       | 20      | Page size                    |
+| cursor         | string                                        | no       | —       | Opaque cursor for next page  |
 | mode           | "auto" \| "keyword" \| "semantic" \| "hybrid" | no       | "auto"  | Search strategy              |
 
-Returns: `{ results: SearchResult[] }` where SearchResult includes
+Returns:
+`{ results: SearchResult[], page: { next_cursor, has_more, returned, limit, order, mode? } }` where
+SearchResult includes
 `{ id, type, role, title, content, tags, importance, rank, match_quality, match_fields, relationships: { incoming: Edge[], outgoing: Edge[] } }`
 
 Example: `texere_search({ query: "timeout", type: "issue", role: "error", limit: 5 })`
@@ -48,14 +51,15 @@ Search for seeds with optional semantic/hybrid modes, then traverse their neighb
 | tags           | string[]                                      | no       | —       | Filter by tags               |
 | tag_mode       | "all" \| "any"                                | no       | "all"   | AND vs OR for tags           |
 | min_importance | number (0-1)                                  | no       | —       | Minimum importance threshold |
-| limit          | number (1-100)                                | no       | 20      | Max seed results             |
+| limit          | number (1-250)                                | no       | 20      | Final page size              |
+| cursor         | string                                        | no       | —       | Opaque cursor for next page  |
 | direction      | "outgoing" \| "incoming" \| "both"            | no       | "both"  | Traversal direction          |
 | max_depth      | number (0-5)                                  | no       | 1       | Traversal depth              |
 | edge_type      | EdgeType                                      | no       | —       | Filter by edge type          |
 | mode           | "auto" \| "keyword" \| "semantic" \| "hybrid" | no       | "auto"  | Search strategy              |
 
 Returns:
-`{ results: Array<{ seed: Node, neighbors: Array<{ node: Node, edge: Edge, depth: number }> }> }`
+`{ results: Array<{ node: Node, depth: number }>, page: { next_cursor, has_more, returned, limit, order, mode? } }`
 
 Example: `texere_about({ query: "concurrency", max_depth: 2, limit: 10 })`
 
@@ -91,14 +95,17 @@ Example: `texere_get_nodes({ ids: ["abc123", "missing", "def456"], include_edges
 
 Traverse graph from start node with recursive CTE.
 
-| arg       | type                               | required | default    | notes               |
-| --------- | ---------------------------------- | -------- | ---------- | ------------------- |
-| start_id  | string                             | yes      | —          | Starting node ID    |
-| direction | "outgoing" \| "incoming" \| "both" | no       | "outgoing" | Traversal direction |
-| max_depth | number (0-5)                       | no       | 3          | Max recursion depth |
-| edge_type | EdgeType                           | no       | —          | Filter by edge type |
+| arg       | type                               | required | default    | notes                       |
+| --------- | ---------------------------------- | -------- | ---------- | --------------------------- |
+| start_id  | string                             | yes      | —          | Starting node ID            |
+| direction | "outgoing" \| "incoming" \| "both" | no       | "outgoing" | Traversal direction         |
+| max_depth | number (0-5)                       | no       | 3          | Max recursion depth         |
+| limit     | number (1-250)                     | no       | 20         | Final page size             |
+| cursor    | string                             | no       | —          | Opaque cursor for next page |
+| edge_type | EdgeType                           | no       | —          | Filter by edge type         |
 
-Returns: `{ results: Array<{ node: Node, edge: Edge, depth: number }> }`
+Returns:
+`{ results: Array<{ node: Node, depth: number }>, page: { next_cursor, has_more, returned, limit, order } }`
 
 Example: `texere_traverse({ start_id: "decision_123", direction: "outgoing", max_depth: 2 })`
 
@@ -601,6 +608,6 @@ RELATED_TO (last resort)
 - Batch nodes: max 50 per store call
 - Inline edges: max 50 per store call
 - Batch edges: max 50 per create_edge call
-- Search limit: max 100
+- Search/About/Traverse page size: max 250 via MCP, max 500 internally
 - Traverse depth: max 5
 - About depth: max 5

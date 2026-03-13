@@ -8,6 +8,12 @@ import { invalidateNode, storeNode } from './nodes.js';
 import { about, stats, traverse } from './traverse.js';
 import { EdgeType, NodeRole, NodeType } from './types.js';
 
+const traverseResults = (db: Database.Database, options: Parameters<typeof traverse>[1]) =>
+  traverse(db, options).results;
+
+const aboutResults = async (db: Database.Database, options: Parameters<typeof about>[1]) =>
+  (await about(db, options)).results;
+
 const makeNode = (
   db: Database.Database,
   opts: { type: NodeType; role: NodeRole; title: string; content: string; tags?: string[] },
@@ -56,7 +62,7 @@ describe('traverse', () => {
     createEdge(db, { source_id: depth1.id, target_id: depth2.id, type: EdgeType.DependsOn });
     createEdge(db, { source_id: depth2.id, target_id: depth3.id, type: EdgeType.BasedOn });
 
-    const result = traverse(db, { startId: start.id, direction: 'outgoing', maxDepth: 2 });
+    const result = traverseResults(db, { startId: start.id, direction: 'outgoing', maxDepth: 2 });
     const depthById = toDepthById(result);
 
     expect(depthById.get(depth1.id)).toBe(1);
@@ -87,7 +93,7 @@ describe('traverse', () => {
     createEdge(db, { source_id: upstream1.id, target_id: start.id, type: EdgeType.Causes });
     createEdge(db, { source_id: upstream2.id, target_id: upstream1.id, type: EdgeType.DependsOn });
 
-    const result = traverse(db, { startId: start.id, direction: 'incoming', maxDepth: 2 });
+    const result = traverseResults(db, { startId: start.id, direction: 'incoming', maxDepth: 2 });
     const depthById = toDepthById(result);
 
     expect(depthById.get(upstream1.id)).toBe(1);
@@ -117,7 +123,7 @@ describe('traverse', () => {
     createEdge(db, { source_id: incoming.id, target_id: start.id, type: EdgeType.Causes });
     createEdge(db, { source_id: start.id, target_id: outgoing.id, type: EdgeType.Resolves });
 
-    const result = traverse(db, { startId: start.id, direction: 'both', maxDepth: 2 });
+    const result = traverseResults(db, { startId: start.id, direction: 'both', maxDepth: 2 });
     const ids = new Set(result.map((row) => row.node.id));
 
     expect(ids.has(incoming.id)).toBe(true);
@@ -154,7 +160,7 @@ describe('traverse', () => {
     createEdge(db, { source_id: d1.id, target_id: d2.id, type: EdgeType.Resolves });
     createEdge(db, { source_id: d2.id, target_id: d3.id, type: EdgeType.Resolves });
 
-    const result = traverse(db, { startId: start.id, maxDepth: 2 });
+    const result = traverseResults(db, { startId: start.id, maxDepth: 2 });
     const ids = new Set(result.map((row) => row.node.id));
 
     expect(ids.has(d1.id)).toBe(true);
@@ -186,7 +192,7 @@ describe('traverse', () => {
     createEdge(db, { source_id: active.id, target_id: invalidated.id, type: EdgeType.DependsOn });
     invalidateNode(db, invalidated.id);
 
-    const result = traverse(db, { startId: start.id, maxDepth: 3 });
+    const result = traverseResults(db, { startId: start.id, maxDepth: 3 });
     const ids = new Set(result.map((row) => row.node.id));
 
     expect(ids.has(active.id)).toBe(true);
@@ -194,7 +200,7 @@ describe('traverse', () => {
   });
 
   it('returns empty for nonexistent start node', () => {
-    const result = traverse(db, { startId: 'missing-node-id' });
+    const result = traverseResults(db, { startId: 'missing-node-id' });
     expect(result).toEqual([]);
   });
 
@@ -205,7 +211,7 @@ describe('traverse', () => {
       title: 'Lonely',
       content: 'Lonely',
     });
-    const result = traverse(db, { startId: lonely.id });
+    const result = traverseResults(db, { startId: lonely.id });
     expect(result).toEqual([]);
   });
 
@@ -233,7 +239,7 @@ describe('traverse', () => {
     createEdge(db, { source_id: b.id, target_id: c.id, type: EdgeType.BasedOn });
     createEdge(db, { source_id: c.id, target_id: a.id, type: EdgeType.BasedOn });
 
-    const result = traverse(db, { startId: a.id, direction: 'outgoing', maxDepth: 4 });
+    const result = traverseResults(db, { startId: a.id, direction: 'outgoing', maxDepth: 4 });
     const ids = new Set(result.map((row) => row.node.id));
 
     expect(ids.has(b.id)).toBe(true);
@@ -265,7 +271,11 @@ describe('traverse', () => {
     createEdge(db, { source_id: start.id, target_id: solves.id, type: EdgeType.Resolves });
     createEdge(db, { source_id: start.id, target_id: causes.id, type: EdgeType.Causes });
 
-    const result = traverse(db, { startId: start.id, edgeType: EdgeType.Resolves, maxDepth: 2 });
+    const result = traverseResults(db, {
+      startId: start.id,
+      edgeType: EdgeType.Resolves,
+      maxDepth: 2,
+    });
     const ids = new Set(result.map((row) => row.node.id));
 
     expect(ids.has(solves.id)).toBe(true);
@@ -309,7 +319,7 @@ describe('traverse', () => {
     createEdge(db, { source_id: d2.id, target_id: d3.id, type: EdgeType.BasedOn });
     createEdge(db, { source_id: d3.id, target_id: d4.id, type: EdgeType.BasedOn });
 
-    const result = traverse(db, { startId: start.id, direction: 'outgoing' });
+    const result = traverseResults(db, { startId: start.id, direction: 'outgoing' });
     const ids = new Set(result.map((row) => row.node.id));
 
     expect(ids.has(d1.id)).toBe(true);
@@ -336,7 +346,7 @@ describe('traverse', () => {
       });
     }
 
-    const result = traverse(db, { startId: nodes[0]!.id, maxDepth: 99 });
+    const result = traverseResults(db, { startId: nodes[0]!.id, maxDepth: 99 });
     const depthById = toDepthById(result);
 
     expect(depthById.get(nodes[5]!.id)).toBe(5);
@@ -355,7 +365,7 @@ describe('about', () => {
     db.close();
   });
 
-  it('finds seed nodes via FTS and traverses neighbors', () => {
+  it('finds seed nodes via FTS and traverses neighbors', async () => {
     const seed = makeNode(db, {
       type: NodeType.Artifact,
       role: NodeRole.Technology,
@@ -372,14 +382,14 @@ describe('about', () => {
 
     createEdge(db, { source_id: seed.id, target_id: neighbor.id, type: EdgeType.BasedOn });
 
-    const result = about(db, { query: 'SQLite', maxDepth: 2, direction: 'outgoing' });
+    const result = await aboutResults(db, { query: 'SQLite', maxDepth: 2, direction: 'outgoing' });
     const ids = new Set(result.map((row) => row.node.id));
 
     expect(ids.has(seed.id)).toBe(true);
     expect(ids.has(neighbor.id)).toBe(true);
   });
 
-  it('returns search + traversal nodes deduplicated by id', () => {
+  it('returns search + traversal nodes deduplicated by id', async () => {
     const seed = makeNode(db, {
       type: NodeType.Artifact,
       role: NodeRole.Technology,
@@ -400,7 +410,7 @@ describe('about', () => {
       type: EdgeType.BasedOn,
     });
 
-    const result = about(db, { query: 'SQLite', maxDepth: 2 });
+    const result = await aboutResults(db, { query: 'SQLite', maxDepth: 2 });
     const ids = result.map((row) => row.node.id);
     const unique = new Set(ids);
 
@@ -409,15 +419,91 @@ describe('about', () => {
     expect(ids.length).toBe(unique.size);
   });
 
-  it('returns empty when search finds no seed nodes', () => {
+  it('returns empty when search finds no seed nodes', async () => {
     makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
       title: 'Unrelated',
       content: 'No sqlite here',
     });
-    const result = about(db, { query: 'nonexistentqueryterm' });
+    const result = await aboutResults(db, { query: 'nonexistentqueryterm' });
     expect(result).toEqual([]);
+  });
+
+  it('paginates traverse results with stable ordering', () => {
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Pagination start',
+      content: 'root',
+    });
+    const depth1a = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Depth1a',
+      content: 'one',
+    });
+    const depth1b = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Depth1b',
+      content: 'two',
+    });
+    const depth2 = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Depth2',
+      content: 'three',
+    });
+
+    createEdge(db, { source_id: start.id, target_id: depth1a.id, type: EdgeType.BasedOn });
+    createEdge(db, { source_id: start.id, target_id: depth1b.id, type: EdgeType.BasedOn });
+    createEdge(db, { source_id: depth1a.id, target_id: depth2.id, type: EdgeType.BasedOn });
+
+    const page1 = traverse(db, { startId: start.id, limit: 2 });
+    const page2 = traverse(db, { startId: start.id, limit: 2, cursor: page1.page.nextCursor! });
+
+    const ids = new Set([...page1.results, ...page2.results].map((row) => row.node.id));
+    expect(ids.size).toBe(3);
+    expect(page1.page.hasMore).toBe(true);
+    expect(page2.page.hasMore).toBe(false);
+  });
+
+  it('paginates about results after deduplication', async () => {
+    const seedA = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Auth timeout A',
+      content: 'timeout details',
+    });
+    const seedB = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Auth timeout B',
+      content: 'timeout details',
+    });
+    const shared = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Shared solution',
+      content: 'use longer timeout',
+    });
+
+    createEdge(db, { source_id: seedA.id, target_id: shared.id, type: EdgeType.Resolves });
+    createEdge(db, { source_id: seedB.id, target_id: shared.id, type: EdgeType.Resolves });
+
+    const page1 = await about(db, { query: 'timeout', direction: 'both', maxDepth: 2, limit: 2 });
+    const page2 = await about(db, {
+      query: 'timeout',
+      direction: 'both',
+      maxDepth: 2,
+      limit: 2,
+      cursor: page1.page.nextCursor!,
+    });
+
+    const ids = new Set([...page1.results, ...page2.results].map((row) => row.node.id));
+    expect(ids.has(shared.id)).toBe(true);
+    expect(ids.size).toBe(3);
   });
 });
 
