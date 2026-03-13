@@ -658,6 +658,14 @@ describe('search', () => {
     ).toThrow('Cursor does not match the current request');
   });
 
+  it('rejects malformed search cursors', () => {
+    store(db, { title: 'SQLite malformed cursor', content: 'scope test', tags: ['db'] });
+
+    expect(() =>
+      search(db, { query: 'SQLite', limit: 1, cursor: 'definitely-not-base64' }),
+    ).toThrow('Invalid cursor');
+  });
+
   it('keeps keyword pagination stable when BM25 ranks tie', () => {
     for (let i = 0; i < 3; i += 1) {
       store(db, {
@@ -738,5 +746,24 @@ describe('search', () => {
     const ids = new Set([...page1.results, ...page2.results].map((row) => row.id));
     expect(ids.size).toBe(3);
     expect(page1.page.mode).toBe('hybrid');
+  });
+
+  it('does not skip tied hybrid scores across pages', () => {
+    const alpha = store(db, { title: 'JWT alpha', content: 'token refresh', tags: ['auth'] });
+    const beta = store(db, { title: 'JWT beta', content: 'token refresh', tags: ['auth'] });
+
+    storeEmbedding(db, alpha.id, embeddingOf(1, 0));
+    storeEmbedding(db, beta.id, embeddingOf(1, 0));
+
+    const firstPage = search(db, { query: 'JWT', mode: 'hybrid', limit: 1 }, embeddingOf(1, 0));
+    const secondPage = search(
+      db,
+      { query: 'JWT', mode: 'hybrid', limit: 1, cursor: firstPage.page.nextCursor! },
+      embeddingOf(1, 0),
+    );
+
+    expect(firstPage.results).toHaveLength(1);
+    expect(secondPage.results).toHaveLength(1);
+    expect(firstPage.results[0]!.id).not.toBe(secondPage.results[0]!.id);
   });
 });

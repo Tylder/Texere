@@ -38,6 +38,20 @@ export const toolFailure = (message: string): ToolCallResult => ({
   },
 });
 
+const isInvalidInputMessage = (message: string): boolean =>
+  message === 'Invalid cursor' || message === 'Cursor does not match the current request';
+
+export const invalidRequest = (message: string): ToolCallResult => ({
+  isError: true,
+  content: [{ type: 'text', text: message }],
+  structuredContent: {
+    error: {
+      code: 'INVALID_INPUT',
+      message,
+    },
+  },
+});
+
 export const executeToolDefinition = async (
   definition: ToolDefinition,
   context: ToolContext,
@@ -52,6 +66,9 @@ export const executeToolDefinition = async (
     return await definition.execute(context, parsed.data);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown tool error';
+    if (isInvalidInputMessage(message)) {
+      return invalidRequest(message);
+    }
     return toolFailure(message);
   }
 };

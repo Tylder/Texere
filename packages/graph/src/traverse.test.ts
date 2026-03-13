@@ -469,6 +469,40 @@ describe('about', () => {
     expect(page2.page.hasMore).toBe(false);
   });
 
+  it('returns no traversal rows at maxDepth 0', () => {
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Depth zero start',
+      content: 'root',
+    });
+    const neighbor = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Neighbor',
+      content: 'one hop',
+    });
+
+    createEdge(db, { source_id: start.id, target_id: neighbor.id, type: EdgeType.BasedOn });
+
+    const page = traverse(db, { startId: start.id, maxDepth: 0 });
+    expect(page.results).toEqual([]);
+    expect(page.page.hasMore).toBe(false);
+  });
+
+  it('rejects malformed traverse cursors', () => {
+    const start = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Traverse bad cursor start',
+      content: 'root',
+    });
+
+    expect(() => traverse(db, { startId: start.id, cursor: 'not-a-cursor' })).toThrow(
+      'Invalid cursor',
+    );
+  });
+
   it('paginates about results after deduplication', async () => {
     const seedA = makeNode(db, {
       type: NodeType.Knowledge,
@@ -486,7 +520,7 @@ describe('about', () => {
       type: NodeType.Action,
       role: NodeRole.Solution,
       title: 'Shared solution',
-      content: 'use longer timeout',
+      content: 'use longer retry window',
     });
 
     createEdge(db, { source_id: seedA.id, target_id: shared.id, type: EdgeType.Resolves });
@@ -504,6 +538,38 @@ describe('about', () => {
     const ids = new Set([...page1.results, ...page2.results].map((row) => row.node.id));
     expect(ids.has(shared.id)).toBe(true);
     expect(ids.size).toBe(3);
+  });
+
+  it('keeps only seeds when about maxDepth is 0', async () => {
+    const seed = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Auth zero depth seed only',
+      content: 'seed-only lookup',
+    });
+    const neighbor = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Zero depth neighbor',
+      content: 'use longer retry window',
+    });
+
+    createEdge(db, { source_id: seed.id, target_id: neighbor.id, type: EdgeType.Resolves });
+
+    const page = await about(db, { query: 'seed-only', maxDepth: 0 });
+    expect(page.results.some((row) => row.depth > 0)).toBe(false);
+    expect(page.results.map((row) => row.node.id)).toContain(seed.id);
+  });
+
+  it('rejects malformed about cursors', () => {
+    makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Timeout cursor seed',
+      content: 'timeout details',
+    });
+
+    expect(() => about(db, { query: 'timeout', cursor: 'not-a-cursor' })).toThrow('Invalid cursor');
   });
 });
 

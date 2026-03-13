@@ -4,14 +4,20 @@ import { EdgeType, NodeRole, NodeType } from './types.js';
 
 import { Texere } from './index.js';
 
-const searchResults = async (db: Texere, options: Parameters<Texere['search']>[0]) =>
-  (await db.search(options)).results;
+const searchResults = async (
+  db: Texere,
+  options: Parameters<Texere['search']>[0],
+): Promise<Awaited<ReturnType<Texere['search']>>['results']> => (await db.search(options)).results;
 
-const aboutResults = async (db: Texere, options: Parameters<Texere['about']>[0]) =>
-  (await db.about(options)).results;
+const aboutResults = async (
+  db: Texere,
+  options: Parameters<Texere['about']>[0],
+): Promise<Awaited<ReturnType<Texere['about']>>['results']> => (await db.about(options)).results;
 
-const traverseResults = (db: Texere, options: Parameters<Texere['traverse']>[0]) =>
-  db.traverse(options).results;
+const traverseResults = (
+  db: Texere,
+  options: Parameters<Texere['traverse']>[0],
+): ReturnType<Texere['traverse']>['results'] => db.traverse(options).results;
 
 describe('Integration: Semantic Search End-to-End', () => {
   let db: Texere;

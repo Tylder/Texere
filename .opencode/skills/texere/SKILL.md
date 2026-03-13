@@ -39,24 +39,29 @@ SearchResult includes
 
 Example: `texere_search({ query: "timeout", type: "issue", role: "error", limit: 5 })`
 
+`page.mode` reflects the effective search mode. When request `mode` is `"auto"`, the returned value
+may be `keyword`, `semantic`, or `hybrid`.
+
+`texere_search` also accepts an empty `query` for tag-only or filter-only searches.
+
 ### texere_about
 
 Search for seeds with optional semantic/hybrid modes, then traverse their neighborhood.
 
-| arg            | type                                          | required | default | notes                        |
-| -------------- | --------------------------------------------- | -------- | ------- | ---------------------------- |
-| query          | string                                        | yes      | —       | FTS5 or semantic query       |
-| type           | NodeType \| NodeType[]                        | no       | —       | Filter by node type(s)       |
-| role           | NodeRole                                      | no       | —       | Filter by node role          |
-| tags           | string[]                                      | no       | —       | Filter by tags               |
-| tag_mode       | "all" \| "any"                                | no       | "all"   | AND vs OR for tags           |
-| min_importance | number (0-1)                                  | no       | —       | Minimum importance threshold |
-| limit          | number (1-250)                                | no       | 20      | Final page size              |
-| cursor         | string                                        | no       | —       | Opaque cursor for next page  |
-| direction      | "outgoing" \| "incoming" \| "both"            | no       | "both"  | Traversal direction          |
-| max_depth      | number (0-5)                                  | no       | 1       | Traversal depth              |
-| edge_type      | EdgeType                                      | no       | —       | Filter by edge type          |
-| mode           | "auto" \| "keyword" \| "semantic" \| "hybrid" | no       | "auto"  | Search strategy              |
+| arg            | type                                          | required | default    | notes                        |
+| -------------- | --------------------------------------------- | -------- | ---------- | ---------------------------- |
+| query          | string                                        | yes      | —          | FTS5 or semantic query       |
+| type           | NodeType \| NodeType[]                        | no       | —          | Filter by node type(s)       |
+| role           | NodeRole                                      | no       | —          | Filter by node role          |
+| tags           | string[]                                      | no       | —          | Filter by tags               |
+| tag_mode       | "all" \| "any"                                | no       | "all"      | AND vs OR for tags           |
+| min_importance | number (0-1)                                  | no       | —          | Minimum importance threshold |
+| limit          | number (1-250)                                | no       | 20         | Final page size              |
+| cursor         | string                                        | no       | —          | Opaque cursor for next page  |
+| direction      | "outgoing" \| "incoming" \| "both"            | no       | "outgoing" | Traversal direction          |
+| max_depth      | number (0-5)                                  | no       | 3          | Traversal depth              |
+| edge_type      | EdgeType                                      | no       | —          | Filter by edge type          |
+| mode           | "auto" \| "keyword" \| "semantic" \| "hybrid" | no       | "auto"     | Search strategy              |
 
 Returns:
 `{ results: Array<{ node: Node, depth: number }>, page: { next_cursor, has_more, returned, limit, order, mode? } }`

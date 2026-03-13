@@ -465,6 +465,18 @@ describe('Texere MCP tools', () => {
     expect(secondStructured.page.has_more).toBe(false);
   });
 
+  it('texere_search maps invalid cursors to INVALID_INPUT', async () => {
+    const result = await mcp.callTool('texere_search', {
+      query: 'anything',
+      cursor: 'not-a-cursor',
+    });
+
+    expect(result.isError).toBe(true);
+    expect((result.structuredContent as { error: { code: string } }).error.code).toBe(
+      'INVALID_INPUT',
+    );
+  });
+
   it('texere_traverse returns neighbors', async () => {
     const start = await mcp.callTool('texere_store_issue', {
       nodes: [

@@ -295,11 +295,11 @@ const paginateTraverseResults = (
   );
 };
 
-const collectAllSearchResults = async (
+const collectAllSearchResults = (
   db: Database.Database,
   options: SearchOptions,
   queryEmbedding?: Float32Array,
-): Promise<SearchResult[]> => {
+): SearchResult[] => {
   const results: SearchResult[] = [];
   let cursor: string | undefined;
 
@@ -347,17 +347,30 @@ export const traverse = (
   db: Database.Database,
   options: TraverseOptions,
 ): PaginatedResults<TraverseResult> => {
+  if (toMaxDepth(options.maxDepth) === 0) {
+    return {
+      results: [],
+      page: {
+        nextCursor: null,
+        hasMore: false,
+        returned: 0,
+        limit: clampPageLimit(options.limit),
+        order: 'depth ASC, created_at ASC, id ASC',
+      },
+    };
+  }
+
   const rows = toResults(runTraverseRows(db, options));
   const limit = clampPageLimit(options.limit);
   const scope = buildTraverseScope(options);
   return paginateTraverseResults(rows, limit, options.cursor, scope);
 };
 
-export const about = async (
+export const about = (
   db: Database.Database,
   options: AboutOptions,
   queryEmbedding?: Float32Array,
-): Promise<PaginatedResults<TraverseResult>> => {
+): PaginatedResults<TraverseResult> => {
   const searchOptions: SearchOptions = { query: options.query };
   if (options.type !== undefined) {
     searchOptions.type = options.type;
@@ -378,7 +391,7 @@ export const about = async (
     searchOptions.mode = options.mode;
   }
 
-  const seeds = await collectAllSearchResults(db, searchOptions, queryEmbedding);
+  const seeds = collectAllSearchResults(db, searchOptions, queryEmbedding);
 
   if (seeds.length === 0) {
     return {
@@ -400,6 +413,10 @@ export const about = async (
   }
 
   for (const [seedIndex, seed] of seeds.entries()) {
+    if (toMaxDepth(options.maxDepth) === 0) {
+      continue;
+    }
+
     const traverseOptions: TraverseOptions = { startId: seed.id };
     if (options.direction !== undefined) {
       traverseOptions.direction = options.direction;

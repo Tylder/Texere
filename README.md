@@ -111,6 +111,7 @@ const searchPage = await db.search({
 
 // searchPage.results
 // searchPage.page.nextCursor
+// searchPage.page.mode
 
 // Traverse graph with pagination
 const neighborsPage = db.traverse({
@@ -129,6 +130,11 @@ if (searchPage.page.nextCursor) {
     cursor: searchPage.page.nextCursor,
   });
 }
+
+await db.search({
+  query: '',
+  tags: ['database'],
+});
 
 // Close when done
 db.close();
@@ -165,6 +171,9 @@ atomic node+edge creation in a single tool call.
 - `texere_search` — Multi-mode search (keyword/semantic/hybrid) with cursor pagination
 - `texere_traverse` — Graph traversal with depth control and cursor pagination
 - `texere_about` — Search + traverse with cursor pagination over the final deduped result set
+
+`texere_search.page.mode` reflects the effective mode, which is especially useful when the request
+uses `mode: 'auto'`.
 
 **Metadata:**
 

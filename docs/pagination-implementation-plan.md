@@ -1,20 +1,20 @@
 # Pagination Implementation Plan
 
 **Date**: 2026-03-13  
-**Status**: Implemented  
+**Status**: Implemented; retained as design record  
 **Scope**: Cursor pagination for multi-result query endpoints in Texere
 
 ---
 
 ## Executive Summary
 
-Texere currently supports partial result limiting, but not real pagination.
+Before implementation, Texere supported partial result limiting, but not real pagination.
 
 - `texere_search` supports `limit`, capped at `100`
 - `texere_about` supports `limit`, capped at `100`
 - `texere_traverse` supports `max_depth`, but no result `limit`
 - `texere_get_nodes` is batch-by-id retrieval, not a list/query endpoint
-- No endpoint currently supports `cursor`, `next_cursor`, or `has_more`
+- No endpoint supported `cursor`, `next_cursor`, or `has_more`
 
 This plan adds cursor pagination to all multi-result query endpoints:
 
@@ -37,12 +37,12 @@ Recommended limits:
 
 ## Problem Statement
 
-The current API has two gaps:
+The original API had two gaps:
 
 1. Large result sets cannot be fetched incrementally
 2. Existing sort orders are not fully stable for cursor pagination in `search`
 
-Today:
+Before implementation:
 
 - `search()` uses `LIMIT`, but has no cursor support
 - `traverse()` returns all reachable rows up to `maxDepth`
@@ -89,7 +89,7 @@ problem.
 
 ---
 
-## Current Behavior Summary
+## Pre-Implementation Behavior Summary
 
 ### `search`
 

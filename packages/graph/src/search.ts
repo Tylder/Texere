@@ -4,7 +4,6 @@ import {
   buildPaginatedResults,
   buildScope,
   clampPageLimit,
-  isBeforeCursor,
   parseCreatedCursor,
   parseHybridCursor,
   parseKeywordCursor,
@@ -594,7 +593,11 @@ const paginateHybridCandidates = (
   }
 
   return rows
-    .filter((row) => isBeforeCursor([row.score, row.id], [cursorValue.score, cursorValue.id]))
+    .filter(
+      (row) =>
+        row.score < cursorValue.score ||
+        (row.score === cursorValue.score && row.id > cursorValue.id),
+    )
     .slice(0, context.limit + 1);
 };
 

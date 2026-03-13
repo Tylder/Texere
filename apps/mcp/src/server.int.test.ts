@@ -199,6 +199,18 @@ describe('MCP server integration', () => {
         'INVALID_INPUT',
       );
     });
+
+    it('returns INVALID_INPUT for malformed search cursors', async () => {
+      const result = await mcp.callTool('texere_search', {
+        query: 'auth',
+        cursor: 'not-a-cursor',
+      });
+
+      expect(result.isError).toBe(true);
+      expect((result.structuredContent as { error: { code: string } }).error.code).toBe(
+        'INVALID_INPUT',
+      );
+    });
   });
 
   describe('error boundary propagation', () => {
