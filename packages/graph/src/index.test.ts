@@ -142,6 +142,26 @@ describe('Texere facade', () => {
       expect(retrieved?.invalidated_at).not.toBeNull();
     });
 
+    it('invalidateNodes() delegates to internal module', () => {
+      const node1 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 1',
+        content: 'Content 1',
+      });
+      const node2 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 2',
+        content: 'Content 2',
+      });
+
+      db.invalidateNodes([node1.id, node2.id]);
+
+      expect(db.getNode(node1.id)?.invalidated_at).not.toBeNull();
+      expect(db.getNode(node2.id)?.invalidated_at).not.toBeNull();
+    });
+
     it('replaceNode() delegates to internal module', () => {
       const original = db.storeNode({
         type: NodeType.Action,
@@ -250,6 +270,29 @@ describe('Texere facade', () => {
 
       const deleted = db.deleteEdge(edge.id);
       expect(deleted).toBe(true);
+    });
+
+    it('deleteEdges() delegates to internal module', () => {
+      const source = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task',
+        content: 'Content',
+      });
+      const target = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 2',
+        content: 'Content 2',
+      });
+
+      const edge = db.createEdge({
+        source_id: source.id,
+        target_id: target.id,
+        type: EdgeType.BasedOn,
+      });
+
+      expect(db.deleteEdges([edge.id, 'missing-edge'])).toEqual([true, false]);
     });
 
     it('getEdgesForNode() delegates to internal module', () => {

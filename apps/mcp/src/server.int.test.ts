@@ -623,7 +623,7 @@ describe('MCP server integration', () => {
       const parsed = ListToolsResultSchema.safeParse(listToolsResult);
       expect(parsed.success).toBe(true);
 
-      expect(listToolsResult.tools).toHaveLength(16);
+      expect(listToolsResult.tools).toHaveLength(18);
 
       for (const tool of listToolsResult.tools) {
         const inputSchema = tool.inputSchema as Record<string, unknown>;
@@ -644,9 +644,11 @@ describe('MCP server integration', () => {
         'texere_get_node',
         'texere_get_nodes',
         'texere_invalidate_node',
+        'texere_invalidate_nodes',
         'texere_replace_node',
         'texere_create_edge',
         'texere_delete_edge',
+        'texere_delete_edges',
         'texere_search',
         'texere_traverse',
         'texere_about',
@@ -887,7 +889,7 @@ describe('MCP server integration', () => {
       expect(initResponse.result.serverInfo).toBeDefined();
 
       expect(toolsResponse).toBeDefined();
-      expect(toolsResponse.result.tools).toHaveLength(16);
+      expect(toolsResponse.result.tools).toHaveLength(18);
 
       for (const tool of toolsResponse.result.tools as Array<Record<string, unknown>>) {
         expect(typeof tool.name).toBe('string');

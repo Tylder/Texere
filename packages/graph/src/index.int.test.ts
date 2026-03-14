@@ -124,14 +124,20 @@ describe('Graph package integration', () => {
       const invalidated = db.getNode(problem.id);
       expect(invalidated?.invalidated_at).not.toBeNull();
 
+      db.invalidateNodes([solution.id, fix.id]);
+      expect(db.getNode(solution.id)?.invalidated_at).not.toBeNull();
+      expect(db.getNode(fix.id)?.invalidated_at).not.toBeNull();
+
       const updatedStats = db.stats();
-      expect(updatedStats.nodes.invalidated).toBe(1);
+      expect(updatedStats.nodes.invalidated).toBe(3);
 
       const deleted = db.deleteEdge(solvesEdge.id);
       expect(deleted).toBe(true);
 
+      expect(db.deleteEdges([buildsOnEdge.id, 'missing-edge-id'])).toEqual([true, false]);
+
       const finalStats = db.stats();
-      expect(finalStats.edges.total).toBe(1);
+      expect(finalStats.edges.total).toBe(0);
     });
   });
 

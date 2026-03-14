@@ -14,9 +14,11 @@ const TOOL_NAMES = [
   'texere_get_node',
   'texere_get_nodes',
   'texere_invalidate_node',
+  'texere_invalidate_nodes',
   'texere_replace_node',
   'texere_create_edge',
   'texere_delete_edge',
+  'texere_delete_edges',
   'texere_search',
   'texere_traverse',
   'texere_about',
@@ -37,13 +39,13 @@ describe('Texere MCP tools', () => {
     db.close();
   });
 
-  it('registers exactly 16 tools', () => {
+  it('registers exactly 18 tools', () => {
     expect(mcp.toolNames).toEqual(TOOL_NAMES);
-    expect(mcp.toolNames).toHaveLength(16);
+    expect(mcp.toolNames).toHaveLength(18);
   });
 
   it('exposes zod input schema for each tool', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(16);
+    expect(TOOL_DEFINITIONS).toHaveLength(18);
 
     for (const definition of TOOL_DEFINITIONS) {
       expect(typeof definition.inputSchema.safeParse).toBe('function');
@@ -291,6 +293,112 @@ describe('Texere MCP tools', () => {
     ).not.toBeNull();
   });
 
+  it('texere_invalidate_nodes invalidates multiple nodes in input order', async () => {
+    const first = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'First invalidation target',
+          content: 'Needs invalidation',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+    const second = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'Second invalidation target',
+          content: 'Also needs invalidation',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+
+    const firstId = (first.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const secondId = (second.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+
+    const invalidated = await mcp.callTool('texere_invalidate_nodes', {
+      ids: [firstId, secondId, firstId],
+    });
+    expect(invalidated.isError).toBeUndefined();
+
+    expect(invalidated.structuredContent).toMatchObject({
+      nodes: [{ id: firstId }, { id: secondId }, { id: firstId }],
+    });
+
+    const nodes = (
+      invalidated.structuredContent as {
+        nodes: Array<{ invalidated_at: number | null } | null>;
+      }
+    ).nodes;
+    expect(nodes[0]?.invalidated_at).not.toBeNull();
+    expect(nodes[1]?.invalidated_at).not.toBeNull();
+    expect(nodes[2]?.invalidated_at).not.toBeNull();
+  });
+
+  it('texere_invalidate_nodes rolls back and returns TOOL_ERROR when any id is missing', async () => {
+    const first = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'Rollback target',
+          content: 'Should remain active on batch failure',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+
+    const firstId = (first.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const invalidated = await mcp.callTool('texere_invalidate_nodes', {
+      ids: [firstId, 'missing-id'],
+    });
+
+    expect(invalidated.isError).toBe(true);
+    expect(invalidated.structuredContent).toMatchObject({
+      error: {
+        code: 'TOOL_ERROR',
+        message: 'Node not found: missing-id',
+      },
+    });
+
+    const fetched = await mcp.callTool('texere_get_node', { id: firstId });
+    expect(
+      (fetched.structuredContent as { node: { invalidated_at: number | null } }).node
+        .invalidated_at,
+    ).toBeNull();
+  });
+
+  it('texere_invalidate_nodes rejects empty ids', async () => {
+    const result = await mcp.callTool('texere_invalidate_nodes', { ids: [] });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: {
+        code: 'INVALID_INPUT',
+      },
+    });
+  });
+
+  it('texere_invalidate_nodes rejects more than 250 ids', async () => {
+    const result = await mcp.callTool('texere_invalidate_nodes', {
+      ids: Array.from({ length: 251 }, (_, i) => `node-${i}`),
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: {
+        code: 'INVALID_INPUT',
+      },
+    });
+  });
+
   it('texere_create_edge returns edge and REPLACES invalidates source node', async () => {
     const oldNode = await mcp.callTool('texere_store_knowledge', {
       nodes: [
@@ -391,6 +499,73 @@ describe('Texere MCP tools', () => {
     });
     expect(deleted.isError).toBeUndefined();
     expect(deleted.structuredContent).toMatchObject({ deleted: true });
+  });
+
+  it('texere_delete_edges returns per-id deletion results', async () => {
+    const source = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Batch delete source',
+          content: 'Source content',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+    const target = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'task',
+          title: 'Batch delete target',
+          content: 'Target content',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+
+    const sourceId = (source.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const targetId = (target.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+
+    const edge = await mcp.callTool('texere_create_edge', {
+      edges: [{ source_id: sourceId, target_id: targetId, type: EdgeType.DependsOn }],
+      minimal: false,
+    });
+
+    const edgeId = (edge.structuredContent as { edges: Array<{ id: string }> }).edges[0].id;
+    const deleted = await mcp.callTool('texere_delete_edges', {
+      ids: [edgeId, 'missing-edge', edgeId],
+    });
+
+    expect(deleted.isError).toBeUndefined();
+    expect(deleted.structuredContent).toMatchObject({ deleted: [true, false, false] });
+  });
+
+  it('texere_delete_edges rejects empty ids', async () => {
+    const result = await mcp.callTool('texere_delete_edges', { ids: [] });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: {
+        code: 'INVALID_INPUT',
+      },
+    });
+  });
+
+  it('texere_delete_edges rejects more than 250 ids', async () => {
+    const result = await mcp.callTool('texere_delete_edges', {
+      ids: Array.from({ length: 251 }, (_, i) => `edge-${i}`),
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: {
+        code: 'INVALID_INPUT',
+      },
+    });
   });
 
   it('texere_search returns results after storing nodes', async () => {
@@ -530,6 +705,72 @@ describe('Texere MCP tools', () => {
       .results;
     expect(results).toHaveLength(1);
     expect(results[0].node.id).toBe(neighborId);
+  });
+
+  it('texere_traverse excludes invalidated nodes from results', async () => {
+    const start = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'Traversal invalidation start',
+          content: 'Start node',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+    const active = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'solution',
+          title: 'Traversal active node',
+          content: 'Visible neighbor',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+    const invalidated = await mcp.callTool('texere_store_action', {
+      nodes: [
+        {
+          role: 'solution',
+          title: 'Traversal invalidated node',
+          content: 'Should be hidden after invalidation',
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+
+    const startId = (start.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const activeId = (active.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    const invalidatedId = (invalidated.structuredContent as { nodes: Array<{ id: string }> })
+      .nodes[0].id;
+
+    await mcp.callTool('texere_create_edge', {
+      edges: [{ source_id: startId, target_id: activeId, type: EdgeType.Resolves }],
+    });
+    await mcp.callTool('texere_create_edge', {
+      edges: [{ source_id: activeId, target_id: invalidatedId, type: EdgeType.BasedOn }],
+    });
+    await mcp.callTool('texere_invalidate_node', { id: invalidatedId });
+
+    const traversed = await mcp.callTool('texere_traverse', {
+      start_id: startId,
+      direction: 'outgoing',
+      max_depth: 3,
+    });
+
+    expect(traversed.isError).toBeUndefined();
+    const results = (traversed.structuredContent as { results: Array<{ node: { id: string } }> })
+      .results;
+    const ids = new Set(results.map((row) => row.node.id));
+
+    expect(ids.has(activeId)).toBe(true);
+    expect(ids.has(invalidatedId)).toBe(false);
   });
 
   it('texere_traverse paginates and rejects scope-mismatched cursors', async () => {

@@ -14,7 +14,7 @@ Designed for AI-assisted development with multi-agent integration (OpenCode, Ser
 ```
 texere/
 ├── apps/mcp/              # MCP server (Model Context Protocol)
-│   └── src/tools/         # 16 tool definitions
+│   └── src/tools/         # 18 tool definitions
 ├── packages/graph/        # Core graph library (SQLite + embeddings)
 │   └── src/               # 11 source files, Texere class API
 ├── tooling/               # Shared ESLint + TypeScript configs
@@ -47,18 +47,19 @@ texere/
 ### Core Exports
 
 - **@texere/graph**: `Texere` class (main API)
-  - Node CRUD: `storeNode()`, `storeNodesWithEdges()`, `getNode()`, `replaceNode()`,
-    `invalidateNode()`
-  - Edge CRUD: `createEdge()`, `deleteEdge()`, `getEdgesForNode()`
+  - Node CRUD: `storeNode()`, `storeNodesWithEdges()`, `getNode()`, `getNodes()`, `replaceNode()`,
+    `invalidateNode()`, `invalidateNodes()`
+  - Edge CRUD: `createEdge()`, `deleteEdge()`, `deleteEdges()`, `getEdgesForNode()`
   - Search: `search()`, `about()`
   - Traversal: `traverse()`
   - Metadata: `stats()`
 
-- **@texere/mcp**: 16 MCP tools
+- **@texere/mcp**: 18 MCP tools
   - `texere_store_knowledge`, `texere_store_issue`, `texere_store_action`, `texere_store_artifact`,
     `texere_store_source`
-  - `texere_get_node`, `texere_get_nodes`, `texere_replace_node`, `texere_invalidate_node`
-  - `texere_create_edge`, `texere_delete_edge`
+  - `texere_get_node`, `texere_get_nodes`, `texere_replace_node`, `texere_invalidate_node`,
+    `texere_invalidate_nodes`
+  - `texere_create_edge`, `texere_delete_edge`, `texere_delete_edges`
   - `texere_search`, `texere_traverse`, `texere_about`
   - `texere_stats`, `texere_validate`
 

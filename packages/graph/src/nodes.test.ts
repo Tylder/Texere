@@ -7,6 +7,7 @@ import {
   getNode,
   getNodes,
   invalidateNode,
+  invalidateNodes,
   storeNode,
   storeNodesWithEdges,
   type StoreNodeInput,
@@ -141,6 +142,33 @@ describe('node CRUD', () => {
 
   it('invalidateNode for unknown id throws', () => {
     expect(() => invalidateNode(db, 'nonexistent')).toThrow(/not found/i);
+  });
+
+  it('invalidateNodes sets invalidated_at for every requested node', () => {
+    const nodeA = storeNode(db, decision({ title: 'A', tags: [] }));
+    const nodeB = storeNode(db, decision({ title: 'B', tags: [] }));
+
+    invalidateNodes(db, [nodeA.id, nodeB.id]);
+
+    expect(getNode(db, nodeA.id)?.invalidated_at).not.toBeNull();
+    expect(getNode(db, nodeB.id)?.invalidated_at).not.toBeNull();
+  });
+
+  it('invalidateNodes is idempotent for already-invalidated nodes', () => {
+    const node = storeNode(db, decision({ tags: [] }));
+
+    invalidateNode(db, node.id);
+    expect(() => invalidateNodes(db, [node.id, node.id])).not.toThrow();
+
+    expect(getNode(db, node.id)?.invalidated_at).not.toBeNull();
+  });
+
+  it('invalidateNodes rolls back if any node is missing', () => {
+    const node = storeNode(db, decision({ tags: [] }));
+
+    expect(() => invalidateNodes(db, [node.id, 'missing-id'])).toThrow(/not found/i);
+
+    expect(getNode(db, node.id)?.invalidated_at).toBeNull();
   });
 
   it('invalidated nodes are excluded from vector search candidates', () => {
@@ -353,6 +381,15 @@ describe('batch support', () => {
     for (const n of result) {
       expect(Object.keys(n)).toEqual(['id']);
     }
+  });
+
+  it('invalidateNodes throws on empty array', () => {
+    expect(() => invalidateNodes(db, [])).toThrow(/at least one node/i);
+  });
+
+  it('invalidateNodes throws when batch exceeds max size', () => {
+    const ids = Array.from({ length: 251 }, (_, i) => `node-${i}`);
+    expect(() => invalidateNodes(db, ids)).toThrow(/max batch size/i);
   });
 });
 

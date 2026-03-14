@@ -1,6 +1,6 @@
 # MCP SERVER (@texere/mcp)
 
-**Model Context Protocol server** — Exposes Texere graph via 16 tools over stdio transport
+**Model Context Protocol server** — Exposes Texere graph via 18 tools over stdio transport
 
 ## OVERVIEW
 
@@ -14,7 +14,7 @@ src/
 ├── index.ts              # CLI entry: --db-path parsing, server startup
 ├── server.ts             # MCP server factory, request handlers
 ├── tools/
-│   ├── index.ts          # Tool registry (16 tools)
+│   ├── index.ts          # Tool registry (18 tools)
 │   ├── types.ts          # ToolDefinition, ToolContext
 │   ├── helpers.ts        # ok(), invalidInput(), toolFailure()
 │   ├── store-knowledge.ts # Store knowledge nodes
@@ -26,8 +26,10 @@ src/
 │   ├── get-nodes.ts      # Batch node retrieval
 │   ├── replace-node.ts   # Node replacement
 │   ├── invalidate-node.ts # Node soft-delete
+│   ├── invalidate-nodes.ts # Batch node soft-delete
 │   ├── create-edge.ts    # Edge creation
 │   ├── delete-edge.ts    # Edge deletion
+│   ├── delete-edges.ts   # Batch edge deletion
 │   ├── search.ts         # Full-text search
 │   ├── traverse.ts       # Graph traversal
 │   ├── about.ts          # Search + traverse
@@ -111,9 +113,11 @@ const result = minimal
 
 ### Batch Limits (Max 50)
 
-- `create_edge` limited to 50 items per call
-- Enforced in Zod schema: `z.array(...).min(1).max(50)`
-- Per-type store tools accept single node input (no batch)
+- `create_edge` is limited to 50 items per call; `invalidate_nodes` and `delete_edges` are limited
+  to 250
+- Enforced in Zod schema per tool (`max(50)` for `create_edge`, `max(250)` for `invalidate_nodes`
+  and `delete_edges`)
+- Per-type store tools accept batch `nodes` input (up to 50) and optional inline `edges` (up to 50)
 
 ### Validation Tool (Pre-Write)
 
@@ -134,15 +138,15 @@ return {
 - All errors include error code for programmatic parsing
 - Codes: `UNKNOWN_TOOL`, `INVALID_INPUT`, `TOOL_ERROR`
 
-## TOOL ORGANIZATION (16 Tools)
+## TOOL ORGANIZATION (18 Tools)
 
-| Category      | Tools                                                                                                                        | Batch Support                                                                                           |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Node CRUD** | store_knowledge, store_issue, store_action, store_artifact, store_source, get_node, get_nodes, replace_node, invalidate_node | Store tools: batch up to 50 nodes + optional inline edges (up to 50); `get_nodes` accepts up to 200 IDs |
-| **Edge CRUD** | create_edge, delete_edge                                                                                                     | Yes (create_edge up to 50)                                                                              |
-| **Search**    | search                                                                                                                       | No                                                                                                      |
-| **Graph**     | traverse, about                                                                                                              | No                                                                                                      |
-| **Meta**      | stats, validate                                                                                                              | No                                                                                                      |
+| Category      | Tools                                                                                                                                          | Batch Support                                                                                                                                     |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node CRUD** | store_knowledge, store_issue, store_action, store_artifact, store_source, get_node, get_nodes, replace_node, invalidate_node, invalidate_nodes | Store tools: batch up to 50 nodes + optional inline edges (up to 50); `get_nodes` accepts up to 200 IDs; `invalidate_nodes` accepts up to 250 IDs |
+| **Edge CRUD** | create_edge, delete_edge, delete_edges                                                                                                         | Yes (`create_edge` up to 50, `delete_edges` up to 250)                                                                                            |
+| **Search**    | search                                                                                                                                         | No                                                                                                                                                |
+| **Graph**     | traverse, about                                                                                                                                | No                                                                                                                                                |
+| **Meta**      | stats, validate                                                                                                                                | No                                                                                                                                                |
 
 ## INTEGRATION WITH @TEXERE/GRAPH
 
@@ -203,7 +207,8 @@ execute: async ({ db }, input) => {
 
 - ❌ **Top-level unions in schemas** (`anyOf`, `oneOf`, `allOf`) → MCP incompatible
 - ❌ **Async without await** → Triggers `require-await` lint error
-- ❌ **Batch >50 items** → Enforced limit in Zod
+- ❌ **Exceed tool batch limits** → Enforced in Zod (`create_edge` 50;
+  `invalidate_nodes`/`delete_edges` 250)
 - ❌ **Modify server after connect()** → Server is immutable after connection
 
 ## NOTES

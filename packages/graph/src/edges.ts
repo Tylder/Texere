@@ -17,7 +17,8 @@ export type MinimalEdge = Pick<Edge, 'id'>;
 
 export type EdgeDirection = 'outgoing' | 'incoming' | 'both';
 
-const MAX_BATCH_SIZE = 50;
+const MAX_CREATE_BATCH_SIZE = 50;
+const MAX_DELETE_BATCH_SIZE = 250;
 
 type Statements = {
   insertEdge: Database.Statement;
@@ -105,8 +106,8 @@ export function createEdge(
   if (inputs.length === 0) {
     throw new Error('at least one edge required');
   }
-  if (inputs.length > MAX_BATCH_SIZE) {
-    throw new Error(`max batch size exceeded (${MAX_BATCH_SIZE})`);
+  if (inputs.length > MAX_CREATE_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded (${MAX_CREATE_BATCH_SIZE})`);
   }
 
   const statements = getStatements(db);
@@ -144,6 +145,21 @@ export const deleteEdge = (db: Database.Database, id: string): boolean => {
   const statements = getStatements(db);
   const result = statements.deleteEdge.run(id);
   return result.changes > 0;
+};
+
+export const deleteEdges = (db: Database.Database, ids: string[]): boolean[] => {
+  if (ids.length === 0) {
+    throw new Error('at least one edge required');
+  }
+  if (ids.length > MAX_DELETE_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded (${MAX_DELETE_BATCH_SIZE})`);
+  }
+
+  const statements = getStatements(db);
+
+  return db
+    .transaction(() => ids.map((id) => statements.deleteEdge.run(id).changes > 0))
+    .immediate();
 };
 
 export const getEdgesForNode = (

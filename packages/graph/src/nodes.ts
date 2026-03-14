@@ -47,7 +47,8 @@ export type StoreNodeResult = Node & { warning?: { similar_nodes: SimilarNode[] 
 
 export type NodeWithEdges = Node & { edges: Edge[] };
 
-const MAX_BATCH_SIZE = 50;
+const MAX_STORE_BATCH_SIZE = 50;
+const MAX_INVALIDATE_BATCH_SIZE = 250;
 
 const NODE_COLUMNS = `id, type, role, title, content, tags_json,
     importance, confidence,
@@ -250,8 +251,8 @@ export function storeNode(
   if (inputs.length === 0) {
     throw new Error('at least one node required');
   }
-  if (inputs.length > MAX_BATCH_SIZE) {
-    throw new Error(`max batch size exceeded (${MAX_BATCH_SIZE})`);
+  if (inputs.length > MAX_STORE_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded (${MAX_STORE_BATCH_SIZE})`);
   }
 
   // Pre-validate all type-role combinations before opening transaction
@@ -402,6 +403,33 @@ export const invalidateNode = (db: Database.Database, id: string): void => {
   }).immediate();
 };
 
+export const invalidateNodes = (db: Database.Database, ids: string[]): void => {
+  if (ids.length === 0) {
+    throw new Error('at least one node required');
+  }
+  if (ids.length > MAX_INVALIDATE_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded (${MAX_INVALIDATE_BATCH_SIZE})`);
+  }
+
+  const statements = getStatements(db);
+  const now = Date.now();
+
+  db.transaction(() => {
+    for (const id of ids) {
+      const existing = statements.getInvalidationState.get(id) as
+        | { invalidated_at: number | null }
+        | undefined;
+      if (!existing) {
+        throw new Error(`Node not found: ${id}`);
+      }
+
+      if (existing.invalidated_at === null) {
+        statements.setInvalidatedAt.run(now, id);
+      }
+    }
+  }).immediate();
+};
+
 export interface StoreNodesWithEdgesResult {
   nodes: Array<Node & { temp_id?: string }>;
   edges: Edge[];
@@ -433,11 +461,11 @@ export function storeNodesWithEdges(
   if (inputs.length === 0) {
     throw new Error('at least one node required');
   }
-  if (inputs.length > MAX_BATCH_SIZE) {
-    throw new Error(`max batch size exceeded for nodes (${MAX_BATCH_SIZE})`);
+  if (inputs.length > MAX_STORE_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded for nodes (${MAX_STORE_BATCH_SIZE})`);
   }
-  if (edgeInputs.length > MAX_BATCH_SIZE) {
-    throw new Error(`max batch size exceeded for edges (${MAX_BATCH_SIZE})`);
+  if (edgeInputs.length > MAX_STORE_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded for edges (${MAX_STORE_BATCH_SIZE})`);
   }
 
   for (const inp of inputs) {

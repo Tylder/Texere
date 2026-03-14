@@ -4,6 +4,7 @@ import { createDatabase } from './db.js';
 import {
   createEdge as createEdgeImpl,
   deleteEdge as deleteEdgeImpl,
+  deleteEdges as deleteEdgesImpl,
   getEdgesForNode as getEdgesForNodeImpl,
   type CreateEdgeInput,
   type CreateEdgeOptions,
@@ -15,6 +16,7 @@ import {
   getNode as getNodeImpl,
   getNodes as getNodesImpl,
   invalidateNode as invalidateNodeImpl,
+  invalidateNodes as invalidateNodesImpl,
   storeNode as storeNodeImpl,
   storeNodesWithEdges as storeNodesWithEdgesImpl,
   type GetNodeOptions,
@@ -134,6 +136,10 @@ export class Texere {
     invalidateNodeImpl(this.db, id);
   }
 
+  invalidateNodes(ids: string[]): void {
+    invalidateNodesImpl(this.db, ids);
+  }
+
   replaceNode(input: ReplaceNodeInput, options?: ReplaceNodeOptions & { minimal?: false }): Node;
   replaceNode(
     input: ReplaceNodeInput,
@@ -169,6 +175,10 @@ export class Texere {
    */
   deleteEdge(id: string): boolean {
     return deleteEdgeImpl(this.db, id);
+  }
+
+  deleteEdges(ids: string[]): boolean[] {
+    return deleteEdgesImpl(this.db, ids);
   }
 
   /**

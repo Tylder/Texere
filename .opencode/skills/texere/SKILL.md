@@ -529,6 +529,18 @@ Returns: `{ node: Node }` (with invalidated_at timestamp)
 
 Example: `texere_invalidate_node({ id: "abc123" })`
 
+### texere_invalidate_nodes
+
+Invalidate up to 250 nodes by setting `invalidated_at` while preserving input order in the response.
+
+| arg | type     | required | default | notes                  |
+| --- | -------- | -------- | ------- | ---------------------- |
+| ids | string[] | yes      | —       | Node IDs to invalidate |
+
+Returns: `{ nodes: Array<Node | null> }`
+
+Example: `texere_invalidate_nodes({ ids: ["abc123", "def456"] })`
+
 ### texere_delete_edge
 
 Hard-delete an edge by ID.
@@ -540,6 +552,18 @@ Hard-delete an edge by ID.
 Returns: `{ deleted: boolean }`
 
 Example: `texere_delete_edge({ id: "edge_xyz" })`
+
+### texere_delete_edges
+
+Hard-delete up to 250 edges by ID.
+
+| arg | type     | required | default | notes              |
+| --- | -------- | -------- | ------- | ------------------ |
+| ids | string[] | yes      | —       | Edge IDs to delete |
+
+Returns: `{ deleted: boolean[] }` aligned to the input `ids`
+
+Example: `texere_delete_edges({ ids: ["edge_a", "edge_b"] })`
 
 ### texere_validate
 

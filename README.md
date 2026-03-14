@@ -13,7 +13,7 @@ cross-session memory for AI agents.
 - **Multi-mode search** — Keyword (BM25), semantic (embeddings), hybrid (RRF fusion), auto-detection
 - **Graph traversal** — Recursive CTEs with depth control, edge type filtering, and cursor
   pagination
-- **16 MCP tools** — Per-type store tools, retrieval, search, traversal, validation
+- **18 MCP tools** — Per-type store tools, retrieval, search, traversal, validation
 - **Immutable design** — Nodes never mutate, only replaced with REPLACES edges
 - **Soft-delete** — Invalidation timestamps preserve history
 - **Debounced embeddings** — Async batch processing for efficient semantic search
@@ -142,7 +142,7 @@ db.close();
 
 ## MCP Tools
 
-The MCP server exposes **16 tools** for graph operations:
+The MCP server exposes **18 tools** for graph operations:
 
 **Node CRUD (per-type stores + inline edges):**
 
@@ -160,11 +160,13 @@ atomic node+edge creation in a single tool call.
 - `texere_get_nodes` — Retrieve up to 200 nodes by ID while preserving input order
 - `texere_replace_node` — Replace node (creates REPLACES edge, invalidates old)
 - `texere_invalidate_node` — Soft-delete node
+- `texere_invalidate_nodes` — Soft-delete up to 250 nodes by ID
 
 **Edge CRUD:**
 
 - `texere_create_edge` — Create edges (single or batch up to 50)
 - `texere_delete_edge` — Delete edge
+- `texere_delete_edges` — Delete up to 250 edges by ID
 
 **Search & Traversal:**
 
@@ -226,7 +228,7 @@ Monorepo with Turbo task orchestration:
 ```
 texere/
 ├── apps/
-│   └── mcp/              # MCP server (16 tools over stdio)
+│   └── mcp/              # MCP server (18 tools over stdio)
 ├── packages/
 │   └── graph/            # Core graph library (SQLite + embeddings)
 └── tooling/

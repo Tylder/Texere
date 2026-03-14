@@ -3,7 +3,7 @@ import type Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createDatabase } from './db.js';
-import { createEdge, deleteEdge, getEdgesForNode } from './edges.js';
+import { createEdge, deleteEdge, deleteEdges, getEdgesForNode } from './edges.js';
 import { getNode, invalidateNode, storeNode } from './nodes.js';
 import { EdgeType, NodeRole, NodeType } from './types.js';
 
@@ -177,6 +177,29 @@ describe('edge CRUD', () => {
 
   it('deleteEdge for nonexistent id returns false', () => {
     expect(deleteEdge(db, 'nonexistent')).toBe(false);
+  });
+
+  it('deleteEdges returns per-id deletion results in input order', () => {
+    const source = makeNode(db, 'Source');
+    const target = makeNode(db, 'Target', NodeType.Action, NodeRole.Solution);
+    const edge = createEdge(db, {
+      source_id: source.id,
+      target_id: target.id,
+      type: EdgeType.Resolves,
+    });
+
+    const result = deleteEdges(db, [edge.id, 'missing-edge', edge.id]);
+
+    expect(result).toEqual([true, false, false]);
+  });
+
+  it('deleteEdges throws on empty array', () => {
+    expect(() => deleteEdges(db, [])).toThrow(/at least one edge/i);
+  });
+
+  it('deleteEdges throws when batch exceeds max size', () => {
+    const ids = Array.from({ length: 251 }, (_, i) => `edge-${i}`);
+    expect(() => deleteEdges(db, ids)).toThrow(/max batch size/i);
   });
 
   it('getEdgesForNode with outgoing returns only outgoing edges', () => {
