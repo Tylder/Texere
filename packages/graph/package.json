@@ -23,6 +23,7 @@
     "check-types": "pnpm typecheck",
     "lint": "eslint .",
     "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:mutation": "stryker run",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:unit:dev": "vitest --config vitest.unit.config.ts",
     "typecheck": "tsc -b tsconfig.json"
@@ -34,6 +35,8 @@
     "sqlite-vec": "^0.1.6"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^9.6.0",
+    "@stryker-mutator/vitest-runner": "^9.6.0",
     "@texere/eslint-config": "workspace:*",
     "@texere/typescript-config": "workspace:*",
     "@types/better-sqlite3": "^7.6.13",
