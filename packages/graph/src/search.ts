@@ -83,7 +83,7 @@ const detectMatchFields = (node: Node, terms: string[]): string[] => {
   return fields;
 };
 
-const normalizeRank = (rank: number): number => 1 / (1 + Math.abs(rank));
+const normalizeRank = (rank: number): number => -rank / (1 + Math.abs(rank));
 
 const normalizeSemanticDistance = (distance: number): number => 1 / (1 + distance);
 

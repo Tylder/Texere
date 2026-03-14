@@ -19,6 +19,7 @@ const inputSchema = z.object({
   edge_type: z.nativeEnum(EdgeType).optional(),
   mode: z.enum(['auto', 'keyword', 'semantic', 'hybrid']).optional().default('auto'),
   seed_limit: z.number().int().min(1).max(250).optional(),
+  min_seed_relevance: z.number().min(0).max(1).optional(),
 });
 
 export const searchGraphTool: ToolDefinition<typeof inputSchema> = {
@@ -66,6 +67,9 @@ export const searchGraphTool: ToolDefinition<typeof inputSchema> = {
     }
     if (input.seed_limit !== undefined) {
       searchGraphOptions.seedLimit = input.seed_limit;
+    }
+    if (input.min_seed_relevance !== undefined) {
+      searchGraphOptions.minSeedRelevance = input.min_seed_relevance;
     }
 
     const page = await db.searchGraph(searchGraphOptions);

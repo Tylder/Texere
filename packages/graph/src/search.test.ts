@@ -99,6 +99,70 @@ describe('search', () => {
     expect(r.relationships).toHaveProperty('outgoing');
   });
 
+  it('finds node when query term appears only in tags', () => {
+    store(db, {
+      title: 'Storage overview',
+      content: 'General storage discussion.',
+      tags: ['redis'],
+    });
+
+    const results = searchResults(db, { query: 'redis' });
+    expect(results).toHaveLength(1);
+  });
+
+  it('finds node when query terms are split across title and tags', () => {
+    store(db, { title: 'Caching strategy', content: 'How to cache data.', tags: ['redis'] });
+
+    const results = searchResults(db, { query: 'redis caching' });
+    expect(results).toHaveLength(1);
+  });
+
+  it('finds node when query terms are split across content and tags', () => {
+    store(db, { title: 'Infrastructure plan', content: 'Set up caching layer.', tags: ['redis'] });
+
+    const results = searchResults(db, { query: 'redis caching' });
+    expect(results).toHaveLength(1);
+  });
+
+  it('does not find node when one query term is missing from all columns', () => {
+    store(db, { title: 'Database options', content: 'Various storage backends.', tags: ['redis'] });
+
+    const results = searchResults(db, { query: 'redis caching' });
+    expect(results).toHaveLength(0);
+  });
+
+  it('finds all nodes matching across different column combinations', () => {
+    store(db, { title: 'Redis caching', content: 'In-memory store.', tags: ['performance'] });
+    store(db, { title: 'Performance tuning', content: 'Use caching for speed.', tags: ['redis'] });
+    store(db, { title: 'Speed improvements', content: 'Redis helps.', tags: ['caching'] });
+    store(db, { title: 'Unrelated', content: 'Nothing relevant here.', tags: ['database'] });
+
+    const results = searchResults(db, { query: 'redis caching' });
+    expect(results).toHaveLength(3);
+  });
+
+  it('keyword match_quality increases with stronger BM25 rank', () => {
+    store(db, {
+      title: 'Redis caching strategy',
+      content: 'Redis provides fast in-memory caching for session data.',
+      tags: ['redis', 'caching'],
+    });
+    store(db, {
+      title: 'Caching overview',
+      content: 'Redis is one option among many caching backends.',
+      tags: ['database'],
+    });
+
+    const results = searchResults(db, { query: 'Redis caching' });
+    expect(results.length).toBeGreaterThanOrEqual(2);
+
+    const better = results[0]!;
+    const worse = results[1]!;
+
+    expect(better.rank).toBeLessThan(worse.rank);
+    expect(better.match_quality).toBeGreaterThan(worse.match_quality);
+  });
+
   it('returns nodes matching title/content/tags via BM25', () => {
     const titleMatch = store(db, {
       title: 'SQLite indexing strategy',

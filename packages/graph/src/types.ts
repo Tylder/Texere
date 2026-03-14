@@ -170,4 +170,5 @@ export interface SearchGraphOptions
     >,
     Omit<TraverseOptions, 'startId'> {
   seedLimit?: number;
+  minSeedRelevance?: number;
 }

@@ -1,9 +1,12 @@
 import type Database from 'better-sqlite3';
 
 import {
+  assertCursorScope,
   buildPaginatedResults,
   buildScope,
   clampPageLimit,
+  decodeCursor,
+  isAfterCursor,
   parseGraphCursor,
 } from './pagination.js';
 import { search } from './search.js';
@@ -37,7 +40,7 @@ export interface Stats {
   };
 }
 
-interface AboutCandidate {
+interface SearchGraphCandidate {
   row: TraverseResult;
   seedIndex: number;
 }
@@ -45,6 +48,7 @@ interface AboutCandidate {
 const DEFAULT_MAX_DEPTH = 3;
 const MAX_DEPTH_CAP = 5;
 const DEFAULT_SEED_LIMIT = 100;
+const DEFAULT_MIN_SEED_RELEVANCE = 0.3;
 
 const toMaxDepth = (maxDepth: number | undefined): number => {
   if (maxDepth === undefined) {
@@ -328,6 +332,45 @@ export const traverse = (
   return paginateTraverseResults(rows, limit, options.cursor, scope);
 };
 
+type SearchGraphCursor = { seedIndex: number; depth: number; created_at: number; id: string };
+
+const paginateSearchGraphResults = (
+  candidates: SearchGraphCandidate[],
+  limit: number,
+  cursor: string | undefined,
+  scope: string,
+  mode?: 'keyword' | 'semantic' | 'hybrid',
+): PaginatedResults<TraverseResult> => {
+  const filtered = cursor
+    ? (() => {
+        const parsed = decodeCursor<SearchGraphCursor>(cursor);
+        assertCursorScope(parsed.scope, scope);
+        const cv = parsed.last;
+        return candidates.filter((c) =>
+          isAfterCursor(
+            [c.seedIndex, c.row.depth, c.row.node.created_at, c.row.node.id],
+            [cv.seedIndex, cv.depth, cv.created_at, cv.id],
+          ),
+        );
+      })()
+    : candidates;
+
+  return buildPaginatedResults(
+    filtered,
+    limit,
+    'seedIndex ASC, depth ASC, created_at ASC, id ASC',
+    (c): TraverseResult => c.row,
+    (c): SearchGraphCursor => ({
+      seedIndex: c.seedIndex,
+      depth: c.row.depth,
+      created_at: c.row.node.created_at,
+      id: c.row.node.id,
+    }),
+    scope,
+    mode,
+  );
+};
+
 export const searchGraph = (
   db: Database.Database,
   options: SearchGraphOptions,
@@ -355,7 +398,10 @@ export const searchGraph = (
 
   const seedLimit = options.seedLimit ?? DEFAULT_SEED_LIMIT;
   const seedPage = search(db, { ...searchOptions, limit: seedLimit }, queryEmbedding);
-  const seeds = seedPage.results;
+  const minRelevance = options.minSeedRelevance ?? DEFAULT_MIN_SEED_RELEVANCE;
+  const topScore = seedPage.results[0]?.match_quality ?? 0;
+  const threshold = topScore * minRelevance;
+  const seeds = seedPage.results.filter((s) => s.match_quality >= threshold);
 
   if (seeds.length === 0) {
     return {
@@ -365,12 +411,12 @@ export const searchGraph = (
         hasMore: false,
         returned: 0,
         limit: clampPageLimit(options.limit),
-        order: 'depth ASC, created_at ASC, id ASC',
+        order: 'seedIndex ASC, depth ASC, created_at ASC, id ASC',
       },
     };
   }
 
-  const byNodeId = new Map<string, AboutCandidate>();
+  const byNodeId = new Map<string, SearchGraphCandidate>();
 
   for (const [seedIndex, seed] of seeds.entries()) {
     byNodeId.set(seed.id, { row: { node: seed, depth: 0 }, seedIndex });
@@ -407,25 +453,23 @@ export const searchGraph = (
     }
   }
 
-  const finalResults = Array.from(byNodeId.values())
-    .sort((left, right) => {
-      if (left.row.depth !== right.row.depth) {
-        return left.row.depth - right.row.depth;
-      }
-      if (left.seedIndex !== right.seedIndex) {
-        return left.seedIndex - right.seedIndex;
-      }
-      if (left.row.node.created_at !== right.row.node.created_at) {
-        return left.row.node.created_at - right.row.node.created_at;
-      }
-      return left.row.node.id.localeCompare(right.row.node.id);
-    })
-    .map((entry) => entry.row);
+  const sorted = Array.from(byNodeId.values()).sort((left, right) => {
+    if (left.seedIndex !== right.seedIndex) {
+      return left.seedIndex - right.seedIndex;
+    }
+    if (left.row.depth !== right.row.depth) {
+      return left.row.depth - right.row.depth;
+    }
+    if (left.row.node.created_at !== right.row.node.created_at) {
+      return left.row.node.created_at - right.row.node.created_at;
+    }
+    return left.row.node.id.localeCompare(right.row.node.id);
+  });
 
   const searchGraphMode = seeds[0]!.search_mode === 'auto' ? 'keyword' : seeds[0]!.search_mode;
   const limit = clampPageLimit(options.limit);
   const scope = buildSearchGraphScope(options, searchGraphMode);
-  return paginateTraverseResults(finalResults, limit, options.cursor, scope, searchGraphMode);
+  return paginateSearchGraphResults(sorted, limit, options.cursor, scope, searchGraphMode);
 };
 
 export const stats = (db: Database.Database): Stats => {
