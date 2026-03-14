@@ -916,12 +916,45 @@ describe('Texere MCP tools', () => {
     expect(resultIds).toContain(solutionId);
   });
 
+  it('texere_search_graph supports empty query with tag filters', async () => {
+    const problem = await mcp.callTool('texere_store_issue', {
+      nodes: [
+        {
+          role: 'problem',
+          title: 'Tagged timeout issue',
+          content: 'Timeout on login route',
+          tags: ['auth', 'timeout'],
+          importance: 0.5,
+          confidence: 0.8,
+        },
+      ],
+      minimal: false,
+    });
+
+    const result = await mcp.callTool('texere_search_graph', {
+      query: '',
+      tags: ['auth'],
+      limit: 10,
+    });
+
+    expect(result.isError).toBeUndefined();
+    const structured = result.structuredContent as {
+      results: Array<{ node: { id: string } }>;
+      page: { returned: number; has_more: boolean; limit: number };
+    };
+    const storedId = (problem.structuredContent as { nodes: Array<{ id: string }> }).nodes[0].id;
+    expect(structured.page.limit).toBe(10);
+    expect(structured.page.returned).toBeGreaterThan(0);
+    expect(structured.page.has_more).toBe(false);
+    expect(structured.results.map((row) => row.node.id)).toContain(storedId);
+  });
+
   it('texere_search_graph paginates and rejects scope-mismatched cursors', async () => {
     const seedA = await mcp.callTool('texere_store_issue', {
       nodes: [
         {
           role: 'problem',
-          title: 'About paged seed A',
+          title: 'Search graph paged seed A',
           content: 'timeout about seed',
           importance: 0.5,
           confidence: 0.8,
@@ -933,7 +966,7 @@ describe('Texere MCP tools', () => {
       nodes: [
         {
           role: 'problem',
-          title: 'About paged seed B',
+          title: 'Search graph paged seed B',
           content: 'timeout about seed',
           importance: 0.5,
           confidence: 0.8,
@@ -945,7 +978,7 @@ describe('Texere MCP tools', () => {
       nodes: [
         {
           role: 'solution',
-          title: 'About paged shared',
+          title: 'Search graph paged shared',
           content: 'shared timeout remedy',
           importance: 0.5,
           confidence: 0.8,

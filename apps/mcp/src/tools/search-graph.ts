@@ -6,7 +6,7 @@ import { ok } from './helpers.js';
 import type { ToolDefinition } from './types.js';
 
 const inputSchema = z.object({
-  query: z.string().min(1),
+  query: z.string(),
   type: z.union([z.nativeEnum(NodeType), z.array(z.nativeEnum(NodeType))]).optional(),
   role: z.nativeEnum(NodeRole).optional(),
   tags: z.array(z.string().min(1)).optional(),
@@ -25,7 +25,7 @@ const inputSchema = z.object({
 export const searchGraphTool: ToolDefinition<typeof inputSchema> = {
   name: 'texere_search_graph',
   description:
-    'Search for seeds with optional semantic/hybrid modes, then traverse their neighborhood with cursor pagination over the final result set.',
+    'Search for seed nodes with optional filters/modes, then traverse their neighborhood with cursor pagination over the deduped final result set.',
   inputSchema,
   execute: async ({ db }, input) => {
     const searchGraphOptions: SearchGraphOptions = {

@@ -48,26 +48,30 @@ may be `keyword`, `semantic`, or `hybrid`.
 
 Search for seeds with optional semantic/hybrid modes, then traverse their neighborhood.
 
-| arg            | type                                          | required | default    | notes                        |
-| -------------- | --------------------------------------------- | -------- | ---------- | ---------------------------- |
-| query          | string                                        | yes      | —          | FTS5 or semantic query       |
-| type           | NodeType \| NodeType[]                        | no       | —          | Filter by node type(s)       |
-| role           | NodeRole                                      | no       | —          | Filter by node role          |
-| tags           | string[]                                      | no       | —          | Filter by tags               |
-| tag_mode       | "all" \| "any"                                | no       | "all"      | AND vs OR for tags           |
-| min_importance | number (0-1)                                  | no       | —          | Minimum importance threshold |
-| limit          | number (1-250)                                | no       | 100        | Final page size              |
-| cursor         | string                                        | no       | —          | Opaque cursor for next page  |
-| direction      | "outgoing" \| "incoming" \| "both"            | no       | "outgoing" | Traversal direction          |
-| max_depth      | number (0-5)                                  | no       | 3          | Traversal depth              |
-| edge_type      | EdgeType                                      | no       | —          | Filter by edge type          |
-| mode           | "auto" \| "keyword" \| "semantic" \| "hybrid" | no       | "auto"     | Search strategy              |
-| seed_limit     | number (1-250)                                | no       | 100        | Max seed nodes from search   |
+| arg                | type                                          | required | default    | notes                        |
+| ------------------ | --------------------------------------------- | -------- | ---------- | ---------------------------- |
+| query              | string                                        | yes      | —          | FTS5 or semantic query       |
+| type               | NodeType \| NodeType[]                        | no       | —          | Filter by node type(s)       |
+| role               | NodeRole                                      | no       | —          | Filter by node role          |
+| tags               | string[]                                      | no       | —          | Filter by tags               |
+| tag_mode           | "all" \| "any"                                | no       | "all"      | AND vs OR for tags           |
+| min_importance     | number (0-1)                                  | no       | —          | Minimum importance threshold |
+| limit              | number (1-250)                                | no       | 100        | Final page size              |
+| cursor             | string                                        | no       | —          | Opaque cursor for next page  |
+| direction          | "outgoing" \| "incoming" \| "both"            | no       | "outgoing" | Traversal direction          |
+| max_depth          | number (0-5)                                  | no       | 3          | Traversal depth              |
+| edge_type          | EdgeType                                      | no       | —          | Filter by edge type          |
+| mode               | "auto" \| "keyword" \| "semantic" \| "hybrid" | no       | "auto"     | Search strategy              |
+| seed_limit         | number (1-250)                                | no       | 100        | Max seed nodes from search   |
+| min_seed_relevance | number (0-1)                                  | no       | 0.3        | Keep seeds near top quality  |
 
 Returns:
 `{ results: Array<{ node: Node, depth: number }>, page: { next_cursor, has_more, returned, limit, order, mode? } }`
 
 Example: `texere_search_graph({ query: "concurrency", max_depth: 2, limit: 10 })`
+
+`texere_search_graph` accepts an empty `query` when at least one filter (for example `tags`, `type`,
+`role`, or `min_importance`) is provided.
 
 ### texere_get_node
 
@@ -638,6 +642,6 @@ RELATED_TO (last resort)
 - Batch nodes: max 50 per store call
 - Inline edges: max 50 per store call
 - Batch edges: max 50 per create_edge call
-- Search/About/Traverse page size: max 250 via MCP, max 500 internally
+- Search/search_graph/traverse page size: max 250 via MCP, max 500 internally
 - Traverse depth: max 5
-- About depth: max 5
+- search_graph depth: max 5

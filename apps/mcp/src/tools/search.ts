@@ -20,7 +20,7 @@ const inputSchema = z.object({
 export const searchTool: ToolDefinition<typeof inputSchema> = {
   name: 'texere_search',
   description:
-    'FTS5 search with BM25 ranking, type/role/tag/importance filters, and cursor pagination. Supports keyword, semantic, and hybrid search modes.',
+    'Search with optional type/role/tag/importance filters and cursor pagination. Supports keyword, semantic, and hybrid modes.',
   inputSchema,
   execute: async ({ db }, input) => {
     const searchOptions = {

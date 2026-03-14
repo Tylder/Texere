@@ -177,6 +177,12 @@ atomic node+edge creation in a single tool call.
 `texere_search.page.mode` reflects the effective mode, which is especially useful when the request
 uses `mode: 'auto'`.
 
+`texere_search` and `texere_search_graph` both support filter-only queries (`query: ""`) when one or
+more filters are provided (`tags`, `type`, `role`, or `min_importance`).
+
+`texere_search_graph` also supports seed tuning via `seed_limit` (cap seed count before traversal)
+and `min_seed_relevance` (drop weak seeds relative to the top match quality).
+
 **Metadata:**
 
 - `texere_stats` — Database statistics
