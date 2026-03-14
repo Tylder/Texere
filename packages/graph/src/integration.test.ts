@@ -9,10 +9,11 @@ const searchResults = async (
   options: Parameters<Texere['search']>[0],
 ): Promise<Awaited<ReturnType<Texere['search']>>['results']> => (await db.search(options)).results;
 
-const aboutResults = async (
+const searchGraphResults = async (
   db: Texere,
-  options: Parameters<Texere['about']>[0],
-): Promise<Awaited<ReturnType<Texere['about']>>['results']> => (await db.about(options)).results;
+  options: Parameters<Texere['searchGraph']>[0],
+): Promise<Awaited<ReturnType<Texere['searchGraph']>>['results']> =>
+  (await db.searchGraph(options)).results;
 
 const traverseResults = (
   db: Texere,
@@ -233,7 +234,7 @@ describe('Integration: Semantic Search End-to-End', () => {
     }, 30_000);
   });
 
-  describe('about() integration (search + traversal)', () => {
+  describe('searchGraph() integration (search + traversal)', () => {
     it('finds seed via keyword search and traverses to connected nodes', async () => {
       // decision --RESOLVES--> problem <--RESOLVES-- solution
       const decision = db.storeNode({
@@ -263,7 +264,7 @@ describe('Integration: Semantic Search End-to-End', () => {
       db.createEdge({ source_id: decision.id, target_id: problem.id, type: EdgeType.Resolves });
       db.createEdge({ source_id: solution.id, target_id: problem.id, type: EdgeType.Resolves });
 
-      const results = await aboutResults(db, {
+      const results = await searchGraphResults(db, {
         query: 'authentication',
         direction: 'both',
         maxDepth: 2,

@@ -21,7 +21,7 @@ const TOOL_NAMES = [
   'texere_delete_edges',
   'texere_search',
   'texere_traverse',
-  'texere_about',
+  'texere_search_graph',
   'texere_stats',
   'texere_validate',
 ] as const;
@@ -699,7 +699,7 @@ describe('Texere MCP tools', () => {
 
     expect(traversed.isError).toBeUndefined();
     expect(traversed.structuredContent).toMatchObject({
-      page: { has_more: false, next_cursor: null, limit: 20 },
+      page: { has_more: false, next_cursor: null, limit: 100 },
     });
     const results = (traversed.structuredContent as { results: Array<{ node: { id: string } }> })
       .results;
@@ -859,7 +859,7 @@ describe('Texere MCP tools', () => {
     );
   });
 
-  it('texere_about returns search plus traversal context', async () => {
+  it('texere_search_graph returns search plus traversal context', async () => {
     const problem = await mcp.callTool('texere_store_issue', {
       nodes: [
         {
@@ -898,7 +898,7 @@ describe('Texere MCP tools', () => {
       ],
     });
 
-    const result = await mcp.callTool('texere_about', {
+    const result = await mcp.callTool('texere_search_graph', {
       query: 'timeout',
       direction: 'both',
       max_depth: 2,
@@ -916,7 +916,7 @@ describe('Texere MCP tools', () => {
     expect(resultIds).toContain(solutionId);
   });
 
-  it('texere_about paginates and rejects scope-mismatched cursors', async () => {
+  it('texere_search_graph paginates and rejects scope-mismatched cursors', async () => {
     const seedA = await mcp.callTool('texere_store_issue', {
       nodes: [
         {
@@ -965,7 +965,7 @@ describe('Texere MCP tools', () => {
       edges: [{ source_id: seedBId, target_id: sharedId, type: EdgeType.Resolves }],
     });
 
-    const firstPage = await mcp.callTool('texere_about', {
+    const firstPage = await mcp.callTool('texere_search_graph', {
       query: 'timeout about seed',
       direction: 'both',
       max_depth: 2,
@@ -977,7 +977,7 @@ describe('Texere MCP tools', () => {
     };
     expect(firstStructured.page.has_more).toBe(true);
 
-    const secondPage = await mcp.callTool('texere_about', {
+    const secondPage = await mcp.callTool('texere_search_graph', {
       query: 'timeout about seed',
       direction: 'both',
       max_depth: 2,
@@ -992,7 +992,7 @@ describe('Texere MCP tools', () => {
     );
     expect(ids.size).toBeGreaterThanOrEqual(2);
 
-    const invalid = await mcp.callTool('texere_about', {
+    const invalid = await mcp.callTool('texere_search_graph', {
       query: 'timeout about seed',
       direction: 'incoming',
       max_depth: 2,

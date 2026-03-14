@@ -172,7 +172,7 @@ atomic node+edge creation in a single tool call.
 
 - `texere_search` — Multi-mode search (keyword/semantic/hybrid) with cursor pagination
 - `texere_traverse` — Graph traversal with depth control and cursor pagination
-- `texere_about` — Search + traverse with cursor pagination over the final deduped result set
+- `texere_search_graph` — Search + traverse with cursor pagination over the final deduped result set
 
 `texere_search.page.mode` reflects the effective mode, which is especially useful when the request
 uses `mode: 'auto'`.

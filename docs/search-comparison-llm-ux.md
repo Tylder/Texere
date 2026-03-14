@@ -319,12 +319,12 @@ texere_search({
 
 ---
 
-### 8. The Killer Feature: `texere_about`
+### 8. The Killer Feature: `texere_search_graph`
 
-**Texere's `about` tool** combines search + traversal:
+**Texere's `search_graph` tool** combines search + traversal:
 
 ```javascript
-texere_about({
+texere_search_graph({
   query: 'redis timeout',
   max_depth: 2,
   direction: 'both',
@@ -353,12 +353,13 @@ texere_about({
 
 **Example**: "Show me everything about Redis timeouts"
 
-- Texere: 1 call (`about`)
+- Texere: 1 call (`search_graph`)
 - Memory-Graph: 1 search + N relationship calls (where N = number of seeds)
 
-**Winner**: **Texere** — `about` is a massive UX win for LLM agents.
+**Winner**: **Texere** — `search_graph` is a massive UX win for LLM agents.
 
-**Recommendation**: Heavily document `about` as the primary search tool for exploratory queries.
+**Recommendation**: Heavily document `search_graph` as the primary search tool for exploratory
+queries.
 
 ---
 
@@ -466,21 +467,21 @@ replace_node({
 
 ## Search Capability Matrix (LLM Perspective)
 
-| Capability               | Texere          | Memory-Graph      | Winner           |
-| ------------------------ | --------------- | ----------------- | ---------------- |
-| **Structured output**    | ✅ JSON         | ⚠️ Markdown       | **Texere**       |
-| **Token efficiency**     | ✅ Dense        | ❌ Verbose        | **Texere**       |
-| **BM25 ranking**         | ✅              | ❌                | **Texere**       |
-| **Boolean logic**        | ✅ Full FTS5    | ⚠️ Simple AND/OR  | **Texere**       |
-| **Phrase search**        | ✅              | ❌                | **Texere**       |
-| **Prefix search**        | ✅ `auth*`      | ❌                | **Texere**       |
-| **Search + traverse**    | ✅ `about` tool | ❌ Multiple calls | **Texere**       |
-| **Typed edges**          | ✅ Enum         | ⚠️ Strings        | **Texere**       |
-| **Confidence scores**    | ✅              | ❌                | **Texere**       |
-| **Immutability**         | ✅              | ❌                | **Texere**       |
-| **Typo tolerance**       | ❌              | ✅                | **Memory-Graph** |
-| **Match quality**        | ❌              | ✅ (concept)      | **Memory-Graph** |
-| **Relationship context** | ❌              | ✅ (concept)      | **Memory-Graph** |
+| Capability               | Texere                 | Memory-Graph      | Winner           |
+| ------------------------ | ---------------------- | ----------------- | ---------------- |
+| **Structured output**    | ✅ JSON                | ⚠️ Markdown       | **Texere**       |
+| **Token efficiency**     | ✅ Dense               | ❌ Verbose        | **Texere**       |
+| **BM25 ranking**         | ✅                     | ❌                | **Texere**       |
+| **Boolean logic**        | ✅ Full FTS5           | ⚠️ Simple AND/OR  | **Texere**       |
+| **Phrase search**        | ✅                     | ❌                | **Texere**       |
+| **Prefix search**        | ✅ `auth*`             | ❌                | **Texere**       |
+| **Search + traverse**    | ✅ `search_graph` tool | ❌ Multiple calls | **Texere**       |
+| **Typed edges**          | ✅ Enum                | ⚠️ Strings        | **Texere**       |
+| **Confidence scores**    | ✅                     | ❌                | **Texere**       |
+| **Immutability**         | ✅                     | ❌                | **Texere**       |
+| **Typo tolerance**       | ❌                     | ✅                | **Memory-Graph** |
+| **Match quality**        | ❌                     | ✅ (concept)      | **Memory-Graph** |
+| **Relationship context** | ❌                     | ✅ (concept)      | **Memory-Graph** |
 
 **Overall Winner**: **Texere** (10 vs 3)
 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { EdgeType, NodeRole, NodeType, type AboutOptions } from '@texere/graph';
+import { EdgeType, NodeRole, NodeType, type SearchGraphOptions } from '@texere/graph';
 
 import { ok } from './helpers.js';
 import type { ToolDefinition } from './types.js';
@@ -18,53 +18,57 @@ const inputSchema = z.object({
   max_depth: z.number().int().min(0).max(5).optional(),
   edge_type: z.nativeEnum(EdgeType).optional(),
   mode: z.enum(['auto', 'keyword', 'semantic', 'hybrid']).optional().default('auto'),
+  seed_limit: z.number().int().min(1).max(250).optional(),
 });
 
-export const aboutTool: ToolDefinition<typeof inputSchema> = {
-  name: 'texere_about',
+export const searchGraphTool: ToolDefinition<typeof inputSchema> = {
+  name: 'texere_search_graph',
   description:
     'Search for seeds with optional semantic/hybrid modes, then traverse their neighborhood with cursor pagination over the final result set.',
   inputSchema,
   execute: async ({ db }, input) => {
-    const aboutOptions: AboutOptions = {
+    const searchGraphOptions: SearchGraphOptions = {
       query: input.query,
     };
 
     if (input.type !== undefined) {
-      aboutOptions.type = input.type;
+      searchGraphOptions.type = input.type;
     }
     if (input.role !== undefined) {
-      aboutOptions.role = input.role;
+      searchGraphOptions.role = input.role;
     }
     if (input.tags !== undefined) {
-      aboutOptions.tags = input.tags;
+      searchGraphOptions.tags = input.tags;
     }
     if (input.tag_mode !== undefined) {
-      aboutOptions.tagMode = input.tag_mode;
+      searchGraphOptions.tagMode = input.tag_mode;
     }
     if (input.min_importance !== undefined) {
-      aboutOptions.minImportance = input.min_importance;
+      searchGraphOptions.minImportance = input.min_importance;
     }
     if (input.limit !== undefined) {
-      aboutOptions.limit = input.limit;
+      searchGraphOptions.limit = input.limit;
     }
     if (input.cursor !== undefined) {
-      aboutOptions.cursor = input.cursor;
+      searchGraphOptions.cursor = input.cursor;
     }
     if (input.direction !== undefined) {
-      aboutOptions.direction = input.direction;
+      searchGraphOptions.direction = input.direction;
     }
     if (input.max_depth !== undefined) {
-      aboutOptions.maxDepth = input.max_depth;
+      searchGraphOptions.maxDepth = input.max_depth;
     }
     if (input.edge_type !== undefined) {
-      aboutOptions.edgeType = input.edge_type;
+      searchGraphOptions.edgeType = input.edge_type;
     }
     if (input.mode !== undefined) {
-      aboutOptions.mode = input.mode;
+      searchGraphOptions.mode = input.mode;
+    }
+    if (input.seed_limit !== undefined) {
+      searchGraphOptions.seedLimit = input.seed_limit;
     }
 
-    const page = await db.about(aboutOptions);
+    const page = await db.searchGraph(searchGraphOptions);
 
     return ok({
       results: page.results,

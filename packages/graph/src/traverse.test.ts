@@ -5,14 +5,16 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createDatabase } from './db.js';
 import { createEdge } from './edges.js';
 import { invalidateNode, storeNode } from './nodes.js';
-import { about, stats, traverse } from './traverse.js';
+import { searchGraph, stats, traverse } from './traverse.js';
 import { EdgeType, NodeRole, NodeType } from './types.js';
 
 const traverseResults = (db: Database.Database, options: Parameters<typeof traverse>[1]) =>
   traverse(db, options).results;
 
-const aboutResults = async (db: Database.Database, options: Parameters<typeof about>[1]) =>
-  (await about(db, options)).results;
+const searchGraphResults = async (
+  db: Database.Database,
+  options: Parameters<typeof searchGraph>[1],
+) => (await searchGraph(db, options)).results;
 
 const collectTraversePages = (db: Database.Database, options: Parameters<typeof traverse>[1]) => {
   const all: ReturnType<typeof traverse>['results'] = [];
@@ -31,12 +33,15 @@ const collectTraversePages = (db: Database.Database, options: Parameters<typeof 
   }
 };
 
-const collectAboutPages = async (db: Database.Database, options: Parameters<typeof about>[1]) => {
-  const all: Awaited<ReturnType<typeof about>>['results'] = [];
+const collectSearchGraphPages = async (
+  db: Database.Database,
+  options: Parameters<typeof searchGraph>[1],
+) => {
+  const all: Awaited<ReturnType<typeof searchGraph>>['results'] = [];
   let cursor = options.cursor;
 
   while (true) {
-    const page = await about(db, {
+    const page = await searchGraph(db, {
       ...options,
       ...(cursor ? { cursor } : {}),
     });
@@ -388,7 +393,7 @@ describe('traverse', () => {
   });
 });
 
-describe('about', () => {
+describe('searchGraph', () => {
   let db: Database.Database;
 
   beforeEach(() => {
@@ -416,7 +421,11 @@ describe('about', () => {
 
     createEdge(db, { source_id: seed.id, target_id: neighbor.id, type: EdgeType.BasedOn });
 
-    const result = await aboutResults(db, { query: 'SQLite', maxDepth: 2, direction: 'outgoing' });
+    const result = await searchGraphResults(db, {
+      query: 'SQLite',
+      maxDepth: 2,
+      direction: 'outgoing',
+    });
     const ids = new Set(result.map((row) => row.node.id));
 
     expect(ids.has(seed.id)).toBe(true);
@@ -444,7 +453,7 @@ describe('about', () => {
       type: EdgeType.BasedOn,
     });
 
-    const result = await aboutResults(db, { query: 'SQLite', maxDepth: 2 });
+    const result = await searchGraphResults(db, { query: 'SQLite', maxDepth: 2 });
     const ids = result.map((row) => row.node.id);
     const unique = new Set(ids);
 
@@ -460,7 +469,7 @@ describe('about', () => {
       title: 'Unrelated',
       content: 'No sqlite here',
     });
-    const result = await aboutResults(db, { query: 'nonexistentqueryterm' });
+    const result = await searchGraphResults(db, { query: 'nonexistentqueryterm' });
     expect(result).toEqual([]);
   });
 
@@ -611,7 +620,7 @@ describe('about', () => {
     );
   });
 
-  it('paginates about results after deduplication', async () => {
+  it('paginates searchGraph results after deduplication', async () => {
     const seedA = makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
@@ -634,8 +643,13 @@ describe('about', () => {
     createEdge(db, { source_id: seedA.id, target_id: shared.id, type: EdgeType.Resolves });
     createEdge(db, { source_id: seedB.id, target_id: shared.id, type: EdgeType.Resolves });
 
-    const page1 = await about(db, { query: 'timeout', direction: 'both', maxDepth: 2, limit: 2 });
-    const page2 = await about(db, {
+    const page1 = await searchGraph(db, {
+      query: 'timeout',
+      direction: 'both',
+      maxDepth: 2,
+      limit: 2,
+    });
+    const page2 = await searchGraph(db, {
       query: 'timeout',
       direction: 'both',
       maxDepth: 2,
@@ -648,7 +662,7 @@ describe('about', () => {
     expect(ids.size).toBe(3);
   });
 
-  it('keeps only seeds when about maxDepth is 0', async () => {
+  it('keeps only seeds when searchGraph maxDepth is 0', async () => {
     const seed = makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
@@ -664,12 +678,12 @@ describe('about', () => {
 
     createEdge(db, { source_id: seed.id, target_id: neighbor.id, type: EdgeType.Resolves });
 
-    const page = await about(db, { query: 'seed-only', maxDepth: 0 });
+    const page = await searchGraph(db, { query: 'seed-only', maxDepth: 0 });
     expect(page.results.some((row) => row.depth > 0)).toBe(false);
     expect(page.results.map((row) => row.node.id)).toContain(seed.id);
   });
 
-  it('rejects malformed about cursors', () => {
+  it('rejects malformed searchGraph cursors', () => {
     makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
@@ -677,10 +691,12 @@ describe('about', () => {
       content: 'timeout details',
     });
 
-    expect(() => about(db, { query: 'timeout', cursor: 'not-a-cursor' })).toThrow('Invalid cursor');
+    expect(() => searchGraph(db, { query: 'timeout', cursor: 'not-a-cursor' })).toThrow(
+      'Invalid cursor',
+    );
   });
 
-  it('rejects about cursors when request scope changes', async () => {
+  it('rejects searchGraph cursors when request scope changes', async () => {
     makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
@@ -694,10 +710,10 @@ describe('about', () => {
       content: 'timeout solution',
     });
 
-    const firstPage = await about(db, { query: 'timeout', direction: 'outgoing', limit: 1 });
+    const firstPage = await searchGraph(db, { query: 'timeout', direction: 'outgoing', limit: 1 });
 
     expect(() =>
-      about(db, {
+      searchGraph(db, {
         query: 'timeout',
         direction: 'incoming',
         limit: 1,
@@ -706,7 +722,40 @@ describe('about', () => {
     ).toThrow('Cursor does not match the current request');
   });
 
-  it('matches single large-page results when collecting all about pages', async () => {
+  it('preserves search relevance ranking for seeds at depth 0', async () => {
+    // Create 15 old nodes that match the query equally well via BM25
+    for (let i = 0; i < 15; i++) {
+      makeNode(db, {
+        type: NodeType.Knowledge,
+        role: NodeRole.Finding,
+        title: `Database migration issue ${i}`,
+        content: 'database migration failed during deployment',
+      });
+    }
+
+    // Create a node that ranks higher in search (matched in title, content, AND tags)
+    const bestMatch = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Database migration strategy',
+      content: 'database migration with zero-downtime deployment',
+      tags: ['database', 'migration'],
+    });
+
+    const { results: searchResults } = await searchGraph(db, {
+      query: 'database migration',
+      limit: 5,
+    });
+
+    const searchRankedIds = searchResults.map((row) => row.node.id);
+
+    // searchGraph() sorts seeds by created_at ASC, so the 15 older nodes fill the first page
+    // and push bestMatch (the newest, last-created) out of the top 5.
+    // If ranking were preserved, bestMatch would appear in the top 5.
+    expect(searchRankedIds).toContain(bestMatch.id);
+  });
+
+  it('matches single large-page results when collecting all searchGraph pages', async () => {
     const seedA = makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
@@ -736,7 +785,7 @@ describe('about', () => {
     createEdge(db, { source_id: seedB.id, target_id: shared.id, type: EdgeType.Resolves });
     createEdge(db, { source_id: shared.id, target_id: neighbor.id, type: EdgeType.BasedOn });
 
-    const allPaged = await collectAboutPages(db, {
+    const allPaged = await collectSearchGraphPages(db, {
       query: 'about roundtrip timeout',
       direction: 'both',
       maxDepth: 2,

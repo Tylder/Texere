@@ -32,7 +32,7 @@ src/
 │   ├── delete-edges.ts   # Batch edge deletion
 │   ├── search.ts         # Full-text search
 │   ├── traverse.ts       # Graph traversal
-│   ├── about.ts          # Search + traverse
+│   ├── search-graph.ts   # Search + traverse
 │   ├── stats.ts          # Database statistics
 │   └── validate.ts       # Pre-write validation
 └── *.test.ts             # 2 test files (unit + integration)
@@ -145,7 +145,7 @@ return {
 | **Node CRUD** | store_knowledge, store_issue, store_action, store_artifact, store_source, get_node, get_nodes, replace_node, invalidate_node, invalidate_nodes | Store tools: batch up to 50 nodes + optional inline edges (up to 50); `get_nodes` accepts up to 200 IDs; `invalidate_nodes` accepts up to 250 IDs |
 | **Edge CRUD** | create_edge, delete_edge, delete_edges                                                                                                         | Yes (`create_edge` up to 50, `delete_edges` up to 250)                                                                                            |
 | **Search**    | search                                                                                                                                         | No                                                                                                                                                |
-| **Graph**     | traverse, about                                                                                                                                | No                                                                                                                                                |
+| **Graph**     | traverse, search_graph                                                                                                                         | No                                                                                                                                                |
 | **Meta**      | stats, validate                                                                                                                                | No                                                                                                                                                |
 
 ## INTEGRATION WITH @TEXERE/GRAPH

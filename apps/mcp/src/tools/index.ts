@@ -1,4 +1,3 @@
-import { aboutTool } from './about.js';
 import { createEdgeTool } from './create-edge.js';
 import { deleteEdgeTool } from './delete-edge.js';
 import { deleteEdgesTool } from './delete-edges.js';
@@ -7,6 +6,7 @@ import { getNodesTool } from './get-nodes.js';
 import { invalidateNodeTool } from './invalidate-node.js';
 import { invalidateNodesTool } from './invalidate-nodes.js';
 import { replaceNodeTool } from './replace-node.js';
+import { searchGraphTool } from './search-graph.js';
 import { searchTool } from './search.js';
 import { statsTool } from './stats.js';
 import { storeActionTool } from './store-action.js';
@@ -36,7 +36,7 @@ export const TOOL_DEFINITIONS = [
   deleteEdgesTool,
   searchTool,
   traverseTool,
-  aboutTool,
+  searchGraphTool,
   statsTool,
   validateTool,
 ] as const;

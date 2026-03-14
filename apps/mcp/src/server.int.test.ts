@@ -406,7 +406,7 @@ describe('MCP server integration', () => {
     });
   });
 
-  describe('about -> verify combined search + traverse', () => {
+  describe('searchGraph -> verify combined search + traverse', () => {
     it('returns search seeds and their graph neighbors', async () => {
       const problem = await storeNode(mcp, {
         type: NodeType.Issue,
@@ -434,7 +434,7 @@ describe('MCP server integration', () => {
         ],
       });
 
-      const aboutResult = await mcp.callTool('texere_about', {
+      const aboutResult = await mcp.callTool('texere_search_graph', {
         query: 'memory leak',
         direction: 'both',
         max_depth: 2,
@@ -651,7 +651,7 @@ describe('MCP server integration', () => {
         'texere_delete_edges',
         'texere_search',
         'texere_traverse',
-        'texere_about',
+        'texere_search_graph',
       ];
 
       for (const toolName of toolsWithRequiredInputs) {

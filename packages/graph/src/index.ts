@@ -36,10 +36,10 @@ import {
 } from './replace-node.js';
 import { detectSearchMode, search as searchImpl } from './search.js';
 import {
-  about as aboutImpl,
+  searchGraph as searchGraphImpl,
   stats as statsImpl,
   traverse as traverseImpl,
-  type AboutOptions,
+  type SearchGraphOptions,
   type Stats,
   type TraverseResult,
 } from './traverse.js';
@@ -218,17 +218,17 @@ export class Texere {
    * @param options - Combined search and traversal options
    * @returns Array of traverse results with depth information
    */
-  async about(options: AboutOptions): Promise<PaginatedResults<TraverseResult>> {
+  async searchGraph(options: SearchGraphOptions): Promise<PaginatedResults<TraverseResult>> {
     const mode =
       options.mode && options.mode !== 'auto' ? options.mode : detectSearchMode(options.query);
 
     if (mode === 'semantic' || mode === 'hybrid') {
       await this.embedder.flushPending();
       const queryEmbedding = await this.embedder.embed(options.query);
-      return aboutImpl(this.db, options, queryEmbedding);
+      return searchGraphImpl(this.db, options, queryEmbedding);
     }
 
-    return aboutImpl(this.db, options);
+    return searchGraphImpl(this.db, options);
   }
 
   /**
@@ -271,7 +271,7 @@ export type {
   SearchResult,
   TraverseOptions,
   TraverseResult,
-  AboutOptions,
+  SearchGraphOptions,
   Stats,
   NodeTag,
 };

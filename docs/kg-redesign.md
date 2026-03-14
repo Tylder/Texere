@@ -1471,7 +1471,7 @@ Sources:
 - **Graph traversal 2 hops: 1-10ms**
 - **Graph traversal 3 hops: 10-50ms** (sweet spot for interactive)
 - **Graph traversal 5 hops: 50-200ms** (deep exploration, acceptable)
-- **texere_about (FTS→CTE compound): <100ms**
+- **texere_search_graph (FTS→CTE compound): <100ms**
 - **texere_store_node: <5ms** (single insert + FTS trigger)
 - **texere_create_edge (DEPRECATED_BY): <10ms** (INSERT + UPDATE in transaction)
 
@@ -1484,7 +1484,7 @@ Sources:
 | `texere_traverse` depth=2 | <50ms          | Common neighborhood query        |
 | `texere_traverse` depth=3 | <200ms         | Extended context                 |
 | `texere_traverse` depth=5 | <1s            | Deep exploration, agent can wait |
-| `texere_about`            | <100ms         | Most complex compound query      |
+| `texere_search_graph`     | <100ms         | Most complex compound query      |
 | `texere_store_node`       | <5ms           | Insert + FTS trigger             |
 | `texere_create_edge`      | <10ms          | INSERT + UPDATE in txn           |
 
@@ -1715,7 +1715,7 @@ reformulation is nearly free once the other two exist.
 | 5   | `texere_delete_edge`     | Hard-delete edge                       | `DELETE FROM edges WHERE id = ?`. Row is gone.                            |
 | 6   | `texere_search`          | FTS5 search + filters                  | BM25 ranking. Type/tag/importance filters.                                |
 | 7   | `texere_traverse`        | Graph walk from node                   | Recursive CTE. Direction: outgoing/incoming/both. Max depth 5.            |
-| 8   | `texere_about`           | Compound: search + traverse            | "Tell me everything about X." FTS5 finds seed nodes, traverses neighbors. |
+| 8   | `texere_search_graph`    | Compound: search + traverse            | "Tell me everything about X." FTS5 finds seed nodes, traverses neighbors. |
 | 9   | `texere_stats`           | Node/edge counts by type               | Quick health check                                                        |
 
 **Two invalidation paths:**

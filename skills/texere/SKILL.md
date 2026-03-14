@@ -44,7 +44,7 @@ may be `keyword`, `semantic`, or `hybrid`.
 
 `texere_search` also accepts an empty `query` for tag-only or filter-only searches.
 
-### texere_about
+### texere_search_graph
 
 Search for seeds with optional semantic/hybrid modes, then traverse their neighborhood.
 
@@ -56,17 +56,18 @@ Search for seeds with optional semantic/hybrid modes, then traverse their neighb
 | tags           | string[]                                      | no       | —          | Filter by tags               |
 | tag_mode       | "all" \| "any"                                | no       | "all"      | AND vs OR for tags           |
 | min_importance | number (0-1)                                  | no       | —          | Minimum importance threshold |
-| limit          | number (1-250)                                | no       | 20         | Final page size              |
+| limit          | number (1-250)                                | no       | 100        | Final page size              |
 | cursor         | string                                        | no       | —          | Opaque cursor for next page  |
 | direction      | "outgoing" \| "incoming" \| "both"            | no       | "outgoing" | Traversal direction          |
 | max_depth      | number (0-5)                                  | no       | 3          | Traversal depth              |
 | edge_type      | EdgeType                                      | no       | —          | Filter by edge type          |
 | mode           | "auto" \| "keyword" \| "semantic" \| "hybrid" | no       | "auto"     | Search strategy              |
+| seed_limit     | number (1-250)                                | no       | 100        | Max seed nodes from search   |
 
 Returns:
 `{ results: Array<{ node: Node, depth: number }>, page: { next_cursor, has_more, returned, limit, order, mode? } }`
 
-Example: `texere_about({ query: "concurrency", max_depth: 2, limit: 10 })`
+Example: `texere_search_graph({ query: "concurrency", max_depth: 2, limit: 10 })`
 
 ### texere_get_node
 
@@ -105,7 +106,7 @@ Traverse graph from start node with recursive CTE.
 | start_id  | string                             | yes      | —          | Starting node ID            |
 | direction | "outgoing" \| "incoming" \| "both" | no       | "outgoing" | Traversal direction         |
 | max_depth | number (0-5)                       | no       | 3          | Max recursion depth         |
-| limit     | number (1-250)                     | no       | 20         | Final page size             |
+| limit     | number (1-250)                     | no       | 100        | Final page size             |
 | cursor    | string                             | no       | —          | Opaque cursor for next page |
 | edge_type | EdgeType                           | no       | —          | Filter by edge type         |
 
@@ -153,7 +154,7 @@ authentication patterns.
 ALWAYS search before creating nodes. Creating without searching = duplicates, missed connections,
 graph degradation.
 
-1. Search first: `texere_search` or `texere_about` with terms from intended node title/tags
+1. Search first: `texere_search` or `texere_search_graph` with terms from intended node title/tags
 2. Review results: Check for (a) duplicates → use existing, (b) outdated versions → use
    `texere_replace_node`, (c) related nodes → note IDs for edges
 3. Create node: Use the appropriate per-type store tool only after reviewing search results

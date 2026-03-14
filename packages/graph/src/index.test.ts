@@ -362,7 +362,7 @@ describe('Texere facade', () => {
       expect(page.results[0].node.id).toBe(node2.id);
     });
 
-    it('about() delegates to internal module', async () => {
+    it('searchGraph() delegates to internal module', async () => {
       const problem = db.storeNode({
         type: NodeType.Issue,
         role: NodeRole.Problem,
@@ -383,7 +383,7 @@ describe('Texere facade', () => {
         type: EdgeType.Resolves,
       });
 
-      const page = await db.about({ query: 'auth', mode: 'keyword' });
+      const page = await db.searchGraph({ query: 'auth', mode: 'keyword' });
       expect(page.results.length).toBeGreaterThan(0);
     });
 
@@ -668,7 +668,7 @@ describe('Texere facade', () => {
       expect(Array.isArray(results.results)).toBe(true);
     });
 
-    it('about() with semantic mode triggers embedding flush', async () => {
+    it('searchGraph() with semantic mode triggers embedding flush', async () => {
       db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
@@ -676,8 +676,8 @@ describe('Texere facade', () => {
         content: 'Add rate limiting',
       });
 
-      // About with semantic mode should trigger flush
-      const results = await db.about({ query: 'security', mode: 'semantic' });
+      // searchGraph with semantic mode should trigger flush
+      const results = await db.searchGraph({ query: 'security', mode: 'semantic' });
 
       expect(results).toBeDefined();
       expect(Array.isArray(results.results)).toBe(true);

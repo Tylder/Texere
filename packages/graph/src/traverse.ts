@@ -8,16 +8,15 @@ import {
 } from './pagination.js';
 import { search } from './search.js';
 import type {
-  AboutOptions,
+  SearchGraphOptions,
   EdgeType,
   Node,
   PaginatedResults,
   SearchOptions,
-  SearchResult,
   TraverseOptions,
 } from './types.js';
 
-export type { AboutOptions } from './types.js';
+export type { SearchGraphOptions } from './types.js';
 
 type TraverseRow = Node & { depth: number };
 
@@ -45,7 +44,7 @@ interface AboutCandidate {
 
 const DEFAULT_MAX_DEPTH = 3;
 const MAX_DEPTH_CAP = 5;
-const INTERNAL_COLLECTION_LIMIT = 500;
+const DEFAULT_SEED_LIMIT = 100;
 
 const toMaxDepth = (maxDepth: number | undefined): number => {
   if (maxDepth === undefined) {
@@ -64,18 +63,6 @@ const toResults = (rows: TraverseRow[]): TraverseResult[] =>
     node,
     depth,
   }));
-
-const compareTraverseResults = (left: TraverseResult, right: TraverseResult): number => {
-  if (left.depth !== right.depth) {
-    return left.depth - right.depth;
-  }
-
-  if (left.node.created_at !== right.node.created_at) {
-    return left.node.created_at - right.node.created_at;
-  }
-
-  return left.node.id.localeCompare(right.node.id);
-};
 
 const buildWalkSql = (
   direction: NonNullable<TraverseOptions['direction']>,
@@ -295,42 +282,17 @@ const paginateTraverseResults = (
   );
 };
 
-const collectAllSearchResults = (
-  db: Database.Database,
-  options: SearchOptions,
-  queryEmbedding?: Float32Array,
-): SearchResult[] => {
-  const results: SearchResult[] = [];
-  let cursor: string | undefined;
-
-  while (true) {
-    const page = search(
-      db,
-      {
-        ...options,
-        limit: INTERNAL_COLLECTION_LIMIT,
-        ...(cursor ? { cursor } : {}),
-      },
-      queryEmbedding,
-    );
-    results.push(...page.results);
-
-    if (!page.page.hasMore || !page.page.nextCursor) {
-      return results;
-    }
-
-    cursor = page.page.nextCursor;
-  }
-};
-
 const collectAllTraverseResults = (
   db: Database.Database,
   options: TraverseOptions,
 ): TraverseResult[] => toResults(runTraverseRows(db, options));
 
-const buildAboutScope = (options: AboutOptions, mode: 'keyword' | 'semantic' | 'hybrid'): string =>
+const buildSearchGraphScope = (
+  options: SearchGraphOptions,
+  mode: 'keyword' | 'semantic' | 'hybrid',
+): string =>
   buildScope({
-    endpoint: 'about',
+    endpoint: 'search_graph',
     query: options.query.trim(),
     mode,
     type: Array.isArray(options.type) ? [...options.type].sort() : options.type,
@@ -366,9 +328,9 @@ export const traverse = (
   return paginateTraverseResults(rows, limit, options.cursor, scope);
 };
 
-export const about = (
+export const searchGraph = (
   db: Database.Database,
-  options: AboutOptions,
+  options: SearchGraphOptions,
   queryEmbedding?: Float32Array,
 ): PaginatedResults<TraverseResult> => {
   const searchOptions: SearchOptions = { query: options.query };
@@ -391,7 +353,9 @@ export const about = (
     searchOptions.mode = options.mode;
   }
 
-  const seeds = collectAllSearchResults(db, searchOptions, queryEmbedding);
+  const seedLimit = options.seedLimit ?? DEFAULT_SEED_LIMIT;
+  const seedPage = search(db, { ...searchOptions, limit: seedLimit }, queryEmbedding);
+  const seeds = seedPage.results;
 
   if (seeds.length === 0) {
     return {
@@ -445,18 +409,23 @@ export const about = (
 
   const finalResults = Array.from(byNodeId.values())
     .sort((left, right) => {
-      const resultComparison = compareTraverseResults(left.row, right.row);
-      if (resultComparison !== 0) {
-        return resultComparison;
+      if (left.row.depth !== right.row.depth) {
+        return left.row.depth - right.row.depth;
       }
-      return left.seedIndex - right.seedIndex;
+      if (left.seedIndex !== right.seedIndex) {
+        return left.seedIndex - right.seedIndex;
+      }
+      if (left.row.node.created_at !== right.row.node.created_at) {
+        return left.row.node.created_at - right.row.node.created_at;
+      }
+      return left.row.node.id.localeCompare(right.row.node.id);
     })
     .map((entry) => entry.row);
 
-  const aboutMode = seeds[0]!.search_mode === 'auto' ? 'keyword' : seeds[0]!.search_mode;
+  const searchGraphMode = seeds[0]!.search_mode === 'auto' ? 'keyword' : seeds[0]!.search_mode;
   const limit = clampPageLimit(options.limit);
-  const scope = buildAboutScope(options, aboutMode);
-  return paginateTraverseResults(finalResults, limit, options.cursor, scope, aboutMode);
+  const scope = buildSearchGraphScope(options, searchGraphMode);
+  return paginateTraverseResults(finalResults, limit, options.cursor, scope, searchGraphMode);
 };
 
 export const stats = (db: Database.Database): Stats => {

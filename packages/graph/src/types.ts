@@ -162,10 +162,12 @@ export interface TraverseOptions {
   cursor?: string;
 }
 
-export interface AboutOptions
+export interface SearchGraphOptions
   extends
     Pick<
       SearchOptions,
       'query' | 'type' | 'tags' | 'tagMode' | 'minImportance' | 'limit' | 'role' | 'mode'
     >,
-    Omit<TraverseOptions, 'startId'> {}
+    Omit<TraverseOptions, 'startId'> {
+  seedLimit?: number;
+}

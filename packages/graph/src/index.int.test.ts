@@ -104,13 +104,13 @@ describe('Graph package integration', () => {
       expect(traverseResults.results[0].node.id).toBe(solution.id);
       expect(traverseResults.results[1].node.id).toBe(problem.id);
 
-      const aboutResults = await db.about({
+      const searchGraphResults = await db.searchGraph({
         query: 'contention',
         direction: 'both',
         maxDepth: 2,
       });
-      const aboutIds = aboutResults.results.map((r) => r.node.id);
-      expect(aboutIds).toContain(problem.id);
+      const searchGraphIds = searchGraphResults.results.map((r) => r.node.id);
+      expect(searchGraphIds).toContain(problem.id);
 
       const stats = db.stats();
       expect(stats.nodes.total).toBe(3);

@@ -1110,6 +1110,6 @@ db.pragma('wal_autocheckpoint = 1000'); // Checkpoint every 1000 pages
 | `texere_traverse` depth=2            | <50ms  | Common neighborhood query          |
 | `texere_traverse` depth=3            | <200ms | Extended context, still acceptable |
 | `texere_traverse` depth=5            | <1s    | Deep exploration, agent can wait   |
-| `texere_about` (FTS+CTE)             | <100ms | Compound query, most complex       |
+| `texere_search_graph` (FTS+CTE)      | <100ms | Compound query, most complex       |
 | `texere_store_node`                  | <5ms   | Single insert + FTS trigger        |
 | `texere_create_edge` (DEPRECATED_BY) | <10ms  | INSERT + UPDATE in transaction     |

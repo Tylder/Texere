@@ -50,7 +50,7 @@ texere/
   - Node CRUD: `storeNode()`, `storeNodesWithEdges()`, `getNode()`, `getNodes()`, `replaceNode()`,
     `invalidateNode()`, `invalidateNodes()`
   - Edge CRUD: `createEdge()`, `deleteEdge()`, `deleteEdges()`, `getEdgesForNode()`
-  - Search: `search()`, `about()`
+  - Search: `search()`, `searchGraph()`
   - Traversal: `traverse()`
   - Metadata: `stats()`
 
@@ -60,7 +60,7 @@ texere/
   - `texere_get_node`, `texere_get_nodes`, `texere_replace_node`, `texere_invalidate_node`,
     `texere_invalidate_nodes`
   - `texere_create_edge`, `texere_delete_edge`, `texere_delete_edges`
-  - `texere_search`, `texere_traverse`, `texere_about`
+  - `texere_search`, `texere_traverse`, `texere_search_graph`
   - `texere_stats`, `texere_validate`
 
 ### Type System

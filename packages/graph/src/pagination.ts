@@ -1,6 +1,6 @@
 import type { PaginatedResults, SearchMode } from './types.js';
 
-export const DEFAULT_PAGE_LIMIT = 20;
+export const DEFAULT_PAGE_LIMIT = 100;
 export const GRAPH_MAX_PAGE_LIMIT = 500;
 
 export interface CursorPayload<TLast> {

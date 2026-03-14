@@ -11,7 +11,7 @@
 Before implementation, Texere supported partial result limiting, but not real pagination.
 
 - `texere_search` supports `limit`, capped at `100`
-- `texere_about` supports `limit`, capped at `100`
+- `texere_search_graph` supports `limit`, capped at `100`
 - `texere_traverse` supports `max_depth`, but no result `limit`
 - `texere_get_nodes` is batch-by-id retrieval, not a list/query endpoint
 - No endpoint supported `cursor`, `next_cursor`, or `has_more`
@@ -20,7 +20,7 @@ This plan adds cursor pagination to all multi-result query endpoints:
 
 - `texere_search`
 - `texere_traverse`
-- `texere_about`
+- `texere_search_graph`
 
 It does **not** add pagination to:
 
@@ -46,7 +46,7 @@ Before implementation:
 
 - `search()` uses `LIMIT`, but has no cursor support
 - `traverse()` returns all reachable rows up to `maxDepth`
-- `about()` limits seed search only, not the final expanded result set
+- `searchGraph()` limits seed search only, not the final expanded result set
 - `search()` ordering lacks deterministic tie-breakers for keyword, semantic, and hybrid modes
 
 Without stable ordering, cursor pagination can skip or duplicate rows across page boundaries.
@@ -59,7 +59,7 @@ Without stable ordering, cursor pagination can skip or duplicate rows across pag
 
 - Cursor pagination for `search`
 - Cursor pagination for `traverse`
-- Cursor pagination for `about`
+- Cursor pagination for `search_graph`
 - Raising MCP max limits
 - Adding graph-layer hard caps
 - Adding deterministic tie-breakers where missing
@@ -129,12 +129,12 @@ Current issues:
 - no cursor
 - no final `id` tie-breaker
 
-### `about`
+### `search_graph`
 
 Current files:
 
 - `packages/graph/src/traverse.ts`
-- `apps/mcp/src/tools/about.ts`
+- `apps/mcp/src/tools/search-graph.ts`
 
 Current behavior:
 
@@ -242,9 +242,9 @@ If the current request produces a different `scope`, the cursor is invalid.
 - `max_depth`
 - `edge_type`
 
-#### About
+#### Search Graph
 
-- endpoint: `about`
+- endpoint: `search_graph`
 - `query`
 - `mode`
 - `type`
@@ -285,7 +285,7 @@ If the current request produces a different `scope`, the cursor is invalid.
 }
 ```
 
-#### Traverse and about
+#### Traverse and search_graph
 
 ```typescript
 {
@@ -539,14 +539,14 @@ WHERE (
 Traversal currently deduplicates by grouping and `MIN(depth)` in SQL. Pagination must happen after
 that shortest-path result set is established.
 
-### 3. `about`
+### 3. `search_graph`
 
 #### Files
 
 - `packages/graph/src/types.ts`
 - `packages/graph/src/traverse.ts`
 - `packages/graph/src/index.ts`
-- `apps/mcp/src/tools/about.ts`
+- `apps/mcp/src/tools/search-graph.ts`
 
 #### Request Changes
 
@@ -556,7 +556,7 @@ that shortest-path result set is established.
 
 #### Important Semantics Decision
 
-Today `about.limit` limits seed search only.
+Today `search_graph.limit` limits seed search only.
 
 Recommended change:
 
@@ -565,7 +565,7 @@ Recommended change:
 Why:
 
 - that is what clients actually care about
-- it aligns `about` with `search` and `traverse`
+- it aligns `search_graph` with `search` and `traverse`
 - it avoids surprising page sizes after graph expansion
 
 #### Ordering
@@ -598,7 +598,7 @@ Update:
 
 - `SearchOptions`
 - `TraverseOptions`
-- `AboutOptions`
+- `SearchGraphOptions`
 
 Add:
 
@@ -611,7 +611,7 @@ Update schemas in:
 
 - `apps/mcp/src/tools/search.ts`
 - `apps/mcp/src/tools/traverse.ts`
-- `apps/mcp/src/tools/about.ts`
+- `apps/mcp/src/tools/search-graph.ts`
 
 Changes:
 
@@ -660,7 +660,7 @@ Add tests for `traverse`:
 - pagination respects `maxDepth`
 - pagination respects `edgeType`
 
-Add tests for `about`:
+Add tests for `search_graph`:
 
 - paginates final deduped rows, not just seeds
 - maintains min-depth dedup behavior
@@ -674,7 +674,7 @@ Add tests for:
 
 - `texere_search` accepts `cursor` and returns `page`
 - `texere_traverse` accepts `limit` and `cursor` and returns `page`
-- `texere_about` accepts `cursor` and returns `page`
+- `texere_search_graph` accepts `cursor` and returns `page`
 - MCP schema cap raised from `100` to `250`
 - cursor round-trip through MCP layer
 - invalid cursor returns structured `INVALID_INPUT`
@@ -695,7 +695,7 @@ Recommended implementation order:
 1. add shared pagination types and cursor helpers
 2. implement paginated `search`
 3. implement paginated `traverse`
-4. implement paginated `about`
+4. implement paginated `search_graph`
 5. update MCP tool schemas and response shapes
 6. add tests
 7. run diagnostics, typecheck, tests, and build
@@ -703,7 +703,7 @@ Recommended implementation order:
 Why this order:
 
 - `search` is the hardest case and establishes the reusable cursor pattern
-- `traverse` and `about` can then reuse the same pagination approach
+- `traverse` and `search_graph` can then reuse the same pagination approach
 - MCP changes are thin wrappers over graph behavior
 
 ---
@@ -727,9 +727,9 @@ This plan does **not** solve snapshot consistency.
 
 If strict consistency is needed later, add an `as_of` fence separately.
 
-### `about.limit` Behavior Change
+### `search_graph.limit` Behavior Change
 
-Changing `about.limit` from seed-limit to final-page-size is a semantic change.
+Changing `search_graph.limit` from seed-limit to final-page-size is a semantic change.
 
 Mitigation:
 
@@ -741,7 +741,7 @@ Mitigation:
 
 These do not block implementation, but should be decided explicitly:
 
-1. Should `about` expose a separate `seed_limit`, or just repurpose `limit` as page size?
+1. Should `search_graph` expose a separate `seed_limit`, or just repurpose `limit` as page size?
 2. Should internal graph hard caps be enforced per endpoint or through a shared helper?
 3. Should cursor helpers live in a new `packages/graph/src/pagination.ts` module?
 4. Should MCP responses include `page.returned` and `page.order`, or only `has_more` and
@@ -763,7 +763,7 @@ result sets:
 
 - `search`
 - `traverse`
-- `about`
+- `search_graph`
 
 Use:
 

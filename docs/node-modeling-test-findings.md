@@ -465,11 +465,11 @@ texere_create_edge({
 
 ### 1. FTS5 Search + Graph Traversal
 
-**Test**: Queried `texere_about({query: "JSON output", max_depth: 2})`
+**Test**: Queried `texere_search_graph({query: "JSON output", max_depth: 2})`
 
 **Result**: ✅ Found all 5 nodes (2 seeds + 3 neighbors) in one call.
 
-**Conclusion**: The `about` tool is **excellent** — combines search + traversal naturally.
+**Conclusion**: The `search_graph` tool is **excellent** — combines search + traversal naturally.
 
 ---
 
