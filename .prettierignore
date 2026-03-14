@@ -15,6 +15,7 @@ coverage
 # Auto-generated files
 **/generated/**
 **/reports/**
+.stryker-tmp
 
 # Logs & misc
 logs

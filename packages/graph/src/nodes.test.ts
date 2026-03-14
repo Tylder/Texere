@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDatabase } from './db.js';
 import { getEdgesForNode } from './edges.js';
@@ -12,6 +12,7 @@ import {
   storeNodesWithEdges,
   type StoreNodeInput,
 } from './nodes.js';
+import { search } from './search.js';
 import { EdgeType, NodeRole, NodeType } from './types.js';
 
 const decision = (overrides: Partial<StoreNodeInput> = {}): StoreNodeInput => ({
@@ -22,6 +23,23 @@ const decision = (overrides: Partial<StoreNodeInput> = {}): StoreNodeInput => ({
   tags: ['db', 'sqlite'],
   ...overrides,
 });
+
+const embeddingOf = (first: number, second = 0): Float32Array => {
+  const embedding = new Float32Array(384);
+  embedding[0] = first;
+  embedding[1] = second;
+  return embedding;
+};
+
+const toBuffer = (embedding: Float32Array): Buffer =>
+  Buffer.from(embedding.buffer, embedding.byteOffset, embedding.byteLength);
+
+const storeEmbedding = (db: Database.Database, nodeId: string, embedding: Float32Array): void => {
+  db.prepare('INSERT OR REPLACE INTO nodes_vec(node_id, embedding) VALUES (?, ?)').run(
+    nodeId,
+    toBuffer(embedding),
+  );
+};
 
 describe('node CRUD', () => {
   let db: Database.Database;
@@ -132,12 +150,18 @@ describe('node CRUD', () => {
 
   it('invalidateNode on an already invalidated node is idempotent', () => {
     const node = storeNode(db, decision({ tags: [] }));
+    const nowSpy = vi.spyOn(Date, 'now');
+    nowSpy.mockReturnValueOnce(1_700_000_000_000);
 
     invalidateNode(db, node.id);
-    expect(() => invalidateNode(db, node.id)).not.toThrow();
+    const firstInvalidatedAt = getNode(db, node.id)?.invalidated_at;
+    nowSpy.mockReturnValueOnce(1_700_000_000_100);
+    invalidateNode(db, node.id);
+    nowSpy.mockRestore();
 
     const invalidated = getNode(db, node.id);
     expect(invalidated?.invalidated_at).not.toBeNull();
+    expect(invalidated?.invalidated_at).toBe(firstInvalidatedAt);
   });
 
   it('invalidateNode for unknown id throws', () => {
@@ -156,11 +180,17 @@ describe('node CRUD', () => {
 
   it('invalidateNodes is idempotent for already-invalidated nodes', () => {
     const node = storeNode(db, decision({ tags: [] }));
+    const nowSpy = vi.spyOn(Date, 'now');
+    nowSpy.mockReturnValueOnce(1_700_000_000_200);
 
     invalidateNode(db, node.id);
-    expect(() => invalidateNodes(db, [node.id, node.id])).not.toThrow();
+    const firstInvalidatedAt = getNode(db, node.id)?.invalidated_at;
+    nowSpy.mockReturnValueOnce(1_700_000_000_300);
+    invalidateNodes(db, [node.id, node.id]);
+    nowSpy.mockRestore();
 
     expect(getNode(db, node.id)?.invalidated_at).not.toBeNull();
+    expect(getNode(db, node.id)?.invalidated_at).toBe(firstInvalidatedAt);
   });
 
   it('invalidateNodes rolls back if any node is missing', () => {
@@ -173,101 +203,72 @@ describe('node CRUD', () => {
 
   it('invalidated nodes are excluded from vector search candidates', () => {
     const node = storeNode(db, decision({ tags: [] }));
-
-    db.prepare('INSERT INTO nodes_vec (node_id, embedding) VALUES (?, zeroblob(1536))').run(
-      node.id,
+    const other = storeNode(
+      db,
+      decision({ title: 'Another decision', content: 'Other content', tags: ['other'] }),
     );
 
-    const beforeInvalidation = db
-      .prepare(
-        `
-          SELECT COUNT(*) AS c
-          FROM nodes_vec v
-          JOIN nodes n ON n.id = v.node_id
-          WHERE n.id = ? AND n.invalidated_at IS NULL
-        `,
-      )
-      .get(node.id) as { c: number };
-    expect(beforeInvalidation.c).toBe(1);
+    storeEmbedding(db, node.id, embeddingOf(1, 0));
+    storeEmbedding(db, other.id, embeddingOf(0, 1));
+
+    const beforeInvalidation = search(
+      db,
+      { query: 'decision content', mode: 'semantic' },
+      embeddingOf(1, 0),
+    );
+    expect(beforeInvalidation.results[0]?.id).toBe(node.id);
 
     invalidateNode(db, node.id);
 
-    const afterInvalidation = db
-      .prepare(
-        `
-          SELECT COUNT(*) AS c
-          FROM nodes_vec v
-          JOIN nodes n ON n.id = v.node_id
-          WHERE n.id = ? AND n.invalidated_at IS NULL
-        `,
-      )
-      .get(node.id) as { c: number };
-    expect(afterInvalidation.c).toBe(0);
+    const afterInvalidation = search(
+      db,
+      { query: 'decision content', mode: 'semantic' },
+      embeddingOf(1, 0),
+    );
+    expect(afterInvalidation.results.map((result) => result.id)).not.toContain(node.id);
+    expect(afterInvalidation.results[0]?.id).toBe(other.id);
   });
 
   it('storeNode with anchor_to creates ANCHORED_TO edge to artifact/file_context node', () => {
     const node = storeNode(db, decision({ tags: [], anchor_to: ['/path/to/file.ts'] }));
 
-    const anchoredEdge = db
-      .prepare(
-        `
-          SELECT e.type, n.type AS target_type, n.role AS target_role
-          FROM edges e
-          JOIN nodes n ON n.id = e.target_id
-          WHERE e.source_id = ?
-        `,
-      )
-      .get(node.id) as { type: string; target_type: string; target_role: string } | undefined;
+    const stored = getNode(db, node.id, { includeEdges: true });
 
-    expect(anchoredEdge).toEqual({
-      type: EdgeType.AnchoredTo,
-      target_type: NodeType.Artifact,
-      target_role: 'file_context',
-    });
+    expect(stored).not.toBeNull();
+    expect(stored && 'edges' in stored).toBe(true);
+
+    const anchoredEdge = (stored && 'edges' in stored ? stored.edges : []).find(
+      (edge) => edge.type === EdgeType.AnchoredTo,
+    );
+    expect(anchoredEdge).toBeDefined();
+    expect(anchoredEdge?.target_id).toBe('file_context:/path/to/file.ts');
+
+    const target = getNode(db, 'file_context:/path/to/file.ts');
+    expect(target).not.toBeNull();
+    expect(target?.type).toBe(NodeType.Artifact);
+    expect(target?.title).toBe('/path/to/file.ts');
   });
 
   it('stored node is findable via FTS5 full-text search', () => {
     const node = storeNode(db, decision({ title: 'unique searchable title xyzzy', tags: [] }));
 
-    const searchResult = db
-      .prepare(
-        `
-          SELECT n.id, n.title
-          FROM nodes_fts fts
-          JOIN nodes n ON n.rowid = fts.rowid
-          WHERE nodes_fts MATCH ? AND n.invalidated_at IS NULL
-        `,
-      )
-      .get('"unique searchable title xyzzy"') as { id: string; title: string } | undefined;
+    const results = search(db, { query: '"unique searchable title xyzzy"' });
 
-    expect(searchResult).toBeDefined();
-    expect(searchResult!.id).toBe(node.id);
-    expect(searchResult!.title).toBe('unique searchable title xyzzy');
+    expect(results.results).toHaveLength(1);
+    expect(results.results[0]!.id).toBe(node.id);
+    expect(results.results[0]!.title).toBe('unique searchable title xyzzy');
   });
 
-  it('invalidated nodes remain in FTS5 index but are filtered by invalidated_at', () => {
+  it('invalidated nodes are filtered from search results after being indexed', () => {
     const node = storeNode(db, decision({ title: 'fts persists after invalidate', tags: [] }));
+
+    const beforeInvalidation = search(db, { query: '"fts persists after invalidate"' });
+    expect(beforeInvalidation.results.map((result) => result.id)).toContain(node.id);
 
     invalidateNode(db, node.id);
 
-    const ftsRowExists = db
-      .prepare('SELECT rowid FROM nodes_fts WHERE nodes_fts MATCH ?')
-      .get('"fts persists after invalidate"') as { rowid: number } | undefined;
-
-    expect(ftsRowExists).toBeDefined();
-
-    const searchResult = db
-      .prepare(
-        `
-          SELECT n.id
-          FROM nodes_fts fts
-          JOIN nodes n ON n.rowid = fts.rowid
-          WHERE nodes_fts MATCH ? AND n.invalidated_at IS NULL
-        `,
-      )
-      .get('"fts persists after invalidate"') as { id: string } | undefined;
-
-    expect(searchResult).toBeUndefined();
+    const afterInvalidation = search(db, { query: '"fts persists after invalidate"' });
+    expect(afterInvalidation.results.map((result) => result.id)).not.toContain(node.id);
   });
 
   it('storeNode with tags creates rows in node_tags with correct values', () => {
@@ -369,8 +370,8 @@ describe('batch support', () => {
 
     expect(() => storeNode(db, inputs)).toThrow(/invalid type-role/i);
 
-    const count = db.prepare('SELECT COUNT(*) AS c FROM nodes').get() as { c: number };
-    expect(count.c).toBe(0);
+    expect(search(db, { query: 'Valid node' }).results).toEqual([]);
+    expect(search(db, { query: 'Invalid node' }).results).toEqual([]);
   });
 
   it('batch with minimal returns array of { id }', () => {
@@ -473,69 +474,52 @@ describe('sources field', () => {
   it('URL source creates source/web_url node and BASED_ON edge', () => {
     const node = storeNode(db, decision({ tags: [], sources: ['https://example.com/api'] }));
 
-    const edge = db
-      .prepare(
-        `
-          SELECT e.type, e.target_id, n.type AS target_type, n.role AS target_role
-          FROM edges e
-          JOIN nodes n ON n.id = e.target_id
-          WHERE e.source_id = ? AND e.type = ?
-        `,
-      )
-      .get(node.id, EdgeType.BasedOn) as
-      | {
-          type: string;
-          target_id: string;
-          target_type: string;
-          target_role: string;
-        }
-      | undefined;
+    const stored = getNode(db, node.id, { includeEdges: true });
+    expect(stored).not.toBeNull();
+
+    const edge = (stored && 'edges' in stored ? stored.edges : []).find(
+      (candidate) => candidate.type === EdgeType.BasedOn,
+    );
 
     expect(edge).toBeDefined();
-    expect(edge!.target_id).toBe('source:web:https://example.com/api');
-    expect(edge!.target_type).toBe(NodeType.Source);
-    expect(edge!.target_role).toBe(NodeRole.WebUrl);
+    expect(edge?.target_id).toBe('source:web:https://example.com/api');
+
+    const sourceNode = getNode(db, 'source:web:https://example.com/api');
+    expect(sourceNode).not.toBeNull();
+    expect(sourceNode?.type).toBe(NodeType.Source);
+    expect(sourceNode?.role).toBe(NodeRole.WebUrl);
   });
 
   it('file path source creates source/file_path node and BASED_ON edge', () => {
     const node = storeNode(db, decision({ tags: [], sources: ['/docs/design.md'] }));
 
-    const edge = db
-      .prepare(
-        `
-          SELECT e.type, e.target_id, n.type AS target_type, n.role AS target_role
-          FROM edges e
-          JOIN nodes n ON n.id = e.target_id
-          WHERE e.source_id = ? AND e.type = ?
-        `,
-      )
-      .get(node.id, EdgeType.BasedOn) as
-      | {
-          type: string;
-          target_id: string;
-          target_type: string;
-          target_role: string;
-        }
-      | undefined;
+    const stored = getNode(db, node.id, { includeEdges: true });
+    expect(stored).not.toBeNull();
+
+    const edge = (stored && 'edges' in stored ? stored.edges : []).find(
+      (candidate) => candidate.type === EdgeType.BasedOn,
+    );
 
     expect(edge).toBeDefined();
-    expect(edge!.target_id).toBe('source:file:/docs/design.md');
-    expect(edge!.target_type).toBe(NodeType.Source);
-    expect(edge!.target_role).toBe(NodeRole.FilePath);
+    expect(edge?.target_id).toBe('source:file:/docs/design.md');
+
+    const sourceNode = getNode(db, 'source:file:/docs/design.md');
+    expect(sourceNode).not.toBeNull();
+    expect(sourceNode?.type).toBe(NodeType.Source);
+    expect(sourceNode?.role).toBe(NodeRole.FilePath);
   });
 
-  it('duplicate source URLs use INSERT OR IGNORE (only 1 source node)', () => {
+  it('duplicate source URLs reuse the same source node id', () => {
     storeNode(db, decision({ tags: [], sources: ['https://example.com/api'] }));
     storeNode(
       db,
       decision({ title: 'Another node', tags: [], sources: ['https://example.com/api'] }),
     );
 
-    const count = db
-      .prepare('SELECT COUNT(*) AS c FROM nodes WHERE id = ?')
-      .get('source:web:https://example.com/api') as { c: number };
-
-    expect(count.c).toBe(1);
+    const sourceNode = getNode(db, 'source:web:https://example.com/api');
+    expect(sourceNode).not.toBeNull();
+    expect(sourceNode?.title).toBe('https://example.com/api');
+    expect(sourceNode?.role).toBe(NodeRole.WebUrl);
   });
 });
 

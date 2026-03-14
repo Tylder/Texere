@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { EdgeType, isValidTypeRole, NodeRole, NodeType } from './types';
+import { EdgeType, isValidTypeRole, NodeRole, NodeType } from './types.js';
 
 describe('graph types', () => {
   describe('isValidTypeRole validation', () => {
@@ -49,16 +49,55 @@ describe('graph types', () => {
   });
 
   describe('enum counts', () => {
-    it('has exactly 5 node types', () => {
-      expect(Object.values(NodeType)).toHaveLength(5);
+    it('exposes the complete node type enum surface', () => {
+      expect(Object.values(NodeType)).toEqual([
+        'knowledge',
+        'issue',
+        'action',
+        'artifact',
+        'source',
+      ]);
     });
 
-    it('has exactly 20 node roles', () => {
-      expect(Object.values(NodeRole)).toHaveLength(20);
+    it('exposes the complete node role enum surface', () => {
+      expect(Object.values(NodeRole)).toEqual([
+        'constraint',
+        'decision',
+        'finding',
+        'pitfall',
+        'principle',
+        'requirement',
+        'error',
+        'problem',
+        'command',
+        'solution',
+        'task',
+        'workflow',
+        'code_pattern',
+        'concept',
+        'example',
+        'technology',
+        'web_url',
+        'file_path',
+        'repository',
+        'api_doc',
+      ]);
     });
 
-    it('has exactly 11 edge types', () => {
-      expect(Object.values(EdgeType)).toHaveLength(11);
+    it('exposes the complete edge type enum surface', () => {
+      expect(Object.values(EdgeType)).toEqual([
+        'ALTERNATIVE_TO',
+        'ANCHORED_TO',
+        'BASED_ON',
+        'CAUSES',
+        'CONTRADICTS',
+        'DEPENDS_ON',
+        'EXAMPLE_OF',
+        'PART_OF',
+        'RELATED_TO',
+        'REPLACES',
+        'RESOLVES',
+      ]);
     });
   });
 });

@@ -11,10 +11,8 @@ import { EdgeType, NodeRole, NodeType } from './types.js';
 const traverseResults = (db: Database.Database, options: Parameters<typeof traverse>[1]) =>
   traverse(db, options).results;
 
-const searchGraphResults = async (
-  db: Database.Database,
-  options: Parameters<typeof searchGraph>[1],
-) => (await searchGraph(db, options)).results;
+const searchGraphResults = (db: Database.Database, options: Parameters<typeof searchGraph>[1]) =>
+  searchGraph(db, options).results;
 
 const collectTraversePages = (db: Database.Database, options: Parameters<typeof traverse>[1]) => {
   const all: ReturnType<typeof traverse>['results'] = [];
@@ -33,15 +31,15 @@ const collectTraversePages = (db: Database.Database, options: Parameters<typeof 
   }
 };
 
-const collectSearchGraphPages = async (
+const collectSearchGraphPages = (
   db: Database.Database,
   options: Parameters<typeof searchGraph>[1],
 ) => {
-  const all: Awaited<ReturnType<typeof searchGraph>>['results'] = [];
+  const all: ReturnType<typeof searchGraph>['results'] = [];
   let cursor = options.cursor;
 
   while (true) {
-    const page = await searchGraph(db, {
+    const page = searchGraph(db, {
       ...options,
       ...(cursor ? { cursor } : {}),
     });
@@ -55,8 +53,30 @@ const collectSearchGraphPages = async (
 
 const makeNode = (
   db: Database.Database,
-  opts: { type: NodeType; role: NodeRole; title: string; content: string; tags?: string[] },
+  opts: {
+    type: NodeType;
+    role: NodeRole;
+    title: string;
+    content: string;
+    tags?: string[];
+    importance?: number;
+    confidence?: number;
+  },
 ) => storeNode(db, opts);
+const embeddingOf = (first: number, second = 0): Float32Array => {
+  const embedding = new Float32Array(384);
+  embedding[0] = first;
+  embedding[1] = second;
+  return embedding;
+};
+const toBuffer = (embedding: Float32Array): Buffer =>
+  Buffer.from(embedding.buffer, embedding.byteOffset, embedding.byteLength);
+const storeEmbedding = (db: Database.Database, nodeId: string, embedding: Float32Array): void => {
+  db.prepare('INSERT OR REPLACE INTO nodes_vec(node_id, embedding) VALUES (?, ?)').run(
+    nodeId,
+    toBuffer(embedding),
+  );
+};
 const toDepthById = (rows: Array<{ node: { id: string }; depth: number }>): Map<string, number> =>
   new Map(rows.map((row) => [row.node.id, row.depth]));
 
@@ -404,7 +424,7 @@ describe('searchGraph', () => {
     db.close();
   });
 
-  it('finds seed nodes via FTS and traverses neighbors', async () => {
+  it('finds seed nodes via FTS and traverses neighbors', () => {
     const seed = makeNode(db, {
       type: NodeType.Artifact,
       role: NodeRole.Technology,
@@ -421,7 +441,7 @@ describe('searchGraph', () => {
 
     createEdge(db, { source_id: seed.id, target_id: neighbor.id, type: EdgeType.BasedOn });
 
-    const result = await searchGraphResults(db, {
+    const result = searchGraphResults(db, {
       query: 'SQLite',
       maxDepth: 2,
       direction: 'outgoing',
@@ -432,7 +452,238 @@ describe('searchGraph', () => {
     expect(ids.has(neighbor.id)).toBe(true);
   });
 
-  it('returns search + traversal nodes deduplicated by id', async () => {
+  it('applies searchGraph filters for type, role, tags, and minimum importance', () => {
+    const matchingSeed = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'SQLite auth decision',
+      content: 'SQLite auth decision for token persistence',
+      tags: ['auth', 'db'],
+    });
+    const matchingNeighbor = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'SQLite auth implementation',
+      content: 'Use SQLite-backed token persistence',
+      tags: ['auth'],
+    });
+    makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Finding,
+      title: 'SQLite auth finding',
+      content: 'Observed SQLite auth latency',
+      tags: ['auth', 'db'],
+    });
+    makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'SQLite auth low-importance',
+      content: 'SQLite auth low-importance note',
+      tags: ['auth', 'db'],
+      importance: 0.2,
+    });
+    makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'SQLite untagged decision',
+      content: 'SQLite auth decision without required tags',
+      tags: ['ops'],
+    });
+
+    createEdge(db, {
+      source_id: matchingSeed.id,
+      target_id: matchingNeighbor.id,
+      type: EdgeType.Resolves,
+    });
+
+    const result = searchGraphResults(db, {
+      query: 'SQLite auth',
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      tags: ['auth', 'db'],
+      minImportance: 0.5,
+      maxDepth: 1,
+    });
+
+    expect(result.map((row) => row.node.id)).toEqual([matchingSeed.id, matchingNeighbor.id]);
+  });
+
+  it('supports searchGraph tagMode any across seed selection', () => {
+    const redis = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Redis cache plan',
+      content: 'Redis cache plan for auth state',
+      tags: ['redis'],
+    });
+    const sql = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'SQL cache plan',
+      content: 'SQL cache plan for auth state',
+      tags: ['sql'],
+    });
+    makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Memcached cache plan',
+      content: 'Memcached cache plan for auth state',
+      tags: ['memcached'],
+    });
+
+    const result = searchGraphResults(db, {
+      query: 'cache plan',
+      tags: ['redis', 'sql'],
+      tagMode: 'any',
+      maxDepth: 0,
+    });
+
+    expect(new Set(result.map((row) => row.node.id))).toEqual(new Set([redis.id, sql.id]));
+  });
+
+  it('uses explicit semantic mode for searchGraph seed ranking', () => {
+    const auth = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'JWT auth decision',
+      content: 'Use JWT with refresh tokens.',
+      tags: ['auth'],
+    });
+    const database = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Database indexing',
+      content: 'Use SQLite indexes.',
+      tags: ['db'],
+    });
+
+    storeEmbedding(db, auth.id, embeddingOf(1, 0));
+    storeEmbedding(db, database.id, embeddingOf(0, 1));
+
+    const result = searchGraph(
+      db,
+      { query: 'session management', mode: 'semantic', maxDepth: 0 },
+      embeddingOf(1, 0),
+    );
+
+    expect(result.page.mode).toBe('semantic');
+    expect(result.results[0]!.node.id).toBe(auth.id);
+    expect(result.results.map((row) => row.node.id)).toContain(database.id);
+  });
+
+  it('applies searchGraph edgeType with incoming traversal', () => {
+    const problem = makeNode(db, {
+      type: NodeType.Issue,
+      role: NodeRole.Problem,
+      title: 'Auth timeout problem',
+      content: 'Users hit auth timeout errors.',
+    });
+    const solution = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Auth timeout solution',
+      content: 'Increase refresh retry window.',
+    });
+    const dependency = makeNode(db, {
+      type: NodeType.Artifact,
+      role: NodeRole.Technology,
+      title: 'Retry library',
+      content: 'Retry helper library.',
+    });
+
+    createEdge(db, { source_id: problem.id, target_id: solution.id, type: EdgeType.Resolves });
+    createEdge(db, { source_id: dependency.id, target_id: solution.id, type: EdgeType.DependsOn });
+
+    const result = searchGraphResults(db, {
+      query: 'timeout solution',
+      direction: 'incoming',
+      edgeType: EdgeType.Resolves,
+      maxDepth: 1,
+    });
+
+    expect(result.map((row) => row.node.id)).toEqual([solution.id, problem.id]);
+  });
+
+  it('limits seed collection before traversal with seedLimit', () => {
+    const seedA = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Primary auth seed',
+      content: 'auth seed auth seed with the strongest exact match',
+      tags: ['auth', 'seed'],
+    });
+    const seedB = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'Secondary candidate',
+      content: 'auth seed candidate',
+    });
+    const neighbor = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Only seed B neighbor',
+      content: 'neighbor reachable only from seed B',
+    });
+
+    createEdge(db, { source_id: seedB.id, target_id: neighbor.id, type: EdgeType.Resolves });
+
+    const limited = searchGraphResults(db, {
+      query: 'auth seed',
+      seedLimit: 1,
+      maxDepth: 1,
+    });
+    const full = searchGraphResults(db, {
+      query: 'auth seed',
+      seedLimit: 2,
+      maxDepth: 1,
+    });
+
+    expect(limited.map((row) => row.node.id)).not.toContain(neighbor.id);
+    expect(full.map((row) => row.node.id)).toContain(neighbor.id);
+    expect(full.map((row) => row.node.id)).toContain(seedA.id);
+  });
+
+  it('filters weak seeds with minSeedRelevance', () => {
+    const strong = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'JWT session management',
+      content: 'JWT session management with refresh rotation',
+      tags: ['auth'],
+    });
+    const weaker = makeNode(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'JWT notes',
+      content: 'Session management notes with partial overlap',
+      tags: ['notes'],
+    });
+    const weakNeighbor = makeNode(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'Weak neighbor',
+      content: 'Only reachable from weaker seed',
+    });
+
+    createEdge(db, { source_id: weaker.id, target_id: weakNeighbor.id, type: EdgeType.Resolves });
+
+    const permissive = searchGraphResults(db, {
+      query: 'JWT session management',
+      minSeedRelevance: 0,
+      maxDepth: 1,
+    });
+    const strict = searchGraphResults(db, {
+      query: 'JWT session management',
+      minSeedRelevance: 0.95,
+      maxDepth: 1,
+    });
+
+    expect(permissive.map((row) => row.node.id)).toContain(weakNeighbor.id);
+    expect(strict.map((row) => row.node.id)).not.toContain(weakNeighbor.id);
+    expect(strict.map((row) => row.node.id)).toContain(strong.id);
+  });
+
+  it('returns search + traversal nodes deduplicated by id', () => {
     const seed = makeNode(db, {
       type: NodeType.Artifact,
       role: NodeRole.Technology,
@@ -453,7 +704,7 @@ describe('searchGraph', () => {
       type: EdgeType.BasedOn,
     });
 
-    const result = await searchGraphResults(db, { query: 'SQLite', maxDepth: 2 });
+    const result = searchGraphResults(db, { query: 'SQLite', maxDepth: 2 });
     const ids = result.map((row) => row.node.id);
     const unique = new Set(ids);
 
@@ -462,14 +713,14 @@ describe('searchGraph', () => {
     expect(ids.length).toBe(unique.size);
   });
 
-  it('returns empty when search finds no seed nodes', async () => {
+  it('returns empty when search finds no seed nodes', () => {
     makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
       title: 'Unrelated',
       content: 'No sqlite here',
     });
-    const result = await searchGraphResults(db, { query: 'nonexistentqueryterm' });
+    const result = searchGraphResults(db, { query: 'nonexistentqueryterm' });
     expect(result).toEqual([]);
   });
 
@@ -504,6 +755,9 @@ describe('searchGraph', () => {
     createEdge(db, { source_id: depth1a.id, target_id: depth2.id, type: EdgeType.BasedOn });
 
     const page1 = traverse(db, { startId: start.id, limit: 2 });
+    expect(page1.page.hasMore).toBe(true);
+    expect(page1.page.nextCursor).not.toBeNull();
+
     const page2 = traverse(db, { startId: start.id, limit: 2, cursor: page1.page.nextCursor! });
 
     const ids = new Set([...page1.results, ...page2.results].map((row) => row.node.id));
@@ -571,6 +825,7 @@ describe('searchGraph', () => {
 
     const firstPage = traverse(db, { startId: start.id, direction: 'outgoing', limit: 1 });
     expect(firstPage.page.hasMore).toBe(true);
+    expect(firstPage.page.nextCursor).not.toBeNull();
 
     expect(() =>
       traverse(db, {
@@ -620,7 +875,7 @@ describe('searchGraph', () => {
     );
   });
 
-  it('paginates searchGraph results after deduplication', async () => {
+  it('paginates searchGraph results after deduplication', () => {
     const seedA = makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
@@ -643,13 +898,16 @@ describe('searchGraph', () => {
     createEdge(db, { source_id: seedA.id, target_id: shared.id, type: EdgeType.Resolves });
     createEdge(db, { source_id: seedB.id, target_id: shared.id, type: EdgeType.Resolves });
 
-    const page1 = await searchGraph(db, {
+    const page1 = searchGraph(db, {
       query: 'timeout',
       direction: 'both',
       maxDepth: 2,
       limit: 2,
     });
-    const page2 = await searchGraph(db, {
+    expect(page1.page.hasMore).toBe(true);
+    expect(page1.page.nextCursor).not.toBeNull();
+
+    const page2 = searchGraph(db, {
       query: 'timeout',
       direction: 'both',
       maxDepth: 2,
@@ -662,7 +920,7 @@ describe('searchGraph', () => {
     expect(ids.size).toBe(3);
   });
 
-  it('keeps only seeds when searchGraph maxDepth is 0', async () => {
+  it('keeps only seeds when searchGraph maxDepth is 0', () => {
     const seed = makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
@@ -678,7 +936,7 @@ describe('searchGraph', () => {
 
     createEdge(db, { source_id: seed.id, target_id: neighbor.id, type: EdgeType.Resolves });
 
-    const page = await searchGraph(db, { query: 'seed-only', maxDepth: 0 });
+    const page = searchGraph(db, { query: 'seed-only', maxDepth: 0 });
     expect(page.results.some((row) => row.depth > 0)).toBe(false);
     expect(page.results.map((row) => row.node.id)).toContain(seed.id);
   });
@@ -696,7 +954,7 @@ describe('searchGraph', () => {
     );
   });
 
-  it('rejects searchGraph cursors when request scope changes', async () => {
+  it('rejects searchGraph cursors when request scope changes', () => {
     makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
@@ -710,7 +968,9 @@ describe('searchGraph', () => {
       content: 'timeout solution',
     });
 
-    const firstPage = await searchGraph(db, { query: 'timeout', direction: 'outgoing', limit: 1 });
+    const firstPage = searchGraph(db, { query: 'timeout', direction: 'outgoing', limit: 1 });
+    expect(firstPage.page.hasMore).toBe(true);
+    expect(firstPage.page.nextCursor).not.toBeNull();
 
     expect(() =>
       searchGraph(db, {
@@ -722,7 +982,7 @@ describe('searchGraph', () => {
     ).toThrow('Cursor does not match the current request');
   });
 
-  it('preserves search relevance ranking for seeds at depth 0', async () => {
+  it('preserves search relevance ranking for seeds at depth 0', () => {
     // Create 15 old nodes that match the query equally well via BM25
     for (let i = 0; i < 15; i++) {
       makeNode(db, {
@@ -742,7 +1002,7 @@ describe('searchGraph', () => {
       tags: ['database', 'migration'],
     });
 
-    const { results: searchResults } = await searchGraph(db, {
+    const { results: searchResults } = searchGraph(db, {
       query: 'database migration',
       limit: 5,
     });
@@ -755,7 +1015,7 @@ describe('searchGraph', () => {
     expect(searchRankedIds).toContain(bestMatch.id);
   });
 
-  it('matches single large-page results when collecting all searchGraph pages', async () => {
+  it('matches single large-page results when collecting all searchGraph pages', () => {
     const seedA = makeNode(db, {
       type: NodeType.Knowledge,
       role: NodeRole.Decision,
@@ -785,7 +1045,7 @@ describe('searchGraph', () => {
     createEdge(db, { source_id: seedB.id, target_id: shared.id, type: EdgeType.Resolves });
     createEdge(db, { source_id: shared.id, target_id: neighbor.id, type: EdgeType.BasedOn });
 
-    const allPaged = await collectSearchGraphPages(db, {
+    const allPaged = collectSearchGraphPages(db, {
       query: 'about roundtrip timeout',
       direction: 'both',
       maxDepth: 2,

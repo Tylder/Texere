@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createDatabase } from './db.js';
 import { createEdge } from './edges.js';
 import { invalidateNode, storeNode, type StoreNodeInput } from './nodes.js';
-import { search } from './search.js';
+import { detectSearchMode, search } from './search.js';
 import { EdgeType, NodeRole, NodeType } from './types.js';
 
 const searchResults = (
@@ -257,6 +257,93 @@ describe('search', () => {
     expect(types.has(NodeType.Knowledge)).toBe(true);
     expect(types.has(NodeType.Action)).toBe(true);
     expect(types.has(NodeType.Issue)).toBe(false);
+  });
+
+  it('filters by role', () => {
+    const finding = store(db, {
+      role: NodeRole.Finding,
+      title: 'SQLite field notes',
+      content: 'Observed SQLite locking under write load.',
+      tags: ['db'],
+    });
+    store(db, {
+      role: NodeRole.Decision,
+      title: 'SQLite decision log',
+      content: 'Selected SQLite for local persistence.',
+      tags: ['db'],
+    });
+
+    const results = searchResults(db, { query: 'SQLite', role: NodeRole.Finding });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.id).toBe(finding.id);
+    expect(results[0]!.role).toBe(NodeRole.Finding);
+  });
+
+  it('supports composite type, role, tags, and minimum-importance filters together', () => {
+    const matching = store(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'SQLite auth design',
+      content: 'SQLite auth design for offline token storage.',
+      tags: ['auth', 'db'],
+      importance: 0.9,
+    });
+    store(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Finding,
+      title: 'SQLite auth findings',
+      content: 'Observed auth storage behavior.',
+      tags: ['auth', 'db'],
+      importance: 0.95,
+    });
+    store(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'SQLite auth draft',
+      content: 'Low-priority auth design note.',
+      tags: ['auth'],
+      importance: 0.5,
+    });
+    store(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'SQLite auth implementation',
+      content: 'Implementation task for auth storage.',
+      tags: ['auth', 'db'],
+      importance: 0.95,
+    });
+
+    const results = searchResults(db, {
+      query: 'SQLite auth',
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      tags: ['auth', 'db'],
+      minImportance: 0.8,
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.id).toBe(matching.id);
+  });
+
+  it('treats an empty type array as no type filter', () => {
+    const knowledge = store(db, {
+      title: 'SQLite knowledge note',
+      content: 'Knowledge entry for SQLite.',
+      tags: ['db'],
+    });
+    const solution = store(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'SQLite solution note',
+      content: 'Action entry for SQLite.',
+      tags: ['db'],
+    });
+
+    const results = searchResults(db, { query: 'SQLite', type: [] });
+    const ids = new Set(results.map((row) => row.id));
+
+    expect(ids).toEqual(new Set([knowledge.id, solution.id]));
   });
 
   it('filters by tag via node_tags join', () => {
@@ -706,6 +793,22 @@ describe('search', () => {
     expect(results[0]!.search_mode).toBe('semantic');
   });
 
+  it('auto mode detects hybrid for multi-word lowercase queries', () => {
+    const node = store(db, {
+      title: 'Redis caching strategy',
+      content: 'Use Redis as the caching layer for auth sessions.',
+      tags: ['redis', 'cache'],
+    });
+
+    storeEmbedding(db, node.id, embeddingOf(1, 0));
+
+    const results = searchResults(db, { query: 'redis caching' }, embeddingOf(1, 0));
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.id).toBe(node.id);
+    expect(results[0]!.search_mode).toBe('hybrid');
+  });
+
   it('returns page metadata and advances with cursor for keyword search', () => {
     for (let i = 0; i < 4; i += 1) {
       store(db, {
@@ -737,6 +840,8 @@ describe('search', () => {
     store(db, { title: 'SQLite cursor scope two', content: 'scope test', tags: ['db'] });
 
     const page = search(db, { query: 'SQLite', limit: 1 });
+    expect(page.page.hasMore).toBe(true);
+    expect(page.page.nextCursor).not.toBeNull();
 
     expect(() =>
       search(db, {
@@ -766,6 +871,9 @@ describe('search', () => {
 
     const page1 = search(db, { query: 'Same', limit: 2 });
     const repeatedPage1 = search(db, { query: 'Same', limit: 2 });
+    expect(page1.page.hasMore).toBe(true);
+    expect(page1.page.nextCursor).not.toBeNull();
+
     const page2 = search(db, { query: 'Same', limit: 2, cursor: page1.page.nextCursor! });
 
     expect(page1.results.map((row) => row.id)).toEqual(repeatedPage1.results.map((row) => row.id));
@@ -788,6 +896,9 @@ describe('search', () => {
 
     const full = search(db, { query: 'auth flow', mode: 'semantic', limit: 10 }, embeddingOf(1, 0));
     const page1 = search(db, { query: 'auth flow', mode: 'semantic', limit: 2 }, embeddingOf(1, 0));
+    expect(page1.page.hasMore).toBe(true);
+    expect(page1.page.nextCursor).not.toBeNull();
+
     const page2 = search(
       db,
       {
@@ -826,6 +937,9 @@ describe('search', () => {
     storeEmbedding(db, semanticOnly.id, embeddingOf(0.9, 0.1));
 
     const page1 = search(db, { query: 'JWT session', mode: 'hybrid', limit: 2 }, embeddingOf(1, 0));
+    expect(page1.page.hasMore).toBe(true);
+    expect(page1.page.nextCursor).not.toBeNull();
+
     const page2 = search(
       db,
       { query: 'JWT session', mode: 'hybrid', limit: 2, cursor: page1.page.nextCursor! },
@@ -845,6 +959,9 @@ describe('search', () => {
     storeEmbedding(db, beta.id, embeddingOf(1, 0));
 
     const firstPage = search(db, { query: 'JWT', mode: 'hybrid', limit: 1 }, embeddingOf(1, 0));
+    expect(firstPage.page.hasMore).toBe(true);
+    expect(firstPage.page.nextCursor).not.toBeNull();
+
     const secondPage = search(
       db,
       { query: 'JWT', mode: 'hybrid', limit: 1, cursor: firstPage.page.nextCursor! },
@@ -930,5 +1047,16 @@ describe('search', () => {
     );
 
     expect(allPaged.map((row) => row.id)).toEqual(singlePage.results.map((row) => row.id));
+  });
+});
+
+describe('detectSearchMode', () => {
+  it('covers the key auto-detection branches directly', () => {
+    expect(detectSearchMode('JWT')).toBe('keyword');
+    expect(detectSearchMode('redis')).toBe('keyword');
+    expect(detectSearchMode('JWT session')).toBe('keyword');
+    expect(detectSearchMode('What causes auth drift?')).toBe('semantic');
+    expect(detectSearchMode('redis caching')).toBe('hybrid');
+    expect(detectSearchMode('')).toBe('hybrid');
   });
 });
