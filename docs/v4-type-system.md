@@ -21,47 +21,46 @@ every cut type is not needed.
 
 ## At a Glance
 
-### Node Roles: 14 kept, 6 cut
+### Node Roles: 10 kept, 10 cut
 
-| Role           | Type      |         | Replaces cut with                                   |
-| -------------- | --------- | ------- | --------------------------------------------------- |
-| `requirement`  | Knowledge | ✅ Keep |                                                     |
-| `decision`     | Knowledge | ✅ Keep |                                                     |
-| `principle`    | Knowledge | ✅ Keep |                                                     |
-| `finding`      | Knowledge | ✅ Keep |                                                     |
-| `pitfall`      | Knowledge | ✅ Keep |                                                     |
-| `constraint`   | Knowledge | ❌ Cut  | → `requirement`                                     |
-| `error`        | Issue     | ✅ Keep |                                                     |
-| `problem`      | Issue     | ✅ Keep |                                                     |
-| `command`      | Action    | ✅ Keep |                                                     |
-| `solution`     | Action    | ✅ Keep |                                                     |
-| `task`         | Action    | ✅ Keep |                                                     |
-| `workflow`     | Action    | ✅ Keep |                                                     |
-| `example`      | Artifact  | ✅ Keep |                                                     |
-| `technology`   | Artifact  | ✅ Keep | _(restored — reference profiles, not tech choices)_ |
-| `code_pattern` | Artifact  | ❌ Cut  | → `example` (tag with `code`)                       |
-| `concept`      | Artifact  | ❌ Cut  | → `principle`, `finding`, or `decision`             |
-| `source`       | Source    | ✅ Keep | _(replaces all 4 sub-roles — use tags)_             |
-| `web_url`      | Source    | ❌ Cut  | → `source` + tag `web_url`                          |
-| `file_path`    | Source    | ❌ Cut  | → `source` + tag `file_path`                        |
-| `repository`   | Source    | ❌ Cut  | → `source` + tag `repository`                       |
-| `api_doc`      | Source    | ❌ Cut  | → `source` + tag `api_doc`                          |
+| Role           | Type      |         | Cut — use instead                                      |
+| -------------- | --------- | ------- | ------------------------------------------------------ |
+| `requirement`  | Knowledge | ✅ Keep |                                                        |
+| `decision`     | Knowledge | ✅ Keep |                                                        |
+| `principle`    | Knowledge | ✅ Keep |                                                        |
+| `finding`      | Knowledge | ✅ Keep |                                                        |
+| `pitfall`      | Knowledge | ❌ Cut  | → `principle` + tag `pitfall`                          |
+| `constraint`   | Knowledge | ❌ Cut  | → `requirement`                                        |
+| `error`        | Issue     | ❌ Cut  | → `finding` or `decision` (transient state — not here) |
+| `problem`      | Issue     | ❌ Cut  | → `finding` or `decision` (transient state — not here) |
+| `command`      | Action    | ✅ Keep |                                                        |
+| `solution`     | Action    | ❌ Cut  | → `decision` with context                              |
+| `task`         | Action    | ❌ Cut  | → `decision` once done; task trackers for open work    |
+| `workflow`     | Action    | ✅ Keep |                                                        |
+| `example`      | Artifact  | ✅ Keep |                                                        |
+| `technology`   | Artifact  | ✅ Keep |                                                        |
+| `code_pattern` | Artifact  | ❌ Cut  | → `example` + tag `code`                               |
+| `concept`      | Artifact  | ❌ Cut  | → `principle`, `finding`, or `decision`                |
+| `file_path`    | Source    | ✅ Keep |                                                        |
+| `web_url`      | Source    | ✅ Keep |                                                        |
+| `repository`   | Source    | ✅ Keep |                                                        |
+| `api_doc`      | Source    | ✅ Keep |                                                        |
 
-### Edge Types: 9 kept, 2 cut
+### Edge Types: 8 kept, 3 cut
 
-| Edge             |         | Replaces cut with                          |
-| ---------------- | ------- | ------------------------------------------ |
-| `REPLACES`       | ✅ Keep |                                            |
-| `RESOLVES`       | ✅ Keep |                                            |
-| `DEPENDS_ON`     | ✅ Keep |                                            |
-| `CONTRADICTS`    | ✅ Keep |                                            |
-| `CAUSES`         | ✅ Keep |                                            |
-| `ANCHORED_TO`    | ✅ Keep |                                            |
-| `BASED_ON`       | ✅ Keep |                                            |
-| `EXAMPLE_OF`     | ✅ Keep |                                            |
-| `ALTERNATIVE_TO` | ✅ Keep |                                            |
-| `RELATED_TO`     | ❌ Cut  | → pick the specific edge, or omit entirely |
-| `PART_OF`        | ❌ Cut  | → `DEPENDS_ON`                             |
+| Edge             |         | Cut — use instead                           |
+| ---------------- | ------- | ------------------------------------------- |
+| `REPLACES`       | ✅ Keep |                                             |
+| `RESOLVES`       | ✅ Keep |                                             |
+| `DEPENDS_ON`     | ✅ Keep |                                             |
+| `CONTRADICTS`    | ✅ Keep |                                             |
+| `ANCHORED_TO`    | ✅ Keep |                                             |
+| `BASED_ON`       | ✅ Keep |                                             |
+| `EXAMPLE_OF`     | ✅ Keep |                                             |
+| `ALTERNATIVE_TO` | ✅ Keep |                                             |
+| `CAUSES`         | ❌ Cut  | → `BASED_ON` (reverse traversal equivalent) |
+| `RELATED_TO`     | ❌ Cut  | → pick the specific edge, or omit entirely  |
+| `PART_OF`        | ❌ Cut  | → `DEPENDS_ON`                              |
 
 ---
 
