@@ -26,50 +26,10 @@ This rule keeps the design principled without making metadata management unworka
 
 ## Type System — Decided
 
-Derived from Oracle debate (2026-03-18). Three Oracles argued for/against each type. Full usage
-reference: [`v4-type-system.md`](./v4-type-system.md)
+See **[`v4-type-system.md`](./v4-type-system.md)** — canonical reference with full usage guidance,
+how/when to use each role and edge, and rationale for every cut.
 
-### Final Edge Types: 9 (cut 2 from 11)
-
-| Edge             | Decision | Reason for cut                                                                               |
-| ---------------- | -------- | -------------------------------------------------------------------------------------------- |
-| `REPLACES`       | ✅ Keep  |                                                                                              |
-| `RESOLVES`       | ✅ Keep  |                                                                                              |
-| `DEPENDS_ON`     | ✅ Keep  | Also absorbs `PART_OF` — workflow composition is `task DEPENDS_ON workflow`                  |
-| `CONTRADICTS`    | ✅ Keep  |                                                                                              |
-| `CAUSES`         | ✅ Keep  |                                                                                              |
-| `ANCHORED_TO`    | ✅ Keep  |                                                                                              |
-| `BASED_ON`       | ✅ Keep  | Provenance ≠ dependency. Traverse to find nodes needing re-evaluation when a source changes. |
-| `EXAMPLE_OF`     | ✅ Keep  | "Find all examples of X" is a primary agent retrieval pattern; cannot be replaced by search. |
-| `ALTERNATIVE_TO` | ✅ Keep  | Decision graphs need competing options as first-class edges, not buried in content.          |
-| `RELATED_TO`     | ❌ Cut   | Catch-all. Its existence lets LLMs be vague. If a relationship matters, it has a name.       |
-| `PART_OF`        | ❌ Cut   | Confused with `DEPENDS_ON` ~40% of the time. Every PART_OF query is answered by DEPENDS_ON.  |
-
-### Final Node Roles: 14 (cut 6 from 20)
-
-| Role           | Type      | Decision | Reason                                                                                             |
-| -------------- | --------- | -------- | -------------------------------------------------------------------------------------------------- |
-| `requirement`  | Knowledge | ✅ Keep  |                                                                                                    |
-| `decision`     | Knowledge | ✅ Keep  |                                                                                                    |
-| `principle`    | Knowledge | ✅ Keep  |                                                                                                    |
-| `finding`      | Knowledge | ✅ Keep  |                                                                                                    |
-| `pitfall`      | Knowledge | ✅ Keep  |                                                                                                    |
-| `constraint`   | Knowledge | ❌ Cut   | Indistinguishable from `requirement`. Splits the same population randomly.                         |
-| `error`        | Issue     | ✅ Keep  |                                                                                                    |
-| `problem`      | Issue     | ✅ Keep  |                                                                                                    |
-| `command`      | Action    | ✅ Keep  |                                                                                                    |
-| `solution`     | Action    | ✅ Keep  |                                                                                                    |
-| `task`         | Action    | ✅ Keep  |                                                                                                    |
-| `workflow`     | Action    | ✅ Keep  |                                                                                                    |
-| `example`      | Artifact  | ✅ Keep  |                                                                                                    |
-| `technology`   | Artifact  | ✅ Keep  | Restored: reference profiles of tools (capabilities, limits, fit criteria) — not a decision record |
-| `code_pattern` | Artifact  | ❌ Cut   | A code pattern is a code example. Splits retrieval unpredictably.                                  |
-| `concept`      | Artifact  | ❌ Cut   | Drain bucket — no phrasing signature. Every concept is a `principle`, `finding`, or `decision`.    |
-| `source`       | Source    | ✅ Keep  | Single role replaces all 4 sub-roles. Use tags: `file_path`, `web_url`, `repository`, `api_doc`    |
-| `web_url`      | Source    | ❌ Cut   | Content convention, not graph structure. Use `source` + tag `web_url`.                             |
-| `file_path`    | Source    | ❌ Cut   | Edge type (`ANCHORED_TO`) already carries the code-location distinction. Use `source` + tag.       |
-| `repository`   | Source    | ❌ Cut   | Sub-type of `web_url`. Use `source` + tag `repository`.                                            |
-| `api_doc`      | Source    | ❌ Cut   | Authority belongs in `importance`/`confidence` fields. Use `source` + tag `api_doc`.               |
+**Summary:** 10 roles (from 20), 8 edges (from 11).
 
 ---
 
@@ -506,17 +466,7 @@ Type system pruning ships **before** any additions. Decided — see
 
 ### Phase 0 — Type System (decided)
 
-| Change                                    | Status     |
-| ----------------------------------------- | ---------- |
-| Remove `RELATED_TO`                       | ✅ Decided |
-| Remove `PART_OF`                          | ✅ Decided |
-| Remove `constraint` role                  | ✅ Decided |
-| Remove `concept` role                     | ✅ Decided |
-| Remove `code_pattern` role                | ✅ Decided |
-| Restore `technology` role (Artifact)      | ✅ Decided |
-| Collapse Source 4 roles → `source` + tags | ✅ Decided |
-| Keep all other 9 edges                    | ✅ Decided |
-| Keep all other remaining roles            | ✅ Decided |
+10 roles, 8 edges. Full reference: [`v4-type-system.md`](./v4-type-system.md)
 
 ### Phase 1 — High Priority Additions
 

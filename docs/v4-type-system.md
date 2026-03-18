@@ -23,48 +23,48 @@ every cut type is not needed.
 
 ### Node Roles: 10 kept, 10 cut
 
-| Role           | Type      |         | Cut — use instead                                      |
-| -------------- | --------- | ------- | ------------------------------------------------------ |
-| `requirement`  | Knowledge | ✅ Keep |                                                        |
-| `decision`     | Knowledge | ✅ Keep |                                                        |
-| `principle`    | Knowledge | ✅ Keep |                                                        |
-| `finding`      | Knowledge | ✅ Keep |                                                        |
-| `pitfall`      | Knowledge | ❌ Cut  | → `principle` + tag `pitfall`                          |
-| `constraint`   | Knowledge | ❌ Cut  | → `requirement`                                        |
-| `error`        | Issue     | ❌ Cut  | → `finding` or `decision` (transient state — not here) |
-| `problem`      | Issue     | ❌ Cut  | → `finding` or `decision` (transient state — not here) |
-| `command`      | Action    | ✅ Keep |                                                        |
-| `solution`     | Action    | ❌ Cut  | → `decision` with context                              |
-| `task`         | Action    | ❌ Cut  | → `decision` once done; task trackers for open work    |
-| `workflow`     | Action    | ✅ Keep |                                                        |
-| `example`      | Artifact  | ✅ Keep |                                                        |
-| `technology`   | Artifact  | ✅ Keep |                                                        |
-| `code_pattern` | Artifact  | ❌ Cut  | → `example` + tag `code`                               |
-| `concept`      | Artifact  | ❌ Cut  | → `principle`, `finding`, or `decision`                |
-| `file_path`    | Source    | ✅ Keep |                                                        |
-| `web_url`      | Source    | ✅ Keep |                                                        |
-| `repository`   | Source    | ✅ Keep |                                                        |
-| `api_doc`      | Source    | ✅ Keep |                                                        |
+| Role           | Type      |         | Use when / Instead use                                                                                                 |
+| -------------- | --------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `requirement`  | Knowledge | ✅ Keep | System **must** do X. "Must", "shall", "required to." Obligations, quality targets, compliance.                        |
+| `decision`     | Knowledge | ✅ Keep | We **chose** X over Y, and here's why. ADR-style. Also: resolved bugs with rationale.                                  |
+| `principle`    | Knowledge | ✅ Keep | We **always/never** do X. Prescriptive rules that apply across all decisions. Covers pitfalls too — add tag `pitfall`. |
+| `finding`      | Knowledge | ✅ Keep | We **discovered** X. Empirical, past-tense. "Investigation showed…", "we measured that…"                               |
+| `pitfall`      | Knowledge | ❌ Cut  | → `principle` + tag `pitfall`                                                                                          |
+| `constraint`   | Knowledge | ❌ Cut  | → `requirement`                                                                                                        |
+| `error`        | Issue     | ❌ Cut  | → `finding` or `decision` — transient state, not durable knowledge                                                     |
+| `problem`      | Issue     | ❌ Cut  | → `finding` or `decision` — use a bug tracker for open issues                                                          |
+| `command`      | Action    | ✅ Keep | Content **is** the executable command. Copy-paste ready. Single invocation.                                            |
+| `solution`     | Action    | ❌ Cut  | → `decision` with context — a resolved problem is a decision with rationale                                            |
+| `task`         | Action    | ❌ Cut  | → `decision` once done; open work → task tracker                                                                       |
+| `workflow`     | Action    | ✅ Keep | Repeatable, **ordered procedure** with named stages. Release process, migration, playbook.                             |
+| `example`      | Artifact  | ✅ Keep | Content **is** a concrete artifact — actual code, config, output. Demonstrates, doesn't describe.                      |
+| `technology`   | Artifact  | ✅ Keep | **Reference profile** of a tool — capabilities, limits, fit criteria. Not a decision to use it.                        |
+| `code_pattern` | Artifact  | ❌ Cut  | → `example` + tag `code`                                                                                               |
+| `concept`      | Artifact  | ❌ Cut  | → `principle`, `finding`, or `decision`                                                                                |
+| `file_path`    | Source    | ✅ Keep | A file in the **local codebase**. Primary target of `ANCHORED_TO` edges.                                               |
+| `web_url`      | Source    | ✅ Keep | Any **external URL**. Default when in doubt.                                                                           |
+| `repository`   | Source    | ✅ Keep | An **external repo** as a whole — not a specific file within it.                                                       |
+| `api_doc`      | Source    | ✅ Keep | **Official API reference** — stable, authoritative. Not a guide or article.                                            |
 
 ### Edge Types: 8 kept, 3 cut
 
-| Edge             |         | Cut — use instead                           |
-| ---------------- | ------- | ------------------------------------------- |
-| `REPLACES`       | ✅ Keep |                                             |
-| `RESOLVES`       | ✅ Keep |                                             |
-| `DEPENDS_ON`     | ✅ Keep |                                             |
-| `CONTRADICTS`    | ✅ Keep |                                             |
-| `ANCHORED_TO`    | ✅ Keep |                                             |
-| `BASED_ON`       | ✅ Keep |                                             |
-| `EXAMPLE_OF`     | ✅ Keep |                                             |
-| `ALTERNATIVE_TO` | ✅ Keep |                                             |
-| `CAUSES`         | ❌ Cut  | → `BASED_ON` (reverse traversal equivalent) |
-| `RELATED_TO`     | ❌ Cut  | → pick the specific edge, or omit entirely  |
-| `PART_OF`        | ❌ Cut  | → `DEPENDS_ON`                              |
+| Edge             |         | Direction          | Use when / Instead use                                                                           |
+| ---------------- | ------- | ------------------ | ------------------------------------------------------------------------------------------------ |
+| `REPLACES`       | ✅ Keep | new → old          | A node's **content changes**. Revised requirement, reversed decision. Auto-invalidates old node. |
+| `RESOLVES`       | ✅ Keep | decision → req     | X **fulfils** Y. "This is the answer to this requirement." Not a precondition — a fulfilment.    |
+| `DEPENDS_ON`     | ✅ Keep | dependent → dep    | X **requires** Y. Technical deps, prerequisites, workflow composition.                           |
+| `CONTRADICTS`    | ✅ Keep | bidirectional      | X and Y are in **logical conflict** — both cannot be true or followed simultaneously.            |
+| `ANCHORED_TO`    | ✅ Keep | knowledge → source | This knowledge is **implemented in / located in** this file or URL.                              |
+| `BASED_ON`       | ✅ Keep | derived → source   | X **traces its lineage** to Y. Intellectual provenance — "this came from that."                  |
+| `EXAMPLE_OF`     | ✅ Keep | example → concept  | X **is a concrete instance** of Y. Links examples to the principle or finding they illustrate.   |
+| `ALTERNATIVE_TO` | ✅ Keep | bidirectional      | X and Y are **competing valid options** — either could work, one was chosen.                     |
+| `CAUSES`         | ❌ Cut  |                    | → `BASED_ON` reverse traversal — same relationship, opposite direction, inconsistent graphs      |
+| `RELATED_TO`     | ❌ Cut  |                    | → pick the specific edge, or omit — if it matters it has a name                                  |
+| `PART_OF`        | ❌ Cut  |                    | → `DEPENDS_ON`                                                                                   |
 
 ---
 
-## Node Roles (16)
+## Node Roles (10)
 
 ### Knowledge
 
@@ -140,8 +140,8 @@ measurement, or experience.
 "testing revealed Z". Post-mortem results, performance measurements, research conclusions, patterns
 observed in production. If it is something you _found out_, it is a finding.
 
-**Do not use when:** You are expressing a rule derived from the observation (→ `principle`), a
-problem being tracked (→ `problem`), or a requirement it implies (→ `requirement`).
+**Do not use when:** You are expressing a rule derived from the observation (→ `principle`), or a
+requirement it implies (→ `requirement`).
 
 **Example:**
 
@@ -151,79 +151,10 @@ problem being tracked (→ `problem`), or a requirement it implies (→ `require
 
 ---
 
-#### `pitfall`
-
-**What it is:** A known trap or mistake that is easy to make and costly to fix. A specific warning
-about a specific failure mode.
-
-**Use when:** The statement takes the form "watch out for X", "don't do Y because Z", "this breaks
-when". Named footguns, gotchas with real consequences, mistakes the team or LLM has made or nearly
-made. More specific than a principle — a pitfall is about a concrete wrong path, not a general rule.
-
-**Do not use when:** The guidance generalizes into a rule (→ `principle`), the mistake is actively
-being tracked as an open issue (→ `problem`), or it is a general bad practice without a specific
-failure mode.
-
-**Example:**
-
-> "FTS5 tokenizes on '/' and '.', so searching for file paths like `src/auth/session.ts` does not
-> work as expected — path components are matched individually." "Calling `flushPending()` before
-> every query adds 30–200ms latency. Only flush before semantic searches, not keyword searches."
-> "REPLACES edges auto-invalidate the source node. Creating a REPLACES edge to the wrong target will
-> silently soft-delete a live node."
-
----
-
-### Issue
-
-> Use `texere_store_issue`. These are things that are _wrong_ or _broken_ — active problems
-> requiring attention.
-
----
-
-#### `error`
-
-**What it is:** A specific, reproducible technical failure — an exception, assertion failure,
-compilation error, or runtime crash.
-
-**Use when:** There is a specific error message, stack trace, or reproducible failure condition. The
-node content should include the error, how to reproduce it, and what the expected behavior is.
-
-**Do not use when:** The failure is broad and doesn't have a specific error message (→ `problem`),
-or it is a pattern of failure documented as a lesson learned (→ `pitfall`).
-
-**Example:**
-
-> "TypeError: Cannot read properties of undefined (reading 'id') at storeNode (nodes.ts:42). Occurs
-> when `temp_id` references a node that was not included in the same batch."
-
----
-
-#### `problem`
-
-**What it is:** A broader issue without a specific technical failure — degraded performance, a
-design flaw, an unclear requirement, a systemic risk, or anything that needs addressing but does not
-have a stack trace.
-
-**Use when:** Something is wrong or suboptimal but it is not a discrete crash or error. Design
-concerns, performance degradation, missing functionality, ambiguous specifications.
-
-**Do not use when:** There is a specific error message (→ `error`), the lesson has already been
-extracted (→ `pitfall`), or it is a gap in requirements (→ `requirement`).
-
-**Example:**
-
-> "Vector search degrades significantly past 20k nodes — linear scan becomes user-visible. No ANN
-> index currently in place." "The `search_graph` tool returns results ordered by seed index then
-> depth, discarding original relevance scores. This makes downstream ranking by authority
-> unreliable."
-
----
-
 ### Action
 
-> Use `texere_store_action`. These are things to _do_ — executable steps, recorded resolutions, and
-> documented processes.
+> Use `texere_store_action`. These are durable procedural artifacts — things to run or repeat. Open
+> work items and one-off tasks belong in a task tracker, not here.
 
 ---
 
@@ -234,52 +165,13 @@ extracted (→ `pitfall`), or it is a gap in requirements (→ `requirement`).
 **Use when:** The content _is_ the command — ready to copy and run. Not a description of what to do,
 but the literal command that does it.
 
-**Do not use when:** It describes a process with multiple steps (→ `workflow`), or a unit of work
-that is not directly executable (→ `task`).
+**Do not use when:** It describes a process with multiple steps (→ `workflow`).
 
 **Example:**
 
 > `pnpm test:integration --reporter=verbose`
 > `sqlite3 texere.db "SELECT COUNT(*) FROM nodes WHERE invalidated_at IS NULL;"`
 > `git log --oneline --follow -- packages/graph/src/search.ts`
-
----
-
-#### `solution`
-
-**What it is:** A recorded resolution to a specific problem or error. The answer to a specific
-issue, linked via a `RESOLVES` edge.
-
-**Use when:** You are recording _how a specific problem was fixed_. The node should describe the
-resolution clearly enough to apply it again. Always link with `RESOLVES` to the problem or error it
-addresses.
-
-**Do not use when:** It is a general approach or guideline (→ `principle`), a step in an ongoing
-process (→ `task`), or a reusable pattern (→ `example`).
-
-**Example:**
-
-> "Increased the sqlite WAL checkpoint interval from 1000 to 4000 pages. This reduced write
-> contention during bulk embedding inserts by ~60%." _(links via RESOLVES → problem: "write
-> contention during embedding pipeline")_
-
----
-
-#### `task`
-
-**What it is:** A unit of work to be done — a TODO, an action item, a step to take.
-
-**Use when:** Something needs to happen and you want it tracked in the graph. Can be atomic ("add
-is_current flag to nodes table") or multi-step ("migrate existing databases to v4 schema").
-Future-oriented.
-
-**Do not use when:** It is already resolved (→ `solution`), it is a literal shell command (→
-`command`), or it is a documented repeatable process (→ `workflow`).
-
-**Example:**
-
-> "Add `is_current BOOLEAN DEFAULT TRUE` column to nodes table." "Backfill is_current flag by
-> traversing all REPLACES edges in existing databases."
 
 ---
 
@@ -291,8 +183,8 @@ Future-oriented.
 Release processes, onboarding sequences, debugging playbooks, recurring operational procedures. If
 it has named stages and an order, it is a workflow.
 
-**Do not use when:** It is a single unit of work (→ `task`), a general principle (→ `principle`), or
-it refers to an agent orchestration pattern (out of scope for Texere).
+**Do not use when:** It is a single executable command (→ `command`), a general rule (→
+`principle`), or it refers to an agent orchestration pattern (out of scope for Texere).
 
 **Example:**
 
@@ -361,48 +253,57 @@ profile.
 
 ### Source
 
-> Use `texere_store_source`. Provenance anchors — they point to _where_ something comes from. Use
-> `ANCHORED_TO` or `BASED_ON` edges to connect knowledge nodes to source nodes.
->
-> **One role only: `source`.** Use tags to express content type — `file_path`, `web_url`,
-> `repository`, `api_doc`. The structural distinction between code location and document reference
-> is already carried by the edge type (`ANCHORED_TO` = code, `BASED_ON` = document).
+> Use `texere_store_source`. Provenance anchors — they point to _where_ something comes from. Always
+> connect via `ANCHORED_TO` (this knowledge is implemented here) or `BASED_ON` (this knowledge was
+> derived from here).
 
 ---
 
-#### `source`
+#### `file_path`
 
-**What it is:** A provenance anchor pointing to a specific external location — a file, a URL, a
-repository, or an API reference page.
+**What it is:** A specific file in the local codebase.
 
-**Use when:** You need to link a knowledge node to its implementation location or origin. Always
-connect via `ANCHORED_TO` (this knowledge is implemented/located here) or `BASED_ON` (this knowledge
-was derived from here).
+**Use when:** Anchoring a requirement, decision, or principle to the file that implements it.
+Primary target of `ANCHORED_TO` edges. The `title` should be the path.
 
-**Tag conventions — always include one:**
-
-| Tag          | Use for                                                      |
-| ------------ | ------------------------------------------------------------ |
-| `file_path`  | A file in the local codebase: `packages/graph/src/search.ts` |
-| `web_url`    | Any external URL — articles, guides, specs, homepages        |
-| `repository` | An external code repository as a whole                       |
-| `api_doc`    | Official API reference documentation (stable, authoritative) |
-
-**Why tags instead of roles:** All Source nodes are structurally identical — they are reference
-pointers. The sub-type distinction (`web_url` vs `api_doc`) is content formatting, not graph
-structure. No traversal query changes based on sub-type. Authority signals belong in
-`importance`/`confidence` fields, not in role. Tags are composable and do not require LLMs to make a
-binary choice between `web_url` and `api_doc` for the same URL.
-
-**Examples:**
-
-> `packages/graph/src/search.ts` — tag: `file_path` `https://www.sqlite.org/fts5.html` — tag:
-> `web_url` `https://github.com/tursodatabase/libsql` — tag: `repository`
-> `https://bun.sh/docs/api/sqlite` — tags: `api_doc`, `web_url`
+**Example:** `packages/graph/src/search.ts`
 
 ---
 
-## Edge Types (9)
+#### `web_url`
+
+**What it is:** Any external URL — documentation pages, articles, specifications, tool homepages,
+research papers. Default choice when in doubt.
+
+**Example:** `https://www.sqlite.org/fts5.html`
+
+---
+
+#### `repository`
+
+**What it is:** An external code repository as a whole — not a specific file within it.
+
+**Use when:** Referencing a dependency repo, reference implementation, or upstream source.
+
+**Example:** `https://github.com/tursodatabase/libsql`
+
+---
+
+#### `api_doc`
+
+**What it is:** Official API reference documentation for a specific library, framework, or service.
+Structured reference material — not a tutorial, guide, or general documentation page.
+
+**Use when:** The URL is the authoritative, stable API reference. Signals higher authority than
+`web_url` for retrieval ranking.
+
+**Do not use when:** It is a guide, article, or general docs page (→ `web_url`).
+
+**Example:** `https://bun.sh/docs/api/sqlite`
+
+---
+
+## Edge Types (8)
 
 ---
 
@@ -427,18 +328,21 @@ one. This preserves history.
 
 ### `RESOLVES`
 
-**Direction:** solution/task/decision → problem/error _(X closes Y)_
+**Direction:** decision/workflow/command → requirement _(X fulfils Y)_
 
-**Meaning:** X fixes, addresses, or closes Y.
+**Meaning:** X is the answer to Y. Not a precondition — a fulfilment. The decision or procedure
+satisfies the requirement.
 
-**Use when:** A solution answers a problem. A task addresses an error. A decision eliminates an open
-question. The canonical query this enables: _"find all problems with no incoming RESOLVES edge"_ —
-the open-work list.
+**Use when:** A decision implements a requirement. A workflow satisfies a requirement. The key query
+this enables: _"find all requirements with no incoming RESOLVES edge"_ — unimplemented requirements.
+
+**Do not use when:** X merely depends on Y existing (→ `DEPENDS_ON`). RESOLVES = "I am the answer."
+DEPENDS_ON = "I need this to exist."
 
 **Example:**
 
-> `wal-checkpoint-solution RESOLVES write-contention-problem`
-> `is-current-flag-task RESOLVES head-node-performance-problem`
+> `rolling-idle-expiration-decision RESOLVES session-expiry-requirement`
+> `migration-workflow RESOLVES schema-versioning-requirement`
 
 ---
 
@@ -449,31 +353,15 @@ the open-work list.
 **Meaning:** X requires Y to function, exist, or be valid. Functional dependency.
 
 **Use when:** Technical dependencies, prerequisite relationships, "this cannot happen without that."
-Also used for workflow composition: a task that belongs to a workflow depends on the workflow (the
-workflow is its context). Covers what `PART_OF` used to cover.
+Also covers composition: a workflow that builds on another workflow uses `DEPENDS_ON`. Covers what
+`PART_OF` used to cover.
 
 **Do not use when:** X was intellectually derived from Y (→ `BASED_ON`), or X is implemented in Y (→
 `ANCHORED_TO`).
 
 **Example:**
 
-> `auth-service DEPENDS_ON session-store` `deploy-task DEPENDS_ON build-task`
-
----
-
-### `CAUSES`
-
-**Direction:** cause → effect _(X leads to Y)_
-
-**Meaning:** X produces Y as a consequence.
-
-**Use when:** Root cause analysis, problem chains, consequence mapping. "This error causes that
-failure." "This missing index causes slow queries."
-
-**Example:**
-
-> `missing-vec-index CAUSES slow-semantic-search-problem`
-> `large-batch-size CAUSES gc-pressure-finding`
+> `auth-service DEPENDS_ON session-store` `deploy-workflow DEPENDS_ON build-workflow`
 
 ---
 
@@ -586,84 +474,101 @@ specifically-illustrative content.
 
 ---
 
+### ~~`pitfall`~~ → use `principle` + tag `pitfall`
+
+A pitfall is a negatively-framed principle. "Never use `as any` because it bypasses type checking"
+and "always use explicit types" are the same knowledge at different polarities. LLMs will split
+identical content between pitfall and principle based on sentence framing, not semantic content.
+
+Use `principle` and add a `pitfall` tag for retrieval. The tag preserves the "watch out" signal
+without creating a parallel bucket that LLMs populate inconsistently.
+
+---
+
+### ~~Issue type~~ (~~`error`~~, ~~`problem`~~) → use `finding` or `decision`
+
+Texere stores medium-to-long term durable knowledge only. Error and problem are transient states —
+they describe something currently wrong, which belongs in a bug tracker, not a knowledge graph.
+
+By the time something is worth writing into Texere, it has already been synthesised into knowledge:
+
+- "We discovered the session store leaks memory under load" → `finding`
+- "We switched to TTL-based cleanup because of the memory leak" → `decision`
+- "Watch out for memory leaks with this connection pattern" → `principle` + tag `pitfall`
+
+The raw event (error, stack trace, open problem) is not the knowledge. The understanding of it is.
+
+---
+
+### ~~`solution`~~ → use `decision`
+
+A resolved problem is a decision with context. "We fixed the write contention by increasing the WAL
+checkpoint interval" is a decision — it records what was chosen and why. The bug is just the
+rationale, not a separate node.
+
+`solution` required a `problem` node to link to via `RESOLVES`. With the Issue type gone, solution
+has no anchor.
+
+---
+
+### ~~`task`~~ → use a task tracker; completed work → `decision`
+
+A task is future-oriented work. Once done, it has zero informational value — it transforms into a
+decision or disappears. There is no clean line between a durable task and a transient one: anything
+genuinely durable is already a `requirement` (standing obligation) or `principle` (standing rule).
+
+Open work belongs in a task tracker. Completed work that shaped the codebase becomes a `decision`.
+
+---
+
 ### ~~`constraint`~~ → use `requirement`
 
-A constraint IS a requirement with negative framing. "Must not exceed 100ms" is a requirement. "No
-cloud services due to compliance" is a requirement. The word "constraint" implies externally imposed
-limits while "requirement" implies desired behavior — but in practice the same fact fits both, and
-LLMs will assign them randomly.
-
-`requirement` is the single bucket for all system obligations, positive or negative, internal or
-external. If the distinction between a compliance constraint and a functional requirement matters in
-a specific context, express it in content or tags (`compliance`, `external`).
+A constraint is a requirement with negative framing. "Must not exceed 100ms" is a requirement. "No
+cloud services" is a requirement. LLMs assign them randomly because the same fact fits both. Use
+`requirement` for all system obligations and express specifics in content or tags (`compliance`,
+`external`).
 
 ---
 
 ### ~~`concept`~~ → use `principle`, `finding`, or `decision`
 
-"Concept" has no phrasing signature. Anything can be called a concept. In practice, LLMs use
-`concept` as a drain bucket for nodes that don't clearly fit elsewhere — which means the role
-becomes noise.
-
-Every concept is actually one of:
-
-- Something the team _should do_ → `principle`
-- Something the team _discovered_ → `finding`
-- Something the team _chose_ → `decision`
-- Something that _illustrates_ an approach → `example` (Artifact)
-
-If you cannot place it in one of those, ask whether the node should exist at all.
+"Concept" has no phrasing signature — anything can be called a concept. In practice it becomes a
+drain bucket. Every concept is actually a principle (prescriptive), finding (empirical), or decision
+(choice). If it doesn't fit any of those, the node probably shouldn't exist.
 
 ---
 
-### ~~`code_pattern`~~ → use `example`
+### ~~`code_pattern`~~ → use `example` + tag `code`
 
-A code pattern is a code example. The distinction between "reusable pattern" and "concrete example"
-is one of intent, not structure, and LLMs will not distinguish them reliably. The result is a split
-population: code snippets filed under `code_pattern`, similar snippets filed under `example`, with
-queries against either missing half the relevant nodes.
-
-Use `Artifact/example` for all code samples. Tag with `code`, `pattern`, or `snippet` if filtering
-by content type matters.
+A code pattern is a code example. The distinction is one of intent, not structure — LLMs will not
+distinguish them reliably and the same snippet ends up split across both roles. Use `example` and
+tag with `code` or `pattern` if filtering matters.
 
 ---
 
-### ~~`web_url` / `file_path` / `repository` / `api_doc`~~ → use `source` + tags
+### ~~`CAUSES`~~ → use `BASED_ON` (reverse traversal)
 
-The four Source sub-roles are content conventions, not structural distinctions. No traversal query
-changes based on which sub-type a Source node has. The structural distinction that matters — code
-location vs. document reference — is already carried by the edge type: `ANCHORED_TO` points to code,
-`BASED_ON` points to documents.
+`CAUSES` and `BASED_ON` encode the same relationship in opposite directions. "finding CAUSES
+decision" and "decision BASED_ON finding" are semantically identical. Over time the graph
+accumulates the same relationship in both directions inconsistently, making traversal unreliable.
 
-`api_doc` was the strongest candidate to keep as a role — an authority signal for retrieval ranking.
-But authority belongs in the `importance` and `confidence` fields, not an enum value. `web_url` vs
-`api_doc` is exactly the LLM hesitation case (is this official enough to be `api_doc`?) that the
-design principles require merging.
-
-Use a single `source` role and tag with `file_path`, `web_url`, `repository`, or `api_doc`. Tags are
-composable (a file inside a repo can carry both), do not require binary judgment, and produce
-identical filtering behaviour via a tag JOIN.
+`BASED_ON` is the survivor — its direction is unambiguous (subject is derived, object is the prior
+source). Reverse traversal on `BASED_ON` edges answers the same "what did this lead to?" question
+that `CAUSES` would have answered.
 
 ---
 
-### ~~`RELATED_TO`~~ → force a specific edge
+### ~~`RELATED_TO`~~ → pick the specific edge, or omit
 
-If the relationship matters enough to record as a graph edge, it is specific enough to name. If it
-is not specific enough to name, it is not structurally important — and semantic search handles
-content similarity without any edge at all.
-
-`RELATED_TO` is permission to be vague in a system that requires precision. Its existence means LLMs
-will reach for it under uncertainty instead of choosing the correct specific type. Every
-`RELATED_TO` edge in the graph is a traversal that tells you nothing.
+If the relationship matters enough to store as a graph edge, it is specific enough to name. If it is
+not specific enough to name, it is not structurally important — semantic search handles content
+similarity without any edge. `RELATED_TO` is permission to be vague in a system that requires
+precision.
 
 ---
 
 ### ~~`PART_OF`~~ → use `DEPENDS_ON`
 
-`PART_OF` encodes compositional membership: "this task is part of this workflow." `DEPENDS_ON`
-encodes functional dependency: "this task depends on this workflow." In practice, these produce
-identical traversal results — and LLMs confuse them approximately 40% of the time.
-
-Model workflow composition as `task DEPENDS_ON workflow` (the task depends on the workflow for its
-context) or document the composition in the workflow node's content. `DEPENDS_ON` already handles
-structural relationships cleanly.
+`PART_OF` (compositional membership) and `DEPENDS_ON` (functional dependency) produce identical
+traversal results for the knowledge graph use case. LLMs confuse them ~40% of the time. `DEPENDS_ON`
+absorbs both — a workflow that builds on another workflow `DEPENDS_ON` it.
