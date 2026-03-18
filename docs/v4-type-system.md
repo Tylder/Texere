@@ -17,6 +17,13 @@ every cut type is not needed.
 3. **Tags and content carry intent. Types carry structure.** Use types for what the graph needs to
    traverse. Use tags for filtering. Use content for everything else.
 
+4. **No manually-assigned relevance scores.** `importance` is removed from the schema. An LLM
+   storing a node has no calibrated reference frame for a 0–1 float, so the field either saturates
+   at 1.0 or becomes noise. Differentiation between nodes is handled by: tags (categorical,
+   explicit), graph structure (connection count), recency (`created_at`), and semantic search
+   ranking. `confidence` is kept — it is epistemics ("how certain is this claim"), not relevance,
+   and has a clear meaning an LLM can reason about.
+
 ---
 
 ## At a Glance
@@ -46,21 +53,22 @@ every cut type is not needed.
 | `repository`   | Source    | ✅ Keep | An **external repo** as a whole — not a specific file within it.                                                       |
 | `api_doc`      | Source    | ✅ Keep | **Official API reference** — stable, authoritative. Not a guide or article.                                            |
 
-### Edge Types: 8 kept, 3 cut
+### Edge Types: 9 kept, 3 cut
 
-| Edge             |         | Direction          | Use when / Instead use                                                                           |
-| ---------------- | ------- | ------------------ | ------------------------------------------------------------------------------------------------ |
-| `REPLACES`       | ✅ Keep | new → old          | A node's **content changes**. Revised requirement, reversed decision. Auto-invalidates old node. |
-| `RESOLVES`       | ✅ Keep | decision → req     | X **fulfils** Y. "This is the answer to this requirement." Not a precondition — a fulfilment.    |
-| `DEPENDS_ON`     | ✅ Keep | dependent → dep    | X **requires** Y. Technical deps, prerequisites, workflow composition.                           |
-| `CONTRADICTS`    | ✅ Keep | bidirectional      | X and Y are in **logical conflict** — both cannot be true or followed simultaneously.            |
-| `ANCHORED_TO`    | ✅ Keep | knowledge → source | This knowledge is **implemented in / located in** this file or URL.                              |
-| `BASED_ON`       | ✅ Keep | derived → source   | X **traces its lineage** to Y. Intellectual provenance — "this came from that."                  |
-| `EXAMPLE_OF`     | ✅ Keep | example → concept  | X **is a concrete instance** of Y. Links examples to the principle or finding they illustrate.   |
-| `ALTERNATIVE_TO` | ✅ Keep | bidirectional      | X and Y are **competing valid options** — either could work, one was chosen.                     |
-| `CAUSES`         | ❌ Cut  |                    | → `BASED_ON` reverse traversal — same relationship, opposite direction, inconsistent graphs      |
-| `RELATED_TO`     | ❌ Cut  |                    | → pick the specific edge, or omit — if it matters it has a name                                  |
-| `PART_OF`        | ❌ Cut  |                    | → `DEPENDS_ON`                                                                                   |
+| Edge             |         | Direction            | Use when / Instead use                                                                           |
+| ---------------- | ------- | -------------------- | ------------------------------------------------------------------------------------------------ |
+| `REPLACES`       | ✅ Keep | new → old            | A node's **content changes**. Revised requirement, reversed decision. Auto-invalidates old node. |
+| `RESOLVES`       | ✅ Keep | decision → req       | X **fulfils** Y. "This is the answer to this requirement." Not a precondition — a fulfilment.    |
+| `VERIFIED_BY`    | ✅ Keep | requirement → source | This requirement is **verified by** this test file. Enables "untested requirements" gap query.   |
+| `DEPENDS_ON`     | ✅ Keep | dependent → dep      | X **requires** Y. Technical deps, prerequisites, workflow composition.                           |
+| `CONTRADICTS`    | ✅ Keep | bidirectional        | X and Y are in **logical conflict** — both cannot be true or followed simultaneously.            |
+| `ANCHORED_TO`    | ✅ Keep | knowledge → source   | This knowledge is **implemented in / located in** this file or URL.                              |
+| `BASED_ON`       | ✅ Keep | derived → source     | X **traces its lineage** to Y. Intellectual provenance — "this came from that."                  |
+| `EXAMPLE_OF`     | ✅ Keep | example → concept    | X **is a concrete instance** of Y. Links examples to the principle or finding they illustrate.   |
+| `ALTERNATIVE_TO` | ✅ Keep | bidirectional        | X and Y are **competing valid options** — either could work, one was chosen.                     |
+| `CAUSES`         | ❌ Cut  |                      | → `BASED_ON` reverse traversal — same relationship, opposite direction, inconsistent graphs      |
+| `RELATED_TO`     | ❌ Cut  |                      | → pick the specific edge, or omit — if it matters it has a name                                  |
+| `PART_OF`        | ❌ Cut  |                      | → `DEPENDS_ON`                                                                                   |
 
 ---
 
@@ -323,6 +331,25 @@ one. This preserves history.
 **Example:**
 
 > `updated-session-requirement REPLACES original-session-requirement`
+
+---
+
+### `VERIFIED_BY`
+
+**Direction:** requirement → source/file*path *(X is verified by Y)\_
+
+**Meaning:** This requirement has test coverage in this file. Distinct from `ANCHORED_TO` —
+requirements are not _implemented in_ test files, they are _verified by_ them.
+
+**Use when:** Linking a requirement to the test file that asserts it is met. The key query this
+enables: _"find all requirements with no outgoing `VERIFIED_BY` edge"_ — untested requirements.
+
+**Do not use when:** The file _implements_ the requirement (→ `ANCHORED_TO`). VERIFIED_BY is only
+for test files asserting that a requirement holds.
+
+**Example:**
+
+> `session-expiry-requirement VERIFIED_BY src/auth/session.test.ts`
 
 ---
 
