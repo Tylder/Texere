@@ -24,6 +24,55 @@ This rule keeps the design principled without making metadata management unworka
 
 ---
 
+## Type System — Decided
+
+Derived from Oracle debate (2026-03-18). Three Oracles argued for/against each type. Full usage
+reference: [`v4-type-system.md`](./v4-type-system.md)
+
+### Final Edge Types: 9 (cut 2 from 11)
+
+| Edge             | Decision | Reason for cut                                                                               |
+| ---------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `REPLACES`       | ✅ Keep  |                                                                                              |
+| `RESOLVES`       | ✅ Keep  |                                                                                              |
+| `DEPENDS_ON`     | ✅ Keep  | Also absorbs `PART_OF` — workflow composition is `task DEPENDS_ON workflow`                  |
+| `CONTRADICTS`    | ✅ Keep  |                                                                                              |
+| `CAUSES`         | ✅ Keep  |                                                                                              |
+| `ANCHORED_TO`    | ✅ Keep  |                                                                                              |
+| `BASED_ON`       | ✅ Keep  | Provenance ≠ dependency. Traverse to find nodes needing re-evaluation when a source changes. |
+| `EXAMPLE_OF`     | ✅ Keep  | "Find all examples of X" is a primary agent retrieval pattern; cannot be replaced by search. |
+| `ALTERNATIVE_TO` | ✅ Keep  | Decision graphs need competing options as first-class edges, not buried in content.          |
+| `RELATED_TO`     | ❌ Cut   | Catch-all. Its existence lets LLMs be vague. If a relationship matters, it has a name.       |
+| `PART_OF`        | ❌ Cut   | Confused with `DEPENDS_ON` ~40% of the time. Every PART_OF query is answered by DEPENDS_ON.  |
+
+### Final Node Roles: 14 (cut 6 from 20)
+
+| Role           | Type      | Decision | Reason                                                                                             |
+| -------------- | --------- | -------- | -------------------------------------------------------------------------------------------------- |
+| `requirement`  | Knowledge | ✅ Keep  |                                                                                                    |
+| `decision`     | Knowledge | ✅ Keep  |                                                                                                    |
+| `principle`    | Knowledge | ✅ Keep  |                                                                                                    |
+| `finding`      | Knowledge | ✅ Keep  |                                                                                                    |
+| `pitfall`      | Knowledge | ✅ Keep  |                                                                                                    |
+| `constraint`   | Knowledge | ❌ Cut   | Indistinguishable from `requirement`. Splits the same population randomly.                         |
+| `error`        | Issue     | ✅ Keep  |                                                                                                    |
+| `problem`      | Issue     | ✅ Keep  |                                                                                                    |
+| `command`      | Action    | ✅ Keep  |                                                                                                    |
+| `solution`     | Action    | ✅ Keep  |                                                                                                    |
+| `task`         | Action    | ✅ Keep  |                                                                                                    |
+| `workflow`     | Action    | ✅ Keep  |                                                                                                    |
+| `example`      | Artifact  | ✅ Keep  |                                                                                                    |
+| `technology`   | Artifact  | ✅ Keep  | Restored: reference profiles of tools (capabilities, limits, fit criteria) — not a decision record |
+| `code_pattern` | Artifact  | ❌ Cut   | A code pattern is a code example. Splits retrieval unpredictably.                                  |
+| `concept`      | Artifact  | ❌ Cut   | Drain bucket — no phrasing signature. Every concept is a `principle`, `finding`, or `decision`.    |
+| `source`       | Source    | ✅ Keep  | Single role replaces all 4 sub-roles. Use tags: `file_path`, `web_url`, `repository`, `api_doc`    |
+| `web_url`      | Source    | ❌ Cut   | Content convention, not graph structure. Use `source` + tag `web_url`.                             |
+| `file_path`    | Source    | ❌ Cut   | Edge type (`ANCHORED_TO`) already carries the code-location distinction. Use `source` + tag.       |
+| `repository`   | Source    | ❌ Cut   | Sub-type of `web_url`. Use `source` + tag `repository`.                                            |
+| `api_doc`      | Source    | ❌ Cut   | Authority belongs in `importance`/`confidence` fields. Use `source` + tag `api_doc`.               |
+
+---
+
 ## Data Model Ideas
 
 ### 1. Node Authority / Review State
@@ -452,40 +501,66 @@ Things discussed but explicitly not Texere's job:
 
 ## Priority Summary
 
-Ordered by oracle consensus and retrieval lane impact:
+Type system pruning ships **before** any additions. Decided — see
+[`v4-type-system.md`](./v4-type-system.md).
 
-| Priority | Idea                                   | Reason                                                                         |
-| -------- | -------------------------------------- | ------------------------------------------------------------------------------ |
-| 1        | **#4 Code symbol nodes** (child table) | Highest leverage; unlocks deterministic code anchor retrieval                  |
-| 2        | **#5 `is_current` flag**               | Critical performance gap; affects every retrieval query                        |
-| 3        | **#6 Structural search mode**          | Closes code anchor lane; FTS5 tokenization breaks file paths                   |
-| 4        | **#7 Recency filter / sort**           | Lane 5 (freshness) is currently broken without this                            |
-| 5        | **#8 Multi-edge-type traversal**       | Lane 3 gap; currently requires N calls with broken depth accounting            |
-| 6        | **#3 Edge confidence**                 | Enables weighted traversal; simple schema addition                             |
-| 7        | **#1 Authority / review state**        | Real need, but design needs to resolve provenance vs. review-state split first |
-| 8        | **#10 Gap / orphan queries**           | "Open questions" capability; pure SQL, no agent logic                          |
-| 9        | **#11 Corpus field**                   | Prevents external knowledge pollution; low effort                              |
-| 10       | **#12 Contradiction tool**             | Useful; may be orchestration-layer pattern rather than new tool                |
-| —        | **#2 Validity windows**                | Drop — redundant with existing schema                                          |
-| —        | **#9 Authority filter**                | Follows from #1; add together or use tags                                      |
-| —        | **#3b Derivation mode**                | Defer — resolve overlap with #1 first                                          |
-| —        | **#13 Edge quality in traversal**      | Defer — depends on #3                                                          |
-| —        | **#14 Richer stats**                   | Nice-to-have, add last                                                         |
+### Phase 0 — Type System (decided)
+
+| Change                                    | Status     |
+| ----------------------------------------- | ---------- |
+| Remove `RELATED_TO`                       | ✅ Decided |
+| Remove `PART_OF`                          | ✅ Decided |
+| Remove `constraint` role                  | ✅ Decided |
+| Remove `concept` role                     | ✅ Decided |
+| Remove `code_pattern` role                | ✅ Decided |
+| Restore `technology` role (Artifact)      | ✅ Decided |
+| Collapse Source 4 roles → `source` + tags | ✅ Decided |
+| Keep all other 9 edges                    | ✅ Decided |
+| Keep all other remaining roles            | ✅ Decided |
+
+### Phase 1 — High Priority Additions
+
+| Priority | Idea                                | Reason                                                        |
+| -------- | ----------------------------------- | ------------------------------------------------------------- |
+| 1        | **Code symbol nodes** (child table) | Highest leverage; unlocks deterministic code anchor retrieval |
+| 2        | **`is_current` flag**               | Critical performance gap; affects every retrieval query       |
+| 3        | **Structural search mode**          | Closes code anchor lane; FTS5 tokenization breaks file paths  |
+| 4        | **Recency filter / sort**           | Lane 5 (freshness) currently broken without this              |
+| 5        | **Multi-edge-type traversal**       | Lane 3 gap; currently requires N separate calls               |
+
+### Phase 2 — Medium Priority
+
+| Priority | Idea                         | Reason                                                                 |
+| -------- | ---------------------------- | ---------------------------------------------------------------------- |
+| 6        | **Edge confidence**          | Enables weighted traversal; simple schema addition                     |
+| 7        | **Authority / review state** | Real need; design must resolve provenance vs. review-state split first |
+| 8        | **Gap / orphan queries**     | "Open questions" capability; pure SQL, no agent logic                  |
+| 9        | **Corpus field**             | Prevents external knowledge pollution; low effort                      |
+
+### Phase 3 — Lower Priority / Defer
+
+| Priority | Idea                           | Reason                                                       |
+| -------- | ------------------------------ | ------------------------------------------------------------ |
+| 10       | **Contradiction tool**         | May be an orchestration-layer pattern rather than a new tool |
+| —        | **Validity windows**           | Drop — redundant with existing schema                        |
+| —        | **Authority filter in search** | Follows from authority field; add together                   |
+| —        | **Edge derivation mode**       | Defer — resolve overlap with authority design first          |
+| —        | **Edge quality in traversal**  | Defer — depends on edge confidence                           |
+| —        | **Richer stats**               | Nice-to-have; add last                                       |
 
 ---
 
 ## Open Cross-Cutting Questions
 
 1. **Authority design** — Single `review_state` field, or two fields (`review_state` +
-   `provenance`)? Resolve before implementing Idea #1 or #3b.
+   `provenance`)? Resolve before implementing the authority idea or edge derivation mode.
 
 2. **Code symbol type** — New `code_symbol` role under `Source`, or a new sixth node type? Affects
-   type-role validation matrix.
+   the type-role validation matrix.
 
 3. **Schema migration** — v4 adds columns to `nodes` and `edges`, plus the `code_anchors` child
-   table. What's the migration path for existing databases? SQLite `ALTER TABLE ADD COLUMN` is safe
-   for additive changes; `code_anchors` table requires a new `CREATE TABLE`.
+   table. `ALTER TABLE ADD COLUMN` is safe for additive changes; `code_anchors` requires a new
+   `CREATE TABLE`. What's the migration strategy for existing databases?
 
-4. **`is_current` backfill** — When adding the flag to existing databases, all current head nodes
-   need to be identified and flagged correctly. Requires a one-time migration query traversing all
-   REPLACES edges.
+4. **`is_current` backfill** — Adding the flag to existing databases requires identifying all
+   current head nodes by traversing REPLACES edges. Needs a one-time migration query.
