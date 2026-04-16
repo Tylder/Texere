@@ -26,6 +26,10 @@
     "lint": "bash -lc 'set +e; oxlint; OX=$?; eslint .; ES=$?; if [ $OX -ne 0 ] || [ $ES -ne 0 ]; then exit 1; fi'",
     "lint:fix": "eslint . --fix && oxlint --fix",
     "quality": "bash -lc 'set +e; pnpm format:check; F=$?; pnpm lint; L=$?; pnpm typecheck; T=$?; pnpm test:unit; U=$?; if [ $F -ne 0 ] || [ $L -ne 0 ] || [ $T -ne 0 ] || [ $U -ne 0 ]; then exit 1; fi'",
+    "release:check": "node ./scripts/release-version.mjs check",
+    "release:tag:create": "node ./scripts/release-version.mjs create-tag",
+    "release:tag:print": "node ./scripts/release-version.mjs print-tag",
+    "release:tag:push": "node ./scripts/release-version.mjs create-tag --push",
     "test:integration": "turbo run test:integration",
     "test:unit": "turbo run test:unit",
     "typecheck": "turbo run typecheck"
