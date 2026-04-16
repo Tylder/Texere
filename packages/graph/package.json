@@ -1,6 +1,25 @@
 {
   "name": "@texere/graph",
   "version": "0.1.0",
+  "description": "Immutable SQLite-backed knowledge graph library with keyword, semantic, and hybrid retrieval.",
+  "keywords": [
+    "agent-memory",
+    "graph-database",
+    "knowledge-graph",
+    "retrieval",
+    "sqlite",
+    "texere",
+    "vector-search"
+  ],
+  "homepage": "https://github.com/Tylder/Texere",
+  "bugs": {
+    "url": "https://github.com/Tylder/Texere/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tylder/Texere.git",
+    "directory": "packages/graph"
+  },
   "license": "MIT",
   "sideEffects": false,
   "type": "module",
