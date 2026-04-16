@@ -1,242 +1,221 @@
 # Texere
 
-**Immutable knowledge graph and retrieval system for AI agents**
+Persistent knowledge-graph memory for AI agents, with an MCP server and a TypeScript library.
 
-Texere is a TypeScript infrastructure project for persistent agent memory.
+Texere gives agents a local, structured memory system instead of a flat note store. It combines
+typed graph storage, immutable history, keyword and semantic retrieval, graph traversal, and an MCP
+server that makes those capabilities available to agent clients.
 
-It combines a typed knowledge graph, SQLite-backed storage, full-text search, vector embeddings,
-hybrid retrieval, graph traversal, and an MCP tool surface for agent integration.
+## Why use Texere
 
-## Choose your path
-
-### I want to run an MCP server
-
-Start with [`apps/mcp/README.md`](apps/mcp/README.md) if you want to plug Texere into an MCP client
-such as Claude Desktop, Cursor, Cline, or VS Code-compatible tooling.
-
-### I want a TypeScript graph library
-
-Start with [`packages/graph/README.md`](packages/graph/README.md) if you want to use Texere directly
-from code without MCP.
-
-### I want the data model and design rules
-
-Start with [`packages/graph/README.md`](packages/graph/README.md) if you want the current graph
-model, API surface, and TypeScript usage details.
+- **Persistent local memory** backed by SQLite
+- **Immutable history** through replace-and-invalidate flows instead of in-place mutation
+- **Structured retrieval** with keyword, semantic, hybrid, and auto modes
+- **Graph traversal** for related-context exploration
+- **Two entry points**: `@texere/mcp` for MCP clients, `@texere/graph` for direct TypeScript use
 
 ## Quick start
 
-**Current status:** Texere is implemented and usable from this monorepo today. The release workflow
-is set up for npm publishing via GitHub tags, but `npx @texere/mcp` will only work after the first
-package release is published.
-
-### Fastest path after the first npm release
+Run the MCP server directly from npm:
 
 ```bash
-npx @texere/mcp --db-path ~/.texere/texere.db
+npx -y @texere/mcp
 ```
 
-### Run from source today
+Texere uses `.texere/texere.db` by default. Pass `--db-path /absolute/path/to/texere.db` only if you
+want a custom database location.
 
-If you are working from a local checkout today:
+If you want to work from source instead:
 
 ```bash
 git clone https://github.com/Tylder/Texere.git Texere
 cd Texere
 pnpm install
 pnpm build
-./apps/mcp/dist/index.js --db-path ~/.texere/texere.db
+./apps/mcp/dist/index.js
 ```
 
-## Client setup examples
+## Add Texere to your client
 
-Use an absolute `command` path unless your client explicitly documents relative resolution.
+The safest default for a published npm MCP package is `npx -y @texere/mcp`. Different clients use
+different config shapes, so the examples are grouped by config family.
 
-### Claude Desktop
+If you want a custom database location, add:
 
-```json
-{
-  "mcpServers": {
-    "texere": {
-      "command": "/path/to/texere/apps/mcp/dist/index.js",
-      "args": ["--db-path", "/absolute/path/to/.texere/texere.db"]
-    }
-  }
-}
-```
+- `--db-path`
+- followed by an absolute path to your database file
 
-### Cursor or Cline
+### Clients using `mcpServers`
 
-After the first npm release:
+Applies to:
+
+- Claude Code
+- Cline
+- Windsurf
 
 ```json
 {
   "mcpServers": {
     "texere": {
       "command": "npx",
-      "args": ["--yes", "@texere/mcp", "--db-path", "/absolute/path/to/.texere/texere.db"]
+      "args": ["-y", "@texere/mcp"]
     }
   }
 }
 ```
 
-Before the first npm release, use the built local executable path shown in the source-based
-quickstart instead of `npx`.
+With a custom database path:
 
-### VS Code-compatible local config
+```json
+{
+  "mcpServers": {
+    "texere": {
+      "command": "npx",
+      "args": ["-y", "@texere/mcp", "--db-path", "/absolute/path/to/texere.db"]
+    }
+  }
+}
+```
+
+Notes:
+
+- **Claude Code** uses `.mcp.json` or user-level Claude config.
+- **Cline** may also support extra fields such as `disabled`, `alwaysAllow`, or timeout controls.
+- **Windsurf** uses the same high-level `mcpServers` shape but stores config in a different file.
+
+### Clients using `servers`
+
+Applies to:
+
+- Cursor
+- VS Code / Copilot
 
 ```json
 {
   "servers": {
     "texere": {
-      "type": "stdio",
-      "command": "/path/to/texere/apps/mcp/dist/index.js",
-      "args": ["--db-path", "/absolute/path/to/.texere/texere.db"]
+      "command": "npx",
+      "args": ["-y", "@texere/mcp"]
     }
   }
 }
 ```
 
-For more client-oriented guidance, see [`apps/mcp/README.md`](apps/mcp/README.md).
+With a custom database path:
 
-## What Texere is
+```json
+{
+  "servers": {
+    "texere": {
+      "command": "npx",
+      "args": ["-y", "@texere/mcp", "--db-path", "/absolute/path/to/texere.db"]
+    }
+  }
+}
+```
 
-Texere gives agents a local, persistent memory system with explicit structure.
+Notes:
 
-Instead of storing arbitrary notes and hoping retrieval behaves well later, it stores typed nodes
-and edges, preserves history through immutable replacement, and exposes retrieval and graph
-operations through both a TypeScript library and an MCP server.
+- **Cursor** uses a `servers` root, not `mcpServers`.
+- **VS Code / Copilot** also uses `servers`; depending on the exact config mode you use, you may
+  want to add `"type": "stdio"`.
 
-If you want a concrete mental model: Texere is a small graph database and retrieval layer for agent
-workflows, designed to make memory, provenance, and search behavior easier to reason about.
+### Clients using TOML
+
+Applies to:
+
+- Codex
+
+```toml
+[mcp_servers.texere]
+command = "npx"
+args = ["-y", "@texere/mcp"]
+enabled = true
+```
+
+With a custom database path:
+
+```toml
+[mcp_servers.texere]
+command = "npx"
+args = ["-y", "@texere/mcp", "--db-path", "/absolute/path/to/texere.db"]
+enabled = true
+```
+
+### Claude Desktop
+
+Claude Desktop should be documented separately from Claude Code. Current Anthropic docs emphasize
+desktop extensions for local MCP integrations rather than lumping Desktop into the same raw config
+flow as Claude Code.
+
+## What Texere gives you
+
+### MCP server
+
+`@texere/mcp` exposes the graph through 15 MCP tools:
+
+- 5 typed store tools
+- node retrieval / replacement / invalidation
+- edge creation and deletion
+- search and traversal
+- about / stats / validation
+
+The actual registered tools are:
+
+- `texere_store_knowledge`
+- `texere_store_issue`
+- `texere_store_action`
+- `texere_store_artifact`
+- `texere_store_source`
+- `texere_get_node`
+- `texere_invalidate_node`
+- `texere_replace_node`
+- `texere_create_edge`
+- `texere_delete_edge`
+- `texere_search`
+- `texere_traverse`
+- `texere_about`
+- `texere_stats`
+- `texere_validate`
+
+### TypeScript library
+
+`@texere/graph` gives you the same graph model directly from code:
+
+- typed node and edge storage
+- immutable replacement semantics
+- keyword, semantic, hybrid, and auto retrieval
+- traversal with pagination
+- graph stats and validation helpers
+
+Install it with:
+
+```bash
+npm install @texere/graph
+```
+
+## Common use cases
+
+Use Texere when you want to:
+
+- store findings, decisions, constraints, and artifacts as durable agent memory
+- retrieve context with keyword, semantic, or hybrid search depending on the query
+- traverse related context instead of relying on flat note lookup
+- preserve history explicitly instead of mutating memory in place
+- expose the same graph model to MCP clients and TypeScript code
 
 ## Operating model
 
 - **Local-first**: Texere stores graph data in a local SQLite database.
-- **MCP over stdio**: the MCP server is a stdio process, not a hosted remote service.
-- **Persistent state**: data survives across runs in the database path you choose.
-- **Immutable history**: nodes are replaced and invalidated rather than updated in place.
-- **Two entry points**: use `@texere/mcp` for agent integration or `@texere/graph` for direct code.
+- **MCP over stdio**: the MCP server runs as a stdio process.
+- **Persistent state**: data survives between runs in the selected database path.
+- **Immutable history**: node changes are modeled as replacement and invalidation, not in-place
+  edits.
 
-## Why it exists
+## Package map
 
-Texere is built to make the reliability-sensitive parts explicit.
-
-- typed node and edge model to reduce ambiguity
-- immutable replacement model to preserve history
-- keyword, semantic, and hybrid retrieval for different query shapes
-- traversal-aware retrieval for connected context
-- MCP tools so the system is usable by real agent workflows, not just directly in code
-
-## Implemented today
-
-Texere is already implemented as two real surfaces in this repo:
-
-- [`packages/graph`](packages/graph/README.md) — the core graph library
-- [`apps/mcp`](apps/mcp/README.md) — the MCP server that exposes the graph to agents
-
-Current capabilities:
-
-- **5 node types, 20 roles, 11 edge types** with type-role constraint validation
-- **Immutable graph operations** through create, invalidate, and replace flows
-- **Atomic node+edge writes** with `temp_id` support for call-scoped references
-- **Keyword, semantic, hybrid, and auto-detected retrieval**
-- **Graph traversal and search+traverse** with cursor pagination
-- **18 MCP tools** for storage, retrieval, traversal, validation, and metadata
-- **Debounced embedding pipeline** for semantic search workloads
-- **Unit and integration tests** across the graph and MCP surfaces
-
-### Use as a library
-
-```typescript
-import { NodeRole, NodeType, Texere } from '@texere/graph';
-
-const main = async (): Promise<void> => {
-  const db = new Texere('./my-knowledge.db');
-
-  const decision = db.storeNode({
-    type: NodeType.Knowledge,
-    role: NodeRole.Decision,
-    title: 'Use SQLite with WAL mode',
-    content: 'Chosen for local-first durability and simple deployment.',
-    tags: ['database', 'architecture'],
-    importance: 0.9,
-    confidence: 0.95,
-  });
-
-  const results = await db.search({
-    query: 'database architecture decisions',
-    mode: 'hybrid',
-    limit: 10,
-  });
-
-  const neighbors = db.traverse({
-    startId: decision.id,
-    direction: 'outgoing',
-    maxDepth: 2,
-    limit: 25,
-  });
-
-  console.log(results.results.length, neighbors.results.length);
-  db.close();
-};
-
-void main();
-```
-
-For the detailed API and graph model, see [`packages/graph/README.md`](packages/graph/README.md).
-
-## Common workflows
-
-Use Texere when you want to:
-
-- store decisions, findings, constraints, and artifacts as typed graph nodes
-- retrieve context with keyword, semantic, or hybrid search depending on query shape
-- traverse related context instead of relying on flat note lookup
-- preserve history through immutable replacement instead of editing memory in place
-- expose that graph to MCP clients through a structured tool surface
-
-## MCP tool surface
-
-The MCP server exposes 18 tools across four groups:
-
-- **store tools** for typed node creation, including atomic node+edge writes with `temp_id`
-- **retrieval and mutation tools** for fetching, replacing, invalidating, and linking graph data
-- **search and graph tools** for keyword, semantic, hybrid, traversal, and search+traverse flows
-- **metadata and safety tools** for validation and database stats
-
-For the full tool list and package-level usage details, see
-[`apps/mcp/README.md`](apps/mcp/README.md).
-
-## Implemented vs evolving
-
-### Implemented now
-
-- core immutable graph storage
-- typed node, role, and edge validation
-- keyword, semantic, and hybrid retrieval
-- cursor-based pagination for search and traversal
-- MCP integration over stdio
-- test coverage across graph and MCP layers
-
-### Still evolving
-
-- public packaging and distribution beyond the monorepo workflow
-- broader documentation curation and architecture storytelling
-- future expansion areas described in deeper design and research docs
-
-This repo is meant to separate shipped capability from ongoing cleanup and future expansion.
-
-## Project structure
-
-```text
-texere/
-├── apps/
-│   └── mcp/               # MCP server over stdio
-├── packages/
-│   └── graph/             # Core graph library
-└── tooling/               # Shared lint and TS config
-```
+- [`apps/mcp/README.md`](apps/mcp/README.md) — MCP server usage and tool surface
+- [`packages/graph/README.md`](packages/graph/README.md) — graph library API and retrieval model
 
 ## Development
 
@@ -257,16 +236,6 @@ pnpm typecheck
 pnpm quality
 ```
 
-## Documentation guide
-
-- [README.md](README.md) — public overview and entry point
-- [apps/mcp/README.md](apps/mcp/README.md) — MCP server usage and tool surface
-- [packages/graph/README.md](packages/graph/README.md) — graph library API, model, and retrieval
-  behavior
-
-This public branch keeps the documentation surface intentionally small. Deeper working notes,
-experiments, and internal planning material are intentionally left out of the public landing path.
-
 ## Contributing and project policies
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) — development workflow and quality expectations
@@ -274,27 +243,6 @@ experiments, and internal planning material are intentionally left out of the pu
 - [SECURITY.md](SECURITY.md) — vulnerability reporting guidance
 - [CHANGELOG.md](CHANGELOG.md) — notable public-facing changes
 
-## Release workflow
-
-Texere uses an explicit release flow for npm publishing.
-
-1. Update package versions if needed.
-2. Push changes to the default branch as normal.
-3. Create and push a release tag such as `v0.1.0`.
-4. GitHub Actions publishes `@texere/graph` first, then `@texere/mcp`.
-5. The same workflow creates a GitHub Release for that tag with generated notes.
-
-Normal pushes do not publish to npm or create GitHub Releases.
-
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
-## Built with
-
-- [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
-- [sqlite-vec](https://github.com/asg017/sqlite-vec)
-- [Transformers.js](https://huggingface.co/docs/transformers.js)
-- [Model Context Protocol](https://modelcontextprotocol.io)
-- [Vitest](https://vitest.dev)
-- [Turbo](https://turbo.build)

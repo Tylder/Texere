@@ -13,18 +13,15 @@ embeddings, hybrid retrieval, and graph traversal.
 - keyword, semantic, and hybrid retrieval in one API
 - traversal and pagination for connected retrieval workflows
 
-**Current status:** this package is publish-ready from the monorepo, but it is not available through
-npm until the first release is published.
+**Current status:** this package is published and installable from npm.
 
 ## Install
-
-### After the first npm release
 
 ```bash
 npm install @texere/graph
 ```
 
-### From source today
+### From source (optional)
 
 From the repo root:
 
@@ -33,8 +30,7 @@ pnpm install
 pnpm build
 ```
 
-The package currently ships from this monorepo and is consumed locally through workspace wiring and
-the built `dist/` output.
+The package can also be used from a source checkout through the built `dist/` output.
 
 ## What it is
 
@@ -163,10 +159,14 @@ Texere is intentionally immutable at the node level.
 
 This keeps graph history explicit and makes changes easier to reason about in agent workflows.
 
+## Relationship to `@texere/mcp`
+
+Use `@texere/graph` when you want direct TypeScript access to the graph model and retrieval APIs.
+
+Use `@texere/mcp` when you want the same graph exposed as an MCP server for agent clients.
+
 ## Quality signals
 
 - unit and integration tests live alongside the source
 - real SQLite is used in tests instead of mocks
 - strict TypeScript, linting, and formatting are part of the default workflow
-
-That is the current supported public consumption path.
