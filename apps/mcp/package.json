@@ -1,27 +1,31 @@
 {
   "name": "@texere/mcp",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "texere-mcp": "./dist/index.js"
   },
   "files": [
     "dist",
-    "src"
+    "src/index.ts",
+    "src/server.ts",
+    "src/tools/*.ts",
+    "README.md"
   ],
   "scripts": {
     "build": "tsdown",
     "check-types": "pnpm typecheck",
     "dev": "tsdown --watch",
     "lint": "eslint .",
+    "prepublishOnly": "pnpm build",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "typecheck": "tsc -b tsconfig.json"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@texere/graph": "workspace:*",
+    "@texere/graph": "^0.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -32,5 +36,8 @@
     "tsdown": "0.20.3",
     "typescript": "5.9.3",
     "vitest": "4.0.18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
