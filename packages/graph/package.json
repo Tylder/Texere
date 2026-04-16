@@ -1,7 +1,26 @@
 {
   "name": "@texere/graph",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Immutable SQLite-backed knowledge graph library with keyword, semantic, and hybrid retrieval.",
+  "keywords": [
+    "agent-memory",
+    "graph-database",
+    "knowledge-graph",
+    "retrieval",
+    "sqlite",
+    "texere",
+    "vector-search"
+  ],
+  "homepage": "https://github.com/Tylder/Texere",
+  "bugs": {
+    "url": "https://github.com/Tylder/Texere/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tylder/Texere.git",
+    "directory": "packages/graph"
+  },
+  "license": "MIT",
   "sideEffects": false,
   "type": "module",
   "exports": {
@@ -16,12 +35,25 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "src"
+    "src/db.ts",
+    "src/edges.ts",
+    "src/embedder.ts",
+    "src/index.ts",
+    "src/nodes.ts",
+    "src/pagination.ts",
+    "src/replace-node.ts",
+    "src/sanitize.ts",
+    "src/schema.ts",
+    "src/search.ts",
+    "src/traverse.ts",
+    "src/types.ts",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.lib.json",
     "check-types": "pnpm typecheck",
     "lint": "eslint .",
+    "prepublishOnly": "pnpm build",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:unit:dev": "vitest --config vitest.unit.config.ts",
@@ -41,5 +73,8 @@
     "eslint": "9.39.2",
     "typescript": "5.9.3",
     "vitest": "4.0.18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

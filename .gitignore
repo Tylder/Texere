@@ -24,6 +24,8 @@ coverage/
 .vscode/
 *.swp
 *.swo
+.opencode/
+.sisyphus/
 
 # OS
 .DS_Store
