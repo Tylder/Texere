@@ -30,8 +30,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate repository
-        run: pnpm quality
+      - name: Validate release gate
+        run: |
+          pnpm format:check
+          pnpm lint
+          pnpm typecheck
+          pnpm --filter @texere/mcp test:unit
+          pnpm --filter @texere/mcp test:integration
+          pnpm --filter @texere/graph test:integration
 
       - name: Publish @texere/graph
         run: pnpm --filter @texere/graph publish --access public --no-git-checks
