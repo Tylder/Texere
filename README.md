@@ -21,8 +21,8 @@ from code without MCP.
 
 ### I want the data model and design rules
 
-Start with [`docs/v4-type-system.md`](docs/v4-type-system.md) if you want the current type-system
-reference and stable modeling rules.
+Start with [`packages/graph/README.md`](packages/graph/README.md) if you want the current graph
+model, API surface, and TypeScript usage details.
 
 ## Quick start
 
@@ -38,7 +38,7 @@ npx @texere/mcp --db-path ~/.texere/texere.db
 
 ### Run from source today
 
-If you already have access to the repo today:
+If you are working from a local checkout today:
 
 ```bash
 git clone https://github.com/Tylder/Texere.git Texere
@@ -235,8 +235,7 @@ texere/
 │   └── mcp/               # MCP server over stdio
 ├── packages/
 │   └── graph/             # Core graph library
-├── tooling/               # Shared lint and TS config
-└── docs/                  # Design docs, research, and implementation notes
+└── tooling/               # Shared lint and TS config
 ```
 
 ## Development
@@ -260,23 +259,13 @@ pnpm quality
 
 ## Documentation guide
 
-### Start here
-
 - [README.md](README.md) — public overview and entry point
-- [docs/README.md](docs/README.md) — documentation index and canonical vs archival guide
-- [packages/graph/README.md](packages/graph/README.md) — graph library API and retrieval model
 - [apps/mcp/README.md](apps/mcp/README.md) — MCP server usage and tool surface
+- [packages/graph/README.md](packages/graph/README.md) — graph library API, model, and retrieval
+  behavior
 
-### Core design docs
-
-- [docs/v4-type-system.md](docs/v4-type-system.md) — canonical type-system reference and stable
-  modeling rules
-
-### Internal and research-heavy material
-
-The `docs/research/` area plus design plans, benchmark notes, and draft documents are intentionally
-kept for deeper context. They are useful if you want implementation history and exploratory work,
-but they are not the recommended first path through the repo.
+This public branch keeps the documentation surface intentionally small. Deeper working notes,
+experiments, and internal planning material are intentionally left out of the public landing path.
 
 ## Contributing and project policies
 
