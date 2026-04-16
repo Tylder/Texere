@@ -146,13 +146,13 @@ export const validateTool: ToolDefinition<typeof inputSchema> = {
       if (sanitized.length === 0) continue;
 
       try {
-        const results = await db.search({ query: sanitized, mode: 'keyword', limit: 5 });
-        if (results.length > 0) {
+        const page = await db.search({ query: sanitized, mode: 'keyword', limit: 5 });
+        if (page.results.length > 0) {
           issues.push({
             severity: 'warning',
             item: 'node',
             index: i,
-            message: `Similar node exists: "${results[0]!.title}"`,
+            message: `Similar node exists: "${page.results[0]!.title}"`,
           });
         }
       } catch {

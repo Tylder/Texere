@@ -4,6 +4,7 @@ import { createDatabase } from './db.js';
 import {
   createEdge as createEdgeImpl,
   deleteEdge as deleteEdgeImpl,
+  deleteEdges as deleteEdgesImpl,
   getEdgesForNode as getEdgesForNodeImpl,
   type CreateEdgeInput,
   type CreateEdgeOptions,
@@ -13,7 +14,9 @@ import {
 import { Embedder } from './embedder.js';
 import {
   getNode as getNodeImpl,
+  getNodes as getNodesImpl,
   invalidateNode as invalidateNodeImpl,
+  invalidateNodes as invalidateNodesImpl,
   storeNode as storeNodeImpl,
   storeNodesWithEdges as storeNodesWithEdgesImpl,
   type GetNodeOptions,
@@ -33,10 +36,10 @@ import {
 } from './replace-node.js';
 import { detectSearchMode, search as searchImpl } from './search.js';
 import {
-  about as aboutImpl,
+  searchGraph as searchGraphImpl,
   stats as statsImpl,
   traverse as traverseImpl,
-  type AboutOptions,
+  type SearchGraphOptions,
   type Stats,
   type TraverseResult,
 } from './traverse.js';
@@ -48,6 +51,8 @@ import {
   type InlineEdgeInput,
   type Node,
   type NodeTag,
+  type PageInfo,
+  type PaginatedResults,
   type SearchMode,
   type SearchOptions,
   type SearchResult,
@@ -118,6 +123,10 @@ export class Texere {
     return getNodeImpl(this.db, id, options);
   }
 
+  getNodes(ids: string[], options?: GetNodeOptions): Array<Node | NodeWithEdges | null> {
+    return getNodesImpl(this.db, ids, options);
+  }
+
   /**
    * Mark a node as invalidated
    * @param id - Node ID to invalidate
@@ -125,6 +134,10 @@ export class Texere {
    */
   invalidateNode(id: string): void {
     invalidateNodeImpl(this.db, id);
+  }
+
+  invalidateNodes(ids: string[]): void {
+    invalidateNodesImpl(this.db, ids);
   }
 
   replaceNode(input: ReplaceNodeInput, options?: ReplaceNodeOptions & { minimal?: false }): Node;
@@ -164,6 +177,10 @@ export class Texere {
     return deleteEdgeImpl(this.db, id);
   }
 
+  deleteEdges(ids: string[]): boolean[] {
+    return deleteEdgesImpl(this.db, ids);
+  }
+
   /**
    * Get all edges for a node
    * @param nodeId - Node ID
@@ -174,7 +191,7 @@ export class Texere {
     return getEdgesForNodeImpl(this.db, nodeId, direction);
   }
 
-  async search(options: SearchOptions): Promise<SearchResult[]> {
+  async search(options: SearchOptions): Promise<PaginatedResults<SearchResult>> {
     const mode =
       options.mode && options.mode !== 'auto' ? options.mode : detectSearchMode(options.query);
 
@@ -192,7 +209,7 @@ export class Texere {
    * @param options - Traversal options
    * @returns Array of traverse results with depth information
    */
-  traverse(options: TraverseOptions): TraverseResult[] {
+  traverse(options: TraverseOptions): PaginatedResults<TraverseResult> {
     return traverseImpl(this.db, options);
   }
 
@@ -201,17 +218,17 @@ export class Texere {
    * @param options - Combined search and traversal options
    * @returns Array of traverse results with depth information
    */
-  async about(options: AboutOptions): Promise<TraverseResult[]> {
+  async searchGraph(options: SearchGraphOptions): Promise<PaginatedResults<TraverseResult>> {
     const mode =
       options.mode && options.mode !== 'auto' ? options.mode : detectSearchMode(options.query);
 
     if (mode === 'semantic' || mode === 'hybrid') {
       await this.embedder.flushPending();
       const queryEmbedding = await this.embedder.embed(options.query);
-      return aboutImpl(this.db, options, queryEmbedding);
+      return searchGraphImpl(this.db, options, queryEmbedding);
     }
 
-    return aboutImpl(this.db, options);
+    return searchGraphImpl(this.db, options);
   }
 
   /**
@@ -248,11 +265,13 @@ export type {
   MinimalEdge,
   EdgeDirection,
   SearchMode,
+  PageInfo,
+  PaginatedResults,
   SearchOptions,
   SearchResult,
   TraverseOptions,
   TraverseResult,
-  AboutOptions,
+  SearchGraphOptions,
   Stats,
   NodeTag,
 };

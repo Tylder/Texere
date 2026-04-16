@@ -1,9 +1,25 @@
 import type Database from 'better-sqlite3';
 
+import {
+  assertCursorScope,
+  buildPaginatedResults,
+  buildScope,
+  clampPageLimit,
+  decodeCursor,
+  isAfterCursor,
+  parseGraphCursor,
+} from './pagination.js';
 import { search } from './search.js';
-import type { AboutOptions, EdgeType, Node, SearchOptions, TraverseOptions } from './types.js';
+import type {
+  SearchGraphOptions,
+  EdgeType,
+  Node,
+  PaginatedResults,
+  SearchOptions,
+  TraverseOptions,
+} from './types.js';
 
-export type { AboutOptions } from './types.js';
+export type { SearchGraphOptions } from './types.js';
 
 type TraverseRow = Node & { depth: number };
 
@@ -24,8 +40,15 @@ export interface Stats {
   };
 }
 
+interface SearchGraphCandidate {
+  row: TraverseResult;
+  seedIndex: number;
+}
+
 const DEFAULT_MAX_DEPTH = 3;
 const MAX_DEPTH_CAP = 5;
+const DEFAULT_SEED_LIMIT = 100;
+const DEFAULT_MIN_SEED_RELEVANCE = 0.3;
 
 const toMaxDepth = (maxDepth: number | undefined): number => {
   if (maxDepth === undefined) {
@@ -93,7 +116,7 @@ const buildWalkSql = (
         n.confidence,
         n.created_at,
         n.invalidated_at
-      ORDER BY depth ASC, n.created_at ASC
+      ORDER BY depth ASC, n.created_at ASC, n.id ASC
     `;
   }
 
@@ -154,7 +177,7 @@ const buildWalkSql = (
         n.confidence,
         n.created_at,
         n.invalidated_at
-      ORDER BY depth ASC, n.created_at ASC
+      ORDER BY depth ASC, n.created_at ASC, n.id ASC
     `;
   }
 
@@ -199,11 +222,20 @@ const buildWalkSql = (
       n.confidence,
       n.created_at,
       n.invalidated_at
-    ORDER BY depth ASC, n.created_at ASC
+    ORDER BY depth ASC, n.created_at ASC, n.id ASC
   `;
 };
 
-export const traverse = (db: Database.Database, options: TraverseOptions): TraverseResult[] => {
+const buildTraverseScope = (options: TraverseOptions): string =>
+  buildScope({
+    endpoint: 'traverse',
+    start_id: options.startId,
+    direction: getDirection(options.direction),
+    max_depth: toMaxDepth(options.maxDepth),
+    edge_type: options.edgeType,
+  });
+
+const runTraverseRows = (db: Database.Database, options: TraverseOptions): TraverseRow[] => {
   const direction = getDirection(options.direction);
   const maxDepth = toMaxDepth(options.maxDepth);
   const hasEdgeType = options.edgeType !== undefined;
@@ -221,15 +253,129 @@ export const traverse = (db: Database.Database, options: TraverseOptions): Trave
   }
 
   const sql = buildWalkSql(direction, hasEdgeType);
-  const rows = db.prepare(sql).all(params) as TraverseRow[];
-  return toResults(rows);
+  return db.prepare(sql).all(params) as TraverseRow[];
 };
 
-export const about = (
+const paginateTraverseResults = (
+  results: TraverseResult[],
+  limit: number,
+  cursor: string | undefined,
+  scope: string,
+  mode?: 'keyword' | 'semantic' | 'hybrid',
+): PaginatedResults<TraverseResult> => {
+  const cursorValue = parseGraphCursor(cursor, scope);
+  const filtered = cursorValue
+    ? results.filter(
+        (row) =>
+          row.depth > cursorValue.depth ||
+          (row.depth === cursorValue.depth && row.node.created_at > cursorValue.created_at) ||
+          (row.depth === cursorValue.depth &&
+            row.node.created_at === cursorValue.created_at &&
+            row.node.id > cursorValue.id),
+      )
+    : results;
+
+  return buildPaginatedResults(
+    filtered,
+    limit,
+    'depth ASC, created_at ASC, id ASC',
+    (row): TraverseResult => row,
+    (row) => ({ depth: row.depth, created_at: row.node.created_at, id: row.node.id }),
+    scope,
+    mode,
+  );
+};
+
+const collectAllTraverseResults = (
   db: Database.Database,
-  options: AboutOptions,
+  options: TraverseOptions,
+): TraverseResult[] => toResults(runTraverseRows(db, options));
+
+const buildSearchGraphScope = (
+  options: SearchGraphOptions,
+  mode: 'keyword' | 'semantic' | 'hybrid',
+): string =>
+  buildScope({
+    endpoint: 'search_graph',
+    query: options.query.trim(),
+    mode,
+    type: Array.isArray(options.type) ? [...options.type].sort() : options.type,
+    role: options.role,
+    tags: options.tags ? [...options.tags].sort() : undefined,
+    tag_mode: options.tagMode ?? 'all',
+    min_importance: options.minImportance,
+    direction: getDirection(options.direction),
+    max_depth: toMaxDepth(options.maxDepth),
+    edge_type: options.edgeType,
+  });
+
+export const traverse = (
+  db: Database.Database,
+  options: TraverseOptions,
+): PaginatedResults<TraverseResult> => {
+  if (toMaxDepth(options.maxDepth) === 0) {
+    return {
+      results: [],
+      page: {
+        nextCursor: null,
+        hasMore: false,
+        returned: 0,
+        limit: clampPageLimit(options.limit),
+        order: 'depth ASC, created_at ASC, id ASC',
+      },
+    };
+  }
+
+  const rows = toResults(runTraverseRows(db, options));
+  const limit = clampPageLimit(options.limit);
+  const scope = buildTraverseScope(options);
+  return paginateTraverseResults(rows, limit, options.cursor, scope);
+};
+
+type SearchGraphCursor = { seedIndex: number; depth: number; created_at: number; id: string };
+
+const paginateSearchGraphResults = (
+  candidates: SearchGraphCandidate[],
+  limit: number,
+  cursor: string | undefined,
+  scope: string,
+  mode?: 'keyword' | 'semantic' | 'hybrid',
+): PaginatedResults<TraverseResult> => {
+  const filtered = cursor
+    ? (() => {
+        const parsed = decodeCursor<SearchGraphCursor>(cursor);
+        assertCursorScope(parsed.scope, scope);
+        const cv = parsed.last;
+        return candidates.filter((c) =>
+          isAfterCursor(
+            [c.seedIndex, c.row.depth, c.row.node.created_at, c.row.node.id],
+            [cv.seedIndex, cv.depth, cv.created_at, cv.id],
+          ),
+        );
+      })()
+    : candidates;
+
+  return buildPaginatedResults(
+    filtered,
+    limit,
+    'seedIndex ASC, depth ASC, created_at ASC, id ASC',
+    (c): TraverseResult => c.row,
+    (c): SearchGraphCursor => ({
+      seedIndex: c.seedIndex,
+      depth: c.row.depth,
+      created_at: c.row.node.created_at,
+      id: c.row.node.id,
+    }),
+    scope,
+    mode,
+  );
+};
+
+export const searchGraph = (
+  db: Database.Database,
+  options: SearchGraphOptions,
   queryEmbedding?: Float32Array,
-): TraverseResult[] => {
+): PaginatedResults<TraverseResult> => {
   const searchOptions: SearchOptions = { query: options.query };
   if (options.type !== undefined) {
     searchOptions.type = options.type;
@@ -239,9 +385,6 @@ export const about = (
   }
   if (options.minImportance !== undefined) {
     searchOptions.minImportance = options.minImportance;
-  }
-  if (options.limit !== undefined) {
-    searchOptions.limit = options.limit;
   }
   if (options.tagMode !== undefined) {
     searchOptions.tagMode = options.tagMode;
@@ -253,19 +396,37 @@ export const about = (
     searchOptions.mode = options.mode;
   }
 
-  const seeds = search(db, searchOptions, queryEmbedding);
+  const seedLimit = options.seedLimit ?? DEFAULT_SEED_LIMIT;
+  const seedPage = search(db, { ...searchOptions, limit: seedLimit }, queryEmbedding);
+  const minRelevance = options.minSeedRelevance ?? DEFAULT_MIN_SEED_RELEVANCE;
+  const topScore = seedPage.results[0]?.match_quality ?? 0;
+  const threshold = topScore * minRelevance;
+  const seeds = seedPage.results.filter((s) => s.match_quality >= threshold);
 
   if (seeds.length === 0) {
-    return [];
+    return {
+      results: [],
+      page: {
+        nextCursor: null,
+        hasMore: false,
+        returned: 0,
+        limit: clampPageLimit(options.limit),
+        order: 'seedIndex ASC, depth ASC, created_at ASC, id ASC',
+      },
+    };
   }
 
-  const byNodeId = new Map<string, TraverseResult>();
+  const byNodeId = new Map<string, SearchGraphCandidate>();
 
-  for (const seed of seeds) {
-    byNodeId.set(seed.id, { node: seed, depth: 0 });
+  for (const [seedIndex, seed] of seeds.entries()) {
+    byNodeId.set(seed.id, { row: { node: seed, depth: 0 }, seedIndex });
   }
 
-  for (const seed of seeds) {
+  for (const [seedIndex, seed] of seeds.entries()) {
+    if (toMaxDepth(options.maxDepth) === 0) {
+      continue;
+    }
+
     const traverseOptions: TraverseOptions = { startId: seed.id };
     if (options.direction !== undefined) {
       traverseOptions.direction = options.direction;
@@ -277,23 +438,38 @@ export const about = (
       traverseOptions.edgeType = options.edgeType;
     }
 
-    const neighbors = traverse(db, traverseOptions);
+    const neighbors = collectAllTraverseResults(db, traverseOptions);
 
     for (const row of neighbors) {
       const existing = byNodeId.get(row.node.id);
-      if (!existing || row.depth < existing.depth) {
-        byNodeId.set(row.node.id, row);
+      if (!existing || row.depth < existing.row.depth) {
+        byNodeId.set(row.node.id, { row, seedIndex });
+        continue;
+      }
+
+      if (row.depth === existing.row.depth && seedIndex < existing.seedIndex) {
+        byNodeId.set(row.node.id, { row, seedIndex });
       }
     }
   }
 
-  return Array.from(byNodeId.values()).sort((left, right) => {
-    if (left.depth !== right.depth) {
-      return left.depth - right.depth;
+  const sorted = Array.from(byNodeId.values()).sort((left, right) => {
+    if (left.seedIndex !== right.seedIndex) {
+      return left.seedIndex - right.seedIndex;
     }
-
-    return left.node.created_at - right.node.created_at;
+    if (left.row.depth !== right.row.depth) {
+      return left.row.depth - right.row.depth;
+    }
+    if (left.row.node.created_at !== right.row.node.created_at) {
+      return left.row.node.created_at - right.row.node.created_at;
+    }
+    return left.row.node.id.localeCompare(right.row.node.id);
   });
+
+  const searchGraphMode = seeds[0]!.search_mode === 'auto' ? 'keyword' : seeds[0]!.search_mode;
+  const limit = clampPageLimit(options.limit);
+  const scope = buildSearchGraphScope(options, searchGraphMode);
+  return paginateSearchGraphResults(sorted, limit, options.cursor, scope, searchGraphMode);
 };
 
 export const stats = (db: Database.Database): Stats => {

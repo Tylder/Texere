@@ -105,6 +105,29 @@ describe('Texere facade', () => {
       expect(retrieved?.id).toBe(created.id);
     });
 
+    it('getNodes() delegates to internal module', () => {
+      const node1 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 1',
+        content: 'Content 1',
+      });
+      const node2 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 2',
+        content: 'Content 2',
+      });
+
+      const retrieved = db.getNodes([node1.id, 'missing-id', node2.id, node1.id]);
+
+      expect(retrieved).toHaveLength(4);
+      expect(retrieved[0]?.id).toBe(node1.id);
+      expect(retrieved[1]).toBeNull();
+      expect(retrieved[2]?.id).toBe(node2.id);
+      expect(retrieved[3]?.id).toBe(node1.id);
+    });
+
     it('invalidateNode() delegates to internal module', () => {
       const node = db.storeNode({
         type: NodeType.Action,
@@ -117,6 +140,26 @@ describe('Texere facade', () => {
 
       const retrieved = db.getNode(node.id);
       expect(retrieved?.invalidated_at).not.toBeNull();
+    });
+
+    it('invalidateNodes() delegates to internal module', () => {
+      const node1 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 1',
+        content: 'Content 1',
+      });
+      const node2 = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 2',
+        content: 'Content 2',
+      });
+
+      db.invalidateNodes([node1.id, node2.id]);
+
+      expect(db.getNode(node1.id)?.invalidated_at).not.toBeNull();
+      expect(db.getNode(node2.id)?.invalidated_at).not.toBeNull();
     });
 
     it('replaceNode() delegates to internal module', () => {
@@ -229,6 +272,29 @@ describe('Texere facade', () => {
       expect(deleted).toBe(true);
     });
 
+    it('deleteEdges() delegates to internal module', () => {
+      const source = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task',
+        content: 'Content',
+      });
+      const target = db.storeNode({
+        type: NodeType.Action,
+        role: NodeRole.Task,
+        title: 'Task 2',
+        content: 'Content 2',
+      });
+
+      const edge = db.createEdge({
+        source_id: source.id,
+        target_id: target.id,
+        type: EdgeType.BasedOn,
+      });
+
+      expect(db.deleteEdges([edge.id, 'missing-edge'])).toEqual([true, false]);
+    });
+
     it('getEdgesForNode() delegates to internal module', () => {
       const source = db.storeNode({
         type: NodeType.Action,
@@ -265,9 +331,9 @@ describe('Texere facade', () => {
         content: 'Implement JWT auth',
       });
 
-      const results = await db.search({ query: 'authentication', mode: 'keyword' });
-      expect(results.length).toBeGreaterThan(0);
-      expect(results[0].title).toContain('Authentication');
+      const page = await db.search({ query: 'authentication', mode: 'keyword' });
+      expect(page.results.length).toBeGreaterThan(0);
+      expect(page.results[0].title).toContain('Authentication');
     });
 
     it('traverse() delegates to internal module', () => {
@@ -291,12 +357,12 @@ describe('Texere facade', () => {
         type: EdgeType.BasedOn,
       });
 
-      const results = db.traverse({ startId: node1.id, direction: 'outgoing' });
-      expect(results).toHaveLength(1);
-      expect(results[0].node.id).toBe(node2.id);
+      const page = db.traverse({ startId: node1.id, direction: 'outgoing' });
+      expect(page.results).toHaveLength(1);
+      expect(page.results[0].node.id).toBe(node2.id);
     });
 
-    it('about() delegates to internal module', async () => {
+    it('searchGraph() delegates to internal module', async () => {
       const problem = db.storeNode({
         type: NodeType.Issue,
         role: NodeRole.Problem,
@@ -317,8 +383,8 @@ describe('Texere facade', () => {
         type: EdgeType.Resolves,
       });
 
-      const results = await db.about({ query: 'auth', mode: 'keyword' });
-      expect(results.length).toBeGreaterThan(0);
+      const page = await db.searchGraph({ query: 'auth', mode: 'keyword' });
+      expect(page.results.length).toBeGreaterThan(0);
     });
 
     it('stats() delegates to internal module', () => {
@@ -568,7 +634,7 @@ describe('Texere facade', () => {
 
       // Should not throw and should return results
       expect(results).toBeDefined();
-      expect(Array.isArray(results)).toBe(true);
+      expect(Array.isArray(results.results)).toBe(true);
     });
 
     it('hybrid search triggers embedding flush', async () => {
@@ -584,7 +650,7 @@ describe('Texere facade', () => {
 
       // Should not throw and should return results
       expect(results).toBeDefined();
-      expect(Array.isArray(results)).toBe(true);
+      expect(Array.isArray(results.results)).toBe(true);
     });
 
     it('keyword search does not trigger embedding flush', async () => {
@@ -599,10 +665,10 @@ describe('Texere facade', () => {
       const results = await db.search({ query: 'database', mode: 'keyword' });
 
       expect(results).toBeDefined();
-      expect(Array.isArray(results)).toBe(true);
+      expect(Array.isArray(results.results)).toBe(true);
     });
 
-    it('about() with semantic mode triggers embedding flush', async () => {
+    it('searchGraph() with semantic mode triggers embedding flush', async () => {
       db.storeNode({
         type: NodeType.Action,
         role: NodeRole.Task,
@@ -610,11 +676,11 @@ describe('Texere facade', () => {
         content: 'Add rate limiting',
       });
 
-      // About with semantic mode should trigger flush
-      const results = await db.about({ query: 'security', mode: 'semantic' });
+      // searchGraph with semantic mode should trigger flush
+      const results = await db.searchGraph({ query: 'security', mode: 'semantic' });
 
       expect(results).toBeDefined();
-      expect(Array.isArray(results)).toBe(true);
+      expect(Array.isArray(results.results)).toBe(true);
     });
   });
 });

@@ -5,8 +5,39 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createDatabase } from './db.js';
 import { createEdge } from './edges.js';
 import { invalidateNode, storeNode, type StoreNodeInput } from './nodes.js';
-import { search } from './search.js';
+import { detectSearchMode, search } from './search.js';
 import { EdgeType, NodeRole, NodeType } from './types.js';
+
+const searchResults = (
+  db: Database.Database,
+  options: Parameters<typeof search>[1],
+  queryEmbedding?: Float32Array,
+) => search(db, options, queryEmbedding).results;
+
+const collectSearchPages = (
+  db: Database.Database,
+  options: Parameters<typeof search>[1],
+  queryEmbedding?: Float32Array,
+) => {
+  const all: ReturnType<typeof search>['results'] = [];
+  let cursor = options.cursor;
+
+  while (true) {
+    const page = search(
+      db,
+      {
+        ...options,
+        ...(cursor ? { cursor } : {}),
+      },
+      queryEmbedding,
+    );
+    all.push(...page.results);
+    if (!page.page.hasMore || !page.page.nextCursor) {
+      return all;
+    }
+    cursor = page.page.nextCursor;
+  }
+};
 
 const store = (db: Database.Database, overrides: Partial<StoreNodeInput> = {}) =>
   storeNode(db, {
@@ -53,7 +84,7 @@ describe('search', () => {
       tags: ['database'],
     });
 
-    const results = search(db, { query: 'SQLite' });
+    const results = searchResults(db, { query: 'SQLite' });
     expect(results).toHaveLength(1);
 
     const r = results[0]!;
@@ -66,6 +97,70 @@ describe('search', () => {
     expect(r.match_fields.length).toBeGreaterThan(0);
     expect(r.relationships).toHaveProperty('incoming');
     expect(r.relationships).toHaveProperty('outgoing');
+  });
+
+  it('finds node when query term appears only in tags', () => {
+    store(db, {
+      title: 'Storage overview',
+      content: 'General storage discussion.',
+      tags: ['redis'],
+    });
+
+    const results = searchResults(db, { query: 'redis' });
+    expect(results).toHaveLength(1);
+  });
+
+  it('finds node when query terms are split across title and tags', () => {
+    store(db, { title: 'Caching strategy', content: 'How to cache data.', tags: ['redis'] });
+
+    const results = searchResults(db, { query: 'redis caching' });
+    expect(results).toHaveLength(1);
+  });
+
+  it('finds node when query terms are split across content and tags', () => {
+    store(db, { title: 'Infrastructure plan', content: 'Set up caching layer.', tags: ['redis'] });
+
+    const results = searchResults(db, { query: 'redis caching' });
+    expect(results).toHaveLength(1);
+  });
+
+  it('does not find node when one query term is missing from all columns', () => {
+    store(db, { title: 'Database options', content: 'Various storage backends.', tags: ['redis'] });
+
+    const results = searchResults(db, { query: 'redis caching' });
+    expect(results).toHaveLength(0);
+  });
+
+  it('finds all nodes matching across different column combinations', () => {
+    store(db, { title: 'Redis caching', content: 'In-memory store.', tags: ['performance'] });
+    store(db, { title: 'Performance tuning', content: 'Use caching for speed.', tags: ['redis'] });
+    store(db, { title: 'Speed improvements', content: 'Redis helps.', tags: ['caching'] });
+    store(db, { title: 'Unrelated', content: 'Nothing relevant here.', tags: ['database'] });
+
+    const results = searchResults(db, { query: 'redis caching' });
+    expect(results).toHaveLength(3);
+  });
+
+  it('keyword match_quality increases with stronger BM25 rank', () => {
+    store(db, {
+      title: 'Redis caching strategy',
+      content: 'Redis provides fast in-memory caching for session data.',
+      tags: ['redis', 'caching'],
+    });
+    store(db, {
+      title: 'Caching overview',
+      content: 'Redis is one option among many caching backends.',
+      tags: ['database'],
+    });
+
+    const results = searchResults(db, { query: 'Redis caching' });
+    expect(results.length).toBeGreaterThanOrEqual(2);
+
+    const better = results[0]!;
+    const worse = results[1]!;
+
+    expect(better.rank).toBeLessThan(worse.rank);
+    expect(better.match_quality).toBeGreaterThan(worse.match_quality);
   });
 
   it('returns nodes matching title/content/tags via BM25', () => {
@@ -88,7 +183,7 @@ describe('search', () => {
       tags: ['SQLite', 'db'],
     });
 
-    const results = search(db, { query: 'SQLite' });
+    const results = searchResults(db, { query: 'SQLite' });
     const ids = new Set(results.map((n) => n.id));
 
     expect(ids.has(titleMatch.id)).toBe(true);
@@ -108,7 +203,7 @@ describe('search', () => {
       tags: ['SQLite'],
     });
 
-    const results = search(db, { query: 'SQLite' });
+    const results = searchResults(db, { query: 'SQLite' });
 
     expect(results).toHaveLength(2);
     expect(results[0]!.id).toBe(strongest.id);
@@ -129,7 +224,7 @@ describe('search', () => {
       tags: ['db'],
     });
 
-    const results = search(db, { query: 'SQLite', type: NodeType.Knowledge });
+    const results = searchResults(db, { query: 'SQLite', type: NodeType.Knowledge });
 
     expect(results).toHaveLength(1);
     expect(results[0]!.id).toBe(decision.id);
@@ -152,7 +247,7 @@ describe('search', () => {
       tags: ['db'],
     });
 
-    const results = search(db, {
+    const results = searchResults(db, {
       query: 'SQLite',
       type: [NodeType.Knowledge, NodeType.Action],
     });
@@ -162,6 +257,93 @@ describe('search', () => {
     expect(types.has(NodeType.Knowledge)).toBe(true);
     expect(types.has(NodeType.Action)).toBe(true);
     expect(types.has(NodeType.Issue)).toBe(false);
+  });
+
+  it('filters by role', () => {
+    const finding = store(db, {
+      role: NodeRole.Finding,
+      title: 'SQLite field notes',
+      content: 'Observed SQLite locking under write load.',
+      tags: ['db'],
+    });
+    store(db, {
+      role: NodeRole.Decision,
+      title: 'SQLite decision log',
+      content: 'Selected SQLite for local persistence.',
+      tags: ['db'],
+    });
+
+    const results = searchResults(db, { query: 'SQLite', role: NodeRole.Finding });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.id).toBe(finding.id);
+    expect(results[0]!.role).toBe(NodeRole.Finding);
+  });
+
+  it('supports composite type, role, tags, and minimum-importance filters together', () => {
+    const matching = store(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'SQLite auth design',
+      content: 'SQLite auth design for offline token storage.',
+      tags: ['auth', 'db'],
+      importance: 0.9,
+    });
+    store(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Finding,
+      title: 'SQLite auth findings',
+      content: 'Observed auth storage behavior.',
+      tags: ['auth', 'db'],
+      importance: 0.95,
+    });
+    store(db, {
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      title: 'SQLite auth draft',
+      content: 'Low-priority auth design note.',
+      tags: ['auth'],
+      importance: 0.5,
+    });
+    store(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'SQLite auth implementation',
+      content: 'Implementation task for auth storage.',
+      tags: ['auth', 'db'],
+      importance: 0.95,
+    });
+
+    const results = searchResults(db, {
+      query: 'SQLite auth',
+      type: NodeType.Knowledge,
+      role: NodeRole.Decision,
+      tags: ['auth', 'db'],
+      minImportance: 0.8,
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.id).toBe(matching.id);
+  });
+
+  it('treats an empty type array as no type filter', () => {
+    const knowledge = store(db, {
+      title: 'SQLite knowledge note',
+      content: 'Knowledge entry for SQLite.',
+      tags: ['db'],
+    });
+    const solution = store(db, {
+      type: NodeType.Action,
+      role: NodeRole.Solution,
+      title: 'SQLite solution note',
+      content: 'Action entry for SQLite.',
+      tags: ['db'],
+    });
+
+    const results = searchResults(db, { query: 'SQLite', type: [] });
+    const ids = new Set(results.map((row) => row.id));
+
+    expect(ids).toEqual(new Set([knowledge.id, solution.id]));
   });
 
   it('filters by tag via node_tags join', () => {
@@ -176,7 +358,7 @@ describe('search', () => {
       tags: ['storage'],
     });
 
-    const results = search(db, { query: 'SQLite', tags: ['db'] });
+    const results = searchResults(db, { query: 'SQLite', tags: ['db'] });
 
     expect(results).toHaveLength(1);
     expect(results[0]!.id).toBe(withTag.id);
@@ -202,7 +384,7 @@ describe('search', () => {
       tags: ['memcached'],
     });
 
-    const results = search(db, { query: 'caching', tags: ['redis', 'sql'], tagMode: 'any' });
+    const results = searchResults(db, { query: 'caching', tags: ['redis', 'sql'], tagMode: 'any' });
 
     expect(results).toHaveLength(2);
     const ids = new Set(results.map((r) => r.id));
@@ -224,7 +406,7 @@ describe('search', () => {
       tags: ['redis'],
     });
 
-    const results = search(db, { query: 'Redis', tags: ['redis', 'sql'], tagMode: 'all' });
+    const results = searchResults(db, { query: 'Redis', tags: ['redis', 'sql'], tagMode: 'all' });
 
     expect(results).toHaveLength(1);
     expect(results[0]!.id).toBe(both.id);
@@ -244,7 +426,7 @@ describe('search', () => {
       importance: 0.6,
     });
 
-    const results = search(db, { query: 'SQLite', minImportance: 0.7 });
+    const results = searchResults(db, { query: 'SQLite', minImportance: 0.7 });
 
     expect(results).toHaveLength(1);
     expect(results[0]!.id).toBe(important.id);
@@ -255,7 +437,7 @@ describe('search', () => {
       store(db, { title: `SQLite note ${i}`, content: 'FTS5 content', tags: ['db'] });
     }
 
-    const results = search(db, { query: 'SQLite', limit: 5 });
+    const results = searchResults(db, { query: 'SQLite', limit: 5 });
 
     expect(results).toHaveLength(5);
   });
@@ -274,7 +456,7 @@ describe('search', () => {
 
     invalidateNode(db, inv.id);
 
-    const results = search(db, { query: 'SQLite' });
+    const results = searchResults(db, { query: 'SQLite' });
     const ids = new Set(results.map((n) => n.id));
 
     expect(ids.has(valid.id)).toBe(true);
@@ -295,7 +477,7 @@ describe('search', () => {
       tags: ['search'],
     });
 
-    const results = search(db, { query: '"exact phrase"' });
+    const results = searchResults(db, { query: '"exact phrase"' });
     expect(results).toHaveLength(1);
     expect(results[0]!.id).toBe(phraseMatch.id);
   });
@@ -314,7 +496,7 @@ describe('search', () => {
       tags: ['test'],
     });
 
-    const results = search(db, { query: 'foo OR bar' });
+    const results = searchResults(db, { query: 'foo OR bar' });
     const ids = new Set(results.map((r) => r.id));
     expect(ids.has(foo.id)).toBe(true);
     expect(ids.has(bar.id)).toBe(true);
@@ -328,14 +510,14 @@ describe('search', () => {
       tags: ['database'],
     });
 
-    expect(() => search(db, { query: 'better-sqlite3' })).not.toThrow();
-    const results = search(db, { query: 'better-sqlite3' });
+    expect(() => searchResults(db, { query: 'better-sqlite3' })).not.toThrow();
+    const results = searchResults(db, { query: 'better-sqlite3' });
     expect(results).toHaveLength(1);
     expect(results[0]!.id).toBe(node.id);
   });
 
   it('returns empty array on empty database', () => {
-    expect(search(db, { query: 'SQLite' })).toEqual([]);
+    expect(searchResults(db, { query: 'SQLite' })).toEqual([]);
   });
 
   it('ranks title/content match higher than tags-only match', () => {
@@ -350,7 +532,7 @@ describe('search', () => {
       tags: ['SQLite'],
     });
 
-    const results = search(db, { query: 'SQLite' });
+    const results = searchResults(db, { query: 'SQLite' });
 
     expect(results).toHaveLength(2);
     expect(results[0]!.id).toBe(titleAndContent.id);
@@ -369,7 +551,7 @@ describe('search', () => {
       tags: ['security'],
     });
 
-    const results = search(db, { query: 'authentication' });
+    const results = searchResults(db, { query: 'authentication' });
 
     expect(results).toHaveLength(2);
     expect(results[0]!.id).toBe(exactTitle.id);
@@ -388,7 +570,7 @@ describe('search', () => {
       tags: ['redis'],
     });
 
-    const results = search(db, { query: 'Redis' });
+    const results = searchResults(db, { query: 'Redis' });
 
     expect(results).toHaveLength(2);
     expect(results[0]!.id).toBe(multiField.id);
@@ -411,7 +593,11 @@ describe('search', () => {
     storeEmbedding(db, closest.id, embeddingOf(1, 0));
     storeEmbedding(db, farther.id, embeddingOf(0, 1));
 
-    const results = search(db, { query: 'auth tokens', mode: 'semantic' }, embeddingOf(1, 0));
+    const results = searchResults(
+      db,
+      { query: 'auth tokens', mode: 'semantic' },
+      embeddingOf(1, 0),
+    );
 
     expect(results).toHaveLength(2);
     expect(results[0]!.id).toBe(closest.id);
@@ -442,7 +628,7 @@ describe('search', () => {
     storeEmbedding(db, keywordOnly.id, embeddingOf(0, 1));
     storeEmbedding(db, semanticOnly.id, embeddingOf(0.9, 0.1));
 
-    const results = search(db, { query: 'JWT session', mode: 'hybrid' }, embeddingOf(1, 0));
+    const results = searchResults(db, { query: 'JWT session', mode: 'hybrid' }, embeddingOf(1, 0));
 
     // dualSignal should rank first (matches both keyword and semantic)
     expect(results[0]!.id).toBe(dualSignal.id);
@@ -457,7 +643,7 @@ describe('search', () => {
       tags: ['architecture'],
     });
 
-    const results = search(db, { query: 'SQLite' });
+    const results = searchResults(db, { query: 'SQLite' });
     expect(results).toHaveLength(1);
     expect(results[0]!.match_fields).toContain('title');
     expect(results[0]!.match_fields).not.toContain('content');
@@ -483,7 +669,7 @@ describe('search', () => {
       type: EdgeType.Resolves,
     });
 
-    const results = search(db, { query: 'SQLite' });
+    const results = searchResults(db, { query: 'SQLite' });
     const found = results.find((r) => r.id === decision.id)!;
     expect(found.relationships.incoming).toHaveLength(1);
     expect(found.relationships.incoming[0]!.type).toBe(EdgeType.Resolves);
@@ -503,14 +689,14 @@ describe('search', () => {
       tags: ['sql'],
     });
 
-    const results = search(db, { query: '', tags: ['redis'] });
+    const results = searchResults(db, { query: '', tags: ['redis'] });
     expect(results).toHaveLength(1);
     expect(results[0]!.id).toBe(tagged.id);
   });
 
   it('returns empty array for empty query with no filters', () => {
     store(db, { title: 'Some node', content: 'Some content.', tags: ['test'] });
-    expect(search(db, { query: '' })).toEqual([]);
+    expect(searchResults(db, { query: '' })).toEqual([]);
   });
 
   it('semantic mode finds vocabulary-mismatched content', () => {
@@ -532,7 +718,7 @@ describe('search', () => {
     storeEmbedding(db, authNode.id, embeddingOf(0, 1));
     storeEmbedding(db, unrelatedNode.id, embeddingOf(1, 0));
 
-    const results = search(
+    const results = searchResults(
       db,
       { query: 'session management approach', mode: 'semantic' },
       embeddingOf(0, 1),
@@ -565,7 +751,7 @@ describe('search', () => {
     storeEmbedding(db, keywordOnlyNode.id, embeddingOf(0, 1));
     storeEmbedding(db, semanticOnlyNode.id, embeddingOf(0.9, 0.1));
 
-    const results = search(db, { query: 'JWT session', mode: 'hybrid' }, embeddingOf(1, 0));
+    const results = searchResults(db, { query: 'JWT session', mode: 'hybrid' }, embeddingOf(1, 0));
 
     expect(results[0]?.id).toBe(bothNode.id);
     expect(results[0]?.search_mode).toBe('hybrid');
@@ -579,7 +765,7 @@ describe('search', () => {
       tags: ['auth'],
     });
 
-    const results = search(db, { query: 'JWT' });
+    const results = searchResults(db, { query: 'JWT' });
 
     expect(results[0]?.id).toBe(jwtNode.id);
     expect(results[0]?.search_mode).toBe('keyword');
@@ -596,10 +782,281 @@ describe('search', () => {
 
     storeEmbedding(db, authNode.id, embeddingOf(0, 1));
 
-    const results = search(db, { query: 'How does session management work?' }, embeddingOf(0, 1));
+    const results = searchResults(
+      db,
+      { query: 'How does session management work?' },
+      embeddingOf(0, 1),
+    );
 
     expect(results).toHaveLength(1);
     expect(results[0]!.id).toBe(authNode.id);
     expect(results[0]!.search_mode).toBe('semantic');
+  });
+
+  it('auto mode detects hybrid for multi-word lowercase queries', () => {
+    const node = store(db, {
+      title: 'Redis caching strategy',
+      content: 'Use Redis as the caching layer for auth sessions.',
+      tags: ['redis', 'cache'],
+    });
+
+    storeEmbedding(db, node.id, embeddingOf(1, 0));
+
+    const results = searchResults(db, { query: 'redis caching' }, embeddingOf(1, 0));
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.id).toBe(node.id);
+    expect(results[0]!.search_mode).toBe('hybrid');
+  });
+
+  it('returns page metadata and advances with cursor for keyword search', () => {
+    for (let i = 0; i < 4; i += 1) {
+      store(db, {
+        title: `SQLite page ${i}`,
+        content: 'paged keyword result',
+        tags: ['db'],
+      });
+    }
+
+    const page1 = search(db, { query: 'SQLite', limit: 2 });
+    expect(page1.results).toHaveLength(2);
+    expect(page1.page.hasMore).toBe(true);
+    expect(page1.page.nextCursor).not.toBeNull();
+
+    const page2 = search(db, {
+      query: 'SQLite',
+      limit: 2,
+      cursor: page1.page.nextCursor!,
+    });
+
+    const ids = new Set([...page1.results, ...page2.results].map((row) => row.id));
+    expect(ids.size).toBe(4);
+    expect(page2.page.hasMore).toBe(false);
+    expect(page2.page.nextCursor).toBeNull();
+  });
+
+  it('rejects cursor reuse with a different search scope', () => {
+    store(db, { title: 'SQLite cursor scope', content: 'scope test', tags: ['db'] });
+    store(db, { title: 'SQLite cursor scope two', content: 'scope test', tags: ['db'] });
+
+    const page = search(db, { query: 'SQLite', limit: 1 });
+    expect(page.page.hasMore).toBe(true);
+    expect(page.page.nextCursor).not.toBeNull();
+
+    expect(() =>
+      search(db, {
+        query: 'different query',
+        limit: 1,
+        cursor: page.page.nextCursor!,
+      }),
+    ).toThrow('Cursor does not match the current request');
+  });
+
+  it('rejects malformed search cursors', () => {
+    store(db, { title: 'SQLite malformed cursor', content: 'scope test', tags: ['db'] });
+
+    expect(() =>
+      search(db, { query: 'SQLite', limit: 1, cursor: 'definitely-not-base64' }),
+    ).toThrow('Invalid cursor');
+  });
+
+  it('keeps keyword pagination stable when BM25 ranks tie', () => {
+    for (let i = 0; i < 3; i += 1) {
+      store(db, {
+        title: 'Same rank title',
+        content: 'Same rank content',
+        tags: ['tie'],
+      });
+    }
+
+    const page1 = search(db, { query: 'Same', limit: 2 });
+    const repeatedPage1 = search(db, { query: 'Same', limit: 2 });
+    expect(page1.page.hasMore).toBe(true);
+    expect(page1.page.nextCursor).not.toBeNull();
+
+    const page2 = search(db, { query: 'Same', limit: 2, cursor: page1.page.nextCursor! });
+
+    expect(page1.results.map((row) => row.id)).toEqual(repeatedPage1.results.map((row) => row.id));
+    const ids = new Set([...page1.results, ...page2.results].map((row) => row.id));
+    expect(ids.size).toBe(3);
+  });
+
+  it('keeps semantic match_quality stable across page boundaries', () => {
+    const first = store(db, { title: 'Auth one', content: 'semantic page one', tags: ['auth'] });
+    const second = store(db, { title: 'Auth two', content: 'semantic page two', tags: ['auth'] });
+    const third = store(db, {
+      title: 'Auth three',
+      content: 'semantic page three',
+      tags: ['auth'],
+    });
+
+    storeEmbedding(db, first.id, embeddingOf(1, 0));
+    storeEmbedding(db, second.id, embeddingOf(0.8, 0.2));
+    storeEmbedding(db, third.id, embeddingOf(0.6, 0.4));
+
+    const full = search(db, { query: 'auth flow', mode: 'semantic', limit: 10 }, embeddingOf(1, 0));
+    const page1 = search(db, { query: 'auth flow', mode: 'semantic', limit: 2 }, embeddingOf(1, 0));
+    expect(page1.page.hasMore).toBe(true);
+    expect(page1.page.nextCursor).not.toBeNull();
+
+    const page2 = search(
+      db,
+      {
+        query: 'auth flow',
+        mode: 'semantic',
+        limit: 2,
+        cursor: page1.page.nextCursor!,
+      },
+      embeddingOf(1, 0),
+    );
+
+    const secondPageRow = page2.results[0]!;
+    const fullRow = full.results.find((row) => row.id === secondPageRow.id)!;
+    expect(secondPageRow.match_quality).toBe(fullRow.match_quality);
+  });
+
+  it('paginates hybrid results without duplicates', () => {
+    const both1 = store(db, {
+      title: 'JWT session alpha',
+      content: 'Token rotation and refresh flow',
+      tags: ['auth'],
+    });
+    const both2 = store(db, {
+      title: 'JWT session beta',
+      content: 'Token rotation and refresh flow',
+      tags: ['auth'],
+    });
+    const semanticOnly = store(db, {
+      title: 'Access lifecycle',
+      content: 'Stateless authentication lifecycle planning',
+      tags: ['auth'],
+    });
+
+    storeEmbedding(db, both1.id, embeddingOf(1, 0));
+    storeEmbedding(db, both2.id, embeddingOf(0.95, 0.05));
+    storeEmbedding(db, semanticOnly.id, embeddingOf(0.9, 0.1));
+
+    const page1 = search(db, { query: 'JWT session', mode: 'hybrid', limit: 2 }, embeddingOf(1, 0));
+    expect(page1.page.hasMore).toBe(true);
+    expect(page1.page.nextCursor).not.toBeNull();
+
+    const page2 = search(
+      db,
+      { query: 'JWT session', mode: 'hybrid', limit: 2, cursor: page1.page.nextCursor! },
+      embeddingOf(1, 0),
+    );
+
+    const ids = new Set([...page1.results, ...page2.results].map((row) => row.id));
+    expect(ids.size).toBe(3);
+    expect(page1.page.mode).toBe('hybrid');
+  });
+
+  it('does not skip tied hybrid scores across pages', () => {
+    const alpha = store(db, { title: 'JWT alpha', content: 'token refresh', tags: ['auth'] });
+    const beta = store(db, { title: 'JWT beta', content: 'token refresh', tags: ['auth'] });
+
+    storeEmbedding(db, alpha.id, embeddingOf(1, 0));
+    storeEmbedding(db, beta.id, embeddingOf(1, 0));
+
+    const firstPage = search(db, { query: 'JWT', mode: 'hybrid', limit: 1 }, embeddingOf(1, 0));
+    expect(firstPage.page.hasMore).toBe(true);
+    expect(firstPage.page.nextCursor).not.toBeNull();
+
+    const secondPage = search(
+      db,
+      { query: 'JWT', mode: 'hybrid', limit: 1, cursor: firstPage.page.nextCursor! },
+      embeddingOf(1, 0),
+    );
+
+    expect(firstPage.results).toHaveLength(1);
+    expect(secondPage.results).toHaveLength(1);
+    expect(firstPage.results[0]!.id).not.toBe(secondPage.results[0]!.id);
+  });
+
+  it('matches single large-page results when collecting all keyword pages', () => {
+    for (let i = 0; i < 5; i += 1) {
+      store(db, {
+        title: `Roundtrip SQLite ${i}`,
+        content: 'keyword pagination roundtrip',
+        tags: ['db'],
+      });
+    }
+
+    const allPaged = collectSearchPages(db, { query: 'Roundtrip SQLite', limit: 2 });
+    const singlePage = search(db, { query: 'Roundtrip SQLite', limit: 10 });
+
+    expect(allPaged.map((row) => row.id)).toEqual(singlePage.results.map((row) => row.id));
+  });
+
+  it('matches single large-page results when collecting all semantic pages', () => {
+    const nodes = [
+      store(db, { title: 'Semantic roundtrip 1', content: 'auth one', tags: ['auth'] }),
+      store(db, { title: 'Semantic roundtrip 2', content: 'auth two', tags: ['auth'] }),
+      store(db, { title: 'Semantic roundtrip 3', content: 'auth three', tags: ['auth'] }),
+      store(db, { title: 'Semantic roundtrip 4', content: 'auth four', tags: ['auth'] }),
+    ];
+
+    nodes.forEach((node, index) => {
+      storeEmbedding(db, node.id, embeddingOf(1 - index * 0.1, index * 0.1));
+    });
+
+    const embedding = embeddingOf(1, 0);
+    const allPaged = collectSearchPages(
+      db,
+      { query: 'auth roundtrip', mode: 'semantic', limit: 2 },
+      embedding,
+    );
+    const singlePage = search(
+      db,
+      { query: 'auth roundtrip', mode: 'semantic', limit: 10 },
+      embedding,
+    );
+
+    expect(allPaged.map((row) => row.id)).toEqual(singlePage.results.map((row) => row.id));
+  });
+
+  it('matches single large-page results when collecting all hybrid pages', () => {
+    const nodes = [
+      store(db, {
+        title: 'Hybrid roundtrip alpha',
+        content: 'token refresh alpha',
+        tags: ['auth'],
+      }),
+      store(db, { title: 'Hybrid roundtrip beta', content: 'token refresh beta', tags: ['auth'] }),
+      store(db, {
+        title: 'Hybrid roundtrip gamma',
+        content: 'session continuity gamma',
+        tags: ['auth'],
+      }),
+    ];
+
+    nodes.forEach((node, index) => {
+      storeEmbedding(db, node.id, embeddingOf(1 - index * 0.05, index * 0.05));
+    });
+
+    const embedding = embeddingOf(1, 0);
+    const allPaged = collectSearchPages(
+      db,
+      { query: 'Hybrid roundtrip', mode: 'hybrid', limit: 1 },
+      embedding,
+    );
+    const singlePage = search(
+      db,
+      { query: 'Hybrid roundtrip', mode: 'hybrid', limit: 10 },
+      embedding,
+    );
+
+    expect(allPaged.map((row) => row.id)).toEqual(singlePage.results.map((row) => row.id));
+  });
+});
+
+describe('detectSearchMode', () => {
+  it('covers the key auto-detection branches directly', () => {
+    expect(detectSearchMode('JWT')).toBe('keyword');
+    expect(detectSearchMode('redis')).toBe('keyword');
+    expect(detectSearchMode('JWT session')).toBe('keyword');
+    expect(detectSearchMode('What causes auth drift?')).toBe('semantic');
+    expect(detectSearchMode('redis caching')).toBe('hybrid');
+    expect(detectSearchMode('')).toBe('hybrid');
   });
 });

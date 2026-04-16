@@ -4,6 +4,22 @@ import { EdgeType, NodeRole, NodeType } from './types.js';
 
 import { Texere } from './index.js';
 
+const searchResults = async (
+  db: Texere,
+  options: Parameters<Texere['search']>[0],
+): Promise<Awaited<ReturnType<Texere['search']>>['results']> => (await db.search(options)).results;
+
+const searchGraphResults = async (
+  db: Texere,
+  options: Parameters<Texere['searchGraph']>[0],
+): Promise<Awaited<ReturnType<Texere['searchGraph']>>['results']> =>
+  (await db.searchGraph(options)).results;
+
+const traverseResults = (
+  db: Texere,
+  options: Parameters<Texere['traverse']>[0],
+): ReturnType<Texere['traverse']>['results'] => db.traverse(options).results;
+
 describe('Integration: Semantic Search End-to-End', () => {
   let db: Texere;
 
@@ -33,7 +49,7 @@ describe('Integration: Semantic Search End-to-End', () => {
         tags: ['cache'],
       });
 
-      const results = await db.search({
+      const results = await searchResults(db, {
         query: 'login session management',
         mode: 'semantic',
       });
@@ -62,7 +78,7 @@ describe('Integration: Semantic Search End-to-End', () => {
         tags: ['ci'],
       });
 
-      const results = await db.search({
+      const results = await searchResults(db, {
         query: 'how is data stored',
         mode: 'semantic',
       });
@@ -83,7 +99,7 @@ describe('Integration: Semantic Search End-to-End', () => {
         tags: ['auth'],
       });
 
-      const results = await db.search({
+      const results = await searchResults(db, {
         query: 'JWT',
         mode: 'keyword',
       });
@@ -114,7 +130,7 @@ describe('Integration: Semantic Search End-to-End', () => {
         tags: ['auth'],
       });
 
-      const results = await db.search({
+      const results = await searchResults(db, {
         query: 'JWT session',
         mode: 'hybrid',
       });
@@ -171,7 +187,7 @@ describe('Integration: Semantic Search End-to-End', () => {
         tags: ['observability'],
       });
 
-      const results = await db.search({
+      const results = await searchResults(db, {
         query: 'authentication and login',
         mode: 'semantic',
         limit: 3,
@@ -205,12 +221,12 @@ describe('Integration: Semantic Search End-to-End', () => {
 
       db.invalidateNode(invalidatedNode.id);
 
-      const keywordResults = await db.search({ query: 'authentication', mode: 'keyword' });
-      const semanticResults = await db.search({
+      const keywordResults = await searchResults(db, { query: 'authentication', mode: 'keyword' });
+      const semanticResults = await searchResults(db, {
         query: 'authentication approach',
         mode: 'semantic',
       });
-      const hybridResults = await db.search({ query: 'authentication', mode: 'hybrid' });
+      const hybridResults = await searchResults(db, { query: 'authentication', mode: 'hybrid' });
 
       expect(keywordResults.every((r) => r.id !== invalidatedNode.id)).toBe(true);
       expect(semanticResults.every((r) => r.id !== invalidatedNode.id)).toBe(true);
@@ -218,7 +234,7 @@ describe('Integration: Semantic Search End-to-End', () => {
     }, 30_000);
   });
 
-  describe('about() integration (search + traversal)', () => {
+  describe('searchGraph() integration (search + traversal)', () => {
     it('finds seed via keyword search and traverses to connected nodes', async () => {
       // decision --RESOLVES--> problem <--RESOLVES-- solution
       const decision = db.storeNode({
@@ -248,7 +264,7 @@ describe('Integration: Semantic Search End-to-End', () => {
       db.createEdge({ source_id: decision.id, target_id: problem.id, type: EdgeType.Resolves });
       db.createEdge({ source_id: solution.id, target_id: problem.id, type: EdgeType.Resolves });
 
-      const results = await db.about({
+      const results = await searchGraphResults(db, {
         query: 'authentication',
         direction: 'both',
         maxDepth: 2,
@@ -279,14 +295,14 @@ describe('Integration: Semantic Search End-to-End', () => {
 
       db.createEdge({ source_id: decision.id, target_id: problem.id, type: EdgeType.Resolves });
 
-      const seeds = await db.search({
+      const seeds = await searchResults(db, {
         query: 'login session management',
         mode: 'semantic',
       });
       const seedIds = seeds.map((r) => r.id);
       expect(seedIds).toContain(decision.id);
 
-      const traversed = db.traverse({
+      const traversed = traverseResults(db, {
         startId: decision.id,
         direction: 'outgoing',
         maxDepth: 2,

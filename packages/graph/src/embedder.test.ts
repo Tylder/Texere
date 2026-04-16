@@ -1,10 +1,10 @@
 import type Database from 'better-sqlite3';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { createDatabase } from './db';
-import { buildEmbeddingText, Embedder, EMBEDDING_DIM } from './embedder';
-import { invalidateNode, storeNode, type StoreNodeInput } from './nodes';
-import { NodeRole, NodeType } from './types';
+import { createDatabase } from './db.js';
+import { buildEmbeddingText, Embedder, EMBEDDING_DIM } from './embedder.js';
+import { invalidateNode, storeNode, type StoreNodeInput } from './nodes.js';
+import { NodeRole, NodeType } from './types.js';
 
 const testNode = (overrides: Partial<StoreNodeInput> = {}): StoreNodeInput => ({
   type: NodeType.Knowledge,
@@ -58,6 +58,42 @@ describe('Embedder', { timeout: 120_000 }, () => {
     it('handles malformed JSON gracefully', () => {
       const result = buildEmbeddingText('Title', 'Content', '{invalid json}');
       expect(result).toBe('Title\nContent');
+    });
+
+    it('ignores whitespace-only tags JSON and keeps the two-line structure', () => {
+      const result = buildEmbeddingText('Title', 'Content', '   ');
+
+      expect(result.split('\n')).toEqual(['Title', 'Content']);
+    });
+
+    it('ignores non-array JSON values instead of treating them as tags', () => {
+      const result = buildEmbeddingText('Title', 'Content', '{"tag":"novel"}');
+
+      expect(result).toBe('Title\nContent');
+    });
+
+    it('keeps only the first three novel tags on the middle line in input order', () => {
+      const result = buildEmbeddingText(
+        'Redis guide',
+        'Covers redis replication and redis persistence.',
+        '["redis","cache","queue","events","stream"]',
+      );
+
+      expect(result.split('\n')).toEqual([
+        'Redis guide',
+        'cache queue events',
+        'Covers redis replication and redis persistence.',
+      ]);
+    });
+
+    it('returns the original title and content when every tag is already present case-insensitively', () => {
+      const result = buildEmbeddingText(
+        'SQLite WAL strategy',
+        'Use journal_mode wal with sqlite checkpoints.',
+        '["sqlite","WAL","strategy","checkpoint"]',
+      );
+
+      expect(result).toBe('SQLite WAL strategy\nUse journal_mode wal with sqlite checkpoints.');
     });
   });
 

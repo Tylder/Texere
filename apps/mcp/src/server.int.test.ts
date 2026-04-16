@@ -199,6 +199,18 @@ describe('MCP server integration', () => {
         'INVALID_INPUT',
       );
     });
+
+    it('returns INVALID_INPUT for malformed search cursors', async () => {
+      const result = await mcp.callTool('texere_search', {
+        query: 'auth',
+        cursor: 'not-a-cursor',
+      });
+
+      expect(result.isError).toBe(true);
+      expect((result.structuredContent as { error: { code: string } }).error.code).toBe(
+        'INVALID_INPUT',
+      );
+    });
   });
 
   describe('error boundary propagation', () => {
@@ -394,7 +406,7 @@ describe('MCP server integration', () => {
     });
   });
 
-  describe('about -> verify combined search + traverse', () => {
+  describe('searchGraph -> verify combined search + traverse', () => {
     it('returns search seeds and their graph neighbors', async () => {
       const problem = await storeNode(mcp, {
         type: NodeType.Issue,
@@ -422,7 +434,7 @@ describe('MCP server integration', () => {
         ],
       });
 
-      const aboutResult = await mcp.callTool('texere_about', {
+      const aboutResult = await mcp.callTool('texere_search_graph', {
         query: 'memory leak',
         direction: 'both',
         max_depth: 2,
@@ -611,7 +623,7 @@ describe('MCP server integration', () => {
       const parsed = ListToolsResultSchema.safeParse(listToolsResult);
       expect(parsed.success).toBe(true);
 
-      expect(listToolsResult.tools).toHaveLength(15);
+      expect(listToolsResult.tools).toHaveLength(18);
 
       for (const tool of listToolsResult.tools) {
         const inputSchema = tool.inputSchema as Record<string, unknown>;
@@ -630,13 +642,16 @@ describe('MCP server integration', () => {
         'texere_store_artifact',
         'texere_store_source',
         'texere_get_node',
+        'texere_get_nodes',
         'texere_invalidate_node',
+        'texere_invalidate_nodes',
         'texere_replace_node',
         'texere_create_edge',
         'texere_delete_edge',
+        'texere_delete_edges',
         'texere_search',
         'texere_traverse',
-        'texere_about',
+        'texere_search_graph',
       ];
 
       for (const toolName of toolsWithRequiredInputs) {
@@ -874,7 +889,7 @@ describe('MCP server integration', () => {
       expect(initResponse.result.serverInfo).toBeDefined();
 
       expect(toolsResponse).toBeDefined();
-      expect(toolsResponse.result.tools).toHaveLength(15);
+      expect(toolsResponse.result.tools).toHaveLength(18);
 
       for (const tool of toolsResponse.result.tools as Array<Record<string, unknown>>) {
         expect(typeof tool.name).toBe('string');

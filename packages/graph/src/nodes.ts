@@ -47,7 +47,8 @@ export type StoreNodeResult = Node & { warning?: { similar_nodes: SimilarNode[] 
 
 export type NodeWithEdges = Node & { edges: Edge[] };
 
-const MAX_BATCH_SIZE = 50;
+const MAX_STORE_BATCH_SIZE = 50;
+const MAX_INVALIDATE_BATCH_SIZE = 250;
 
 const NODE_COLUMNS = `id, type, role, title, content, tags_json,
     importance, confidence,
@@ -250,8 +251,8 @@ export function storeNode(
   if (inputs.length === 0) {
     throw new Error('at least one node required');
   }
-  if (inputs.length > MAX_BATCH_SIZE) {
-    throw new Error(`max batch size exceeded (${MAX_BATCH_SIZE})`);
+  if (inputs.length > MAX_STORE_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded (${MAX_STORE_BATCH_SIZE})`);
   }
 
   // Pre-validate all type-role combinations before opening transaction
@@ -327,6 +328,62 @@ export const getNode = (
   return { ...node, edges };
 };
 
+export const getNodes = (
+  db: Database.Database,
+  ids: string[],
+  options?: GetNodeOptions,
+): Array<Node | NodeWithEdges | null> => {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const uniqueIds = [...new Set(ids)];
+  const placeholders = uniqueIds.map(() => '?').join(', ');
+
+  const nodes = db
+    .prepare(`SELECT ${NODE_COLUMNS} FROM nodes WHERE id IN (${placeholders})`)
+    .all(...uniqueIds) as Node[];
+
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+
+  if (!options?.includeEdges) {
+    return ids.map((id) => nodesById.get(id) ?? null);
+  }
+
+  const edges = db
+    .prepare(
+      `
+        SELECT id, source_id, target_id, type, created_at
+        FROM edges
+        WHERE source_id IN (${placeholders}) OR target_id IN (${placeholders})
+        ORDER BY created_at ASC
+      `,
+    )
+    .all(...uniqueIds, ...uniqueIds) as Edge[];
+
+  const edgesByNode = new Map<string, Edge[]>();
+  for (const id of uniqueIds) {
+    edgesByNode.set(id, []);
+  }
+
+  for (const edge of edges) {
+    if (edgesByNode.has(edge.source_id)) {
+      edgesByNode.get(edge.source_id)!.push(edge);
+    }
+    if (edge.target_id !== edge.source_id && edgesByNode.has(edge.target_id)) {
+      edgesByNode.get(edge.target_id)!.push(edge);
+    }
+  }
+
+  return ids.map((id) => {
+    const node = nodesById.get(id);
+    if (!node) {
+      return null;
+    }
+    return { ...node, edges: edgesByNode.get(id) ?? [] };
+  });
+};
+
 export const invalidateNode = (db: Database.Database, id: string): void => {
   const statements = getStatements(db);
 
@@ -343,6 +400,33 @@ export const invalidateNode = (db: Database.Database, id: string): void => {
     }
 
     statements.setInvalidatedAt.run(Date.now(), id);
+  }).immediate();
+};
+
+export const invalidateNodes = (db: Database.Database, ids: string[]): void => {
+  if (ids.length === 0) {
+    throw new Error('at least one node required');
+  }
+  if (ids.length > MAX_INVALIDATE_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded (${MAX_INVALIDATE_BATCH_SIZE})`);
+  }
+
+  const statements = getStatements(db);
+  const now = Date.now();
+
+  db.transaction(() => {
+    for (const id of ids) {
+      const existing = statements.getInvalidationState.get(id) as
+        | { invalidated_at: number | null }
+        | undefined;
+      if (!existing) {
+        throw new Error(`Node not found: ${id}`);
+      }
+
+      if (existing.invalidated_at === null) {
+        statements.setInvalidatedAt.run(now, id);
+      }
+    }
   }).immediate();
 };
 
@@ -377,11 +461,11 @@ export function storeNodesWithEdges(
   if (inputs.length === 0) {
     throw new Error('at least one node required');
   }
-  if (inputs.length > MAX_BATCH_SIZE) {
-    throw new Error(`max batch size exceeded for nodes (${MAX_BATCH_SIZE})`);
+  if (inputs.length > MAX_STORE_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded for nodes (${MAX_STORE_BATCH_SIZE})`);
   }
-  if (edgeInputs.length > MAX_BATCH_SIZE) {
-    throw new Error(`max batch size exceeded for edges (${MAX_BATCH_SIZE})`);
+  if (edgeInputs.length > MAX_STORE_BATCH_SIZE) {
+    throw new Error(`max batch size exceeded for edges (${MAX_STORE_BATCH_SIZE})`);
   }
 
   for (const inp of inputs) {

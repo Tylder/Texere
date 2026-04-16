@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import type Database from 'better-sqlite3';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDatabase } from './db.js';
-import { createEdge, deleteEdge, getEdgesForNode } from './edges.js';
+import { createEdge, deleteEdge, deleteEdges, getEdgesForNode } from './edges.js';
 import { getNode, invalidateNode, storeNode } from './nodes.js';
 import { EdgeType, NodeRole, NodeType } from './types.js';
 
@@ -157,6 +157,29 @@ describe('edge CRUD', () => {
     expect(updatedSource!.invalidated_at).toBeNull();
   });
 
+  it('reuses prepared edge statements across repeated operations on the same database', () => {
+    const source = makeNode(db, 'Source');
+    const target = makeNode(db, 'Target', NodeType.Action, NodeRole.Solution);
+    const prepareSpy = vi.spyOn(db, 'prepare');
+
+    const edge = createEdge(db, {
+      source_id: source.id,
+      target_id: target.id,
+      type: EdgeType.Resolves,
+    });
+
+    expect(deleteEdge(db, edge.id)).toBe(true);
+    expect(getEdgesForNode(db, source.id, 'both')).toEqual([]);
+
+    createEdge(db, {
+      source_id: source.id,
+      target_id: target.id,
+      type: EdgeType.BasedOn,
+    });
+
+    expect(prepareSpy).toHaveBeenCalledTimes(6);
+  });
+
   it('deleteEdge removes edge row entirely', () => {
     const source = makeNode(db, 'Source');
     const target = makeNode(db, 'Target', NodeType.Action, NodeRole.Solution);
@@ -177,6 +200,29 @@ describe('edge CRUD', () => {
 
   it('deleteEdge for nonexistent id returns false', () => {
     expect(deleteEdge(db, 'nonexistent')).toBe(false);
+  });
+
+  it('deleteEdges returns per-id deletion results in input order', () => {
+    const source = makeNode(db, 'Source');
+    const target = makeNode(db, 'Target', NodeType.Action, NodeRole.Solution);
+    const edge = createEdge(db, {
+      source_id: source.id,
+      target_id: target.id,
+      type: EdgeType.Resolves,
+    });
+
+    const result = deleteEdges(db, [edge.id, 'missing-edge', edge.id]);
+
+    expect(result).toEqual([true, false, false]);
+  });
+
+  it('deleteEdges throws on empty array', () => {
+    expect(() => deleteEdges(db, [])).toThrow(/at least one edge/i);
+  });
+
+  it('deleteEdges throws when batch exceeds max size', () => {
+    const ids = Array.from({ length: 251 }, (_, i) => `edge-${i}`);
+    expect(() => deleteEdges(db, ids)).toThrow(/max batch size/i);
   });
 
   it('getEdgesForNode with outgoing returns only outgoing edges', () => {
@@ -304,6 +350,21 @@ describe('batch createEdge', () => {
     expect(() => createEdge(db, inputs)).toThrow('max batch size exceeded');
   });
 
+  it('allows a batch of exactly 50 edges', () => {
+    const source = makeNode(db, 'Source');
+    const target = makeNode(db, 'Target');
+    const inputs = Array.from({ length: 50 }, () => ({
+      source_id: source.id,
+      target_id: target.id,
+      type: EdgeType.BasedOn,
+    }));
+
+    const result = createEdge(db, inputs);
+
+    expect(result).toHaveLength(50);
+    expect(getEdgesForNode(db, source.id, 'outgoing')).toHaveLength(50);
+  });
+
   it('REPLACES auto-invalidation works within batch', () => {
     const old1 = makeNode(db, 'Old 1');
     const old2 = makeNode(db, 'Old 2');
@@ -365,5 +426,41 @@ describe('minimal response', () => {
     for (const r of results) {
       expect(Object.keys(r)).toEqual(['id']);
     }
+  });
+});
+
+describe('batch deleteEdges boundaries', () => {
+  let db: Database.Database;
+
+  beforeEach(() => {
+    db = createDatabase(':memory:');
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('allows deleting exactly 250 edge ids', () => {
+    const source = makeNode(db, 'Source');
+    const target = makeNode(db, 'Target');
+    const edgeIds: string[] = [];
+
+    for (let batch = 0; batch < 5; batch++) {
+      const created = createEdge(
+        db,
+        Array.from({ length: 50 }, () => ({
+          source_id: source.id,
+          target_id: target.id,
+          type: EdgeType.RelatedTo,
+        })),
+      );
+      edgeIds.push(...created.map((edge) => edge.id));
+    }
+
+    const deleted = deleteEdges(db, edgeIds);
+
+    expect(deleted).toHaveLength(250);
+    expect(deleted.every(Boolean)).toBe(true);
+    expect(getEdgesForNode(db, source.id, 'both')).toEqual([]);
   });
 });

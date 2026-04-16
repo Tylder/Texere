@@ -13,8 +13,6 @@ embeddings, hybrid retrieval, and graph traversal.
 - keyword, semantic, and hybrid retrieval in one API
 - traversal and pagination for connected retrieval workflows
 
-**Current status:** this package is published and installable from npm.
-
 ## Install
 
 ```bash
