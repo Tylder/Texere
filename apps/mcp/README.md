@@ -5,6 +5,18 @@
 It exposes Texere's immutable graph, retrieval, traversal, and validation capabilities as a
 structured tool surface for AI agents over stdio.
 
+## Best for
+
+Use this package if you want to:
+
+- run Texere as a local MCP server inside your client
+- persist agent memory in a local SQLite-backed graph
+- search and traverse that graph through structured MCP tools
+- keep graph logic in `@texere/graph` while exposing it to agent runtimes
+
+If you want the direct TypeScript API instead of MCP, start with
+[`packages/graph/README.md`](../../packages/graph/README.md).
+
 ## Package role in the repo
 
 Read this package README if you want the agent-facing server layer.
@@ -16,6 +28,85 @@ Read this package README if you want the agent-facing server layer.
 
 **Current status:** this package is publish-ready from the monorepo, but `npx @texere/mcp` will only
 work after the first npm release.
+
+## Quick start
+
+### Fastest path after npm release
+
+```bash
+npx @texere/mcp --db-path ~/.texere/texere.db
+```
+
+### Run from source today
+
+From the repo root:
+
+```bash
+pnpm install
+pnpm build
+./apps/mcp/dist/index.js --db-path ~/.texere/texere.db
+```
+
+Default database path: `.texere/texere.db`
+
+On successful startup, the process connects over stdio and waits for MCP requests from the client.
+
+## Client setup examples
+
+Use an absolute path for `command` unless your client documents repo-relative resolution.
+
+### Claude Desktop
+
+```json
+{
+  "mcpServers": {
+    "texere": {
+      "command": "/path/to/texere/apps/mcp/dist/index.js",
+      "args": ["--db-path", "/absolute/path/to/.texere/texere.db"]
+    }
+  }
+}
+```
+
+### Cursor or Cline
+
+After npm release:
+
+```json
+{
+  "mcpServers": {
+    "texere": {
+      "command": "npx",
+      "args": ["--yes", "@texere/mcp", "--db-path", "/absolute/path/to/.texere/texere.db"]
+    }
+  }
+}
+```
+
+Before npm release, replace `npx ...` with the built local executable path shown above.
+
+### VS Code-compatible local config
+
+```json
+{
+  "servers": {
+    "texere": {
+      "type": "stdio",
+      "command": "/path/to/texere/apps/mcp/dist/index.js",
+      "args": ["--db-path", "/absolute/path/to/.texere/texere.db"]
+    }
+  }
+}
+```
+
+## Operating model and boundaries
+
+- **Local database**: Texere stores data in a local SQLite file, not a hosted backend.
+- **stdio transport**: this package runs as a stdio MCP server process.
+- **Persistent state**: the selected `--db-path` persists graph state between client sessions.
+- **Thin wrapper**: most business logic lives in `@texere/graph`; this package exposes it to MCP.
+- **Snake_case tool input**: the MCP surface accepts snake_case fields and converts them to the
+  graph library's camelCase API internally.
 
 ## What it does
 
@@ -29,6 +120,16 @@ The MCP app is a thin integration layer over [`@texere/graph`](../../packages/gr
 If you want the database and retrieval model itself, start with
 [`packages/graph/README.md`](../../packages/graph/README.md). If you want agent integration, start
 here.
+
+## Common MCP workflows
+
+Teams typically use `@texere/mcp` to:
+
+- store decisions, findings, and constraints as durable agent memory
+- validate writes before they hit the graph
+- search memory semantically or with hybrid ranking
+- traverse related nodes after a search hit
+- replace outdated nodes while preserving provenance and history
 
 ## What it provides
 
@@ -57,59 +158,10 @@ Its job is to expose the graph library through a consistent MCP interface:
 That separation keeps the core graph model reusable outside MCP while making the agent interface
 explicit and typed.
 
-## Running locally
-
-### Prerequisites
-
-- Node.js 20 or later
-- pnpm 10.29.3 or later
-- built repo output from `pnpm build`
-
-From the repo root:
-
-```bash
-pnpm install
-pnpm build
-./apps/mcp/dist/index.js
-```
-
-Use a custom database path if needed:
-
-```bash
-./apps/mcp/dist/index.js --db-path=/path/to/texere.db
-```
-
-Default database path: `.texere/texere.db`
-
-On successful startup, the process connects over stdio and waits for MCP requests from the client.
-
-## Run with `npx`
-
-After the package has been published to npm, you can run it without cloning the repo:
-
-```bash
-npx @texere/mcp --db-path ~/.texere/texere.db
-```
-
-Equivalent explicit form:
+## Equivalent explicit `npx` form
 
 ```bash
 npx --package @texere/mcp texere-mcp --db-path ~/.texere/texere.db
-```
-
-## Example MCP client configuration
-
-Use an absolute path for `command` unless your client documents repo-relative resolution.
-
-```json
-{
-  "mcpServers": {
-    "texere": {
-      "command": "/path/to/texere/apps/mcp/dist/index.js",
-      "args": ["--db-path", ".texere/texere.db"]
-    }
-  }
-}
 ```
 
 ## Tool surface
