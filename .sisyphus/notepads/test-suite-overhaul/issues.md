@@ -1,3 +1,0 @@
-# Issues & Gotchas
-
-## Known Problems
