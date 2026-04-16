@@ -26,6 +26,7 @@ coverage/
 *.swo
 .opencode/
 .sisyphus/
+.serena/
 
 # OS
 .DS_Store
