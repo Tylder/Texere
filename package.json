@@ -1,6 +1,23 @@
 {
   "name": "texere",
   "private": true,
+  "description": "Monorepo for the Texere immutable graph library and MCP server.",
+  "keywords": [
+    "agent-memory",
+    "knowledge-graph",
+    "mcp",
+    "model-context-protocol",
+    "retrieval",
+    "sqlite"
+  ],
+  "homepage": "https://github.com/Tylder/Texere",
+  "bugs": {
+    "url": "https://github.com/Tylder/Texere/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tylder/Texere.git"
+  },
   "license": "MIT",
   "scripts": {
     "build": "turbo run build",

@@ -1,6 +1,24 @@
 {
   "name": "@texere/mcp",
   "version": "0.1.0",
+  "description": "Model Context Protocol server for Texere's immutable knowledge graph.",
+  "keywords": [
+    "agent-memory",
+    "knowledge-graph",
+    "mcp",
+    "model-context-protocol",
+    "sqlite",
+    "texere"
+  ],
+  "homepage": "https://github.com/Tylder/Texere",
+  "bugs": {
+    "url": "https://github.com/Tylder/Texere/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tylder/Texere.git",
+    "directory": "apps/mcp"
+  },
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -25,7 +43,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@texere/graph": "^0.1.0",
+    "@texere/graph": "workspace:*",
     "zod": "^4.3.6"
   },
   "devDependencies": {
