@@ -1,9 +1,5 @@
 # TEXERE PROJECT KNOWLEDGE BASE
 
-**Updated:** 2026-02-15  
-**Commit:** 76a1ec6  
-**Branch:** remake-as-knowledge-graph
-
 ## OVERVIEW
 
 Knowledge graph database with semantic search (SQLite + embeddings), exposed via MCP server.

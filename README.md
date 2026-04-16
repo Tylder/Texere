@@ -7,6 +7,98 @@ Texere is a TypeScript infrastructure project for persistent agent memory.
 It combines a typed knowledge graph, SQLite-backed storage, full-text search, vector embeddings,
 hybrid retrieval, graph traversal, and an MCP tool surface for agent integration.
 
+## Choose your path
+
+### I want to run an MCP server
+
+Start with [`apps/mcp/README.md`](apps/mcp/README.md) if you want to plug Texere into an MCP client
+such as Claude Desktop, Cursor, Cline, or VS Code-compatible tooling.
+
+### I want a TypeScript graph library
+
+Start with [`packages/graph/README.md`](packages/graph/README.md) if you want to use Texere directly
+from code without MCP.
+
+### I want the data model and design rules
+
+Start with [`docs/v4-type-system.md`](docs/v4-type-system.md) if you want the current type-system
+reference and stable modeling rules.
+
+## Quick start
+
+**Current status:** Texere is implemented and usable from this monorepo today. The release workflow
+is set up for npm publishing via GitHub tags, but `npx @texere/mcp` will only work after the first
+package release is published.
+
+### Fastest path after the first npm release
+
+```bash
+npx @texere/mcp --db-path ~/.texere/texere.db
+```
+
+### Run from source today
+
+If you already have access to the repo today:
+
+```bash
+git clone https://github.com/Tylder/Texere.git Texere
+cd Texere
+pnpm install
+pnpm build
+./apps/mcp/dist/index.js --db-path ~/.texere/texere.db
+```
+
+## Client setup examples
+
+Use an absolute `command` path unless your client explicitly documents relative resolution.
+
+### Claude Desktop
+
+```json
+{
+  "mcpServers": {
+    "texere": {
+      "command": "/path/to/texere/apps/mcp/dist/index.js",
+      "args": ["--db-path", "/absolute/path/to/.texere/texere.db"]
+    }
+  }
+}
+```
+
+### Cursor or Cline
+
+After the first npm release:
+
+```json
+{
+  "mcpServers": {
+    "texere": {
+      "command": "npx",
+      "args": ["--yes", "@texere/mcp", "--db-path", "/absolute/path/to/.texere/texere.db"]
+    }
+  }
+}
+```
+
+Before the first npm release, use the built local executable path shown in the source-based
+quickstart instead of `npx`.
+
+### VS Code-compatible local config
+
+```json
+{
+  "servers": {
+    "texere": {
+      "type": "stdio",
+      "command": "/path/to/texere/apps/mcp/dist/index.js",
+      "args": ["--db-path", "/absolute/path/to/.texere/texere.db"]
+    }
+  }
+}
+```
+
+For more client-oriented guidance, see [`apps/mcp/README.md`](apps/mcp/README.md).
+
 ## What Texere is
 
 Texere gives agents a local, persistent memory system with explicit structure.
@@ -17,6 +109,14 @@ operations through both a TypeScript library and an MCP server.
 
 If you want a concrete mental model: Texere is a small graph database and retrieval layer for agent
 workflows, designed to make memory, provenance, and search behavior easier to reason about.
+
+## Operating model
+
+- **Local-first**: Texere stores graph data in a local SQLite database.
+- **MCP over stdio**: the MCP server is a stdio process, not a hosted remote service.
+- **Persistent state**: data survives across runs in the database path you choose.
+- **Immutable history**: nodes are replaced and invalidated rather than updated in place.
+- **Two entry points**: use `@texere/mcp` for agent integration or `@texere/graph` for direct code.
 
 ## Why it exists
 
@@ -45,50 +145,6 @@ Current capabilities:
 - **18 MCP tools** for storage, retrieval, traversal, validation, and metadata
 - **Debounced embedding pipeline** for semantic search workloads
 - **Unit and integration tests** across the graph and MCP surfaces
-
-## Quick start
-
-**Current status:** Texere is implemented and usable from this monorepo today. The release workflow
-is set up for npm publishing via GitHub tags, but `npx @texere/mcp` will only work after the first
-package release is published.
-
-```bash
-git clone https://github.com/danscan/texere.git
-cd texere
-pnpm install
-pnpm build
-```
-
-### Run as an MCP server
-
-```bash
-./apps/mcp/dist/index.js
-```
-
-Use a custom database path if needed:
-
-```bash
-./apps/mcp/dist/index.js --db-path=/path/to/database.db
-```
-
-After the first npm release, the same server can be started without cloning the repo:
-
-```bash
-npx @texere/mcp --db-path ~/.texere/texere.db
-```
-
-Example MCP client configuration:
-
-```json
-{
-  "mcpServers": {
-    "texere": {
-      "command": "/path/to/texere/apps/mcp/dist/index.js",
-      "args": ["--db-path", ".texere/texere.db"]
-    }
-  }
-}
-```
 
 ### Use as a library
 
@@ -129,6 +185,16 @@ void main();
 ```
 
 For the detailed API and graph model, see [`packages/graph/README.md`](packages/graph/README.md).
+
+## Common workflows
+
+Use Texere when you want to:
+
+- store decisions, findings, constraints, and artifacts as typed graph nodes
+- retrieve context with keyword, semantic, or hybrid search depending on query shape
+- traverse related context instead of relying on flat note lookup
+- preserve history through immutable replacement instead of editing memory in place
+- expose that graph to MCP clients through a structured tool surface
 
 ## MCP tool surface
 
@@ -197,6 +263,7 @@ pnpm quality
 ### Start here
 
 - [README.md](README.md) — public overview and entry point
+- [docs/README.md](docs/README.md) — documentation index and canonical vs archival guide
 - [packages/graph/README.md](packages/graph/README.md) — graph library API and retrieval model
 - [apps/mcp/README.md](apps/mcp/README.md) — MCP server usage and tool surface
 
@@ -210,6 +277,13 @@ pnpm quality
 The `docs/research/` area plus design plans, benchmark notes, and draft documents are intentionally
 kept for deeper context. They are useful if you want implementation history and exploratory work,
 but they are not the recommended first path through the repo.
+
+## Contributing and project policies
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — development workflow and quality expectations
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — collaboration guidelines
+- [SECURITY.md](SECURITY.md) — vulnerability reporting guidance
+- [CHANGELOG.md](CHANGELOG.md) — notable public-facing changes
 
 ## Release workflow
 
