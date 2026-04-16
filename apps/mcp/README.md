@@ -161,13 +161,13 @@ flow as Claude Code.
 The MCP app is a thin integration layer over [`@texere/graph`](../../packages/graph/README.md):
 
 - creates or opens a local Texere SQLite database
-- exposes 15 registered MCP tools
+- exposes 18 registered MCP tools
 - translates MCP-style snake_case input into the graph library's camelCase API shape
 - returns structured, machine-readable responses for agent workflows
 
 ## MCP tool surface
 
-`@texere/mcp` currently registers **15 tools**.
+`@texere/mcp` currently registers **18 tools**.
 
 ### Store tools
 
@@ -183,21 +183,24 @@ These create typed nodes and optionally create edges atomically in the same call
 
 ### Node and edge mutation tools
 
-| Tool                     | Purpose                                                                                                  |
-| ------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `texere_get_node`        | Read a node by ID, with optional edge expansion.                                                         |
-| `texere_invalidate_node` | Soft-invalidate a node by setting `invalidated_at`.                                                      |
-| `texere_replace_node`    | Atomically replace a node: create the new version, link it with `REPLACES`, and invalidate the old node. |
-| `texere_create_edge`     | Create one or many typed edges between nodes.                                                            |
-| `texere_delete_edge`     | Hard-delete an edge by ID.                                                                               |
+| Tool                      | Purpose                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `texere_get_node`         | Read a node by ID, with optional edge expansion.                                                         |
+| `texere_get_nodes`        | Read multiple nodes by ID, preserving input order and returning `null` for missing nodes.                |
+| `texere_invalidate_node`  | Soft-invalidate a node by setting `invalidated_at`.                                                      |
+| `texere_invalidate_nodes` | Soft-invalidate multiple nodes in one call.                                                              |
+| `texere_replace_node`     | Atomically replace a node: create the new version, link it with `REPLACES`, and invalidate the old node. |
+| `texere_create_edge`      | Create one or many typed edges between nodes.                                                            |
+| `texere_delete_edge`      | Hard-delete an edge by ID.                                                                               |
+| `texere_delete_edges`     | Hard-delete multiple edges by ID.                                                                        |
 
 ### Retrieval and graph tools
 
-| Tool              | Purpose                                                                                                 |
-| ----------------- | ------------------------------------------------------------------------------------------------------- |
-| `texere_search`   | FTS5-based search with keyword, semantic, hybrid, and auto modes plus type/role/tag/importance filters. |
-| `texere_traverse` | Traverse the graph from a starting node using recursive CTEs.                                           |
-| `texere_about`    | Search for seed nodes and then traverse their neighborhood in one call.                                 |
+| Tool                  | Purpose                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------- |
+| `texere_search`       | FTS5-based search with keyword, semantic, hybrid, and auto modes plus type/role/tag/importance filters. |
+| `texere_traverse`     | Traverse the graph from a starting node using recursive CTEs.                                           |
+| `texere_search_graph` | Search for seed nodes and then traverse their neighborhood in one call.                                 |
 
 ### Metadata and safety tools
 

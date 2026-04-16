@@ -152,13 +152,13 @@ flow as Claude Code.
 
 ### MCP server
 
-`@texere/mcp` exposes the graph through 15 MCP tools:
+`@texere/mcp` exposes the graph through 18 MCP tools:
 
 - 5 typed store tools
-- node retrieval / replacement / invalidation
-- edge creation and deletion
-- search and traversal
-- about / stats / validation
+- single and batch node retrieval / invalidation
+- edge creation and single/batch edge deletion
+- search, traversal, and search+traverse
+- stats and validation
 
 The actual registered tools are:
 
@@ -168,13 +168,16 @@ The actual registered tools are:
 - `texere_store_artifact`
 - `texere_store_source`
 - `texere_get_node`
+- `texere_get_nodes`
 - `texere_invalidate_node`
+- `texere_invalidate_nodes`
 - `texere_replace_node`
 - `texere_create_edge`
 - `texere_delete_edge`
+- `texere_delete_edges`
 - `texere_search`
 - `texere_traverse`
-- `texere_about`
+- `texere_search_graph`
 - `texere_stats`
 - `texere_validate`
 
