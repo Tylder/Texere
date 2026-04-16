@@ -3,6 +3,20 @@
 This document describes the simplest workflow for keeping the public branch clean while retaining a
 visible internal branch in the same public repository.
 
+## Current repo note
+
+The branch names in this document are role names, not a requirement that your repository literally
+uses those names.
+
+For Texere right now, the equivalent mapping is:
+
+- `main` -> the future clean public branch role
+- `internal` -> the current `v4` working branch role
+- `public-prep/*` -> short-lived cleanup/promotion branches created from `v4`
+
+If your repository currently uses `master` instead of `main`, substitute `master` wherever this
+document says `main`.
+
 ## Branch roles
 
 ### `main`
