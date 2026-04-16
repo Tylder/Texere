@@ -16,6 +16,26 @@ embeddings, hybrid retrieval, and graph traversal.
 **Current status:** this package is publish-ready from the monorepo, but it is not available through
 npm until the first release is published.
 
+## Install
+
+### After the first npm release
+
+```bash
+npm install @texere/graph
+```
+
+### From source today
+
+From the repo root:
+
+```bash
+pnpm install
+pnpm build
+```
+
+The package currently ships from this monorepo and is consumed locally through workspace wiring and
+the built `dist/` output.
+
 ## What it is
 
 Use this package if you want to create, query, traverse, and evolve a Texere graph directly from
@@ -142,18 +162,6 @@ Texere is intentionally immutable at the node level.
 - Replaced nodes are soft-invalidated instead of hard-deleted.
 
 This keeps graph history explicit and makes changes easier to reason about in agent workflows.
-
-## Local usage
-
-From the repo root:
-
-```bash
-pnpm install
-pnpm build
-```
-
-The package currently ships from this monorepo and is consumed locally through workspace wiring and
-the built `dist/` output.
 
 ## Quality signals
 

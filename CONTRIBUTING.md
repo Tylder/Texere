@@ -85,7 +85,6 @@ If your change affects how the project is used or understood, update the relevan
 - `README.md` for the repo entry point
 - `apps/mcp/README.md` for MCP usage and tool-surface changes
 - `packages/graph/README.md` for library API or model changes
-- `docs/README.md` if the documentation structure changes
 
 ## Pull requests
 
