@@ -1,6 +1,7 @@
 {
   "name": "texere",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "build": "turbo run build",
     "format": "prettier . --write --cache",
