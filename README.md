@@ -1,4 +1,6 @@
 # Texere
+[![npm version](https://img.shields.io/npm/v/@texere/graph?label=%40texere%2Fgraph&logo=npm)](https://www.npmjs.com/package/@texere/graph)
+[![npm version](https://img.shields.io/npm/v/@texere/mcp?label=%40texere%2Fmcp&logo=npm)](https://www.npmjs.com/package/@texere/mcp)
 
 Persistent knowledge-graph memory for AI agents, with an MCP server and a TypeScript library.
 
